@@ -1,0 +1,208 @@
+{
+  "capture_date": "2026-10-07",
+  "blender_version": "5.2.2 LTS",
+  "model_sha256": "7d15fd41e3b8a9b58878bc001061b3193f2fe73ee3af62dbb7f48464b4fcbb87",
+  "prepared_revision": null,
+  "scope": "Static authored poses and baseline illumination; no gameplay hit flashes or camera motion.",
+  "model_modified": false,
+  "render_engine": "CYCLES",
+  "samples": 96,
+  "denoising": true,
+  "seed": 31,
+  "display_device": "sRGB",
+  "view_transform": "Standard",
+  "look": "None",
+  "exposure": -0.6499999761581421,
+  "gamma": 1.0,
+  "compositing": true,
+  "compositor_nodes_enabled": true,
+  "frame": 1,
+  "pixel_aspect": [
+    1.0,
+    1.0
+  ],
+  "unit_system": "METRIC",
+  "unit_scale": 1.0,
+  "views": [
+    {
+      "projection": "PERSP",
+      "sensor_width": 36.0,
+      "sensor_height": 24.0,
+      "sensor_fit": "AUTO",
+      "ortho_scale": 6.0,
+      "shift_x": 0.0,
+      "shift_y": 0.0,
+      "file": "01-gameplay-area.png",
+      "world_matrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.6507912278175354,
+          -0.7592567205429077,
+          -17.0
+        ],
+        [
+          0.0,
+          0.7592567205429077,
+          0.6507912278175354,
+          18.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "lens_mm": 28.0,
+      "clip_start": 0.05000000074505806,
+      "clip_end": 1000.0,
+      "depth_of_field": false,
+      "resolution": [
+        1134,
+        1503
+      ],
+      "image_sha256": "8234d5a42130015094328ba3862c01f1696726e575e8c2bd2e221b3555a462b9"
+    },
+    {
+      "projection": "PERSP",
+      "sensor_width": 36.0,
+      "sensor_height": 24.0,
+      "sensor_fit": "VERTICAL",
+      "ortho_scale": 6.0,
+      "shift_x": 0.0,
+      "shift_y": 0.0,
+      "file": "02-launcher.png",
+      "world_matrix": [
+        [
+          0.94498610496521,
+          -0.28427815437316895,
+          0.16182462871074677,
+          8.780969619750977
+        ],
+        [
+          0.32711052894592285,
+          0.8212481141090393,
+          -0.4674935042858124,
+          -6.800000190734863
+        ],
+        [
+          2.7690445492112303e-08,
+          0.4947093725204468,
+          0.8690584897994995,
+          7.400000095367432
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "lens_mm": 50.0,
+      "clip_start": 0.05000000074505806,
+      "clip_end": 1000.0,
+      "depth_of_field": false,
+      "resolution": [
+        1440,
+        960
+      ],
+      "image_sha256": "2f7b2b0f356df5e33603a7a11a70c9e1bba23c1f83a9d8a58a6297f2a8956c06"
+    },
+    {
+      "projection": "PERSP",
+      "sensor_width": 36.0,
+      "sensor_height": 24.0,
+      "sensor_fit": "AUTO",
+      "ortho_scale": 6.0,
+      "shift_x": 0.0,
+      "shift_y": 0.0,
+      "file": "03-rail.png",
+      "world_matrix": [
+        [
+          0.683941125869751,
+          -0.49946388602256775,
+          0.5317521691322327,
+          8.0
+        ],
+        [
+          0.7295371890068054,
+          0.46824735403060913,
+          -0.4985177218914032,
+          -0.5
+        ],
+        [
+          4.9701938564794546e-08,
+          0.7288897633552551,
+          0.6846311092376709,
+          11.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "lens_mm": 25.64102554321289,
+      "clip_start": 0.05000000074505806,
+      "clip_end": 1000.0,
+      "depth_of_field": false,
+      "resolution": [
+        1440,
+        960
+      ],
+      "image_sha256": "5015c33d3200536cae3f7a166822222bca9a86ad3268d4b189ce3cf9592b18fc"
+    },
+    {
+      "projection": "PERSP",
+      "sensor_width": 36.0,
+      "sensor_height": 24.0,
+      "sensor_fit": "AUTO",
+      "ortho_scale": 6.0,
+      "shift_x": 0.0,
+      "shift_y": 0.0,
+      "file": "04-scoreboard.png",
+      "world_matrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.2614155113697052,
+          -0.9652263522148132,
+          8.100000381469727
+        ],
+        [
+          0.0,
+          0.9652263522148132,
+          0.2614155113697052,
+          3.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "lens_mm": 35.0,
+      "clip_start": 0.05000000074505806,
+      "clip_end": 1000.0,
+      "depth_of_field": false,
+      "resolution": [
+        1440,
+        810
+      ],
+      "image_sha256": "769e818f2adac1046e94f2d283c7dd8d4f1557b3c2432c30f708293e43ad2072"
+    }
+  ]
+}

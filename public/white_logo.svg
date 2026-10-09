@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="574" viewBox="0 0 700 574">
+  <path fill="#fff" fill-rule="evenodd" d="
+    M 133.5,25
+    H 565.5
+    L 681,140.5
+    V 552
+    H 458
+    L 568,362
+    H 399
+    L 350,248
+    L 301,362
+    H 132
+    L 241,552
+    H 18
+    V 140.5
+    Z
+
+    M 198,139.5
+    H 501.5
+    L 567,205
+    V 248.5
+    H 132
+    V 205
+    Z
+  "/>
+</svg>

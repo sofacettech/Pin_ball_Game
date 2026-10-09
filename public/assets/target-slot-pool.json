@@ -1,0 +1,670 @@
+{
+  "schema_version": 1,
+  "revision": "owner-wider-playfield-20261006",
+  "status": "placement_and_clearance_verified_for_model_f393fe657574",
+  "source_image": "references/target-spots-owner-marked.png",
+  "owner_clarification": "Between drums is floor; upper-right marked curve is rail; add existing S position on right drum as an additional rail spot.",
+  "counts": {
+    "total_slots": 15,
+    "floor_slots": 13,
+    "rail_slots": 2,
+    "target_actors": 7
+  },
+  "placement_policy": {
+    "initial_and_replay": "choose_seven_distinct_safe_eligible_slots_without_replacement",
+    "on_valid_passage": "relocate_only_activated_letter_to_different_free_safe_slot",
+    "max_targets_per_slot": 1,
+    "all_slots_need_occupants": false,
+    "spawn_additional_characters": false,
+    "reserve_destination_before_releasing_origin": true,
+    "no_safe_relocation": "retain_current_valid_pose_and_earned_score",
+    "insufficient_initial_capacity": "configuration_error_do_not_invent_unmarked_locations",
+    "safety_checks": [
+      "target_footprint",
+      "neighbor_target_overlap",
+      "ball_separation",
+      "support_and_reachability",
+      "moving_mechanisms"
+    ],
+    "selection_distribution": "uniform_among_valid_candidates_proposed_tuning_default"
+  },
+  "not_defined_by_this_pool": [
+    "portal_target_subset",
+    "ball_rail_entry_or_exit_routes",
+    "letter_downward_motion_routes_and_endpoints",
+    "ball_random_floor_return_regions"
+  ],
+  "slots": [
+    {
+      "slot_id": "target_slot_01",
+      "label": "Left of the rear floor logo",
+      "surface_type": "floor",
+      "source_mark_index": 1,
+      "source_pixel_center": [
+        385.996282527881,
+        71.73234200743494
+      ],
+      "source_pixel_bounds": [
+        369,
+        68,
+        403,
+        77
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 10",
+      "support_asset_id": "asset_bc9651fc81ba5405",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        -1.2557461261749268,
+        13.056910514831543,
+        0.0060024261474609375
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_01 | Left of the rear floor logo"
+    },
+    {
+      "slot_id": "target_slot_02",
+      "label": "Right of the rear floor logo",
+      "surface_type": "floor",
+      "source_mark_index": 0,
+      "source_pixel_center": [
+        504.3672131147541,
+        68.05245901639344
+      ],
+      "source_pixel_bounds": [
+        484,
+        61,
+        524,
+        75
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 10",
+      "support_asset_id": "asset_bc9651fc81ba5405",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        1.5616519451141357,
+        13.01259994506836,
+        0.0060024261474609375
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_02 | Right of the rear floor logo"
+    },
+    {
+      "slot_id": "target_slot_03",
+      "label": "Below the rear floor logo",
+      "surface_type": "floor",
+      "source_mark_index": 2,
+      "source_pixel_center": [
+        438.8563829787234,
+        105.04787234042553
+      ],
+      "source_pixel_bounds": [
+        426,
+        101,
+        452,
+        109
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 10",
+      "support_asset_id": "asset_bc9651fc81ba5405",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        -0.04407351091504097,
+        12.50094985961914,
+        0.006000518798828125
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_03 | Below the rear floor logo"
+    },
+    {
+      "slot_id": "target_slot_04",
+      "label": "Between the drums, on the floor",
+      "surface_type": "floor",
+      "source_mark_index": 3,
+      "source_pixel_center": [
+        454.9989118607182,
+        145.11643090315562
+      ],
+      "source_pixel_bounds": [
+        408,
+        140,
+        500,
+        150
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_o_lower",
+      "support_object": "o target | attached base",
+      "support_asset_id": "asset_248e615f5ecb5d0c",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        -0.030948609113693237,
+        11.68959665298462,
+        0.4625362977385521
+      ],
+      "position_world": [
+        -0.031199976801872253,
+        11.760000228881836,
+        0.017999999225139618
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_04 | Between the drums, on the floor"
+    },
+    {
+      "slot_id": "target_slot_05",
+      "label": "Upper-right rail curve",
+      "surface_type": "rail",
+      "source_mark_index": 4,
+      "source_pixel_center": [
+        682.5,
+        350.5
+      ],
+      "source_pixel_bounds": [
+        668,
+        347,
+        697,
+        354
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "candidate_anchor_world": [
+        4.76621150970459,
+        8.377864837646484,
+        0.9278693199157715
+      ],
+      "support_curve": "Constant gap Outer rail | shared guide offset",
+      "curve_point_index": 616,
+      "support_center_world": [
+        4.76621150970459,
+        8.377864837646484,
+        0.8998693227767944
+      ],
+      "support_projected_pixel": [
+        671.9806753332398,
+        352.088697120237
+      ],
+      "mapping_note": "Snapped to the physical outer rail touched by the red mark; do not move to arbitrary rail positions.",
+      "support_object": "Constant gap Outer rail | shared guide offset",
+      "support_asset_id": "asset_0e46d6d3e8675a06",
+      "mapping_method": "registered_image_mark_snapped_to_visible_rail_surface",
+      "position_world": [
+        4.76621150970459,
+        8.377864837646484,
+        0.9278693199157715
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_05 | Upper-right rail curve"
+    },
+    {
+      "slot_id": "target_slot_06",
+      "label": "Left upper floor beside the lane bend",
+      "surface_type": "floor",
+      "source_mark_index": 5,
+      "source_pixel_center": [
+        238.1635944700461,
+        414.33870967741933
+      ],
+      "source_pixel_bounds": [
+        213,
+        406,
+        263,
+        424
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 03",
+      "support_asset_id": "asset_9d1ee8185985587d",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        -5.197085857391357,
+        7.951326847076416,
+        0.006000518798828125
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_06 | Left upper floor beside the lane bend"
+    },
+    {
+      "slot_id": "target_slot_07",
+      "label": "Right inner floor above the middle targets",
+      "surface_type": "floor",
+      "source_mark_index": 6,
+      "source_pixel_center": [
+        593.5,
+        443.5
+      ],
+      "source_pixel_bounds": [
+        583,
+        440,
+        604,
+        447
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 07",
+      "support_asset_id": "asset_359ff7c1d6f853cf",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        3.1629512310028076,
+        7.207625389099121,
+        0.0059986114501953125
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_07 | Right inner floor above the middle targets"
+    },
+    {
+      "slot_id": "target_slot_08",
+      "label": "Existing F position",
+      "surface_type": "floor",
+      "source_mark_index": 7,
+      "source_pixel_center": [
+        301.8138528138528,
+        455.98268398268397
+      ],
+      "source_pixel_bounds": [
+        287,
+        450,
+        317,
+        464
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_f",
+      "support_object": "F target | attached base",
+      "support_asset_id": "asset_34ec1e4f46845a75",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        -2.323306918144226,
+        7.154961585998535,
+        0.43885935842990875
+      ],
+      "position_world": [
+        -3.663339853286743,
+        7.201793670654297,
+        0.0009997561573982239
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_08 | Existing F position"
+    },
+    {
+      "slot_id": "target_slot_09",
+      "label": "Center floor above the plus bumper",
+      "surface_type": "floor",
+      "source_mark_index": 8,
+      "source_pixel_center": [
+        491.6359649122807,
+        453.9166666666667
+      ],
+      "source_pixel_bounds": [
+        478,
+        447,
+        506,
+        459
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 10",
+      "support_asset_id": "asset_bc9651fc81ba5405",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        0.7420963048934937,
+        7.135810852050781,
+        0.006000518798828125
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_09 | Center floor above the plus bumper"
+    },
+    {
+      "slot_id": "target_slot_10",
+      "label": "Existing C position",
+      "surface_type": "floor",
+      "source_mark_index": 9,
+      "source_pixel_center": [
+        725.89375,
+        508.603125
+      ],
+      "source_pixel_bounds": [
+        705,
+        502,
+        747,
+        513
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_c",
+      "support_object": "C target | attached base",
+      "support_asset_id": "asset_59bdf2b51bc3551f",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        3.82368266582489,
+        6.102573871612549,
+        0.4448758512735367
+      ],
+      "position_world": [
+        6.041042804718018,
+        6.151851654052734,
+        0.0010007098317146301
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_10 | Existing C position"
+    },
+    {
+      "slot_id": "target_slot_11",
+      "label": "Existing A position",
+      "surface_type": "floor",
+      "source_mark_index": 10,
+      "source_pixel_center": [
+        539.1386861313869,
+        526.5364963503649
+      ],
+      "source_pixel_bounds": [
+        521,
+        519,
+        557,
+        535
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_a",
+      "support_object": "A target | attached base",
+      "support_asset_id": "asset_c0e28433277e5e32",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        1.138305813074112,
+        6.0167012214660645,
+        0.4455360472202301
+      ],
+      "position_world": [
+        1.7928369045257568,
+        6.087104797363281,
+        0.0009997561573982239
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_11 | Existing A position"
+    },
+    {
+      "slot_id": "target_slot_12",
+      "label": "Right floor between C and T",
+      "surface_type": "floor",
+      "source_mark_index": 11,
+      "source_pixel_center": [
+        667.2432432432432,
+        620.456081081081
+      ],
+      "source_pixel_bounds": [
+        648,
+        614,
+        686,
+        625
+      ],
+      "owner_approved": true,
+      "authored_target_reference": null,
+      "support_object": "Flooring | reference polygon plate 07",
+      "support_asset_id": "asset_359ff7c1d6f853cf",
+      "mapping_method": "registered_image_ray_intersection_with_playfield_surface",
+      "position_world": [
+        4.6594319343566895,
+        4.4670305252075195,
+        0.0059986114501953125
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_12 | Right floor between C and T"
+    },
+    {
+      "slot_id": "target_slot_13",
+      "label": "Existing T position",
+      "surface_type": "floor",
+      "source_mark_index": 12,
+      "source_pixel_center": [
+        649.2361623616237,
+        693.1771217712177
+      ],
+      "source_pixel_bounds": [
+        632,
+        684,
+        666,
+        700
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_t",
+      "support_object": "T target | attached base",
+      "support_asset_id": "asset_c38f91fb7d3d52ac",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        2.505311608314514,
+        3.316396951675415,
+        0.44385016709566116
+      ],
+      "position_world": [
+        3.9779999256134033,
+        3.299999952316284,
+        0.0009997561573982239
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_13 | Existing T position"
+    },
+    {
+      "slot_id": "target_slot_14",
+      "label": "Existing E position",
+      "surface_type": "floor",
+      "source_mark_index": 13,
+      "source_pixel_center": [
+        301.24285714285713,
+        721.5
+      ],
+      "source_pixel_bounds": [
+        283,
+        718,
+        319,
+        725
+      ],
+      "owner_approved": true,
+      "authored_target_reference": "target_e",
+      "support_object": "E target | attached base",
+      "support_asset_id": "asset_6ef16263be7b56e1",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        -2.5052034854888916,
+        3.316516876220703,
+        0.4370666481554508
+      ],
+      "position_world": [
+        -3.9779999256134033,
+        3.299999952316284,
+        0.0009997561573982239
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_14 | Existing E position"
+    },
+    {
+      "slot_id": "target_slot_15",
+      "label": "Existing S position on the right drum rail passage",
+      "surface_type": "rail",
+      "owner_approved": true,
+      "source_mark_index": null,
+      "source_pixel_center": null,
+      "authored_target_reference": "target_s",
+      "mapping_note": "Explicit additional location requested by the owner after the image.",
+      "support_object": "S target | attached base",
+      "support_asset_id": "asset_19b82c404aec5f37",
+      "mapping_method": "existing_owner_approved_authored_target_base",
+      "authored_entity_anchor_world": [
+        2.162584662437439,
+        10.471143245697021,
+        1.3345038294792175
+      ],
+      "position_world": [
+        3.390711784362793,
+        10.541546821594238,
+        0.8899675607681274
+      ],
+      "coordinate_space": "Blender source world; apply export basis and unit conversion",
+      "clearance_validation": "Revalidate after owner-requested table spacing.",
+      "allowed_target_ids": [
+        "target_f",
+        "target_a",
+        "target_c",
+        "target_e",
+        "target_t",
+        "target_s",
+        "target_o_lower"
+      ],
+      "max_occupancy": 1,
+      "marker_object": "SLOT | target_slot_15 | Existing S position on the right drum rail passage"
+    }
+  ],
+  "model_source_sha256": "b936281ce70f193c741a0f5a21fb8c194a0f7b7f1418c5b1915b3810b2043f09",
+  "runtime_clearance_data": "website-game/public/assets/manifest.json:target_gameplay"
+}

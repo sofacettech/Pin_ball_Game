@@ -1,0 +1,42 @@
+{
+  "fields": {
+    "score": {
+      "render_group": "scoreboard_score",
+      "origin_blender": [
+        -3.0903799533843994,
+        15.18571694691976,
+        0.9008617401123047
+      ],
+      "width_blender": 0.1986997127532959,
+      "height_blender": 0.28600406646728516,
+      "step_blender": 0.2618131637573242,
+      "digits": 6
+    },
+    "high_score": {
+      "render_group": "scoreboard_high_score",
+      "origin_blender": [
+        -0.7183245420455933,
+        15.18571694691976,
+        0.9008617401123047
+      ],
+      "width_blender": 0.1986997127532959,
+      "height_blender": 0.28600406646728516,
+      "step_blender": 0.2618131637573242,
+      "digits": 6
+    },
+    "lives": {
+      "render_group": "scoreboard_lives",
+      "origin_blender": [
+        2.223369836807251,
+        15.18571697581898,
+        0.9008617401123047
+      ],
+      "width_blender": 0.1986997127532959,
+      "height_blender": 0.28600406646728516,
+      "step_blender": 0.2618131637573242,
+      "digits": 1
+    }
+  },
+  "stroke_radius_blender": 0.008,
+  "style": "authored chamfered pale-violet display strokes; live numbers occupy the original digit panels"
+}
