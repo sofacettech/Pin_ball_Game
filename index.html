@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>FACET — Pinball</title></head>
 <body>
- <header><a class="brand" href="/" aria-label="So/Facet pinball home"><img src="/white_logo.svg" alt="" width="58" height="48"><span>So/Facet</span></a><nav aria-label="Game controls"><select id="quality" aria-label="Visual quality"><option value="auto">Quality: Auto</option><option value="full">Full resolution</option></select><button id="inspect" disabled>Inspect table</button><button id="sound" aria-pressed="false" disabled>Sound off</button><button id="settings" disabled>Settings</button><button id="pause" disabled>Pause</button></nav><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none" aria-hidden="true"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></header>
+ <header><a class="brand" href="/" aria-label="So/Facet pinball home"><img src="/white_logo.svg" alt="" width="58" height="48"><span>So/Facet</span></a><nav aria-label="Game controls"><select id="quality" aria-label="Visual quality"><option value="auto">Quality: Auto</option><option value="full">Full resolution</option></select><button id="inspect" disabled>Inspect table</button><button id="sound" aria-pressed="false" disabled>Sound off</button><button id="member">Become a member</button><button id="settings" disabled>Settings</button><button id="pause" disabled>Pause</button></nav><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none" aria-hidden="true"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></header>
  <main id="stage"><div class="hud" aria-label="Game status"><span>Score <strong id="score">0</strong></span><span>Lives <strong id="lives">3</strong></span></div><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span></div>
  <div id="loading" role="status"><p>Preparing your table</p><progress max="100" value="0" aria-label="Model loading"></progress><small id="loading-detail">Loading the Blender artwork…</small></div>
  <div id="error" role="alert" hidden><p>The table could not load.</p><small id="error-detail"></small><button onclick="location.reload()">Try again</button></div>
@@ -12,6 +12,56 @@
   <h2 id="menu-title">Game menu</h2><p id="menu-description">Game paused. Your progress is saved here.</p>
   <fieldset><legend>Game settings</legend><label for="camera">Camera</label><select id="camera"><option value="ball" selected>Ball Focused</option><option value="complete">Complete Game View</option></select></fieldset>
   <button id="resume" autofocus>Resume game</button><small>Press Esc to close</small>
+ </dialog>
+ <dialog id="registration-dialog" aria-label="Become a So/Facet member">
+  <iframe id="registration-frame" title="So/Facet membership registration"></iframe>
+ </dialog>
+
+ <dialog id="leaderboard-dialog" aria-labelledby="leaderboard-title" aria-describedby="leaderboard-summary">
+  <div class="leaderboard-panel">
+   <svg class="artwork" viewBox="0 0 1456 1024" aria-hidden="true">
+          <title id="art-title">Floating purple and lime futuristic frame</title>
+          <defs>
+            <mask id="object-silhouette" maskUnits="userSpaceOnUse" x="0" y="0" width="1456" height="1024" style="mask-type:luminance">
+              <rect width="1456" height="1024" fill="black"/>
+              <path id="frame-outline" fill="white" d="M196 104
+                L270 36 L370 36 L400 57 L1057 57 L1083 36 L1169 36 L1247 104
+                L1247 195 L1211 267 L1212 608 L1244 636 L1280 625 L1310 650
+                L1336 784 L1295 833 L1076 915 L1051 902 L859 968 L844 967
+                Q832 965 832 954 L832 928 Q832 920 842 914 L1012 839
+                Q1027 831 1040 837 L1048 824 L1174 764 L1163 780
+                L1037 786 L419 786 L287 775 L280 764 L403 822 L417 837
+                L435 838 L605 905 Q622 912 624 922 L624 950 Q624 961 614 966
+                L600 968 L410 901 L402 915 L376 915 L147 837
+                L113 786 L131 650 L159 630 L197 623 L239 640 L239 275
+                L197 225 Z"/>
+            </mask>
+            <mask id="frame-depth" maskUnits="userSpaceOnUse" x="0" y="0" width="1456" height="1024" style="mask-type:luminance">
+              <rect width="1456" height="1024" fill="black"/>
+              <use href="#frame-outline"/>
+              <!-- The source already contains the claws' bevels and thickness. -->
+              <rect x="400" y="831" width="227" height="142" fill="black"/>
+              <rect x="829" y="831" width="230" height="142" fill="black"/>
+            </mask>
+          </defs>
+
+          <g class="extrusion--far" transform="translate(0 20)">
+            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
+          </g>
+          <g class="extrusion--mid" transform="translate(0 13)">
+            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
+          </g>
+          <g class="extrusion--near" transform="translate(0 7)">
+            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
+          </g>
+          <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#object-silhouette)" preserveAspectRatio="none"/>
+        </svg>
+   <h2 id="leaderboard-title" class="leaderboard-heading"><img src="/leaderboard/heading.png" alt="Leaderboard" width="666" height="123"></h2>
+   <button id="leaderboard-close" class="board-close" aria-label="Close leaderboard" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+   <table class="leaderboard-table"><caption id="leaderboard-caption" class="sr-only">Best pinball scores</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
+   <div class="leaderboard-note"><p id="leaderboard-summary"></p><p id="leaderboard-status" role="status"></p><button id="leaderboard-retry" hidden>Try again</button></div>
+  </div>
+  <div class="leaderboard-actions"><form id="player-name-form"><label for="player-name">Your name</label><input id="player-name" name="name" maxlength="40" required autocomplete="nickname"><button type="submit">Save</button></form><button id="leaderboard-play">Play again</button></div>
  </dialog>
  <section id="inspection" aria-label="Reference comparison" hidden><label>View <select id="view"><option value="0">Gameplay area</option><option value="1">Launcher</option><option value="2">Rail</option><option value="3">Scoreboard</option></select></label><label>Blender overlay <input id="overlay" type="range" min="0" max="100" value="0"></label><output id="metrics">Measuring frames…</output></section>
 

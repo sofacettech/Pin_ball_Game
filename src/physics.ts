@@ -1,4 +1,5 @@
 import {BALL_MOTION_RATE} from './motion.ts';
+import {seededRandom} from './simulation.ts';
 import RAPIER from '@dimforge/rapier3d-compat';
 import type {Manifest,XYZ} from './types.ts';
 import {LetterTargets} from './targets.ts';
@@ -11,6 +12,7 @@ export const MAX_SPEED=2;
 export const BUMPER_SPEED_GAIN_FACTOR=.85;
 export const COLLISION_SPEED_MULTIPLIER=1.10;
 export const PADDLE_PUSH_MULTIPLIER=1.6698; // Another 10% contact impulse; speed budgets remain unchanged.
+export const PADDLE_RESTITUTION=.05;
 export const RING_SCORE=50;
 export const TRIANGLE_SCORE=100;
 export const CAVE_SCORE=3000;
@@ -37,6 +39,7 @@ export class PinballPhysics {
  readonly world:RAPIER.World;readonly ball:RAPIER.RigidBody;
  readonly targets:LetterTargets;targetPasses=0;
  rail:RailTravel|null=null;railCollected=0;railRequired=3;railTrips=0;transportGeneration=0;
+ private random:()=>number=Math.random;
  private pendingRail=false;private pendingFloorReturn=false;private floorTriangles:XYZ[][]=[];private barriers:XYZ[][]=[];
  private barrierCells=new Map<string,XYZ[][]>();private caveRestTime=0;private caveCheeks:Outline[]=[];private caveWalls:XYZ[][]=[];
  readonly paddles:Paddle[]=[];
@@ -140,12 +143,12 @@ export class PinballPhysics {
    const p=paddle.pivot_blender;const body=this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(p[0]*s,p[2]*s,-p[1]*s));
    const vertices=new Float32Array(paddle.collider_hull_vertices_local.flatMap(p=>[p[0]*s,p[2]*s,-p[1]*s]));
    const hull=RAPIER.ColliderDesc.convexHull(vertices);if(!hull)throw new Error('Invalid paddle hull.');
-   this.world.createCollider(hull.setFriction(.35).setRestitution(.6).setCollisionGroups(0x00040001),body);
+   this.world.createCollider(hull.setFriction(.35).setRestitution(PADDLE_RESTITUTION).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min).setCollisionGroups(0x00040001),body);
    this.paddles.push({id:paddle.game_id,body,up:paddle.up_angle_degrees*Math.PI/180,angle:0,local:outline(Array.from(vertices)),omega:0});
   }
  }
  static async create(manifest:Manifest,vertices:Float32Array,indices:Uint32Array,obstacles:Obstacle[]){await RAPIER.init();return new PinballPhysics(manifest,vertices,indices,obstacles)}
- start(){this.caveEntries=0;this.lastTriangleHit.clear();this.postPocketRebounds.clear();this.drainTransfer=null;this.recoveries=0;this.pendingFloorReturn=false;this.rail=null;this.pendingRail=false;this.railCollected=0;this.railRequired=3+Math.floor(Math.random()*3);this.railTrips=0;this.transportGeneration++;this.active=true;this.paused=false;this.state='launcher';this.lives=3;this.charge=0;this.springCompression=0;this.score=0;this.hits=0;this.lastHit=null;this.ballMode='floor';this.launches=0;this.drains=0;this.laneExited=false;this.falling=false;this.springReturnTime=0;this.time=0;this.resetTimer=0;this.spaceMustRelease=true;this.lastBump.clear();this.touching.clear();this.park();this.targetPasses=0;this.targets.reset(this.spawn);for(const p of this.paddles){p.angle=0;p.body.setRotation({x:0,y:0,z:0,w:1},true);p.body.setNextKinematicRotation({x:0,y:0,z:0,w:1})}}
+ start(seed?:number){this.random=seed===undefined?Math.random:seededRandom(seed);this.targets.random=this.random;this.caveEntries=0;this.lastTriangleHit.clear();this.postPocketRebounds.clear();this.drainTransfer=null;this.recoveries=0;this.pendingFloorReturn=false;this.rail=null;this.pendingRail=false;this.railCollected=0;this.railRequired=3+Math.floor(this.random()*3);this.railTrips=0;this.transportGeneration++;this.active=true;this.paused=false;this.state='launcher';this.lives=3;this.charge=0;this.springCompression=0;this.score=0;this.hits=0;this.lastHit=null;this.ballMode='floor';this.launches=0;this.drains=0;this.laneExited=false;this.falling=false;this.springReturnTime=0;this.time=0;this.resetTimer=0;this.spaceMustRelease=true;this.lastBump.clear();this.touching.clear();this.park();this.targetPasses=0;this.targets.reset(this.spawn);for(const p of this.paddles){p.angle=0;p.body.setRotation({x:0,y:0,z:0,w:1},true);p.body.setNextKinematicRotation({x:0,y:0,z:0,w:1})}}
  park(){this.caveRestTime=0;this.cave=null;this.caveArmed=true;this.caveBoostUntil=-Infinity;this.ball.resetForces(true);this.ball.setGravityScale(1,true);this.resetRebounds();this.postPocketRebounds.clear();this.launchCharge=0;this.drainTransfer=null;this.lastSupported=[...this.spawn];this.ballMode='floor';this.rail=null;this.pendingRail=false;this.falling=false;this.tableLocked=false;this.laneExited=false;this.ballCollider.setEnabled(true);this.ball.setAdditionalMass(0,true);this.ball.setEnabledTranslations(true,true,true,true);this.ball.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);this.ball.setTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]},true);this.ball.setNextKinematicTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]});this.ball.setLinvel({x:0,y:0,z:0},true);this.ball.setAngvel({x:0,y:0,z:0},true);this.ball.setRotation({x:0,y:0,z:0,w:1},true)}
  setPaused(value:boolean){this.paused=value}
  launch(){if(this.state!=='launcher'&&this.state!=='charging')return;
@@ -354,8 +357,10 @@ export class PinballPhysics {
   this.caveBoostUntil=-Infinity;
   const pivot=paddle.body.translation(),surface:XYZ=[paddle.omega*(p[2]-pivot.z),0,-paddle.omega*(p[0]-pivot.x)],v=this.ball.linvel();
   const inward=-((v.x-surface[0])*normal[0]+(v.z-surface[2])*normal[2]);if(inward<=.001)return;
-  const repeated=this.noteRebound(paddle.id),factor=repeated?1:COLLISION_SPEED_MULTIPLIER*(this.rapidRebound()?RAPID_REBOUND_LOSS:1);
-  const impulse=inward*1.65*(repeated?1:PADDLE_PUSH_MULTIPLIER);
+  // Only a surface moving into the ball supplies a powered hit; resting/held paddles absorb the normal impact.
+  const powered=surface[0]*normal[0]+surface[2]*normal[2]>.001;
+  const repeated=this.noteRebound(paddle.id),factor=powered&&!repeated?COLLISION_SPEED_MULTIPLIER*(this.rapidRebound()?RAPID_REBOUND_LOSS:1):1;
+  const impulse=inward*(powered?1.65:1+PADDLE_RESTITUTION)*(powered&&!repeated?PADDLE_PUSH_MULTIPLIER:1);
   this.ball.setLinvel({x:(v.x+normal[0]*impulse)*factor,y:0,z:(v.z+normal[2]*impulse)*factor},true);this.limitSpeed();
  }
  private resetRebounds(){this.lastReboundTime=-Infinity;this.rapidReboundUntil=-Infinity;this.reboundTicks.clear()}
@@ -394,7 +399,7 @@ export class PinballPhysics {
   // Explicit fractions are diagnostic fixtures; automatic transport must be earned.
   if(fraction===undefined&&(!this.pendingRail||this.railCollected<=this.railRequired||this.ballMode!=='floor'||!this.laneExited||this.state!=='playing'))return;
   const source=this.pose().position,route=this.manifest.rail_route;this.resetRebounds();
-  fraction??=route.entry_fractions[Math.floor(Math.random()*route.entry_fractions.length)];
+  fraction??=route.entry_fractions[Math.floor(this.random()*route.entry_fractions.length)];
   this.pendingFloorReturn=false;this.rail=new RailTravel(route,fraction);this.pendingRail=false;this.railTrips++;this.ballMode='rail';this.falling=false;this.tableLocked=false;this.lastBump.clear();this.touching.clear();
   this.ballCollider.setEnabled(false);this.ball.setAdditionalMass(0,true);this.ball.setEnabledTranslations(true,true,true,true);this.ball.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);
   this.placeRail(this.rail.sample().position);this.transportGeneration++;this.onTransport?.(source);
@@ -434,7 +439,7 @@ export class PinballPhysics {
   let destination:XYZ|undefined;
   // Sample the modeled floor faces independently of the restricted letter spots.
   for(let trial=0;trial<600&&!destination;trial++){
-   const tri=this.floorTriangles[Math.floor(Math.random()*this.floorTriangles.length)],u=Math.sqrt(Math.random()),v=Math.random();
+   const tri=this.floorTriangles[Math.floor(this.random()*this.floorTriangles.length)],u=Math.sqrt(this.random()),v=this.random();
    const p:XYZ=[(1-u)*tri[0][0]+u*(1-v)*tri[1][0]+u*v*tri[2][0],this.floorY,(1-u)*tri[0][2]+u*(1-v)*tri[1][2]+u*v*tri[2][2]];
    if(p[2]>1*this.manifest.scale||this.supportHeight(p[0],p[2])!==this.floorY)continue;
    if(this.pocketBlockers.some(shape=>overlapCircle(shape,p,r+.002)))continue;
@@ -447,7 +452,7 @@ export class PinballPhysics {
   if(!destination){this.placeRail(this.rail!.sample(this.rail!.length).position);return}
   const source=this.pose().position;this.resetRebounds();
   this.pendingFloorReturn=false;this.rail=null;this.ballMode='floor';this.ballCollider.setEnabled(true);this.ball.setBodyType(RAPIER.RigidBodyType.Dynamic,true);this.ball.setTranslation({x:destination[0],y:destination[1],z:destination[2]},true);
-  this.ball.setLinvel({x:(Math.random()-.5)*.12,y:0,z:.12},true);this.ball.setAngvel({x:0,y:0,z:0},true);this.laneExited=true;this.tableLocked=false;this.falling=false;this.railCollected=0;this.railRequired=3+Math.floor(Math.random()*3);this.lastBump.clear();this.touching.clear();this.constrainToTable();this.transportGeneration++;this.onTransport?.(source);
+  this.ball.setLinvel({x:(this.random()-.5)*.12,y:0,z:.12},true);this.ball.setAngvel({x:0,y:0,z:0},true);this.laneExited=true;this.tableLocked=false;this.falling=false;this.railCollected=0;this.railRequired=3+Math.floor(this.random()*3);this.lastBump.clear();this.touching.clear();this.constrainToTable();this.transportGeneration++;this.onTransport?.(source);
  }
  private applyBumper(handle:number,normal:XYZ,incoming:RAPIER.Vector,previous:RAPIER.Vector){
   this.caveBoostUntil=-Infinity;

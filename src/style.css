@@ -8,6 +8,10 @@
 
 /* Navbar shape and glow follow the supplied reference; controls are unchanged. */
 :root{--nav-height:90px}
+#registration-dialog{width:min(960px,calc(100% - 40px));height:min(780px,calc(100svh - 40px));max-width:none;max-height:none;padding:0;border:0;border-radius:28px;overflow:hidden;background:#02010f;box-shadow:0 24px 80px #0009}
+#registration-dialog::backdrop{background:#03010899;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#registration-frame{display:block;width:100%;height:100%;border:0}
+@media(max-width:700px){#registration-dialog{width:calc(100% - 24px);height:calc(100svh - 24px);border-radius:24px}}
 body{height:100svh;overflow:hidden}
 header{height:var(--nav-height);position:relative;z-index:2;padding:0 clamp(20px,4vw,64px) 12px;border:0;background:#07060d;gap:32px}
 .brand{display:flex;align-items:center;gap:14px;flex-shrink:0;color:#fff;text-decoration:none}
@@ -34,3 +38,61 @@ footer{position:absolute;right:24px;bottom:19px;height:auto;padding:0;display:gr
 body.inspect-mode #stage{height:calc(100svh - var(--nav-height) - 64px)}
 @media(max-width:1000px){header{gap:16px;padding-inline:22px}.brand img{width:46px;height:40px}.brand span{font-size:23px}header nav{gap:5px}header nav button{padding-inline:9px;font-size:12px}header #settings{padding-inline:16px}header nav select{max-width:122px;font-size:12px}}
 @media(max-width:700px){:root{--nav-height:116px}header{align-content:center;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;padding:7px 12px 23px}.brand{gap:10px}.brand img{width:33px;height:28px}.brand span{display:block;font-size:21px}header nav{justify-content:center;width:100%;gap:2px}header nav button{font-size:11px;padding:5px 7px;min-height:36px}header #settings{padding-inline:10px}header nav select{max-width:104px;padding:5px 7px;min-height:36px;font-size:11px}.hud{top:14px;left:14px;gap:14px}footer{right:12px;bottom:12px;gap:6px 10px;font-size:9px}#action{left:12px;bottom:12px;max-width:170px;padding:10px;font-size:11px}#message{font-size:11px}body.inspect-mode #stage{height:calc(100svh - var(--nav-height) - 90px)}}
+
+header #member{color:#b5ff42;border:1px solid #68408b}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#leaderboard-dialog{width:min(96vw,1240px,calc((100svh - 94px)*1.421875));max-width:none;max-height:calc(100svh - 24px);padding:0;border:0;background:transparent;color:#f5edff;overflow:visible}
+#leaderboard-dialog[open]{animation:leaderboard-arrive 600ms cubic-bezier(.16,1,.3,1) both}
+#leaderboard-dialog::backdrop{background:#030108a6;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:leaderboard-backdrop 600ms ease-out both}
+.leaderboard-panel{position:relative;width:100%;aspect-ratio:1456/1024;container-type:inline-size}
+.leaderboard-panel .artwork{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 26px 28px #0009)}
+.leaderboard-panel .extrusion--far{filter:brightness(.13) saturate(.35)}
+.leaderboard-panel .extrusion--mid{filter:brightness(.2) saturate(.45)}
+.leaderboard-panel .extrusion--near{filter:brightness(.34) saturate(.55)}
+.leaderboard-panel .source-image{width:1456px;height:1024px}
+.leaderboard-heading{position:absolute;left:25.4%;top:5.4%;width:49.1%;height:13.7%;margin:0;display:flex;align-items:center}
+.leaderboard-heading img{display:block;width:100%;height:auto;clip-path:inset(16% 3% 15%)}
+.board-close{position:absolute;right:12.1%;top:19.9%;display:grid;place-items:center;width:40px;height:40px;min-height:0;padding:9px;border:1px solid #a553e2;border-radius:50%;background:#120a20;z-index:1}
+.board-close svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.board-close:hover{background:#39204f;color:#e5ff42}
+.leaderboard-table{position:absolute;left:22.1%;top:25.5%;width:55.8%;height:43.9%;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
+.leaderboard-table th:first-child{width:21%}.leaderboard-table th:last-child{width:23%}
+.leaderboard-table thead{height:10%}.leaderboard-table tbody:empty{display:none}
+.leaderboard-table th,.leaderboard-table td{text-align:left;padding:0 2.3%;height:9%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.leaderboard-table th{color:#e8ff70;font-size:.86em;font-weight:650;text-transform:uppercase;letter-spacing:.06em}
+.leaderboard-table th:last-child,.leaderboard-table td:last-child{text-align:right}
+.leaderboard-table td{background:#100b21d9;border-bottom:1px solid #57267b70}
+.leaderboard-table td:first-child{color:#cdb7e5}
+.leaderboard-table .current-player td{background:#31204edb;color:#eaff86;font-weight:650;border-block:1px solid #a4cf4080}
+.you-label{display:inline-block;margin-left:8px;font-size:.7em;vertical-align:middle;color:#eaff86}
+.leaderboard-table .board-empty{height:100%;white-space:normal;text-align:center;color:#d5c3e6;line-height:1.5;padding:24px}
+.leaderboard-note{position:absolute;left:22.1%;top:71.2%;width:55.8%;text-align:center;font-size:clamp(11px,1.3cqw,15px);line-height:1.4;color:#ddcceb}
+.leaderboard-note p{margin:0 0 5px}.leaderboard-note #leaderboard-summary{font-weight:650;color:#eaff83}
+.leaderboard-note button{min-height:32px;padding:5px 12px;font-size:12px}
+.leaderboard-actions{display:flex;justify-content:center;align-items:center;gap:20px;margin:2px 0 0;padding:0 12px 4px}
+#player-name-form{display:flex;align-items:center;gap:8px;font-size:12px;color:#dccbeb}
+#player-name{width:170px;min-width:0;height:40px;background:#170d27;border:1px solid #775092;color:#fff;border-radius:6px;padding:8px 10px;caret-color:#c9ff43}
+#player-name-form button{font-size:12px;min-height:40px}
+#leaderboard-play{background:#d9ed37;border-color:#d9ed37;color:#17101e;font-weight:650;white-space:nowrap}
+#leaderboard-play:hover{background:#eeff6a}
+@keyframes leaderboard-arrive{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes leaderboard-backdrop{from{background:#03010800;backdrop-filter:blur(0);-webkit-backdrop-filter:blur(0)}to{background:#030108a6;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}}
+@media(max-width:1000px){header{gap:10px;padding-inline:16px}header nav{gap:2px}header nav button{padding-inline:7px}header #settings{padding-inline:12px}}
+@media(max-width:700px){header #member{position:absolute;right:16px;top:10px;font-size:11px;min-height:32px;padding:5px 10px}.brand{margin-right:auto;margin-left:6px}.leaderboard-actions{gap:12px}}
+@media(max-width:600px){
+ #leaderboard-dialog{width:calc(100% - 28px);max-height:calc(100svh - 24px);overflow:auto;scrollbar-width:thin;scrollbar-color:#8240b2 #100b1d;background:#100b1d;border-radius:14px;box-shadow:0 24px 65px #000a}
+ .leaderboard-panel{aspect-ratio:auto;height:min(630px,calc(100svh - 110px));min-height:470px;border:1px solid #a44cdb;border-radius:14px;background:linear-gradient(150deg,#180d29,#0a0716)}
+ .leaderboard-panel .artwork{display:none}
+ .leaderboard-heading{left:3%;top:9px;width:94%;height:64px}.leaderboard-heading img{clip-path:none}
+ .board-close{right:8px;top:74px;width:36px;height:36px;padding:9px}
+ .leaderboard-table{left:5%;top:120px;width:90%;height:calc(100% - 220px);font-size:14px;line-height:1.25}
+ .leaderboard-table thead{height:35px;background:#deef3820;box-shadow:inset 0 1px #d9ed37,inset 0 -1px #afbe3070}
+ .leaderboard-table th:first-child{width:18%}.leaderboard-table th:last-child{width:27%}
+ .leaderboard-table th,.leaderboard-table td{height:9%;padding:0 8px}.leaderboard-table td{background:transparent}.you-label{margin-left:5px;font-size:10px}
+ .leaderboard-note{left:7%;top:auto;bottom:12px;width:86%;font-size:12px}
+ .leaderboard-actions{flex-wrap:wrap;margin:0;padding:14px 12px;gap:12px;background:#160d24}
+ #player-name-form{width:100%;justify-content:center;gap:8px;font-size:11px}#player-name{width:auto;flex:1;max-width:180px}
+ #leaderboard-play{width:100%;min-height:42px}
+}
+@media(prefers-reduced-motion:reduce){#leaderboard-dialog[open]{animation:leaderboard-arrive-reduced 120ms ease-out both}#leaderboard-dialog::backdrop{animation:none}@keyframes leaderboard-arrive-reduced{from{opacity:.6}to{opacity:1}}}
+@media(max-width:380px){:root{--nav-height:150px}header nav{flex-wrap:wrap;gap:2px 4px}header #member{right:10px;max-width:150px}.leaderboard-table{font-size:13px}.leaderboard-table th,.leaderboard-table td{padding-inline:5px}.leaderboard-actions{padding-inline:8px}#player-name-form{gap:6px}#player-name-form button{padding-inline:10px}}

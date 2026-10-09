@@ -1,15 +1,16 @@
 import type {XYZ,TargetDefinition} from './types.ts';
 export type TargetPose={id:string;slot:string;surface:string;position:XYZ};
-const shuffle=<T>(values:T[])=>{const result=[...values];for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result};
+const shuffle=<T>(values:T[],random:()=>number)=>{const result=[...values];for(let i=result.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result};
 export class LetterTargets {
  readonly poses:TargetPose[]=[];
  readonly definitions:TargetDefinition[];readonly radius:number;
+ random:()=>number=Math.random;
  constructor(definitions:TargetDefinition[],radius:number){this.definitions=definitions;this.radius=radius;this.restore()}
  restore(){this.poses.splice(0,this.poses.length,...this.definitions.map(d=>({id:d.id,slot:d.initial_slot,surface:d.placements.find(p=>p.slot===d.initial_slot)!.surface,position:[...d.initial_position] as XYZ})))}
  reset(ball:XYZ){
   this.poses.length=0;
   const assign=(index:number):boolean=>{if(index===this.definitions.length)return true;const d=this.definitions[index];
-   for(const p of shuffle(d.placements.filter(p=>p.safe&&this.available(d,p,ball)))){this.poses.push({id:d.id,slot:p.slot,surface:p.surface,position:[...p.position]});if(assign(index+1))return true;this.poses.pop()}return false};
+   for(const p of shuffle(d.placements.filter(p=>p.safe&&this.available(d,p,ball)),this.random)){this.poses.push({id:d.id,slot:p.slot,surface:p.surface,position:[...p.position]});if(assign(index+1))return true;this.poses.pop()}return false};
   if(!assign(0))throw new Error('The marked target spots cannot safely hold all seven letters.');
  }
  private bounds(d:TargetDefinition,position:XYZ,padding=0){return d.bounds_local.map((side,j)=>side.map((v,i)=>v+position[i]+(j===0?-padding:padding))) as [XYZ,XYZ]}
@@ -27,7 +28,7 @@ export class LetterTargets {
    let entry=0,exit=1;for(let i=0;i<3;i++){const delta=to[i]-from[i];if(Math.abs(delta)<1e-12){if(from[i]<b[0][i]||from[i]>b[1][i])exit=-1;continue}const a=(b[0][i]-from[i])/delta,c=(b[1][i]-from[i])/delta;entry=Math.max(entry,Math.min(a,c));exit=Math.min(exit,Math.max(a,c))}
    if(entry>exit||exit<0||entry>1)continue;
    onPass(t.id);
-   const destinations=shuffle(d.placements.filter(p=>p.safe&&p.slot!==t.slot&&this.available(d,p,to)));
+   const destinations=shuffle(d.placements.filter(p=>p.safe&&p.slot!==t.slot&&this.available(d,p,to)),this.random);
    if(destinations.length){const next=destinations[0],actual=this.poses.find(p=>p.id===t.id)!;actual.slot=next.slot;actual.surface=next.surface;actual.position=[...next.position]}
   }
  }

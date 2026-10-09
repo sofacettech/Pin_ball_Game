@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "node --env-file-if-exists=.env server.mjs --dev",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1",
+    "preview": "node --env-file-if-exists=.env server.mjs",
     "test": "node --experimental-strip-types tests/physics.test.ts && node --experimental-strip-types tests/bumper.test.ts && node --experimental-strip-types tests/ball-spring.test.ts && node --experimental-strip-types tests/gameplay-update.test.ts && node --experimental-strip-types tests/rail-physics.test.ts && node --experimental-strip-types tests/pocket-drain.test.ts && node --experimental-strip-types tests/launch-rail-entry.test.ts && node --experimental-strip-types tests/game-polish.test.ts && node --experimental-transform-types tests/scoreboard.test.ts && node --experimental-strip-types tests/camera-right-pocket.test.ts && node --experimental-strip-types tests/rapid-rebound.test.ts && node --experimental-strip-types tests/lane-roll.test.ts && node --experimental-strip-types tests/triangle-update.test.ts",
     "test:browser": "node tests/browser.test.mjs",
     "test:assets": "node tests/validate-assets.mjs",
@@ -31,7 +31,8 @@
     "test:menu-ring-camera": "node --experimental-strip-types tests/menu-ring-camera.test.ts",
     "test:menu-ring-camera-browser": "node tests/menu-ring-camera.browser.mjs",
     "test:cave": "node --experimental-strip-types tests/cave-charge.test.ts && node --experimental-strip-types tests/cave-approach.test.ts && node tests/cave-assets.test.mjs",
-    "test:cave:browser": "node run-cave-browser.mjs"
+    "test:cave:browser": "node run-cave-browser.mjs",
+    "start": "node --env-file-if-exists=.env server.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
