@@ -24,13 +24,20 @@ export function displayNumber(value:number,digits:number){
 }
 export class Scoreboard {
  readonly values:Record<string,string>={};private meshes=new Map<string,THREE.Mesh>();
+ private lifeDots:THREE.Mesh[]=[];private availableLife=new THREE.MeshBasicMaterial({color:'#fff',toneMapped:false});private spentLife=new THREE.MeshBasicMaterial({color:'#67616f',toneMapped:false});
  constructor(readonly scene:THREE.Scene,readonly layout:DisplayLayout,readonly scale:number,material:THREE.Material){
-  for(const key of Object.keys(layout.fields)){const mesh=new THREE.Mesh(new THREE.BufferGeometry(),material);scene.add(mesh);this.meshes.set(key,mesh)}
+  for(const key of Object.keys(layout.fields)){
+   if(key==='lives'){
+    const field=layout.fields[key],center=field.origin_blender[0]+field.width_blender/2,geometry=new THREE.CircleGeometry(.075*scale,24);
+    for(let i=0;i<3;i++){const dot=new THREE.Mesh(geometry,this.availableLife);dot.name=`Life dot ${i+1}`;dot.position.set((center+(i-1)*.25)*scale,(field.origin_blender[2]+field.height_blender/2)*scale,-field.origin_blender[1]*scale);scene.add(dot);this.lifeDots.push(dot)}
+   }else{const mesh=new THREE.Mesh(new THREE.BufferGeometry(),material);scene.add(mesh);this.meshes.set(key,mesh)}
+  }
  }
  update(score:number,highScore:number,lives:number){
   let changed=false;
   for(const [key,value] of Object.entries({score,high_score:highScore,lives,bonus:0})){
    const field=this.layout.fields[key];if(!field)continue;const text=displayNumber(value,field.digits);if(this.values[key]===text)continue;
+   if(key==='lives'){this.lifeDots.forEach((dot,i)=>{dot.material=i<value?this.availableLife:this.spentLife});this.values[key]=text;changed=true;continue}
    const pieces:THREE.BufferGeometry[]=[],totalWidth=(field.digits-1)*field.step_blender+field.width_blender;
    const step=text.length>field.digits?totalWidth/text.length:field.step_blender,compression=text.length>field.digits?step/field.step_blender:1;
    for(let index=0;index<text.length;index++)for(const stroke of strokes[text[index]]||[]){

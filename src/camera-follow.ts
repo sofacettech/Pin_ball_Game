@@ -1,4 +1,5 @@
-import type {Vector3} from 'three';
+import {Vector3} from 'three';
+import type {PerspectiveCamera} from 'three';
 
 // Small alternating collisions stay inside a stable frame. Sustained travel
 // moves the frame smoothly; a larger separation increases catch-up continuously.
@@ -10,4 +11,10 @@ export function advanceBallFollow(anchor:Vector3,ball:Vector3,dt:number,scale:nu
  const movement=distance>radius?(distance-radius)/distance*alpha:0;
  anchor.x+=dx*movement;anchor.z+=dz*movement;
  anchor.y+=(ball.y-anchor.y)*(1-Math.exp(-dt*4));
+}
+
+// Low three-quarter rail view, with stand-off to keep the moving ball framed.
+export function aimRailCamera(camera:PerspectiveCamera,target:Vector3,scale:number){
+ camera.position.copy(target).add(new Vector3(-2.5*scale,3*scale,7*scale));
+ camera.lookAt(target);camera.fov=48;camera.updateProjectionMatrix();camera.updateMatrixWorld();
 }

@@ -1,5 +1,6 @@
 export type XYZ = [number, number, number];
 export interface Manifest {
+ asset_revision:string;asset_checksums:Record<string,string>;
  additional_supports?:{matrix_inverse:number[][];width:number;rear:number;front:number;flat_end:number;height:number;lip:number}[];
  cave?:{root_matrix:number[][];matrix_inverse:number[][];world_scale:number;entry_plane:number;hold_local:number;approach_front:number;capture_half_width_local:number;inner_clear_diameter_source:number;clearance_ratio:number};
 }

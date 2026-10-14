@@ -3,7 +3,7 @@ import type {InputRun} from './simulation';
 import type {Input} from './physics';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
-type Player={display_name:string;member:boolean;best_score:number|null};
+export type Player={display_name:string;member:boolean;best_score:number|null};
 
 async function request<T>(url:string,body?:unknown,timeout=30000):Promise<T>{
  const response=await fetch(url,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(timeout)});
@@ -20,14 +20,13 @@ export function visibleEntries(entries:Entry[],me:Entry|null):Entry[]{
  return rows;
 }
 
-export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void){
+export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void,onPlayer:(player:Player|null)=>void=()=>{}){
  const dialog=document.getElementById('leaderboard-dialog') as HTMLDialogElement;
  const rows=document.getElementById('leaderboard-rows')!,status=document.getElementById('leaderboard-status')!,summary=document.getElementById('leaderboard-summary')!;
  const retry=document.getElementById('leaderboard-retry') as HTMLButtonElement;
- const nameForm=document.getElementById('player-name-form') as HTMLFormElement,nameInput=document.getElementById('player-name') as HTMLInputElement;
  type Run={id?:string;seed?:number;inputs:InputRun[];ticks:number;ended:boolean;submitted:boolean;error?:string;submission?:Promise<void>};
  let player:Player={display_name:'You',member:false,best_score:null},run:Run={inputs:[],ticks:0,ended:false,submitted:false},revision=0;
- const refreshPlayer=async()=>{try{player=await request<Player>('/api/player');onBest(player.best_score);nameInput.value=player.display_name;nameForm.hidden=player.member;document.getElementById('member')!.textContent=player.member?'Membership':'Become a member'}catch{/* Keep the table usable while its service is unavailable. */}};
+ const refreshPlayer=async()=>{try{player=await request<Player>('/api/player');onBest(player.best_score);onPlayer(player)}catch{onPlayer(null)}};
  void refreshPlayer();
  function close(){revision++;dialog.close();onClose()}
  document.getElementById('leaderboard-close')!.onclick=close;
@@ -54,9 +53,6 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   finally{if(current===revision)rows.removeAttribute('aria-busy')}
  }
  retry.onclick=()=>void refresh();
- nameForm.onsubmit=async event=>{event.preventDefault();const button=nameForm.querySelector('button')!;button.disabled=true;
-  try{player=await request<Player>('/api/player/name',{name:nameInput.value.trim()});await refresh()}catch(error){status.textContent=error instanceof Error?error.message:'Your name could not be saved.'}finally{button.disabled=false}
- };
  return {
   dialog,
   async start(){const next:Run={inputs:[],ticks:0,ended:false,submitted:false};run=next;try{const result=await request<{id:string;seed:number;version:number}>('/api/games/start',{},10000);if(result.version!==REPLAY_VERSION||!Number.isInteger(result.seed))throw new Error('Please refresh the game to start a verified run.');next.id=result.id;next.seed=result.seed}catch(error){next.error=error instanceof Error?error.message:'This run is offline and cannot enter the leaderboard.'}return next.seed??crypto.getRandomValues(new Uint32Array(1))[0]},

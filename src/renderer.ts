@@ -1,5 +1,6 @@
-import {advanceBallFollow} from './camera-follow';
+import {advanceBallFollow,aimRailCamera} from './camera-follow';
 import {fitOverview} from './overview-camera';
+import {CameraTransition} from './camera-transition';
 import {prepareGeometry,NeonMaterial,batchOverview} from './visual-quality';
 import type {GlowMaterial} from './visual-quality';
 import {TeleportEffect} from './teleport';
@@ -24,8 +25,10 @@ export const ROOM_LIGHT_FACTOR=1.05;
 export class TableView {
  readonly scene=new THREE.Scene();readonly camera=new THREE.PerspectiveCamera(48,1,.001,10);
  readonly overviewCamera=new THREE.PerspectiveCamera(42,1,.001,10);
- cameraMode:'ball'|'complete'='ball';private overviewBounds=new THREE.Box3();private overviewPoints:THREE.Vector3[]=[];private overviewFill:THREE.Light[]=[];private renderPass:RenderPass;private overviewBatch?:ReturnType<typeof batchOverview>;
- get activeCamera(){return !this.inspect&&this.cameraMode==='complete'?this.overviewCamera:this.camera}
+ cameraMode:'ball'|'complete'='complete';private overviewBounds=new THREE.Box3();private overviewPoints:THREE.Vector3[]=[];private overviewFill:THREE.Light[]=[];private renderPass:RenderPass;private overviewBatch?:ReturnType<typeof batchOverview>;
+ private railCamera=false;private cameraTransition=new CameraTransition();private transitionExposure=0;
+ private get destinationCamera(){return !this.inspect&&!this.railCamera&&this.cameraMode==='complete'?this.overviewCamera:this.camera}
+ get activeCamera(){return this.cameraTransition.active?this.cameraTransition.camera:this.destinationCamera}
  readonly renderer:THREE.WebGLRenderer;
  readonly composer:EffectComposer;private fxaa=new ShaderPass(FXAAShader);private automaticQuality=true;private qualityClock=0;private geometryQuality!:Awaited<ReturnType<typeof prepareGeometry>>;
  readonly groups=new Map<string,THREE.Object3D[]>();references:Reference[]=[];
@@ -40,7 +43,7 @@ export class TableView {
  private glassQuality=new Map<THREE.Mesh,{full:THREE.MeshPhysicalMaterial;fast:THREE.MeshStandardMaterial}>();
  constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
+  this.renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(pointer: coarse)').matches?1:1.25));this.renderer.transmissionResolutionScale=.5;this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
   this.renderer.info.autoReset=false;
   this.scene.background=new THREE.Color('#08050d');
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:2});
@@ -50,14 +53,15 @@ export class TableView {
  }
  convert(p:XYZ){const s=this.manifest.scale;return new THREE.Vector3(p[0]*s,p[2]*s,-p[1]*s)}
  async load(progress:(value:number,label:string)=>void){
-  const json=async(url:string)=>{const r=await fetch(url);if(!r.ok)throw new Error(`Missing asset: ${url}`);return r.json()};
+  const json=async(url:string)=>{const r=await fetch(url,{cache:'no-cache'});if(!r.ok)throw new Error(`Missing asset: ${url}`);return r.json()};
   const [manifest,referenceData]=await Promise.all([json('/assets/manifest.json'),json('/assets/reference-cameras.json')]);this.manifest=manifest;this.references=referenceData.views;
+  const asset=(name:string)=>'/assets/'+name+'?v='+(manifest.asset_checksums[name]||manifest.asset_revision);
   if(manifest.runtime_contract_version!==6)throw new Error('This model package is incompatible. Restore the matching game files.');
-  if(manifest.target_gameplay?.length!==7||manifest.target_gameplay.some((t:{score:number})=>t.score!==5000))throw new Error('The model package is missing the seven 5000-point target mappings.');
+  if(manifest.target_gameplay?.length!==7||manifest.target_gameplay.some((t:{score:number})=>t.score!==1500))throw new Error('The model package is missing the seven 1500-point target mappings.');
   if(!(manifest.scale>0)||manifest.entities.filter((e:EntityLike)=>e.role==='ball').length!==1)throw new Error('Invalid model manifest.');
   progress(8,'Loading the original geometry…');
   const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const gltf=await loader.loadAsync('/assets/'+manifest.model,e=>progress(8+Math.min(65,e.loaded/(e.total||manifest.model_bytes||20e6)*65),'Loading the original geometry…'));
+  const gltf=await loader.loadAsync(asset(manifest.model),e=>progress(8+Math.min(65,e.loaded/(e.total||manifest.model_bytes||20e6)*65),'Loading the original geometry…'));
   this.scene.add(gltf.scene);gltf.scene.updateMatrixWorld(true);
   const bedBounds=this.manifest.static_collision_objects.find(o=>o.source_name==='Playfield | dark purple metal bed')!.world_bounds;
   const tableBounds=new THREE.Box3().setFromPoints(bedBounds.map(p=>this.convert(p))),tableSize=tableBounds.getSize(new THREE.Vector3()),padding=manifest.ball_diameter*2;
@@ -85,9 +89,10 @@ export class TableView {
   this.ballShadow=new THREE.Mesh(haloGeometry,shadowMaterial);this.ballShadow.rotation.x=-Math.PI/2;this.ballShadow.scale.setScalar(manifest.ball_diameter*1.5);this.ballShadow.userData.floorHeight=floorTop;this.scene.add(this.ballShadow);
   progress(74,'Preparing detailed lighting and smooth edges…');
   this.geometryQuality=await prepareGeometry(gltf.scene);
-  const [environment,appearance]=await Promise.all([new HDRLoader().loadAsync('/assets/reflection.hdr'),new EXRLoader().loadAsync('/assets/floor-appearance.exr')]);
+  const [environment,appearance]=await Promise.all([new HDRLoader().loadAsync(asset('reflection.hdr')),new EXRLoader().loadAsync(asset('floor-appearance.exr'))]);
   const floorBake=await json('/assets/floor-appearance.json');
-  if(floorBake.source_sha256!==manifest.source_sha256)throw new Error('The stationary floor lighting was baked for another model. Re-export the matching assets.');
+  const lightingSource=manifest.floor_bake_reuse?.model_source_sha256===manifest.source_sha256?manifest.floor_bake_reuse.baked_source_sha256:manifest.source_sha256;
+  if(floorBake.source_sha256!==lightingSource)throw new Error('The stationary floor lighting was baked for another model. Re-export the matching assets.');
   environment.mapping=THREE.EquirectangularReflectionMapping;
   const pmrem=new THREE.PMREMGenerator(this.renderer);this.scene.environment=pmrem.fromEquirectangular(environment).texture;this.scene.environmentIntensity=ROOM_LIGHT_FACTOR;environment.dispose();
   appearance.flipY=true;appearance.generateMipmaps=true;appearance.minFilter=THREE.LinearMipmapLinearFilter;appearance.anisotropy=Math.min(4,this.renderer.capabilities.getMaxAnisotropy());
@@ -150,7 +155,9 @@ export class TableView {
    const mat=obj.material;if(!borderNeon.has(mat)){const lens=mat.clone();lens.polygonOffset=true;lens.polygonOffsetFactor=-2;lens.polygonOffsetUnits=-2;borderNeon.set(mat,lens)}obj.material=borderNeon.get(mat)!;
   });
   for(const root of this.groups.get('static_cave')||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&(obj.material instanceof THREE.MeshStandardMaterial||obj.material instanceof NeonMaterial)&&obj.material.emissiveIntensity>0){const mat=obj.material.clone();obj.material=mat;this.caveGlow.push({material:mat,baseline:mat.emissiveIntensity})}});
-  gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0){const full=obj.material,fast=new THREE.MeshStandardMaterial().copy(full);fast.name=full.name;fast.transparent=true;fast.opacity=.10;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
+  gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0){const full=obj.material;
+   full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
+   const fast=full.clone();fast.name=full.name;fast.transmission=.94;fast.clearcoat=.6;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
   this.overviewBatch=batchOverview(this.scene);this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
  }
  setReference(index:number){
@@ -163,11 +170,12 @@ export class TableView {
   this.camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(height/(2*ref.lens_mm)));this.camera.aspect=ratio;this.camera.updateProjectionMatrix();this.initializedFollow=false;
  }
  resize(){this.needsRender=true;const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.composer.setPixelRatio(this.renderer.getPixelRatio());this.composer.setSize(w,h);this.fxaa.uniforms.resolution.value.set(1/(w*this.renderer.getPixelRatio()),1/(h*this.renderer.getPixelRatio()));this.camera.aspect=w/h;this.camera.updateProjectionMatrix();if(!this.overviewBounds.isEmpty())fitOverview(this.overviewCamera,this.overviewBounds,w/h,this.overviewPoints)}
- setCameraMode(mode:'ball'|'complete'){this.cameraMode=mode;this.updateCameraLighting();this.needsRender=true}
- private updateCameraLighting(){this.frames=[];this.last=performance.now();const complete=this.cameraMode==='complete'&&!this.inspect;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);this.renderer.toneMappingExposure=2**-.65*1.05*(complete?1.4:1)}
+ setCameraMode(mode:'ball'|'complete',restart=false){if(!this.inspect&&!this.reduced&&(mode!==this.cameraMode||restart&&mode==='ball')){this.cameraTransition.begin(this.activeCamera);this.transitionExposure=this.renderer.toneMappingExposure}this.cameraMode=mode;this.updateCameraLighting();this.needsRender=true}
+ advanceCamera(dt:number){if(!this.cameraTransition.active)return;this.cameraTransition.advance(this.destinationCamera,dt);this.renderer.toneMappingExposure=THREE.MathUtils.lerp(this.transitionExposure,2**-.65*1.05*(this.cameraMode==='complete'&&!this.railCamera?1.4:1),this.cameraTransition.progress);this.needsRender=true}
+ private updateCameraLighting(){this.frames=[];this.last=performance.now();const complete=this.cameraMode==='complete'&&!this.inspect&&!this.railCamera;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);if(!this.cameraTransition.active)this.renderer.toneMappingExposure=2**-.65*1.05*(complete?1.4:1)}
  private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=!this.automaticQuality;for(const light of this.previewKeys)light.visible=this.automaticQuality;for(const [mesh,materials] of this.glassQuality)mesh.material=this.automaticQuality?materials.fast:materials.full}
- setQuality(automatic:boolean){this.automaticQuality=automatic;this.updateLightingQuality();this.composer.renderTarget1.samples=this.composer.renderTarget2.samples=2;this.composer.renderTarget1.dispose();this.composer.renderTarget2.dispose();this.fxaa.enabled=false;this.renderer.setPixelRatio(Math.min(devicePixelRatio,automatic?1.25:1.5));this.frames=[];this.qualityClock=performance.now();this.resize()}
- setInspect(inspect:boolean){this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
+ setQuality(automatic:boolean){this.automaticQuality=automatic;this.renderer.transmissionResolutionScale=automatic?.5:1;this.updateLightingQuality();this.composer.renderTarget1.samples=this.composer.renderTarget2.samples=2;this.composer.renderTarget1.dispose();this.composer.renderTarget2.dispose();this.fxaa.enabled=false;this.renderer.setPixelRatio(Math.min(devicePixelRatio,automatic?matchMedia('(pointer: coarse)').matches?1:1.25:1.5));this.frames=[];this.qualityClock=performance.now();this.resize()}
+ setInspect(inspect:boolean){this.cameraTransition.active=false;this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
  updateBall(position:XYZ,rotation:{x:number;y:number;z:number;w:number},visible=true){if(!visible)this.teleportEffect.reset();const fx=this.inspect?{position,presence:1,strength:0}:this.teleportEffect.sample(position);this.teleportEffect.apply(fx.position,fx.presence,fx.strength);const floor=this.ballShadow.userData.floorHeight;this.ballShadow.visible=visible&&fx.presence>0&&fx.position[1]<floor+this.manifest.ball_diameter*.9;this.ballShadow.position.set(fx.position[0],floor+.00035,fx.position[2]);this.ballShadow.material.opacity=.32*fx.presence;for(const obj of this.groups.get('ball_main')||[]){obj.visible=visible;obj.position.set(...fx.position);obj.quaternion.set(rotation.x,rotation.y,rotation.z,rotation.w)}}
  updatePaddle(id:string,angle:number){for(const obj of this.groups.get(id)||[])obj.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),angle)}
  updateTarget(id:string,position:XYZ){for(const obj of this.groups.get(id)||[])obj.position.set(...position)}
@@ -176,16 +184,19 @@ export class TableView {
   hit(id:string){if(id==='triangle_left'||id==='triangle_right'){for(let i=1;i<=3;i++)this.flashes.set(`bumper_neutral_${id.slice(9)}_${i}`,.24)}else this.flashes.set(id,.24)}
  teleport(source:XYZ,destination:XYZ){this.teleportEffect.begin(source,this.initializedFollow?this.smoothedBall.toArray() as XYZ:source);this.needsRender=true}
  retarget(ball?:XYZ){this.teleportEffect.reset();this.initializedFollow=false;this.needsRender=true;if(ball)this.follow(ball,0,'playing')}
- resetFeedback(){this.teleportEffect.reset();this.flashes.clear();for(const parts of this.glow.values())for(const p of parts)p.material.emissiveIntensity=p.baseline;for(const halo of this.halos.values())halo.visible=false}
+ resetFeedback(){this.railCamera=false;this.updateCameraLighting();this.teleportEffect.reset();this.flashes.clear();for(const parts of this.glow.values())for(const p of parts)p.material.emissiveIntensity=p.baseline;for(const halo of this.halos.values())halo.visible=false}
  updateFeedback(dt:number){this.teleportEffect.advance(dt);for(const [id,remaining] of this.flashes){const t=Math.max(0,remaining-dt);for(const p of this.glow.get(id)||[])p.material.emissiveIntensity=p.baseline*(1+1.5*t/.24);const halo=this.halos.get(id);if(halo){halo.visible=t>0;halo.material.opacity=.75*t/.24}if(t===0)this.flashes.delete(id);else this.flashes.set(id,t)}}
- follow(ball:XYZ,dt:number,state:string){
+ follow(ball:XYZ,dt:number,state:string,ballMode:'floor'|'rail'='floor'){
   if(this.inspect)return;
+  const rail=ballMode==='rail'&&state==='playing';
+  if(rail!==this.railCamera){this.cameraTransition.begin(this.activeCamera,this.reduced?.2:rail?2:1.2);this.transitionExposure=this.renderer.toneMappingExposure;this.railCamera=rail;this.updateCameraLighting();if(rail)this.smoothedBall.set(...ball)}
   if(state==='finished'){this.setReference(3);this.camera.aspect=this.viewport.clientWidth/this.viewport.clientHeight;this.camera.updateProjectionMatrix();return}
   const b=new THREE.Vector3(...ball);if(!this.initializedFollow){this.smoothedBall.copy(b);this.initializedFollow=true}
-  if(this.teleportEffect.active)this.smoothedBall.set(...this.teleportEffect.sample(ball).camera);else advanceBallFollow(this.smoothedBall,b,dt,this.manifest.scale,state==='resetting');
+  if(rail)this.smoothedBall.lerp(b,1-Math.exp(-dt*3));else if(this.teleportEffect.active)this.smoothedBall.set(...this.teleportEffect.sample(ball).camera);else advanceBallFollow(this.smoothedBall,b,dt,this.manifest.scale,state==='resetting');
+  if(rail){aimRailCamera(this.camera,this.smoothedBall,this.manifest.scale);return}
   const s=this.manifest.scale;const target=this.smoothedBall.clone();const bed=this.manifest.static_collision_objects.find(o=>o.source_name==='Playfield | dark purple metal bed')!;target.x=THREE.MathUtils.clamp(target.x,bed.world_bounds[0][0]*s*.75,bed.world_bounds[1][0]*s*.75);
   const position=target.clone().add(new THREE.Vector3(0,6*s,4*s));
-  if(state==='playing'||state==='draining')this.camera.position.copy(position);else this.camera.position.lerp(position,1-Math.exp(-dt*3.5));this.camera.lookAt(target);this.camera.fov=40;this.camera.updateProjectionMatrix();
+  if(this.cameraTransition.active||state==='playing'||state==='draining')this.camera.position.copy(position);else this.camera.position.lerp(position,1-Math.exp(-dt*3.5));this.camera.lookAt(target);this.camera.fov=40;this.camera.updateProjectionMatrix();
   this.camera.updateMatrixWorld();
  }
  render(){this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();

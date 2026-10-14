@@ -65,7 +65,7 @@ export function batchOverview(root:THREE.Object3D){
  root.traverse(obj=>{
   if(!(obj instanceof THREE.Mesh)||!obj.visible||Array.isArray(obj.material)||obj.material.transparent)return;
   const id=obj.userData.game_render_group||'';if(!id.startsWith('static_')&&id!=='rail_network')return;
-  const signature=Object.keys(obj.geometry.attributes).sort().map(k=>{const a=obj.geometry.attributes[k];return k+':'+a.itemSize+':'+a.normalized}).join(',');
+  const signature=Object.keys(obj.geometry.attributes).sort().map(k=>{const a=obj.geometry.attributes[k];return k+':'+a.itemSize+':'+a.normalized+':'+a.array.constructor.name+':'+('gpuType' in a?a.gpuType:'default')}).join(',');
   const byAttributes=buckets.get(obj.material)||new Map<string,THREE.Mesh[]>(),list=byAttributes.get(signature)||[];list.push(obj);byAttributes.set(signature,list);buckets.set(obj.material,byAttributes);
  });
  let originalDraws=0;

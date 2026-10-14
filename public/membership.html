@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>So/Facet – Become a member</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --s:1; color-scheme:dark;
+    --lime:#C8FF00; --purple:#9a1cff;
+    --text:#F5F3F8; --text2:#D2CDD9; --err:#ff5c8a;
+    --font:'Outfit','Segoe UI',Helvetica,Arial,sans-serif;
+    --font-head:'Lexend','Outfit','Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:transparent;color:var(--text);font-family:var(--font);}
+  body{min-height:100vh;position:relative}
+  @media (min-width:900px) and (min-aspect-ratio:1/1){ html,body{overflow:hidden;height:100%} }
+  button{font-family:inherit}
+  [hidden]{display:none !important}
+
+  /* ---------- panel (shared by both steps) ---------- */
+  .panel{position:absolute;left:50%;top:50%;width:1030px;transform:translate(-50%,-50%) scale(var(--s));transform-origin:50% 50%;z-index:3}
+  .panel.s1{height:578px}
+  .panel.s2{height:auto;min-height:638px;padding-bottom:32px}
+  .pbg{position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse at 50% 42%,rgba(105,0,185,.38) 0%,rgba(105,0,185,0) 68%),
+      radial-gradient(ellipse at 0% 0%,rgba(150,40,255,.12),transparent 40%),
+      linear-gradient(135deg,#160720,#210a32)}
+  .frame{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 3px rgba(200,255,0,.45))}
+  .content{position:relative;padding:0 65px}
+  .head{position:relative;padding-top:39px}
+  h1{margin:0;font-weight:400}
+  h1 span{display:block;line-height:48px;font-family:var(--font-head);text-transform:uppercase;letter-spacing:-.2px}
+  .t1{font-size:40px;font-weight:300;color:#fff}
+  .t2{font-size:44px;font-weight:700;color:var(--lime);text-shadow:0 0 8px rgba(200,255,0,.25)}
+  .rule{height:2px;margin:9px -11px 0 0;background:var(--lime);box-shadow:0 0 6px rgba(200,255,0,.45)}
+  .tab{position:absolute;left:0;top:144px;width:58px;height:14px;background:var(--lime);clip-path:polygon(0 0,100% 0,88% 100%,10% 100%)}
+  .close{position:absolute;left:883px;top:40px;width:28px;height:28px;padding:0;border:0;background:none;cursor:pointer;filter:drop-shadow(0 0 4px rgba(200,255,0,.5))}
+  .close svg{width:28px;height:28px;display:block}
+  form{margin:0}
+
+  /* ---------- CTA button (shared) ---------- */
+  .cta{position:relative;display:block;padding:0;border:0;background:none;cursor:pointer;color:#05020a;font:600 24px var(--font-head);letter-spacing:.2px}
+  .cta .shape{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 9px rgba(200,255,0,.55));transition:filter .18s}
+  .cta:hover .shape,.cta:focus-visible .shape{filter:drop-shadow(0 0 15px rgba(200,255,0,.85)) brightness(1.07)}
+  .cta .lbl{position:relative;display:flex;align-items:center;justify-content:center;height:100%;text-transform:uppercase}
+  .cta .lbl svg{width:30px;height:20px;display:block}
+
+  /* ---------- step 1: email ---------- */
+  #p1 .cta{width:263px;height:67px;margin:68px auto 0}
+  #p1 .cta .lbl{gap:14px}
+  .desc{margin:57px 0 0;text-align:center;font-size:20px;line-height:24px;font-weight:400;color:var(--text);letter-spacing:.2px;text-transform:uppercase}
+  .email{position:relative;width:509px;height:72px;margin:47px auto 0;border:1.5px solid var(--lime);border-radius:36px;background:rgba(12,3,22,.25);box-shadow:0 0 8px rgba(200,255,0,.2),inset 0 0 14px rgba(200,255,0,.04)}
+  .email:focus-within{box-shadow:0 0 14px rgba(200,255,0,.4),inset 0 0 14px rgba(200,255,0,.06)}
+  .email.bad{border-color:var(--err);box-shadow:0 0 10px rgba(255,92,138,.35)}
+  .email svg{position:absolute;left:46px;top:24px;width:29px;height:23px;pointer-events:none}
+  .email input{position:absolute;inset:0;width:100%;height:100%;padding:0 30px 0 104px;border:0;outline:0;background:transparent;color:var(--text);font:400 20px var(--font);letter-spacing:.2px;border-radius:36px}
+  .email input::placeholder{color:var(--text);opacity:1;letter-spacing:.2px}
+  .err{position:absolute;left:0;right:0;top:calc(100% + 9px);margin:0;text-align:center;font-size:14.5px;color:var(--err);min-height:0;line-height:18px}
+
+  /* ---------- step 2: registration form ---------- */
+  .fields{margin-top:25px;display:flex;flex-direction:column;gap:14px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+  .fld{position:relative;height:56px;border:1.5px solid var(--lime);border-radius:14px;background:rgba(12,3,22,.3);
+       box-shadow:0 0 6px rgba(200,255,0,.15);transition:box-shadow .15s,border-color .15s}
+  .fld:focus-within{box-shadow:0 0 0 1px var(--lime),0 0 14px rgba(200,255,0,.38)}
+  .fld.bad{border-color:var(--err);box-shadow:0 0 10px rgba(255,92,138,.3)}
+  .fld input{width:100%;height:100%;border:0;outline:0;background:transparent;color:var(--text);
+       font:400 18px var(--font);letter-spacing:.3px;padding:0 26px;border-radius:14px}
+  .fld input::placeholder{color:var(--text2);opacity:1}
+  .fld.open{z-index:30}
+  #dob{padding-right:64px}
+  .cal{position:absolute;right:24px;top:14px;width:25px;height:27px;padding:0;border:0;background:none;cursor:pointer}
+  .cal svg{width:25px;height:27px;display:block}
+  .phone{display:flex;align-items:center}
+  .cc{position:relative;width:80px;height:100%;flex:0 0 80px}
+  .vdiv{width:2px;height:28px;background:var(--text);flex:0 0 2px;opacity:.9}
+  .phone input{padding-left:36px;flex:1;min-width:0}
+
+  /* ---------- themed dropdown (civility, country, calling code) ---------- */
+  .dd-btn{position:relative;display:block;width:100%;height:100%;border:0;outline:0;background:linear-gradient(112deg,rgba(154,28,255,.16),rgba(12,3,22,.12) 54%,rgba(200,255,0,.035));color:var(--text);
+       font:400 18px var(--font);letter-spacing:.3px;padding:0 60px 0 26px;text-align:left;text-transform:uppercase;cursor:pointer;
+       border-radius:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .18s,color .18s,filter .18s}
+  .dd-btn.ph{color:var(--text2)}
+  .dd-btn:hover{background:linear-gradient(112deg,rgba(154,28,255,.24),rgba(12,3,22,.12) 54%,rgba(200,255,0,.075));filter:brightness(1.08)}
+  .dd-btn:active{filter:brightness(1.16)}
+  .dd-btn::after{content:"";position:absolute;right:25px;top:50%;width:24px;height:14px;margin-top:-7px;transition:transform .18s;
+       background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='14' viewBox='0 0 24 14'><path d='M2 2 L12 12 L22 2' fill='none' stroke='%23C8FF00' stroke-width='2.6'/></svg>") no-repeat center/contain}
+  .fld.open .dd-btn::after{transform:rotate(180deg)}
+  .cc .dd-btn{padding:0 0 0 26px;color:var(--lime);text-transform:none;font-size:18px;background:linear-gradient(112deg,rgba(154,28,255,.16),rgba(12,3,22,.12))}
+  .cc .dd-btn::after{display:none}
+  .dd-menu,.cal-pop{position:absolute;z-index:40;overflow:hidden;border:1px solid rgba(200,255,0,.76);border-radius:14px;
+       background:radial-gradient(ellipse at 12% 0%,rgba(154,28,255,.2),transparent 54%),linear-gradient(145deg,#241037,#160a22 68%,#12071c);
+       box-shadow:inset 0 0 0 1px rgba(154,28,255,.2),0 0 16px rgba(200,255,0,.26),0 16px 36px rgba(0,0,0,.58);
+       -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);animation:menu-in .16s ease-out both}
+  @keyframes menu-in{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .dd-menu{left:0;right:0;top:calc(100% + 8px);padding:6px}
+  .dd-menu.up,.cal-pop.up{top:auto;bottom:calc(100% + 8px);animation-name:menu-in-up}
+  @keyframes menu-in-up{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .dd-list{position:relative;max-height:232px;overflow-y:auto;margin:0;padding:0;list-style:none}
+  .dd-menu.searchable .dd-list{max-height:190px}
+  .dd-search-wrap{padding:3px 3px 9px;margin-bottom:3px;border-bottom:1px solid rgba(154,28,255,.42)}
+  .dd-search{display:block;width:100%;height:40px;padding:0 13px;border:1px solid rgba(154,28,255,.72);border-radius:9px;
+       outline:0;background:rgba(12,3,22,.62);box-shadow:inset 0 0 0 1px rgba(154,28,255,.12);
+       color:var(--text);font:400 15px var(--font);letter-spacing:.3px;text-transform:uppercase;transition:border-color .16s,box-shadow .16s,background .16s}
+  .dd-search::placeholder{color:var(--text2);opacity:.86}
+  .dd-search:focus{border-color:var(--lime);background:rgba(12,3,22,.82);box-shadow:0 0 10px rgba(200,255,0,.2),inset 0 0 0 1px rgba(200,255,0,.2)}
+  .dd-search:focus-visible{outline:2px solid rgba(200,255,0,.44);outline-offset:2px}
+  .dd-empty{padding:13px 10px;color:var(--text2);font-size:14px;letter-spacing:.3px;text-align:center;text-transform:uppercase}
+  .dd-list li[hidden]{display:none}
+  .dd-list li{position:relative;display:flex;align-items:center;min-height:42px;padding:9px 14px;border:1px solid transparent;border-radius:9px;
+       font-size:17px;letter-spacing:.3px;color:var(--text);cursor:pointer;text-transform:uppercase;transition:background .14s,border-color .14s,color .14s}
+  .dd-list li.act:not([aria-selected="true"]),.dd-list li:hover:not([aria-selected="true"]){background:rgba(154,28,255,.2);border-color:rgba(154,28,255,.42);color:var(--lime)}
+  .dd-list li[aria-selected="true"]{padding-left:34px;background:linear-gradient(100deg,rgba(200,255,0,.15),rgba(154,28,255,.17));border-color:rgba(200,255,0,.28);color:var(--lime);font-weight:500}
+  .dd-list li[aria-selected="true"]::before{content:"✓";position:absolute;left:12px;color:var(--lime);font-size:14px;font-weight:700}
+  .dd-code{display:inline-block;min-width:68px;color:var(--lime)}
+  .dd-list,.cal-years{scrollbar-width:thin;scrollbar-color:rgba(200,255,0,.62) transparent}
+  .dd-list::-webkit-scrollbar,.cal-years::-webkit-scrollbar{width:8px}
+  .dd-list::-webkit-scrollbar-thumb,.cal-years::-webkit-scrollbar-thumb{background:linear-gradient(var(--lime),var(--purple));border-radius:8px}
+  .dd-list::-webkit-scrollbar-track,.cal-years::-webkit-scrollbar-track{background:transparent}
+  .dd-btn:focus-visible,.cal:focus-visible{outline:2px solid var(--lime);outline-offset:-5px;box-shadow:inset 0 0 0 1px rgba(200,255,0,.24)}
+
+  /* ---------- themed date picker (DOB) ---------- */
+  .cal-pop{right:0;top:calc(100% + 8px);width:330px;padding:14px;color:var(--text);text-transform:none}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(154,28,255,.4)}
+  .cal-title{display:flex;gap:6px;flex:1;justify-content:center}
+  .cal-t{background:none;border:1.5px solid transparent;color:var(--text);font:500 16px var(--font);letter-spacing:.3px;padding:6px 10px;border-radius:9px;cursor:pointer;text-transform:uppercase}
+  .cal-t:hover,.cal-t.on{color:var(--lime);border-color:rgba(200,255,0,.52);background:rgba(154,28,255,.18)}
+  .cal-nav{width:34px;height:34px;flex:0 0 34px;border:1.5px solid rgba(200,255,0,.45);background:none;border-radius:9px;cursor:pointer;display:grid;place-items:center;padding:0}
+  .cal-nav svg{width:10px;height:16px;display:block}
+  .cal-nav:hover:not(:disabled){border-color:var(--lime);box-shadow:0 0 8px rgba(200,255,0,.35)}
+  .cal-nav:disabled{opacity:.3;cursor:default}
+  .cal-body{height:264px}
+  .cal-wd,.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-wd{margin-bottom:6px}
+  .cal-wd span{text-align:center;font-size:12.5px;color:var(--text2);letter-spacing:.5px;text-transform:uppercase;line-height:28px}
+  .cal-d,.cal-m,.cal-y{border:0;background:none;color:var(--text);font:400 15px var(--font);border-radius:9px;cursor:pointer;padding:0}
+  .cal-d{height:34px}
+  .cal-months{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .cal-m{height:56px;font-size:16px;text-transform:uppercase}
+  .cal-years{position:relative;height:100%;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;align-content:start;padding-right:4px}
+  .cal-y{height:38px;font-size:16px}
+  .cal-d:hover:not(:disabled),.cal-m:hover:not(:disabled),.cal-y:hover{background:rgba(154,28,255,.24);color:var(--lime);box-shadow:inset 0 0 0 1px rgba(200,255,0,.28)}
+  .cal-d.tod{box-shadow:inset 0 0 0 1.5px rgba(200,255,0,.6)}
+  .cal-d.sel,.cal-m.sel,.cal-y.sel,.cal-d.sel:hover,.cal-m.sel:hover,.cal-y.sel:hover{background:var(--lime);color:#05020a;font-weight:600}
+  .cal-d:disabled,.cal-m:disabled{opacity:.28;cursor:default}
+  .cal-pop button{appearance:none;-webkit-appearance:none}
+  .cal-pop button:focus-visible{outline:2px solid var(--lime);outline-offset:1px;box-shadow:0 0 10px rgba(200,255,0,.24)}
+  .cal-pop button:active:not(:disabled){transform:scale(.96)}
+  .fld.open .cal{filter:drop-shadow(0 0 6px rgba(200,255,0,.72))}
+
+  .chk{display:flex;align-items:center;margin-left:4px;font-size:18px;line-height:24px;color:var(--text);letter-spacing:.1px}
+  .chk.first{margin-top:16px}
+  .chk.second{margin-top:12px}
+  .chk label{cursor:pointer}
+  .chk input{appearance:none;-webkit-appearance:none;flex:0 0 33px;width:33px;height:33px;margin:0 28px 0 0;border:2.5px solid var(--lime);border-radius:4px;background:rgba(12,3,22,.2) center/22px no-repeat;cursor:pointer;outline:0;box-shadow:0 0 6px rgba(200,255,0,.2)}
+  .chk input:focus-visible{box-shadow:0 0 0 2px rgba(200,255,0,.6),0 0 12px rgba(200,255,0,.5)}
+  .chk input:checked{background-color:rgba(200,255,0,.12);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'><path d='M3 11.5 L9 17.5 L19 5' fill='none' stroke='%23C8FF00' stroke-width='3.2'/></svg>")}
+  .chk.bad input{border-color:var(--err)}
+  .chk a{color:var(--lime);text-decoration:underline;text-underline-offset:2px}
+
+  #p2 .cta{width:305px;height:67px;margin:13px auto 0}
+  #p2 .cta .lbl{gap:16px}
+  .msg{position:static;margin:16px 0 0;text-align:center;font-size:14.5px;line-height:21px;color:var(--err);overflow-wrap:anywhere}
+  .msg.ok{color:var(--lime)}
+  .cta:disabled{cursor:wait;opacity:.7}
+  .success{padding:56px 20px 24px;text-align:center}
+  .success-mark{display:block;width:64px;height:64px;margin:0 auto 22px;color:var(--lime);filter:drop-shadow(0 0 8px rgba(200,255,0,.28))}
+  .success h2{margin:0 0 12px;font:600 30px var(--font-head);color:var(--lime);text-transform:uppercase}
+  .success p{max-width:480px;margin:0 auto;color:var(--text2);font-size:19px;line-height:1.55}
+  .success:focus{outline:0}
+  #p2 .success .cta{margin:26px auto 0}
+  @media(max-width:599px){.success{padding:40px 4px 10px}.success h2{font-size:25px}.success p{font-size:16px}}
+  @media (prefers-reduced-motion:reduce){
+    .dd-btn,.dd-list li,.cal-pop button{transition:none}
+    .dd-list,.cal-pop{animation:none}
+  }
+
+  /* ---------- tablets / portrait: fluid layout ---------- */
+  @media (max-width:899px),(max-aspect-ratio:1/1){
+    .panel,.panel.s1,.panel.s2{position:relative;left:auto;top:auto;transform:none;width:calc(100% - 24px);max-width:760px;height:auto;min-height:0;margin:28px auto;padding-bottom:44px}
+    .content{padding:0 36px}
+    .head{padding-top:36px}
+    h1 span{line-height:44px}
+    .t1{font-size:34px}.t2{font-size:38px}
+    .rule{margin:8px -4px 0 0}
+    .tab{top:132px}
+    .close{left:auto;right:28px;top:30px;width:24px;height:24px}
+    .close svg{width:24px;height:24px}
+
+    .desc{font-size:18px;line-height:24px;margin-top:44px}
+    .email{width:min(509px,100%);height:66px;margin-top:40px;border-radius:33px}
+    .email svg{left:30px;top:21px}
+    .email input{padding-left:80px;font-size:18px}
+    #p1 .cta{margin-top:56px}
+
+    .fields{margin-top:28px}
+    .chk{margin-left:0;font-size:17px;line-height:23px}
+    #p2 .cta{margin-top:28px}
+    .msg{position:static;margin-top:14px}
+  }
+  /* ---------- phones ---------- */
+  @media (max-width:599px){
+    .content{padding:0 20px}
+    .head{padding-top:30px}
+    h1 span{line-height:36px}
+    .t1{font-size:26px}.t2{font-size:28px}
+    .tab{top:110px;width:46px;height:12px}
+    .close{right:16px;top:18px;width:22px;height:22px}
+    .close svg{width:22px;height:22px}
+
+    #p1{padding-bottom:36px}
+    #p2{padding-bottom:30px}
+    .desc{font-size:15px;line-height:21px;margin-top:32px;text-wrap:balance}
+    .email{height:58px;margin-top:28px;border-radius:29px}
+    .email svg{left:20px;top:18px;width:26px;height:21px}
+    .email input{padding-left:62px;font-size:16px}
+    #p1 .cta{margin-top:46px}
+
+    .fields{margin-top:22px;gap:12px}
+    .two{grid-template-columns:1fr;gap:12px}
+    .fld{height:52px;border-radius:13px}
+    .fld input,.dd-btn{font-size:16px;padding-left:20px}
+    .dd-btn{padding-right:52px}
+    .dd-btn::after{right:18px}
+    .cc .dd-btn{padding:0 0 0 20px;font-size:16px}
+    .cal-pop{width:100%;padding:10px}
+    .cal-body{height:246px}
+    .cal-d{height:32px}
+    .dd-list li{font-size:16px}
+    .dd-search{font-size:16px}
+    .phone input{padding-left:30px}
+    .cal{top:12px;right:18px}
+    .chk{font-size:15px;line-height:21px}
+    .chk.first{margin-top:18px}
+    .chk input{flex-basis:28px;width:28px;height:28px;margin-right:16px}
+    #p2 .cta{width:100%;max-width:305px;margin-top:22px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ STEP 1: EMAIL ============ -->
+<main class="panel s1" id="p1">
+  <div class="pbg" id="pbg1"></div>
+  <svg class="frame" id="frame1" aria-hidden="true"></svg>
+  <div class="content">
+    <div class="head">
+      <h1><span class="t1">Register</span><span class="t2">The Contest</span></h1>
+      <div class="rule"></div>
+      <div class="tab"></div>
+      <button type="button" class="close" id="email-close" aria-label="Close membership registration">
+        <svg viewBox="0 0 28 28"><path d="M3 3 L25 25 M25 3 L3 25" stroke="#C8FF00" stroke-width="4" fill="none"/></svg>
+      </button>
+    </div>
+
+    <p class="desc">Enter your email to save your best score<br>and become a member.</p>
+
+    <form id="f1" novalidate>
+      <div class="email" id="emailWrap">
+        <svg viewBox="0 0 29 23" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><rect x="1" y="1" width="27" height="21" rx="2.5"/><path d="M1.5 2.5 L14.5 13 L27.5 2.5"/></svg>
+        <input type="email" id="emailIn" name="email" placeholder="ENTER YOUR E-MAIL" autocomplete="email" aria-label="Email address" required autofocus>
+        <p class="err" id="err" role="alert" aria-live="polite"></p>
+      </div>
+      <button type="submit" class="cta" id="go1"><span class="shape"></span><span class="lbl">Register</span></button>
+    </form>
+  </div>
+</main>
+
+<!-- ============ STEP 2: REGISTRATION FORM ============ -->
+<main class="panel s2" id="p2" hidden>
+  <div class="pbg" id="pbg2"></div>
+  <svg class="frame" id="frame2" aria-hidden="true"></svg>
+  <div class="content">
+    <div class="head">
+      <h1><span class="t1">Register</span><span class="t2">The Contest</span></h1>
+      <div class="rule"></div>
+      <div class="tab"></div>
+      <button type="button" class="close" id="close" aria-label="Close membership registration">
+        <svg viewBox="0 0 28 28"><path d="M3 3 L25 25 M25 3 L3 25" stroke="#C8FF00" stroke-width="4" fill="none"/></svg>
+      </button>
+    </div>
+
+    <form id="f2" novalidate>
+      <input type="hidden" name="email" id="email">
+      <div class="fields">
+        <div class="fld" id="w-civ">
+          <input type="hidden" id="civ" name="civility">
+          <button type="button" class="dd-btn" id="civBtn" aria-label="Civility"></button>
+        </div>
+        <div class="two">
+          <div class="fld" id="w-fn"><input type="text" id="fn" name="firstName" placeholder="FIRST NAME" autocomplete="given-name" required aria-label="First name"></div>
+          <div class="fld" id="w-ln"><input type="text" id="ln" name="lastName" placeholder="LAST NAME" autocomplete="family-name" required aria-label="Last name"></div>
+        </div>
+        <div class="two">
+          <div class="fld phone" id="w-ph">
+            <div class="cc"><button type="button" class="dd-btn" id="ccBtn" aria-label="Country calling code"></button></div>
+            <input type="hidden" id="cc" name="callingCode">
+            <span class="vdiv"></span>
+            <input type="tel" id="ph" name="phone" placeholder="PHONE" autocomplete="tel-national" inputmode="tel" required aria-label="Phone">
+          </div>
+          <div class="fld" id="w-dob">
+            <input type="text" id="dob" name="dob" placeholder="DOB (DD/MM/YYYY)" autocomplete="bday" inputmode="numeric" maxlength="10" required aria-label="Date of birth">
+            <button type="button" class="cal" id="cal" aria-label="Open calendar" aria-haspopup="dialog" aria-expanded="false">
+              <svg viewBox="0 0 25 27" fill="none" stroke="#C8FF00" stroke-width="2"><rect x="1.5" y="4" width="22" height="21.5" rx="3"/><path d="M1.5 10.5 H23.5 M7 1 V6.5 M18 1 V6.5"/><g fill="#C8FF00" stroke="none"><rect x="6" y="14" width="2.4" height="2.4"/><rect x="11.3" y="14" width="2.4" height="2.4"/><rect x="16.6" y="14" width="2.4" height="2.4"/><rect x="6" y="19" width="2.4" height="2.4"/><rect x="11.3" y="19" width="2.4" height="2.4"/><rect x="16.6" y="19" width="2.4" height="2.4"/></g></svg>
+            </button>
+            <div class="cal-pop" id="calPop" role="dialog" aria-label="Choose date of birth" hidden></div>
+          </div>
+        </div>
+        <div class="fld" id="w-co">
+          <input type="hidden" id="co" name="country">
+          <button type="button" class="dd-btn" id="coBtn" aria-label="Country"></button>
+        </div>
+      </div>
+
+      <div class="chk first" id="w-c1">
+        <input type="checkbox" id="c1" name="consent" required>
+        <label for="c1">I agree to join the So/Facet membership programme and participate in the contest, and accept the <a href="#" id="terms">Terms and Conditions.</a> *</label>
+      </div>
+      <div class="chk second" id="w-c2">
+        <input type="checkbox" id="c2" name="age18" required>
+        <label for="c2">I hereby confirm that I am 18 years or older.</label>
+      </div>
+
+      <button type="submit" class="cta" id="go2"><span class="shape"></span>
+        <span class="lbl">Submit
+          <svg viewBox="0 0 30 20" fill="none" stroke="#05020a" stroke-width="2.4"><path d="M1 10 H27 M18 1.5 L27.5 10 L18 18.5"/></svg>
+        </span>
+      </button>
+      <p class="msg" id="msg" role="alert" aria-live="polite" hidden></p>
+    </form>
+    <section class="success" id="membership-success" role="status" aria-live="polite" tabindex="-1" hidden>
+      <svg class="success-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="29" stroke="currentColor" stroke-width="2"/><path d="m18 32 10 10 19-21" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2>Thank you!</h2>
+      <p>Your So/Facet membership is confirmed.<br>Returning to your game…</p>
+      <button type="button" class="cta" id="return-game"><span class="shape"></span><span class="lbl">Back to game</span></button>
+    </section>
+  </div>
+</main>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var $ = function(id){ return document.getElementById(id); };
+  var step = 1, submitting = false, completed = false, returnTimer = null, submissionController = null;
+
+  /* Official Terms and Conditions URL. Leave empty until one is provided:
+     while empty, clicking the link does nothing. */
+  var TERMS_URL = "";
+
+  /* ---------- scaling (desktop scales the panel to fit; phones/portrait are fluid) ---------- */
+  function fit(){
+    var w = window.innerWidth, h = window.innerHeight;
+    var panelH = $(step === 1 ? 'p1' : 'p2').offsetHeight || (step === 1 ? 578 : 638);
+    var s = Math.min(1, w/1100, h/(panelH + 62));
+    if (w < 900 || w < h) s = 1;
+    root.style.setProperty('--s', s);
+  }
+
+  function buildFrame(panelId, bgId, frameId){
+    var p = $(panelId);
+    var w = p.offsetWidth, h = p.offsetHeight, L = '#C8FF00';
+    var path = 'M0,58 L58,0 L'+(w-60)+',0 L'+w+',58 L'+w+','+(h-58)+' L'+(w-50)+','+h+' L44,'+h+' L0,'+(h-60)+' Z';
+    var stripes = '';
+    for (var i=0;i<3;i++){
+      var x = w-128+i*26;
+      stripes += '<polygon points="'+x+','+(h-2)+' '+(x+(i===0?15:11))+','+(h-2)+' '+(x+(i===0?32:28))+','+(h-20)+' '+(x+17)+','+(h-20)+'" fill="'+L+'"/>';
+    }
+    var svg = $(frameId);
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    svg.innerHTML =
+      '<path d="'+path+'" fill="none" stroke="'+L+'" stroke-width="1.6"/>'+
+      '<polygon points="53,0 113,0 106,10 47,10" fill="'+L+'"/>'+
+      '<path d="M4,50 L40,18" stroke="'+L+'" stroke-width="5" fill="none"/>'+
+      '<path d="M1.5,62 V92" stroke="'+L+'" stroke-width="4" fill="none"/>'+
+      '<path d="M'+(w-100)+',3 H'+(w-66)+'" stroke="'+L+'" stroke-width="3" fill="none"/>'+
+      '<path d="M4,'+(h-62)+' L45,'+(h-3)+'" stroke="'+L+'" stroke-width="5" fill="none"/>'+
+      '<path d="M1.5,'+(h-92)+' V'+(h-64)+'" stroke="'+L+'" stroke-width="4" fill="none"/>'+
+      '<path d="M'+(w-3)+','+(h-62)+' L'+(w-48)+','+(h-14)+'" stroke="'+L+'" stroke-width="5" fill="none"/>'+
+      stripes;
+    $(bgId).style.clipPath = 'polygon(0 58px,58px 0,'+(w-60)+'px 0,'+w+'px 58px,'+w+'px '+(h-58)+'px,'+(w-50)+'px '+h+'px,44px '+h+'px,0 '+(h-60)+'px)';
+  }
+
+  function buildCta(btn){
+    var w = btn.offsetWidth, h = btn.offsetHeight, L = '#C8FF00';
+    var fill = [[16,5],[w-16,5],[w-5,16],[w-5,h-16],[w-16,h-5],[16,h-5],[5,h-16],[5,16]].map(function(p){return p.join(',')}).join(' ');
+    var outline = 'M18,1 H'+(w-18)+' L'+(w-1)+',18 V'+(h-18)+' L'+(w-18)+','+(h-1)+' H18 L1,'+(h-18)+' V18 Z';
+    btn.querySelector('.shape').innerHTML =
+      '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="display:block;overflow:visible">'+
+      '<path d="'+outline+'" fill="none" stroke="'+L+'" stroke-width="1.6" opacity=".85"/>'+
+      '<polygon points="'+fill+'" fill="'+L+'"/>'+
+      '<path d="M7,19 L19,7" stroke="#0a0410" stroke-width="2.5" fill="none"/>'+
+      '<path d="M'+(w-7)+','+(h-19)+' L'+(w-19)+','+(h-7)+'" stroke="#0a0410" stroke-width="2.5" fill="none"/>'+
+      '</svg>';
+  }
+
+  /* lay out only the visible step (hidden panels have no size) */
+  function layout(){
+    fit();
+    if (step === 1){ buildFrame('p1','pbg1','frame1'); buildCta($('go1')); }
+    else            { buildFrame('p2','pbg2','frame2'); buildCta($(completed ? 'return-game' : 'go2')); }
+  }
+  window.addEventListener('resize', layout);
+
+  function showStep(n){
+    step = n;
+    closeAll();
+    $('p1').hidden = (n !== 1);
+    $('p2').hidden = (n !== 2);
+    window.scrollTo(0, 0);
+    layout();
+  }
+
+  /* =====================  STEP 1: EMAIL  ===================== */
+  var emailIn = $('emailIn'), wrap = $('emailWrap'), err = $('err');
+  var re = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
+  function showErr(m){ err.textContent = m; wrap.classList.add('bad'); }
+  function clearErr(){ err.textContent = ''; wrap.classList.remove('bad'); }
+  emailIn.addEventListener('input', clearErr);
+
+  $('f1').addEventListener('submit', function(e){
+    e.preventDefault();
+    var v = emailIn.value.trim();
+    if (!v){ showErr('Please enter your e-mail address.'); emailIn.focus(); return; }
+    if (!re.test(v)){ showErr('Please enter a valid e-mail address.'); emailIn.focus(); return; }
+    clearErr();
+    $('email').value = v;      /* hand the email to the form step */
+    showStep(2);
+    ddCiv.btn.focus();
+  });
+
+  /* =====================  STEP 2: FORM  ===================== */
+  var C = [["India","+91","IN"],["United States","+1","US"],["Canada","+1","CA"],["United Kingdom","+44","GB"],["France","+33","FR"],["Germany","+49","DE"],["Spain","+34","ES"],["Italy","+39","IT"],["Portugal","+351","PT"],["Netherlands","+31","NL"],["Belgium","+32","BE"],["Switzerland","+41","CH"],["Austria","+43","AT"],["Ireland","+353","IE"],["Luxembourg","+352","LU"],["Sweden","+46","SE"],["Norway","+47","NO"],["Denmark","+45","DK"],["Finland","+358","FI"],["Poland","+48","PL"],["Czech Republic","+420","CZ"],["Greece","+30","GR"],["Turkey","+90","TR"],["Russia","+7","RU"],["Ukraine","+380","UA"],["Romania","+40","RO"],["Hungary","+36","HU"],["Pakistan","+92","PK"],["Bangladesh","+880","BD"],["Sri Lanka","+94","LK"],["China","+86","CN"],["Japan","+81","JP"],["South Korea","+82","KR"],["Singapore","+65","SG"],["Malaysia","+60","MY"],["Thailand","+66","TH"],["Vietnam","+84","VN"],["Indonesia","+62","ID"],["Philippines","+63","PH"],["Australia","+61","AU"],["New Zealand","+64","NZ"],["United Arab Emirates","+971","AE"],["Saudi Arabia","+966","SA"],["Qatar","+974","QA"],["Kuwait","+965","KW"],["Lebanon","+961","LB"],["Israel","+972","IL"],["Egypt","+20","EG"],["Morocco","+212","MA"],["Algeria","+213","DZ"],["Tunisia","+216","TN"],["Senegal","+221","SN"],["Ivory Coast","+225","CI"],["Nigeria","+234","NG"],["Cameroon","+237","CM"],["Kenya","+254","KE"],["South Africa","+27","ZA"],["Mexico","+52","MX"],["Brazil","+55","BR"],["Argentina","+54","AR"],["Chile","+56","CL"],["Colombia","+57","CO"],["Peru","+51","PE"]];
+
+  var dropdowns = [];
+  function closeAll(except){
+    dropdowns.forEach(function(d){ if (d !== except) d.close(); });
+    if (except !== 'cal') closeCal();
+  }
+  /* open upward when there is not enough room below */
+  function flip(el, host){
+    el.classList.remove('up');
+    var r = el.getBoundingClientRect(), hr = host.getBoundingClientRect();
+    var below = window.innerHeight - hr.bottom, above = hr.top;
+    if (r.height + 12 > below && above > below) el.classList.add('up');
+  }
+
+  /* ---------- themed dropdown ---------- */
+  function Dropdown(cfg){
+    var host = cfg.host, btn = cfg.btn, input = cfg.input, items = cfg.items;
+    var searchable = !!cfg.searchable;
+    var menu = document.createElement('div');
+    menu.className = searchable ? 'dd-menu searchable' : 'dd-menu';
+    menu.id = btn.id + 'Menu'; menu.hidden = true;
+    var search = null, empty = null;
+    if (searchable){
+      var searchWrap = document.createElement('div');
+      searchWrap.className = 'dd-search-wrap';
+      search = document.createElement('input');
+      search.type = 'text'; search.className = 'dd-search'; search.id = btn.id + 'Search';
+      search.setAttribute('role','combobox'); search.setAttribute('aria-label',cfg.searchLabel || 'Search options');
+      search.setAttribute('aria-autocomplete','list'); search.setAttribute('aria-haspopup','listbox');
+      search.setAttribute('autocomplete','off'); search.setAttribute('autocapitalize','off');
+      search.setAttribute('spellcheck','false'); search.placeholder = cfg.searchPlaceholder || 'SEARCH';
+      searchWrap.appendChild(search); menu.appendChild(searchWrap);
+    }
+    var list = document.createElement('ul');
+    list.className = 'dd-list'; list.id = btn.id + 'List'; list.setAttribute('role','listbox'); list.hidden = true;
+    if (searchable){
+      search.setAttribute('aria-controls',list.id);
+      empty = document.createElement('div'); empty.className = 'dd-empty';
+      empty.setAttribute('role','status'); empty.textContent = cfg.emptyText || 'No matches found'; empty.hidden = true;
+    }
+    var lis = items.map(function(it, i){
+      var li = document.createElement('li');
+      li.setAttribute('role','option'); li.id = btn.id + 'Opt' + i; li.setAttribute('aria-selected','false'); li.setAttribute('aria-label',it.label);
+      if (it.code){
+        var a = document.createElement('span'); a.className = 'dd-code'; a.textContent = it.code;
+        var b = document.createElement('span'); b.textContent = it.name;
+        li.appendChild(a); li.appendChild(b);
+      } else { li.textContent = it.label; }
+      list.appendChild(li);
+      return li;
+    });
+    menu.appendChild(list);
+    if (empty) menu.appendChild(empty);
+    host.appendChild(menu);
+    btn.setAttribute('aria-haspopup','listbox'); btn.setAttribute('aria-expanded','false'); btn.setAttribute('aria-controls', list.id);
+    if (search) search.setAttribute('aria-expanded','false');
+
+    var idx = -1, active = -1, isOpen = false, buf = '', bufT;
+    var self = { host: host, btn: btn };
+
+    function paint(){
+      if (idx < 0){ btn.textContent = cfg.placeholder || ''; btn.classList.add('ph'); input.value = ''; }
+      else { var it = items[idx]; btn.textContent = cfg.btnText ? cfg.btnText(it) : it.label; btn.classList.remove('ph'); input.value = it.value; }
+      lis.forEach(function(li, i){ li.setAttribute('aria-selected', i === idx ? 'true' : 'false'); });
+    }
+    function visibleIndices(){
+      var out = [];
+      lis.forEach(function(li, i){ if (!li.hidden) out.push(i); });
+      return out;
+    }
+    function syncActiveDescendant(){
+      btn.removeAttribute('aria-activedescendant');
+      if (search) search.removeAttribute('aria-activedescendant');
+      if (active < 0) return;
+      var owner = search && document.activeElement === search ? search : btn;
+      owner.setAttribute('aria-activedescendant',lis[active].id);
+    }
+    function setActive(i, scroll){
+      if (i < 0 || i >= lis.length || lis[i].hidden) return;
+      if (active >= 0) lis[active].classList.remove('act');
+      active = i; lis[i].classList.add('act'); syncActiveDescendant();
+      if (scroll){
+        var t = lis[i].offsetTop, b = t + lis[i].offsetHeight;
+        if (t < list.scrollTop + 6) list.scrollTop = t - 6;
+        else if (b > list.scrollTop + list.clientHeight - 6) list.scrollTop = b - list.clientHeight + 6;
+      }
+    }
+    function filterItems(){
+      if (!search) return;
+      var q = search.value.trim().toLowerCase(), visible = [];
+      lis.forEach(function(li, i){
+        var it = items[i], label = (it.name || it.label || '').toLowerCase();
+        var code = (it.code || '').toLowerCase(), show = !q || label.indexOf(q) >= 0 || code.indexOf(q) >= 0;
+        li.hidden = !show;
+        if (show) visible.push(i);
+      });
+      if (active >= 0) lis[active].classList.remove('act');
+      active = -1; syncActiveDescendant();
+      if (visible.length) setActive(visible[0], false);
+      empty.hidden = visible.length > 0;
+      list.scrollTop = 0;
+    }
+    function moveActive(direction){
+      var visible = visibleIndices();
+      if (!visible.length) return;
+      var pos = visible.indexOf(active);
+      if (pos < 0) pos = direction > 0 ? -1 : visible.length;
+      setActive(visible[Math.max(0,Math.min(visible.length-1,pos+direction))],true);
+    }
+    function edgeActive(last){
+      var visible = visibleIndices();
+      if (visible.length) setActive(visible[last ? visible.length-1 : 0],true);
+    }
+    self.open = function(){
+      if (isOpen) return;
+      closeAll(self);
+      isOpen = true; menu.hidden = false; list.hidden = false; host.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+      if (search){
+        search.setAttribute('aria-expanded','true');
+        search.value = '';
+        filterItems();
+      } else {
+        var i = idx >= 0 ? idx : 0;
+        setActive(i, false);
+      }
+      flip(menu, host);
+      if (search) search.focus();
+      else {
+        var selected = idx >= 0 ? idx : active;
+        if (selected >= 0) list.scrollTop = Math.max(0, lis[selected].offsetTop - list.clientHeight/2 + lis[selected].offsetHeight/2);
+      }
+    };
+    self.close = function(){
+      if (!isOpen) return;
+      isOpen = false; menu.hidden = true; list.hidden = true; host.classList.remove('open');
+      btn.setAttribute('aria-expanded','false'); btn.removeAttribute('aria-activedescendant');
+      if (search){ search.setAttribute('aria-expanded','false'); search.removeAttribute('aria-activedescendant'); search.value = ''; }
+    };
+    self.contains = function(n){ return btn.contains(n) || menu.contains(n); };
+    self.setIndex = function(i, silent){ idx = i; paint(); if (!silent && cfg.onChange) cfg.onChange(self); };
+    Object.defineProperty(self, 'value', { get: function(){ return idx < 0 ? '' : items[idx].value; } });
+    Object.defineProperty(self, 'index', { get: function(){ return idx; } });
+    function choose(i){ if (i < 0 || i >= items.length || lis[i].hidden) return; self.setIndex(i); self.close(); btn.focus(); }
+
+    btn.addEventListener('click', function(){ if (isOpen) self.close(); else self.open(); });
+    list.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    list.addEventListener('click', function(e){ var li = e.target.closest('li'); if (li && !li.hidden) choose(lis.indexOf(li)); });
+    list.addEventListener('mousemove', function(e){
+      var li = e.target.closest('li');
+      if (li && !li.hidden){ var i = lis.indexOf(li); if (i !== active) setActive(i, false); }
+    });
+    btn.addEventListener('keyup', function(e){ if (e.key === ' ') e.preventDefault(); });
+    btn.addEventListener('keydown', function(e){
+      var k = e.key;
+      if (k === 'Tab'){ self.close(); return; }
+      if (k === 'Escape'){ if (isOpen){ e.preventDefault(); e.stopPropagation(); self.close(); } return; }
+      if (k === 'ArrowDown' || k === 'ArrowUp'){
+        e.preventDefault();
+        if (!isOpen) self.open(); else moveActive(k === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      if (k === 'Home' || k === 'End'){ if (isOpen){ e.preventDefault(); edgeActive(k === 'End'); } return; }
+      if (k.length === 1 && k !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey){
+        e.preventDefault();
+        if (search){
+          if (!isOpen) self.open();
+          search.value += k;
+          search.dispatchEvent(new Event('input',{bubbles:true}));
+        } else {
+          buf += k.toLowerCase(); clearTimeout(bufT); bufT = setTimeout(function(){ buf = ''; }, 700);
+          for (var i = 0; i < items.length; i++){
+            var it = items[i], key = (it.name || it.label).toLowerCase();
+            if (key.indexOf(buf) === 0 || (it.code && it.code.indexOf(buf) === 0)){
+              if (!isOpen) self.open();
+              setActive(i, true);
+              break;
+            }
+          }
+        }
+        return;
+      }
+      if (k === 'Enter' || k === ' '){
+        e.preventDefault();
+        if (!isOpen) self.open(); else choose(active);
+      }
+    });
+    if (search){
+      search.addEventListener('focus',syncActiveDescendant);
+      search.addEventListener('input',filterItems);
+      search.addEventListener('keydown',function(e){
+        var k=e.key;
+        if (k==='Tab'){ self.close(); return; }
+        if (k==='Escape' && isOpen){ e.preventDefault(); e.stopPropagation(); self.close(); btn.focus(); return; }
+        if (k==='ArrowDown' || k==='ArrowUp'){
+          e.preventDefault();
+          if (!isOpen) self.open(); else moveActive(k==='ArrowDown'?1:-1);
+          return;
+        }
+        if (k==='Enter' && isOpen){ e.preventDefault(); if (active>=0) choose(active); }
+      });
+    }
+
+    dropdowns.push(self);
+    paint();
+    return self;
+  }
+  function onField(){ clearBad(); if (msg.className === 'msg' && !msg.hidden){ msg.textContent = ''; msg.hidden = true; layout(); } }
+
+  var ddCiv = Dropdown({
+    host: $('w-civ'), btn: $('civBtn'), input: $('civ'), placeholder: 'CIVILITY',
+    items: [{value:'Mr',label:'Mr'},{value:'Ms',label:'Ms'},{value:'Others',label:'Others'}],
+    onChange: onField
+  });
+  var ddCo = Dropdown({
+    host: $('w-co'), btn: $('coBtn'), input: $('co'), searchable: true,
+    searchPlaceholder: 'SEARCH COUNTRY', searchLabel: 'Search countries', emptyText: 'No countries found',
+    items: C.map(function(r){ return {value:r[2], label:r[0]}; }),
+    onChange: function(d){ ddCc.setIndex(d.index, true); onField(); }
+  });
+  var ddCc = Dropdown({
+    host: $('w-ph'), btn: $('ccBtn'), input: $('cc'),
+    items: C.map(function(r){ return {value:r[1], label:r[0]+' '+r[1], code:r[1], name:r[0]}; }),
+    btnText: function(it){ return it.value; },
+    onChange: onField
+  });
+  ddCo.setIndex(0, true); ddCc.setIndex(0, true);   /* default: India / +91 */
+
+  /* ---------- themed date picker ---------- */
+  var dob = $('dob'), calBtn = $('cal'), calHost = $('w-dob'), pop = $('calPop');
+  var today = new Date();
+  var TY = today.getFullYear(), TM = today.getMonth(), MIN_Y = 1900;
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var WD = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  var cal = { y: TY - 18, m: TM, mode: 'days', sel: null };
+  var CHEV_L = '<svg viewBox="0 0 10 16" fill="none" stroke="#C8FF00" stroke-width="2.4"><path d="M8 1 L2 8 L8 15"/></svg>';
+  var CHEV_R = '<svg viewBox="0 0 10 16" fill="none" stroke="#C8FF00" stroke-width="2.4"><path d="M2 1 L8 8 L2 15"/></svg>';
+  function pad(n){ return ('0'+n).slice(-2); }
+  function fmt(d){ return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear(); }
+
+  /* accepts DD/MM/YYYY (also - or .) and YYYY-MM-DD; returns a real Date or null */
+  function parseDob(v){
+    v = (v || '').trim();
+    var y, m, d, a;
+    if ((a = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v))){ y = +a[1]; m = +a[2]; d = +a[3]; }
+    else if ((a = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(v))){ d = +a[1]; m = +a[2]; y = +a[3]; }
+    else return null;
+    var dt = new Date(y, m-1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function ageOf(dt){
+    var a = TY - dt.getFullYear(), m = today.getMonth() - dt.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dt.getDate())) a--;
+    return a;
+  }
+
+  /* auto-format typed digits as DD/MM/YYYY */
+  dob.addEventListener('input', function(){
+    var v = dob.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)){ var d0 = parseDob(v); if (d0) dob.value = fmt(d0); return; }
+    var dg = v.replace(/\D/g,'').slice(0,8), out = dg;
+    if (dg.length > 4) out = dg.slice(0,2)+'/'+dg.slice(2,4)+'/'+dg.slice(4);
+    else if (dg.length > 2) out = dg.slice(0,2)+'/'+dg.slice(2);
+    if (out !== v) dob.value = out;
+  });
+
+  function renderCal(){
+    var navPrevOff = (cal.mode === 'days' && cal.y === MIN_Y && cal.m === 0) || (cal.mode === 'months' && cal.y <= MIN_Y) || cal.mode === 'years';
+    var navNextOff = (cal.mode === 'days' && cal.y === TY && cal.m >= TM) || (cal.mode === 'months' && cal.y >= TY) || cal.mode === 'years';
+    var h = '<div class="cal-head">'+
+      '<button type="button" class="cal-nav" data-a="prev" aria-label="Previous"'+(navPrevOff?' disabled':'')+'>'+CHEV_L+'</button>'+
+      '<div class="cal-title">'+
+        '<button type="button" class="cal-t'+(cal.mode==='months'?' on':'')+'" data-a="mon">'+MONTHS[cal.m]+'</button>'+
+        '<button type="button" class="cal-t'+(cal.mode==='years'?' on':'')+'" data-a="yr">'+cal.y+'</button>'+
+      '</div>'+
+      '<button type="button" class="cal-nav" data-a="next" aria-label="Next"'+(navNextOff?' disabled':'')+'>'+CHEV_R+'</button>'+
+    '</div><div class="cal-body">';
+
+    if (cal.mode === 'days'){
+      h += '<div class="cal-wd">'+WD.map(function(w){ return '<span>'+w+'</span>'; }).join('')+'</div><div class="cal-days">';
+      var first = (new Date(cal.y, cal.m, 1).getDay() + 6) % 7;
+      var n = new Date(cal.y, cal.m+1, 0).getDate();
+      for (var b = 0; b < first; b++) h += '<span></span>';
+      for (var d = 1; d <= n; d++){
+        var dt = new Date(cal.y, cal.m, d);
+        var cls = 'cal-d';
+        if (cal.sel && dt.getTime() === cal.sel.getTime()) cls += ' sel';
+        if (cal.y === TY && cal.m === TM && d === today.getDate()) cls += ' tod';
+        var off = dt > today ? ' disabled' : '';
+        h += '<button type="button" class="'+cls+'" data-d="'+d+'"'+off+'>'+d+'</button>';
+      }
+      h += '</div>';
+    } else if (cal.mode === 'months'){
+      h += '<div class="cal-months">';
+      for (var i = 0; i < 12; i++){
+        var offm = (cal.y === TY && i > TM) ? ' disabled' : '';
+        h += '<button type="button" class="cal-m'+(i===cal.m?' sel':'')+'" data-m="'+i+'"'+offm+'>'+MS[i]+'</button>';
+      }
+      h += '</div>';
+    } else {
+      h += '<div class="cal-years">';
+      for (var y = TY; y >= MIN_Y; y--) h += '<button type="button" class="cal-y'+(y===cal.y?' sel':'')+'" data-y="'+y+'">'+y+'</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    pop.innerHTML = h;
+    if (cal.mode === 'years' && !pop.hidden){
+      var yrs = pop.querySelector('.cal-years'), cur = pop.querySelector('.cal-y.sel');
+      if (yrs && cur) yrs.scrollTop = Math.max(0, cur.offsetTop - yrs.clientHeight/2 + cur.offsetHeight/2);
+    }
+  }
+
+  function openCal(){
+    closeAll('cal');
+    var d = parseDob(dob.value);
+    var ok = d && d <= today && d.getFullYear() >= MIN_Y;
+    cal.sel = ok ? d : null;
+    var base = ok ? d : new Date(TY - 18, TM, 1);
+    cal.y = base.getFullYear(); cal.m = base.getMonth();
+    cal.mode = ok ? 'days' : 'years';          /* no date yet: start by picking the year */
+    pop.hidden = false; calHost.classList.add('open'); calBtn.setAttribute('aria-expanded','true');
+    renderCal();
+    flip(pop, calHost);
+    var selected = pop.querySelector('button.sel:not(:disabled)') || pop.querySelector('button:not(:disabled)');
+    if (selected) selected.focus();
+  }
+  function closeCal(){
+    if (pop.hidden) return;
+    pop.hidden = true; calHost.classList.remove('open'); calBtn.setAttribute('aria-expanded','false');
+  }
+
+  calBtn.addEventListener('click', function(){ if (pop.hidden) openCal(); else closeCal(); });
+  dob.addEventListener('keydown', function(e){ if (e.key === 'ArrowDown'){ e.preventDefault(); openCal(); } });
+  pop.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeCal(); calBtn.focus(); } });
+  pop.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b || b.disabled) return;
+    var a = b.getAttribute('data-a');
+    if (a === 'mon'){ cal.mode = cal.mode === 'months' ? 'days' : 'months'; renderCal(); }
+    else if (a === 'yr'){ cal.mode = cal.mode === 'years' ? 'days' : 'years'; renderCal(); }
+    else if (a === 'prev' || a === 'next'){
+      var dir = a === 'prev' ? -1 : 1;
+      if (cal.mode === 'days'){
+        cal.m += dir;
+        if (cal.m < 0){ cal.m = 11; cal.y--; } else if (cal.m > 11){ cal.m = 0; cal.y++; }
+      } else if (cal.mode === 'months'){ cal.y += dir; }
+      if (cal.y === TY && cal.m > TM) cal.m = TM;
+      renderCal();
+    }
+    else if (b.hasAttribute('data-y')){
+      cal.y = +b.getAttribute('data-y');
+      if (cal.y === TY && cal.m > TM) cal.m = TM;
+      cal.mode = 'months'; renderCal();
+    }
+    else if (b.hasAttribute('data-m')){ cal.m = +b.getAttribute('data-m'); cal.mode = 'days'; renderCal(); }
+    else if (b.hasAttribute('data-d')){
+      dob.value = fmt(new Date(cal.y, cal.m, +b.getAttribute('data-d')));
+      closeCal(); dob.focus(); onField();
+    }
+  });
+
+  /* close any open dropdown / calendar when clicking elsewhere */
+  document.addEventListener('pointerdown', function(e){
+    dropdowns.forEach(function(d){ if (!d.contains(e.target)) d.close(); });
+    if (!pop.hidden && !pop.contains(e.target) && !calBtn.contains(e.target)) closeCal();
+  });
+
+  /* ---------- links ---------- */
+  $('terms').addEventListener('click', function(e){
+    e.preventDefault();
+    if (TERMS_URL) window.open(TERMS_URL, '_blank', 'noopener');
+  });
+  function requestClose(){
+    clearTimeout(returnTimer);
+    if (submissionController) submissionController.abort();
+    closeAll();
+    if (window.parent !== window) window.parent.postMessage({type:'contest-registration:close'},location.origin);
+    else if (location.protocol === 'http:' || location.protocol === 'https:') location.assign('/');
+  }
+  $('email-close').addEventListener('click',requestClose);
+  $('close').addEventListener('click',requestClose);
+  $('return-game').addEventListener('click',requestClose);
+  document.addEventListener('keydown',function(e){
+    if (e.key === 'Escape' && !e.defaultPrevented){
+      e.preventDefault();
+      if (!pop.hidden){ closeCal(); calBtn.focus(); return; }
+      if (dropdowns.some(function(d){ return d.host.classList.contains('open'); })){ closeAll(); return; }
+      requestClose();
+    }
+  });
+  window.addEventListener('pagehide',function(){ clearTimeout(returnTimer); if (submissionController) submissionController.abort(); });
+
+  /* ---------- validation ---------- */
+  var msg = $('msg');
+  var wrappers = ['w-civ','w-fn','w-ln','w-ph','w-dob','w-co','w-c1','w-c2'];
+  function clearBad(){ wrappers.forEach(function(id){ $(id).classList.remove('bad'); }); }
+  function fail(id, text, focusEl){
+    clearBad(); $(id).classList.add('bad');
+    msg.className = 'msg'; msg.textContent = text; msg.hidden = false; layout();
+    if (focusEl) focusEl.focus();
+    return false;
+  }
+
+  $('f2').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (submitting || completed) return;
+    closeAll();
+    if (!ddCiv.value) return fail('w-civ','Please select your civility.',ddCiv.btn);
+    if (!$('fn').value.trim()) return fail('w-fn','Please enter your first name.',$('fn'));
+    if (!$('ln').value.trim()) return fail('w-ln','Please enter your last name.',$('ln'));
+    var ph = $('ph').value.trim();
+    var digits = ph.replace(/\D/g,'');
+    if (!ph) return fail('w-ph','Please enter your phone number.',$('ph'));
+    if (!/^\+?[0-9 ()\-.]+$/.test(ph) || digits.length < 6 || digits.length > 15)
+      return fail('w-ph','Please enter a valid phone number.',$('ph'));
+    var dv = dob.value.trim();
+    if (!dv) return fail('w-dob','Please enter your date of birth.',dob);
+    var r = parseDob(dv);
+    if (!r || r > today || r.getFullYear() < MIN_Y) return fail('w-dob','Please enter a valid date of birth (DD/MM/YYYY).',dob);
+    if (ageOf(r) < 18) return fail('w-dob','You must be at least 18 years old to participate.',dob);
+    if (!ddCo.value) return fail('w-co','Please select your country.',ddCo.btn);
+    if (!$('c1').checked) return fail('w-c1','Please accept the Terms and Conditions to continue.',$('c1'));
+    if (!$('c2').checked) return fail('w-c2','Please confirm that you are 18 years or older.',$('c2'));
+    clearBad(); msg.textContent = ''; msg.hidden = true;
+    var form = $('f2'), button = $('go2'), label = button.querySelector('.lbl'), originalLabel = label.innerHTML;
+    var payload = {
+      email: $('email').value.trim(), civility: ddCiv.value,
+      firstName: $('fn').value.trim(), lastName: $('ln').value.trim(),
+      phone: ph.charAt(0) === '+' ? '+' + digits : ddCc.value + digits,
+      birthDate: r.getFullYear() + '-' + pad(r.getMonth()+1) + '-' + pad(r.getDate()),
+      country: ddCo.value, memberConsent: $('c1').checked, contestConsent: $('c1').checked
+    };
+    submitting = true; submissionController = new AbortController();
+    var timeout = setTimeout(function(){ submissionController.abort(); },30000);
+    var controls = Array.from(form.querySelectorAll('input,button')).map(function(control){ return {node:control,disabled:control.disabled}; });
+    controls.forEach(function(control){ control.node.disabled = true; });
+    form.setAttribute('aria-busy','true'); label.textContent = 'Submitting…'; layout();
+    try{
+      var response = await fetch('/api/member',{
+        method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload), signal:submissionController.signal
+      });
+      var result = await response.json().catch(function(){ return {}; });
+      if (!response.ok) throw new Error(result.message || 'Membership could not be saved. Please try again.');
+      if (result.member !== true) throw new Error('Membership could not be confirmed. Please try again.');
+      completed = true; form.hidden = true; $('membership-success').hidden = false;
+      layout(); $('membership-success').focus();
+      if (window.parent !== window){
+        window.parent.postMessage({type:'contest-registration:complete',player:result},location.origin);
+        returnTimer = setTimeout(requestClose,3200);
+      }
+    }catch(issue){
+      msg.className = 'msg'; msg.hidden = false;
+      msg.textContent = issue.name === 'AbortError' ? 'The request timed out. Please try again.' : issue.message || 'Membership could not be saved. Please try again.';
+      layout();
+    }finally{
+      clearTimeout(timeout); submissionController = null; submitting = false;
+      controls.forEach(function(control){ control.node.disabled = control.disabled; });
+      form.removeAttribute('aria-busy'); label.innerHTML = originalLabel;
+      layout();
+    }
+  });
+
+  /* clear error state while editing */
+  ['fn','ln','ph','dob'].forEach(function(id){ $(id).addEventListener('input', onField); });
+  ['c1','c2'].forEach(function(id){ $(id).addEventListener('change', onField); });
+
+  layout();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+})();
+</script>
+</body>
+</html>

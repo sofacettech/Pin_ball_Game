@@ -45,12 +45,14 @@ async function api(request,response,path){
  if(request.method==='POST')sameOrigin(request);
  const [id,p]=player(request,response);
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
- if(path==='/api/player/name'&&request.method==='POST'){const data=await body(request),value=name(data.name);commit(()=>{p.name=value});return json(response,200,publicPlayer(p))}
  if(path==='/api/member'&&request.method==='POST'){
   const data=await body(request);if(data.memberConsent!==true||data.contestConsent!==true)fail(400,'Please accept the membership and contest terms.');
   const fullName=name(name(data.firstName)+' '+name(data.lastName));const normalized=phone(data.phone);
   if(typeof data.email!=='string'||data.email.length>254||!/^\S+@\S+\.\S+$/.test(data.email))fail(400,'Please enter a valid email address.');
   if(typeof data.birthDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate)||!Number.isFinite(Date.parse(data.birthDate))||new Date(data.birthDate).toISOString().slice(0,10)!==data.birthDate||data.birthDate<'1900-01-01'||data.birthDate>new Date().toISOString().slice(0,10))fail(400,'Please enter a valid date of birth.');
+  const born=new Date(data.birthDate+'T00:00:00Z'),now=new Date();let age=now.getUTCFullYear()-born.getUTCFullYear();if(now.getUTCMonth()<born.getUTCMonth()||now.getUTCMonth()===born.getUTCMonth()&&now.getUTCDate()<born.getUTCDate())age--;if(age<18)fail(400,'You must be at least 18 years old to participate.');
+  if(typeof data.country!=='string'||! /^[A-Z]{2}$/.test(data.country))fail(400,'Please select your country.');
+  if(!['Mr','Ms','Others'].includes(data.civility))fail(400,'Please select your civility.');
   const result=await authenticatePhone(normalized);
   // The upstream API creates a phone-only customer. Other details stay in this game's private profile.
   commit(()=>{p.name=fullName;p.profile={customerId:result.customer_id,phone:normalized,email:data.email,firstName:data.firstName,lastName:data.lastName,birthDate:data.birthDate,country:String(data.country||'').slice(0,2),civility:String(data.civility||'').slice(0,20),memberConsent:true,contestConsent:true,registeredAt:new Date().toISOString()}});
@@ -85,18 +87,21 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const vite=dev?await (await import('vite')).createServer({root,server:{middlewareMode:true},appType:'spa'}):null;
+const privateFiles=['server.mjs','rewards.mjs','verify-game.mjs','replay-worker.mjs'];
+const vite=dev?await (await import('vite')).createServer({root,server:{middlewareMode:true,fs:{deny:['.env','.env.*','*.{crt,pem}','**/.git/**','**/data/**',...privateFiles.map(file=>'**/'+file)]}},appType:'spa'}):null;
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2'};
 const dist=resolve(root,'dist');
 const server=createServer(async(request,response)=>{
  try{const path=new URL(request.url,'http://localhost').pathname;
+  const segments=decodeURIComponent(path).replaceAll('\\','/').split('/').filter(Boolean).map(part=>part.toLowerCase().split(':')[0].replace(/[ .]+$/g,''));
+  if(segments.some(part=>(part.startsWith('.')&&part!=='.vite')||part==='data'||privateFiles.includes(part)))fail(404,'File not found.');
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(vite)return vite.middlewares(request,response);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
   let target=resolve(dist,'.'+decodeURIComponent(path));if(!target.startsWith(dist+sep)&&target!==dist)fail(403,'Forbidden.');
   if(path==='/')target=resolve(dist,'index.html');
   if(!(await stat(target).catch(()=>null))?.isFile())fail(404,'File not found.');
-  const data=await readFile(target);response.writeHead(200,{'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':path.startsWith('/assets/')?'public, max-age=3600':'no-cache'});response.end(request.method==='HEAD'?undefined:data);
+  const data=await readFile(target);response.writeHead(200,{'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':path.startsWith('/assets/')&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'});response.end(request.method==='HEAD'?undefined:data);
  }catch(error){if(!response.headersSent)json(response,error instanceof ServiceError?error.status:500,{message:error instanceof ServiceError?error.message:'The service could not complete this request. Please try again.'});else response.end()}
 });
 const port=Number(process.env.PORT||5173),host=process.env.HOST||'127.0.0.1';server.listen(port,host,()=>console.log(`FACET pinball: http://${host}:${port}${dev?' (development)':''}`));
