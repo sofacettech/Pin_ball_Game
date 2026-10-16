@@ -72,15 +72,15 @@ The package includes compiled browser files and editable game source. Static-onl
 
 ## Railway deployments
 
-Production runs in the existing **so-facet / facet-pinball / production** service at https://shopsofacet.com. The existing `/data` volume stores players and scores; keep the service at one replica.
+The configured custom domain `shopsofacet.com` is awaiting DNS setup. Production runs in the existing **so-facet / facet-pinball / production** service at https://facet-pinball-production.up.railway.app. The existing `/data` volume stores players and scores; keep the service at one replica.
 
 The `Railway CI/CD` GitHub Actions workflow runs on pull requests and pushes to `main`. It checks out Git LFS assets, installs Node.js 26 dependencies, checks TypeScript, builds the game, and smoke-tests the server, game session API, public assets, and video byte ranges. Successful pushes to `main` then deploy to the existing Railway service, wait for that deployment to become healthy, and check the public website. You can also run the workflow manually on `main` from GitHub Actions.
 
-The repository's `RAILWAY_TOKEN` Actions secret must contain a Railway token scoped to this project's production environment. Rotate it in Railway and update that GitHub secret when needed. No token belongs in source control. The target project, environment, and service IDs are recorded in `.github/workflows/railway.yml`; `railway.json` records the build, start, health-check, and restart settings. GitHub Actions owns automatic deployment, so a second native Railway GitHub autodeploy is unnecessary.
+The repository's `RAILWAY_TOKEN` Actions secret must contain a Railway token scoped to this project's production environment. Rotate it in Railway and update that GitHub secret when needed. No token belongs in source control. The target project, environment, and service IDs are recorded in `.github/workflows/railway.yml`; Railway service settings specify `npm run build`, `npm start`, the `/health` check, and restart on failure. GitHub Actions owns automatic deployment, so a second native Railway GitHub autodeploy is unnecessary.
 
 The deploy job uploads the video's small Git LFS pointer to stay below Railway's upload-size limit. During the build, `scripts/materialize-video.mjs` downloads the video from this public repository and verifies its committed size and SHA-256 before publishing it. A normal local build or CI check with LFS already checked out uses the existing video. If this repository becomes private, provide an authenticated asset download before deploying.
 
-Railway variables include `HOST=0.0.0.0`, `PORT=8080`, `APP_ORIGIN=https://shopsofacet.com`, `DATA_DIR=/data`, and `RAILPACK_NODE_VERSION=26`. Rewards credentials remain in Railway. `/health` is a read-only readiness endpoint that does not create player records.
+Railway variables include `HOST=0.0.0.0`, `PORT=8080`, `APP_ORIGIN=https://facet-pinball-production.up.railway.app`, `DATA_DIR=/data`, and `RAILPACK_NODE_VERSION=26`. Rewards credentials remain in Railway. `/health` is a read-only readiness endpoint that does not create player records.
 
 To run the same local checks:
 
@@ -90,7 +90,7 @@ npm run build
 npm run smoke
 ```
 
-`npm run smoke -- https://shopsofacet.com` checks the live site's readiness, landing and game assets, video streaming, and private-file protection without creating game sessions. The local smoke test uses temporary player storage that is removed afterward.
+`npm run smoke -- https://facet-pinball-production.up.railway.app` checks the live site's readiness, landing and game assets, video streaming, and private-file protection without creating game sessions. The local smoke test uses temporary player storage that is removed afterward.
 
 ## Environment and membership
 

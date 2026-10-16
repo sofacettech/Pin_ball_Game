@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 25
     environment:
       name: production
-      url: https://shopsofacet.com
+      url: https://facet-pinball-production.up.railway.app
     env:
       RAILWAY_PROJECT_ID: e9732dcb-6399-4e69-b7d1-75b7ac86e36f
       RAILWAY_ENVIRONMENT_ID: 968c8083-613f-441f-ba7f-8ed28ec7342e
@@ -59,4 +59,4 @@ jobs:
           railway up --ci --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service "$RAILWAY_SERVICE_ID" --message "$GITHUB_SHA"
           node scripts/wait-for-railway.mjs
       - name: Check the public website and streamed video
-        run: npm run smoke -- https://shopsofacet.com
+        run: npm run smoke -- https://facet-pinball-production.up.railway.app
