@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "build": "tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs",
+    "build": "node scripts/materialize-video.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs",
     "smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {

@@ -47,8 +47,6 @@ jobs:
       RAILWAY_SERVICE_ID: b83c4461-687d-499c-a7ff-c650e67bd7f8
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
