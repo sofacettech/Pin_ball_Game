@@ -94,6 +94,7 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
 const server=createServer(async(request,response)=>{
  try{
   const path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
+  if(path==='/health'&&(request.method==='GET'||request.method==='HEAD'))return json(response,200,{status:'ok'});
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
   const relative=path==='/'?'index.html':path.slice(1),parts=relative.split('/');

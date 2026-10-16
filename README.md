@@ -70,6 +70,26 @@ This combined version needs **Node.js hosting**, because verified scores, player
 
 The package includes compiled browser files and editable game source. Static-only hosting can show the front end, but it will not provide working score verification, membership and leaderboard APIs; deploy the Node server for the combined experience.
 
+## Railway deployments
+
+Production runs in the existing **so-facet / facet-pinball / production** service at https://shopsofacet.com. The existing `/data` volume stores players and scores; keep the service at one replica.
+
+The `Railway CI/CD` GitHub Actions workflow runs on pull requests and pushes to `main`. It checks out Git LFS assets, installs Node.js 26 dependencies, checks TypeScript, builds the game, and smoke-tests the server, game session API, public assets, and video byte ranges. Successful pushes to `main` then deploy to the existing Railway service, wait for that deployment to become healthy, and check the public website. You can also run the workflow manually on `main` from GitHub Actions.
+
+The repository's `RAILWAY_TOKEN` Actions secret contains a Railway token scoped to this project's production environment. Rotate it in Railway and update that GitHub secret when needed. No token belongs in source control. The target project, environment, and service IDs are recorded in `.github/workflows/railway.yml`; `railway.json` records the build, start, health-check, and restart settings. GitHub Actions owns automatic deployment, so a second native Railway GitHub autodeploy is unnecessary.
+
+Railway variables include `HOST=0.0.0.0`, `PORT=8080`, `APP_ORIGIN=https://shopsofacet.com`, `DATA_DIR=/data`, and `RAILPACK_NODE_VERSION=26`. Rewards credentials remain in Railway. `/health` is a read-only readiness endpoint that does not create player records.
+
+To run the same local checks:
+
+```sh
+npm ci
+npm run build
+npm run smoke
+```
+
+`npm run smoke -- https://shopsofacet.com` checks the live site's readiness, landing and game assets, video streaming, and private-file protection without creating game sessions. The local smoke test uses temporary player storage that is removed afterward.
+
 ## Environment and membership
 
 `.env.example` contains empty placeholders, not credentials. Real `.env` files are ignored by Git. Put production values in your hosting service's environment settings.
@@ -98,6 +118,6 @@ The Desktop delivery excludes password/access-gate pages, Blender `.blend` files
 
 Local browser checks cover the final-frame fade and game handoff, reversing during the fade, direct Play now navigation, game Play/settings, a verified game-session start, replay-worker validation, phone layout, MP4 byte ranges and blocked private-file routes. The game source and runtime assets were copied from the current port-5173 project. Existing animation/video files remain unchanged.
 
-Nothing has been pushed or deployed. Physical phone/iPad testing, final audio balance and the live membership integration with real credentials have not been checked in this combined package.
+Physical phone/iPad testing, final audio balance and the live membership integration with real credentials are separate from the automated deployment checks.
 
 Official GitHub references: [large-file limits](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github), [Git LFS setup](https://docs.github.com/en/repositories/working-with-files/managing-large-files/configuring-git-large-file-storage), [LFS and GitHub Pages](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage).

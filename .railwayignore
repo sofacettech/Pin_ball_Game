@@ -1,0 +1,14 @@
+.git/
+.github/
+.codebase-memory/
+node_modules/
+dist/
+data/
+work/
+.playwright-cli/
+.env
+.env.*
+*.log
+*.blend
+*.blend1
+.DS_Store
