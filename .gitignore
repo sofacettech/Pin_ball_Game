@@ -1,6 +1,14 @@
+.DS_Store
+Thumbs.db
 node_modules/
-dist/
+data/
+__pycache__/
+*.py[cod]
+*.log
 .env
 .env.*
 !.env.example
-data/
+work/
+.playwright-cli/
+*.blend
+*.blend1

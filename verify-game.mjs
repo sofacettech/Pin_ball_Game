@@ -1,6 +1,6 @@
 import {Worker} from 'node:worker_threads';
 import {ServiceError} from './rewards.mjs';
-import {MAX_GAME_TICKS,MAX_INPUT_RUNS} from './src/simulation.ts';
+import {MAX_GAME_TICKS,MAX_INPUT_RUNS} from './game-source/src/simulation.ts';
 export function validateInputs(inputs){
  if(!Array.isArray(inputs)||!inputs.length||inputs.length>MAX_INPUT_RUNS)throw new ServiceError(400,'A valid gameplay replay is required.');
  let ticks=0;for(const item of inputs){if(!Array.isArray(item)||item.length!==2||!Number.isInteger(item[0])||item[0]<0||item[0]>15||!Number.isInteger(item[1])||item[1]<1||item[1]>MAX_GAME_TICKS)throw new ServiceError(400,'The gameplay controls are invalid.');ticks+=item[1];if(ticks>MAX_GAME_TICKS)throw new ServiceError(400,'This game exceeds the 30-minute verification limit.');}

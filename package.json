@@ -1,47 +1,22 @@
 {
-  "name": "facet-pinball",
+  "name": "sofacet-website",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env server.mjs --dev",
-    "build": "tsc --noEmit && vite build",
-    "preview": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --experimental-strip-types tests/physics.test.ts && node --experimental-strip-types tests/bumper.test.ts && node --experimental-strip-types tests/ball-spring.test.ts && node --experimental-strip-types tests/gameplay-update.test.ts && node --experimental-strip-types tests/rail-physics.test.ts && node --experimental-strip-types tests/pocket-drain.test.ts && node --experimental-strip-types tests/launch-rail-entry.test.ts && node --experimental-strip-types tests/game-polish.test.ts && node --experimental-transform-types tests/scoreboard.test.ts && node --experimental-strip-types tests/camera-right-pocket.test.ts && node --experimental-strip-types tests/rapid-rebound.test.ts && node --experimental-strip-types tests/lane-roll.test.ts && node --experimental-strip-types tests/triangle-update.test.ts",
-    "test:browser": "node tests/browser.test.mjs",
-    "test:assets": "node tests/validate-assets.mjs",
-    "test:production": "node tests/production.test.mjs",
-    "test:ball-browser": "node tests/ball-spring.browser.mjs",
-    "test:gameplay-browser": "node tests/gameplay-update.browser.mjs",
-    "test:rail-browser": "node tests/rail.browser.mjs",
-    "test:pocket-browser": "node tests/pocket-drain.browser.mjs",
-    "test:polish-browser": "node run-polish-browser.mjs",
-    "test:teleport-browser": "node tests/teleport.browser.mjs",
-    "test:rail-approved": "node --experimental-strip-types tests/rail-approval.test.ts",
-    "test:visual-browser": "node tests/visual-quality.browser.mjs",
-    "test:rendering": "node tests/rendering-integrity.browser.mjs",
-    "test:visual-sustained": "node tests/visual-sustained.browser.mjs",
-    "test:border-glow": "node tests/border-glow.browser.mjs",
-    "test:camera-pocket": "node --experimental-strip-types tests/camera-right-pocket.test.ts",
-    "test:rapid-rebounds": "node --experimental-strip-types tests/rapid-rebound.test.ts && node --experimental-strip-types tests/lane-roll.test.ts",
-    "test:lane": "node --experimental-strip-types tests/lane-roll.test.ts",
-    "test:flow": "node --experimental-strip-types tests/flow.test.ts",
-    "test:spacing": "node --experimental-strip-types tests/spacing.test.ts",
-    "test:triangle": "node --experimental-strip-types tests/triangle-update.test.ts",
-    "test:menu-ring-camera": "node --experimental-strip-types tests/menu-ring-camera.test.ts",
-    "test:menu-ring-camera-browser": "node tests/menu-ring-camera.browser.mjs",
-    "test:cave": "node --experimental-strip-types tests/cave-charge.test.ts && node --experimental-strip-types tests/cave-approach.test.ts && node tests/cave-assets.test.mjs",
-    "test:cave:browser": "node run-cave-browser.mjs",
-    "start": "node --env-file-if-exists=.env server.mjs"
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "build": "tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
     "three": "0.186.1"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
     "@types/three": "0.186.0",
     "typescript": "7.0.2",
     "vite": "8.3.2"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

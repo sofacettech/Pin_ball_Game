@@ -1,110 +1,48 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>FACET — Pinball</title></head>
-<body>
- <header>
-  <div class="navbar-backdrop" aria-hidden="true"><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></div>
-  <a class="brand" href="/" aria-label="So/Facet pinball home"><img src="/white_logo.svg" alt="" width="58" height="48"><span>So/Facet</span></a>
-  <nav aria-label="Game controls">
-   <div id="navbar-extras" class="navbar-extras"><button id="member">Become a member</button><button id="pause" disabled>Pause</button></div>
-   <button id="restart" class="nav-icon" type="button" aria-label="Restart game" title="Restart game" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg></button>
-   <button id="settings" class="nav-icon" type="button" aria-label="Open settings and pause game" title="Settings" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 3 3-1 3 5-2 2 2 2-3 5-3-1-1 3H9l-1-3-3 1-3-5 2-2-2-2 3-5 3 1Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-   <div id="profile-navigation" class="profile-navigation">
-    <button id="profile" class="nav-icon" type="button" aria-label="Profile" title="Profile" aria-controls="profile-menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></button>
-    <section id="profile-menu" class="profile-menu" aria-label="Profile options" hidden>
-     <button id="profile-close" type="button" aria-label="Close profile options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-     <h2 id="profile-name">Your profile</h2><p id="profile-status">Checking your membership…</p>
-     <button id="profile-member" type="button" hidden>Become a member</button><button id="profile-retry" type="button" hidden>Try again</button>
-    </section>
-   </div>
-  </nav>
- </header>
- <main id="stage" class="showing-play"><div class="hud" aria-label="Game status"><span>Score <strong id="score">0</strong></span><span>Lives <span id="lives" class="lives-dots" role="img" aria-label="3 of 3 lives remaining"><span class="life-dot" aria-hidden="true"></span><span class="life-dot" aria-hidden="true"></span><span class="life-dot" aria-hidden="true"></span></span></span></div><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span></div>
- <aside id="neon-scoreboard" aria-label="Your score and personal best" hidden>
-  <figure class="neon-scoreboard-float"><div class="neon-scoreboard-face">
-   <template id="neon-scoreboard-artwork">
-    <img class="neon-scoreboard-depth" src="/scoreboard/scoreboard-reference.png" width="1092" height="1440" alt="" aria-hidden="true">
-    <img class="neon-scoreboard-art" src="/scoreboard/scoreboard-reference.png" width="1092" height="1440" alt="" aria-hidden="true">
-   </template>
-   <span class="neon-scoreboard-mask neon-scoreboard-mask--score" aria-hidden="true"></span><span class="neon-scoreboard-mask neon-scoreboard-mask--best" aria-hidden="true"></span>
-   <output id="neon-score" class="neon-counter neon-counter--score" role="img" aria-live="off" aria-label="Score: 0"></output>
-   <output id="neon-high-score" class="neon-counter neon-counter--best" role="img" aria-live="off" aria-label="High score: No saved score available"></output>
-  </div></figure>
- </aside>
- <div id="loading" role="status"><p>Preparing your table</p><progress max="100" value="0" aria-label="Model loading"></progress><small id="loading-detail">Loading the Blender artwork…</small></div>
- <div id="error" role="alert" hidden><p>The table could not load.</p><small id="error-detail"></small><button onclick="location.reload()">Try again</button></div>
- <div id="action"><p id="message" aria-live="polite">Your table, ready to play.</p><button id="start" disabled>Play</button></div>
- <div id="touch-hints" class="touch-controls" aria-hidden="true" hidden><span class="touch-left">Left paddle</span><span class="touch-right">Right paddle</span></div>
- <button id="touch-launch" class="touch-controls" type="button" aria-pressed="false" aria-label="Hold to charge the spring, release to launch" hidden>Hold to launch</button>
- <div class="charge" role="progressbar" aria-label="Spring charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="charge-fill"></span></div>
- </main>
- <dialog id="game-menu" aria-labelledby="menu-title" aria-describedby="menu-description">
-  <button id="menu-close" type="button" aria-label="Close settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><h2 id="menu-title">Settings</h2><p id="menu-description">Game paused. Your progress is saved here.</p>
-  <fieldset><legend>Game settings</legend><label for="camera">Camera</label><div class="select-control"><select id="camera"><option value="ball" selected>Ball Focused</option><option value="complete">Complete Game View</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div><label for="quality">Visual quality</label><div class="select-control"><select id="quality"><option value="auto">Quality: Auto</option><option value="full">Full resolution</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div><button id="inspect" disabled>Inspect table</button></fieldset>
-  <fieldset class="sound-settings"><legend>Sound settings</legend><div class="volume-label"><label for="volume">Game volume</label><output id="volume-value" for="volume">100%</output></div><input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Game volume"><button id="sound" type="button" aria-pressed="false" aria-label="Mute game sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-muted" d="m16 9 5 6m0-6-5 6"/></svg><span id="sound-label">Mute</span></button></fieldset>
-  <section class="how-to-play"><button id="how-to-play-toggle" type="button" aria-expanded="false" aria-controls="how-to-play-controls">How to play<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="controls-reveal" id="how-to-play-controls" inert><div class="controls-clip"><div class="controls-guide"><div class="touch-guide"><span>Touch and hold the left half of the table for the left paddle.</span><span>Touch and hold the right half for the right paddle. Use two fingers for both.</span><span>Hold the launch button to charge; release to launch.</span><span>Open Settings to pause or resume the game.</span></div><span><kbd>A</kbd> / <kbd>←</kbd> Left paddle</span><span><kbd>D</kbd> / <kbd>→</kbd> Right paddle</span><span><kbd>Space</kbd> Hold to charge</span><span><kbd>Esc</kbd> / <kbd>P</kbd> Pause</span></div></div></div></section>
-  <button id="menu-member" type="button">Membership</button>
-  <button id="resume" autofocus>Resume game</button>
- </dialog>
- <dialog id="registration-dialog" aria-label="Become a So/Facet member">
-  <iframe id="registration-frame" title="So/Facet membership registration"></iframe>
- </dialog>
-
- <dialog id="leaderboard-dialog" aria-labelledby="leaderboard-title" aria-describedby="leaderboard-summary">
-  <div class="leaderboard-panel">
-   <svg class="artwork artwork--desktop" viewBox="0 0 1456 1024" aria-hidden="true">
-          <title id="art-title">Floating purple and lime futuristic frame</title>
-          <defs>
-            <mask id="object-silhouette" maskUnits="userSpaceOnUse" x="0" y="0" width="1456" height="1024" style="mask-type:luminance">
-              <rect width="1456" height="1024" fill="black"/>
-              <path id="frame-outline" fill="white" d="M196 104
-                L270 36 L370 36 L400 57 L1057 57 L1083 36 L1169 36 L1247 104
-                L1247 195 L1211 267 L1212 608 L1244 636 L1280 625 L1310 650
-                L1336 784 L1295 833 L1076 915 L1051 902 L859 968 L844 967
-                Q832 965 832 954 L832 928 Q832 920 842 914 L1012 839
-                Q1027 831 1040 837 L1048 824 L1174 764 L1163 780
-                L1037 786 L419 786 L287 775 L280 764 L403 822 L417 837
-                L435 838 L605 905 Q622 912 624 922 L624 950 Q624 961 614 966
-                L600 968 L410 901 L402 915 L376 915 L147 837
-                L113 786 L131 650 L159 630 L197 623 L239 640 L239 275
-                L197 225 Z"/>
-            </mask>
-            <mask id="frame-depth" maskUnits="userSpaceOnUse" x="0" y="0" width="1456" height="1024" style="mask-type:luminance">
-              <rect width="1456" height="1024" fill="black"/>
-              <use href="#frame-outline"/>
-              <!-- The source already contains the claws' bevels and thickness. -->
-              <rect x="400" y="831" width="227" height="142" fill="black"/>
-              <rect x="829" y="831" width="230" height="142" fill="black"/>
-            </mask>
-          <g id="leaderboard-frame-art">
-          <g class="extrusion--far" transform="translate(0 20)">
-            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
-          </g>
-          <g class="extrusion--mid" transform="translate(0 13)">
-            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
-          </g>
-          <g class="extrusion--near" transform="translate(0 7)">
-            <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
-          </g>
-          <image class="source-image" href="/leaderboard/frame.jpeg" mask="url(#object-silhouette)" preserveAspectRatio="none"/>
-          </g>
-          </defs>
-          <use href="#leaderboard-frame-art"/>
-        </svg>
-   <svg class="artwork artwork--mobile" viewBox="0 0 1456 2200" aria-hidden="true">
-    <svg x="0" y="0" width="1456" height="334" viewBox="0 0 1456 334" preserveAspectRatio="none" overflow="hidden"><use href="#leaderboard-frame-art"/></svg>
-    <svg x="0" y="334" width="1456" height="1545" viewBox="0 334 1456 369" preserveAspectRatio="none" overflow="hidden"><use href="#leaderboard-frame-art"/></svg>
-    <svg x="0" y="1879" width="1456" height="321" viewBox="0 703 1456 321" preserveAspectRatio="none" overflow="hidden"><use href="#leaderboard-frame-art"/></svg>
-   </svg>
-   <h2 id="leaderboard-title" class="leaderboard-heading"><img src="/leaderboard/heading.png" alt="Leaderboard" width="666" height="123"></h2>
-   <button id="leaderboard-close" class="board-close" aria-label="Close leaderboard" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-   <table class="leaderboard-table"><caption id="leaderboard-caption" class="sr-only">Best pinball scores</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
-   <div class="leaderboard-note"><p id="leaderboard-summary"></p><p id="leaderboard-status" role="status"></p><button id="leaderboard-retry" hidden>Try again</button></div>
-  </div>
-  <div class="leaderboard-actions"><button id="leaderboard-play">Play again</button></div>
- </dialog>
- <section id="inspection" aria-label="Reference comparison" hidden><label>View <select id="view"><option value="0">Gameplay area</option><option value="1">Launcher</option><option value="2">Rail</option><option value="3">Scoreboard</option></select></label><label>Blender overlay <input id="overlay" type="range" min="0" max="100" value="0"></label><output id="metrics">Measuring frames…</output></section>
-
- <script type="module" src="/src/main.ts"></script>
-</body></html>
-
-
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1022">
+  <title>SOFACET — Enter the world</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css?v=pinball-handoff">
+  <link rel="preload" as="image" href="./assets/opening-poster.webp">
+  <script type="importmap">
+    {"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/jsm/"}}
+  </script>
+</head>
+<body data-phase="opening">
+  <main aria-label="SOFACET cinematic experience">
+    <div id="scene-frame">
+      <img id="background" src="./assets/idle-background.webp" width="1920" height="1080" alt="Purple SOFACET building and illuminated walkway at night.">
+      <canvas id="ball-canvas" aria-label="Interactive SOFACET ball. Hover over a plate to lift it and its neighbours."></canvas>
+      <img id="hold-frame" src="./assets/handoff.webp" width="1920" height="1080" alt="" aria-hidden="true">
+      <canvas id="journey-frame" width="1920" height="1080" aria-label="Scroll down to follow the ball; scroll up to move back." hidden></canvas>
+      <video id="opening" src="./assets/clip-1.mp4" poster="./assets/opening-poster.webp" muted playsinline preload="auto" aria-label="SOFACET opening animation"></video>
+    </div>
+    <div class="wordmark" aria-hidden="true">SOFACET</div>
+    <header class="site-navigation">
+      <a class="play-now" href="./play.html">Play now</a>
+      <details id="site-menu">
+        <summary aria-label="Navigation menu"><span></span><span></span><span></span></summary>
+        <nav aria-label="Main navigation">
+          <a href="./about.html">About</a>
+          <a href="./privacy.html">Privacy Policies</a>
+        </nav>
+      </details>
+    </header>
+    <p id="status" role="status">Loading experience…</p>
+    <button id="enter" hidden>Enter SOFACET <span aria-hidden="true">↗</span></button>
+    <p id="hint" aria-live="polite"></p>
+    <div id="progress" aria-hidden="true"></div>
+  </main>
+  <div id="blackout" aria-hidden="true"></div>
+  <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
+  <div id="scroll-space" aria-hidden="true"></div>
+  <video id="journey" src="./assets/journey-through-clip6.mp4" muted playsinline preload="metadata" hidden></video>
+  <noscript>This experience needs JavaScript to play the opening and explore the ball.</noscript>
+  <script type="module" src="./viewer.js?v=pinball-handoff"></script>
+  <script type="module" src="./navigation.js"></script>
+</body>
+</html>

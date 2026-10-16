@@ -1,8 +1,8 @@
 import {parentPort,workerData} from 'node:worker_threads';
 import {readFileSync} from 'node:fs';
-import {PinballPhysics} from './src/physics.ts';
-import {unpackInput} from './src/simulation.ts';
-const assets=new URL('./public/assets/',import.meta.url);
+import {PinballPhysics} from './game-source/src/physics.ts';
+import {unpackInput} from './game-source/src/simulation.ts';
+const assets=new URL('./assets/',import.meta.url);
 const json=name=>JSON.parse(readFileSync(new URL(name,assets),'utf8'));
 const binary=name=>{const buffer=readFileSync(new URL(name,assets));return buffer.buffer.slice(buffer.byteOffset,buffer.byteOffset+buffer.byteLength)};
 let physics;

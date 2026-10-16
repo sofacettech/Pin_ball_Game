@@ -1,14 +1,14 @@
 import {createServer} from 'node:http';
 import {randomBytes,randomUUID,timingSafeEqual,createHash} from 'node:crypto';
-import {mkdirSync,existsSync,readFileSync,writeFileSync,renameSync} from 'node:fs';
-import {readFile,stat} from 'node:fs/promises';
+import {createReadStream,mkdirSync,existsSync,readFileSync,writeFileSync,renameSync} from 'node:fs';
+import {stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ServiceError,authenticatePhone,rewardsLeaderboard,awardPoints} from './rewards.mjs';
 import {validateInputs,verifyGame} from './verify-game.mjs';
-import {REPLAY_VERSION} from './src/simulation.ts';
+import {REPLAY_VERSION} from './game-source/src/simulation.ts';
 
-const root=fileURLToPath(new URL('.',import.meta.url)),dev=process.argv.includes('--dev');
+const root=resolve(fileURLToPath(new URL('.',import.meta.url)));
 const dir=resolve(process.env.DATA_DIR||resolve(root,'data'));mkdirSync(dir,{recursive:true});
 const file=resolve(dir,'players.json');
 let store=existsSync(file)?JSON.parse(readFileSync(file,'utf8')):{players:{},games:{}};
@@ -19,11 +19,11 @@ function json(response,status,data){response.writeHead(status,{'Content-Type':'a
 async function body(request,limit=8192){let data='';for await(const chunk of request){data+=chunk;if(Buffer.byteLength(data)>limit)fail(413,'The request is too large.')}try{return JSON.parse(data||'{}')}catch{fail(400,'Please send valid JSON.')}}
 const publicPlayer=p=>({display_name:p.name,member:!!p.profile,best_score:p.bestVerified?p.best:null});
 function player(request,response){
- const id=/(?:^|;\s*)facet_player=([a-f0-9]{64})(?:;|$)/.exec(request.headers.cookie||'')?.[1];
+ const id=/(?:^|;\s*)sofacet_pinball_player=([a-f0-9]{64})(?:;|$)/.exec(request.headers.cookie||'')?.[1];
  if(id&&store.players[id])return [id,store.players[id]];
  const fresh=randomBytes(32).toString('hex');
  commit(()=>{store.players[fresh]={name:'Player '+fresh.slice(0,4).toUpperCase()}});
- response.setHeader('Set-Cookie',`facet_player=${fresh}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`);
+ response.setHeader('Set-Cookie',`sofacet_pinball_player=${fresh}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`);
  return [fresh,store.players[fresh]];
 }
 function name(value){if(typeof value!=='string')fail(400,'Please enter your player name.');const result=value.trim().replace(/\s+/g,' ');if(!result||result.length>40||/[\x00-\x1f\x7f]/.test(result))fail(400,'Use a player name between 1 and 40 characters.');return result}
@@ -32,11 +32,11 @@ const requests=new Map();
 function rateLimit(request){const now=Date.now(),key=request.socket.remoteAddress;for(const [ip,bucket] of requests)if(now>bucket.until)requests.delete(ip);const bucket=requests.get(key)||{count:0,until:now+60000};bucket.count++;requests.set(key,bucket);if(bucket.count>120)fail(429,'Too many requests. Please wait a minute and try again.')}
 function sameOrigin(request){const expected=process.env.APP_ORIGIN||'http://'+request.headers.host;if(request.headers.origin!==expected)fail(403,'Please submit this request from the game.');if(!request.headers['content-type']?.startsWith('application/json'))fail(415,'Please send JSON.');}
 function trusted(request){const secret=process.env.REWARDS_ADMIN_SECRET;if(!secret)fail(503,'Redeemable rewards are disabled.');const actual=Buffer.from(request.headers.authorization||''),expected=Buffer.from('Bearer '+secret);if(actual.length!==expected.length||!timingSafeEqual(actual,expected))fail(401,'Unauthorized.');}
-function gameBoard(id){
+function gameBoard(id,locked){
  const ranked=Object.entries(store.players).filter(([,p])=>p.bestVerified===true&&Number.isSafeInteger(p.best)).sort(([a,p],[b,q])=>q.best-p.best||p.bestAt-q.bestAt||a.localeCompare(b));
- const entry=([key,p],index)=>({rank:index+1,display_name:p.name,points:p.best,is_you:key===id});
+ const entry=([key,p],index)=>({rank:index+1,display_name:locked?'Locked':p.name,points:p.best,is_you:key===id});
  const index=ranked.findIndex(([key])=>key===id);
- return {mode:'game',entries:ranked.slice(0,100).map(entry),me:index<0?null:entry(ranked[index],index)};
+ return {mode:'game',locked,entries:ranked.slice(0,100).map(entry),me:index<0?null:entry(ranked[index],index)};
 }
 const inflight=new Map();
 async function api(request,response,path){
@@ -79,30 +79,49 @@ async function api(request,response,path){
   inflight.set(match[1],{hash,promise});try{await promise;return json(response,200,{...result(),replayed:false})}finally{inflight.delete(match[1])}
  }
  if((path==='/api/leaderboard'||path==='/api/rewards/leaderboard')&&request.method==='GET'){
+  const locked=!p.profile;
   if(path==='/api/rewards/leaderboard'||process.env.LEADERBOARD_MODE==='rewards'){
    const result=await rewardsLeaderboard();
    // Key-only lookup has no identified customer session. Do not guess a personal rewards rank.
-   return json(response,200,{mode:'rewards',entries:result.entries.map(row=>({rank:row.rank,display_name:row.display_name,points:row.points,is_you:false})),me:null});
-  }return json(response,200,gameBoard(id));
+   return json(response,200,{mode:'rewards',locked,entries:result.entries.map(row=>({rank:row.rank,display_name:locked?'Locked':row.display_name,points:row.points,is_you:false})),me:null});
+  }return json(response,200,gameBoard(id,locked));
  }
  fail(404,'This endpoint was not found.');
 }
-const privateFiles=['server.mjs','rewards.mjs','verify-game.mjs','replay-worker.mjs'];
-const vite=dev?await (await import('vite')).createServer({root,server:{middlewareMode:true,fs:{deny:['.env','.env.*','*.{crt,pem}','**/.git/**','**/data/**',...privateFiles.map(file=>'**/'+file)]}},appType:'spa'}):null;
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2'};
-const dist=resolve(root,'dist');
+const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.mp4':'video/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
- try{const path=new URL(request.url,'http://localhost').pathname;
-  const segments=decodeURIComponent(path).replaceAll('\\','/').split('/').filter(Boolean).map(part=>part.toLowerCase().split(':')[0].replace(/[ .]+$/g,''));
-  if(segments.some(part=>(part.startsWith('.')&&part!=='.vite')||part==='data'||privateFiles.includes(part)))fail(404,'File not found.');
+ try{
+  const path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
   if(path.startsWith('/api/'))return await api(request,response,path);
-  if(vite)return vite.middlewares(request,response);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
-  let target=resolve(dist,'.'+decodeURIComponent(path));if(!target.startsWith(dist+sep)&&target!==dist)fail(403,'Forbidden.');
-  if(path==='/')target=resolve(dist,'index.html');
-  if(!(await stat(target).catch(()=>null))?.isFile())fail(404,'File not found.');
-  const data=await readFile(target);response.writeHead(200,{'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':path.startsWith('/assets/')&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'});response.end(request.method==='HEAD'?undefined:data);
- }catch(error){if(!response.headersSent)json(response,error instanceof ServiceError?error.status:500,{message:error instanceof ServiceError?error.message:'The service could not complete this request. Please try again.'});else response.end()}
+  const relative=path==='/'?'index.html':path.slice(1),parts=relative.split('/');
+  if(parts.some(p=>!p||p.startsWith('.')||p.includes('\\'))||!(publicFiles.has(relative)||publicDirectories.has(parts[0])&&parts.length>1))fail(404,'File not found.');
+  const target=resolve(root,relative);
+  if(!target.startsWith(root+sep))fail(403,'Forbidden.');
+  const info=await stat(target).catch(()=>null);
+  if(!info?.isFile())fail(404,'File not found.');
+  let start=0,end=info.size-1,status=200;
+  const headers={'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes','Cache-Control':publicDirectories.has(parts[0])&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'};
+  if(request.headers.range){
+   const match=/^bytes=(\d*)-(\d*)$/.exec(request.headers.range);
+   if(match&&(match[1]||match[2])){
+    start=match[1]?Number(match[1]):Math.max(0,info.size-Number(match[2]));
+    end=match[1]&&match[2]?Math.min(Number(match[2]),info.size-1):info.size-1;
+   }else start=NaN;
+   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>end||start>=info.size){response.writeHead(416,{'Content-Range':`bytes */${info.size}`});response.end();return;}
+   status=206;headers['Content-Range']=`bytes ${start}-${end}/${info.size}`;
+  }
+  headers['Content-Length']=Math.max(0,end-start+1);
+  response.writeHead(status,headers);
+  if(request.method==='HEAD'||info.size===0){response.end();return;}
+  const stream=createReadStream(target,{start,end});
+  stream.on('error',()=>response.destroy());
+  response.on('close',()=>stream.destroy());
+  stream.pipe(response);
+ }catch(error){if(!response.headersSent)json(response,error instanceof ServiceError?error.status:500,{message:error instanceof ServiceError?error.message:'The service could not complete this request. Please try again.'});else response.end();}
 });
-const port=Number(process.env.PORT||5173),host=process.env.HOST||'127.0.0.1';server.listen(port,host,()=>console.log(`FACET pinball: http://${host}:${port}${dev?' (development)':''}`));
-for(const signal of ['SIGINT','SIGTERM'])process.on(signal,async()=>{await vite?.close();server.close(()=>process.exit(0))});
+const port=Number(process.env.PORT||8766),host=process.env.HOST||'127.0.0.1';
+server.listen(port,host,()=>console.log(`SOFACET website and pinball: http://${host}:${port}`));
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close(()=>process.exit(0)));

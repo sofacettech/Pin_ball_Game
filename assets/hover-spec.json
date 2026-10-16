@@ -1,0 +1,468 @@
+{
+  "fps": 60,
+  "neighbourLift": 0.65,
+  "response": 8,
+  "plates": {
+    "Travel exterior ball | Panel_01 \u2022 6 sides": {
+      "peakFrame": 116.375,
+      "neighbours": [
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_07 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_02 \u2022 6 sides": {
+      "peakFrame": 114.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_13 \u2022 5 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_03 \u2022 6 sides": {
+      "peakFrame": 141.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides",
+        "Travel exterior ball | Panel_34 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_04 \u2022 6 sides": {
+      "peakFrame": 75.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_11 \u2022 6 sides",
+        "Travel exterior ball | Panel_12 \u2022 5 sides",
+        "Travel exterior ball | Panel_13 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_05 \u2022 6 sides": {
+      "peakFrame": 94.75,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_07 \u2022 6 sides",
+        "Travel exterior ball | Panel_14 \u2022 6 sides",
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_16 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_06 \u2022 6 sides": {
+      "peakFrame": 158.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_07 \u2022 6 sides",
+        "Travel exterior ball | Panel_08 \u2022 5 sides",
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_11 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_07 \u2022 6 sides": {
+      "peakFrame": 155.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_01 \u2022 6 sides",
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_14 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_08 \u2022 5 sides": {
+      "peakFrame": 136.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_11 \u2022 6 sides",
+        "Travel exterior ball | Panel_39 \u2022 5 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_09 \u2022 6 sides": {
+      "peakFrame": 139.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_07 \u2022 6 sides",
+        "Travel exterior ball | Panel_08 \u2022 5 sides",
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides",
+        "Travel exterior ball | Panel_39 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_10 \u2022 6 sides": {
+      "peakFrame": 165.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_07 \u2022 6 sides",
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_14 \u2022 6 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_37 \u2022 5 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_11 \u2022 6 sides": {
+      "peakFrame": 129.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_06 \u2022 6 sides",
+        "Travel exterior ball | Panel_08 \u2022 5 sides",
+        "Travel exterior ball | Panel_12 \u2022 5 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_12 \u2022 5 sides": {
+      "peakFrame": 153.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_11 \u2022 6 sides",
+        "Travel exterior ball | Panel_13 \u2022 5 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_13 \u2022 5 sides": {
+      "peakFrame": 72.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_04 \u2022 6 sides",
+        "Travel exterior ball | Panel_12 \u2022 5 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_14 \u2022 6 sides": {
+      "peakFrame": 101.625,
+      "neighbours": [
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_07 \u2022 6 sides",
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_16 \u2022 5 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides",
+        "Travel exterior ball | Panel_37 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_15 \u2022 6 sides": {
+      "peakFrame": 147.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_16 \u2022 5 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_34 \u2022 5 sides",
+        "Travel exterior ball | Panel_35 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_16 \u2022 5 sides": {
+      "peakFrame": 122.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_05 \u2022 6 sides",
+        "Travel exterior ball | Panel_14 \u2022 6 sides",
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_35 \u2022 5 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_17 \u2022 6 sides": {
+      "peakFrame": 75.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_18 \u2022 6 sides": {
+      "peakFrame": 144.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_29 \u2022 5 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_19 \u2022 6 sides": {
+      "peakFrame": 111.375,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides",
+        "Travel exterior ball | Panel_34 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_20 \u2022 6 sides": {
+      "peakFrame": 96.625,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides",
+        "Travel exterior ball | Panel_28 \u2022 5 sides",
+        "Travel exterior ball | Panel_29 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_21 \u2022 6 sides": {
+      "peakFrame": 151.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_32 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_22 \u2022 6 sides": {
+      "peakFrame": 157.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_25 \u2022 5 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_23 \u2022 6 sides": {
+      "peakFrame": 135.375,
+      "neighbours": [
+        "Travel exterior ball | Panel_17 \u2022 6 sides",
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_25 \u2022 5 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_24 \u2022 6 sides": {
+      "peakFrame": 155.875,
+      "neighbours": [
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_25 \u2022 5 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides",
+        "Travel exterior ball | Panel_39 \u2022 5 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_25 \u2022 5 sides": {
+      "peakFrame": 106.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_26 \u2022 6 sides": {
+      "peakFrame": 166.75,
+      "neighbours": [
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides",
+        "Travel exterior ball | Panel_25 \u2022 5 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides",
+        "Travel exterior ball | Panel_37 \u2022 5 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_27 \u2022 6 sides": {
+      "peakFrame": 158.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_22 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_28 \u2022 5 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_28 \u2022 5 sides": {
+      "peakFrame": 124.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides",
+        "Travel exterior ball | Panel_29 \u2022 5 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_29 \u2022 5 sides": {
+      "peakFrame": 149.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_20 \u2022 6 sides",
+        "Travel exterior ball | Panel_28 \u2022 5 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_30 \u2022 6 sides": {
+      "peakFrame": 132.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_23 \u2022 6 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_32 \u2022 5 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides",
+        "Travel exterior ball | Panel_37 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_31 \u2022 6 sides": {
+      "peakFrame": 71.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_32 \u2022 5 sides",
+        "Travel exterior ball | Panel_34 \u2022 5 sides",
+        "Travel exterior ball | Panel_35 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_32 \u2022 5 sides": {
+      "peakFrame": 156.125,
+      "neighbours": [
+        "Travel exterior ball | Panel_21 \u2022 6 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_35 \u2022 5 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_33 \u2022 6 sides": {
+      "peakFrame": 109.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_34 \u2022 5 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_34 \u2022 5 sides": {
+      "peakFrame": 71.25,
+      "neighbours": [
+        "Travel exterior ball | Panel_03 \u2022 6 sides",
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_19 \u2022 6 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_35 \u2022 5 sides": {
+      "peakFrame": 119.375,
+      "neighbours": [
+        "Travel exterior ball | Panel_15 \u2022 6 sides",
+        "Travel exterior ball | Panel_16 \u2022 5 sides",
+        "Travel exterior ball | Panel_31 \u2022 6 sides",
+        "Travel exterior ball | Panel_32 \u2022 5 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_36 \u2022 6 sides": {
+      "peakFrame": 98.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_14 \u2022 6 sides",
+        "Travel exterior ball | Panel_16 \u2022 5 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides",
+        "Travel exterior ball | Panel_32 \u2022 5 sides",
+        "Travel exterior ball | Panel_35 \u2022 5 sides",
+        "Travel exterior ball | Panel_37 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_37 \u2022 5 sides": {
+      "peakFrame": 160.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_14 \u2022 6 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_30 \u2022 6 sides",
+        "Travel exterior ball | Panel_36 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_38 \u2022 6 sides": {
+      "peakFrame": 89.75,
+      "neighbours": [
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_10 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_25 \u2022 5 sides",
+        "Travel exterior ball | Panel_26 \u2022 6 sides",
+        "Travel exterior ball | Panel_39 \u2022 5 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_39 \u2022 5 sides": {
+      "peakFrame": 168.0,
+      "neighbours": [
+        "Travel exterior ball | Panel_08 \u2022 5 sides",
+        "Travel exterior ball | Panel_09 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_38 \u2022 6 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_40 \u2022 6 sides": {
+      "peakFrame": 103.5,
+      "neighbours": [
+        "Travel exterior ball | Panel_08 \u2022 5 sides",
+        "Travel exterior ball | Panel_11 \u2022 6 sides",
+        "Travel exterior ball | Panel_24 \u2022 6 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides",
+        "Travel exterior ball | Panel_39 \u2022 5 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_41 \u2022 6 sides": {
+      "peakFrame": 127.375,
+      "neighbours": [
+        "Travel exterior ball | Panel_11 \u2022 6 sides",
+        "Travel exterior ball | Panel_12 \u2022 5 sides",
+        "Travel exterior ball | Panel_27 \u2022 6 sides",
+        "Travel exterior ball | Panel_28 \u2022 5 sides",
+        "Travel exterior ball | Panel_40 \u2022 6 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_42 \u2022 6 sides": {
+      "peakFrame": 73.75,
+      "neighbours": [
+        "Travel exterior ball | Panel_12 \u2022 5 sides",
+        "Travel exterior ball | Panel_13 \u2022 5 sides",
+        "Travel exterior ball | Panel_28 \u2022 5 sides",
+        "Travel exterior ball | Panel_29 \u2022 5 sides",
+        "Travel exterior ball | Panel_41 \u2022 6 sides",
+        "Travel exterior ball | Panel_43 \u2022 6 sides"
+      ]
+    },
+    "Travel exterior ball | Panel_43 \u2022 6 sides": {
+      "peakFrame": 91.625,
+      "neighbours": [
+        "Travel exterior ball | Panel_02 \u2022 6 sides",
+        "Travel exterior ball | Panel_13 \u2022 5 sides",
+        "Travel exterior ball | Panel_18 \u2022 6 sides",
+        "Travel exterior ball | Panel_29 \u2022 5 sides",
+        "Travel exterior ball | Panel_33 \u2022 6 sides",
+        "Travel exterior ball | Panel_42 \u2022 6 sides"
+      ]
+    }
+  }
+}

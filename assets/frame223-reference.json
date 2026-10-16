@@ -1,0 +1,3611 @@
+{
+  "frame": 223,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "cameraName": "INTRO | prepended landing descent",
+  "ballCenterWorld": [
+    139.30426025390625,
+    -221.34051513671875,
+    6.6424126625061035
+  ],
+  "cameraWorldMatrixRows": [
+    [
+      0.7662936449050903,
+      -1.4102595741860569e-05,
+      0.6424905061721802,
+      41.32911682128906
+    ],
+    [
+      1.2815553418477066e-07,
+      1.0,
+      2.181333002226893e-05,
+      6.353653907775879
+    ],
+    [
+      -0.6424905061721802,
+      -1.66368863574462e-05,
+      0.7662935853004456,
+      30.33251953125
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "projectionMatrixRows": [
+    [
+      1.7214986085891724,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      3.0604422092437744,
+      0.02464497648179531,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      -1.0000039339065552,
+      -0.020000038668513298
+    ],
+    [
+      0.0,
+      0.0,
+      -1.0,
+      0.0
+    ]
+  ],
+  "ballBoundsPixels": [
+    351.0201358795166,
+    574.1954290866852,
+    749.1620063781738,
+    959.8189982771873
+  ],
+  "sourceFile": "/Users/yashikaverma/Desktop/FInal-SO:FACET.blend",
+  "sourceUnchanged": true,
+  "projectionChecks": [
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -0.920440673828125,
+        4.692989826202393,
+        -0.6787416338920593
+      ],
+      "pixel": [
+        555.8016014099121,
+        607.1819651126862
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -2.72747802734375,
+        2.5443804264068604,
+        -3.1206817626953125
+      ],
+      "pixel": [
+        584.1672706604004,
+        669.980320930481
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -1.5629119873046875,
+        3.96016263961792,
+        -2.3123934268951416
+      ],
+      "pixel": [
+        586.1180305480957,
+        628.5113847255707
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.7465362548828125,
+        -4.770199298858643,
+        0.06884786486625671
+      ],
+      "pixel": [
+        569.0545463562012,
+        926.4317643642426
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.778533935546875,
+        -4.409206390380859,
+        -1.830474615097046
+      ],
+      "pixel": [
+        620.6956100463867,
+        904.1036939620972
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.512481689453125,
+        -3.2009880542755127,
+        -3.327758550643921
+      ],
+      "pixel": [
+        674.1956520080566,
+        860.6234067678452
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 258,
+      "worldRelativeThree": [
+        2.5136566162109375,
+        -1.357521653175354,
+        -3.9515533447265625
+      ],
+      "pixel": [
+        710.9652328491211,
+        802.1237683296204
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 301,
+      "worldRelativeThree": [
+        3.2018890380859375,
+        0.7592189908027649,
+        -3.597412109375
+      ],
+      "pixel": [
+        717.2598266601562,
+        736.3646721839905
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 344,
+      "worldRelativeThree": [
+        3.1055145263671875,
+        2.7220892906188965,
+        -2.5600128173828125
+      ],
+      "pixel": [
+        689.0964317321777,
+        673.875435590744
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 387,
+      "worldRelativeThree": [
+        2.0721588134765625,
+        4.143192768096924,
+        -1.3995821475982666
+      ],
+      "pixel": [
+        636.5746307373047,
+        627.0149052143097
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 430,
+      "worldRelativeThree": [
+        0.34698486328125,
+        4.765788555145264,
+        -0.6992189288139343
+      ],
+      "pixel": [
+        581.825008392334,
+        605.6402635574341
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 473,
+      "worldRelativeThree": [
+        2.115814208984375,
+        -4.279055595397949,
+        0.7757875323295593
+      ],
+      "pixel": [
+        577.994441986084,
+        920.553268790245
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 516,
+      "worldRelativeThree": [
+        3.424896240234375,
+        -3.0567920207977295,
+        1.570480465888977
+      ],
+      "pixel": [
+        583.6005020141602,
+        888.493173122406
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 559,
+      "worldRelativeThree": [
+        3.761077880859375,
+        -1.365019679069519,
+        2.7734832763671875
+      ],
+      "pixel": [
+        555.318603515625,
+        835.1418954133987
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 602,
+      "worldRelativeThree": [
+        3.0318145751953125,
+        0.47276991605758667,
+        3.7912139892578125
+      ],
+      "pixel": [
+        507.9223823547363,
+        769.5175158977509
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 645,
+      "worldRelativeThree": [
+        1.560272216796875,
+        2.162667989730835,
+        4.078216552734375
+      ],
+      "pixel": [
+        467.6261043548584,
+        704.9304270744324
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 688,
+      "worldRelativeThree": [
+        -0.0365447998046875,
+        3.4926822185516357,
+        3.3736417293548584
+      ],
+      "pixel": [
+        456.9744873046875,
+        653.3695721626282
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 731,
+      "worldRelativeThree": [
+        -1.0903778076171875,
+        4.347575664520264,
+        1.820770025253296
+      ],
+      "pixel": [
+        482.5009346008301,
+        620.7905495166779
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 774,
+      "worldRelativeThree": [
+        -1.146636962890625,
+        4.691127300262451,
+        -0.08128377795219421
+      ],
+      "pixel": [
+        535.1057052612305,
+        607.5757992267609
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 817,
+      "worldRelativeThree": [
+        -0.051116943359375,
+        -4.279148101806641,
+        2.2622225284576416
+      ],
+      "pixel": [
+        490.1337432861328,
+        918.6231082677841
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 860,
+      "worldRelativeThree": [
+        -1.7184600830078125,
+        -3.423044443130493,
+        2.9824678897857666
+      ],
+      "pixel": [
+        435.98974227905273,
+        885.6182098388672
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 903,
+      "worldRelativeThree": [
+        -3.4517059326171875,
+        -2.196615695953369,
+        2.6287384033203125
+      ],
+      "pixel": [
+        414.1131591796875,
+        835.8785158395767
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 946,
+      "worldRelativeThree": [
+        -4.603424072265625,
+        -0.689915120601654,
+        1.4145050048828125
+      ],
+      "pixel": [
+        428.4846496582031,
+        778.5524940490723
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 989,
+      "worldRelativeThree": [
+        -4.7644805908203125,
+        0.9652547836303711,
+        -0.10411076247692108
+      ],
+      "pixel": [
+        467.8135871887207,
+        721.4886474609375
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 1032,
+      "worldRelativeThree": [
+        -3.9195709228515625,
+        2.5780739784240723,
+        -1.250045895576477
+      ],
+      "pixel": [
+        513.8356590270996,
+        670.3975224494934
+      ]
+    },
+    {
+      "object": "Travel exterior ball | InnerCore",
+      "vertex": 1075,
+      "worldRelativeThree": [
+        -2.44024658203125,
+        3.905768871307373,
+        -1.496688961982727
+      ],
+      "pixel": [
+        548.0290603637695,
+        630.311222076416
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        4.38690185546875,
+        1.9707227945327759,
+        3.1895294189453125
+      ],
+      "pixel": [
+        556.644172668457,
+        715.9187400341034
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.0380401611328125,
+        2.9367377758026123,
+        3.9276273250579834
+      ],
+      "pixel": [
+        503.77309799194336,
+        679.2195546627045
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.8163909912109375,
+        1.989805817604065,
+        2.47088623046875
+      ],
+      "pixel": [
+        588.2841682434082,
+        714.2177152633667
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        2.91229248046875,
+        2.8136861324310303,
+        4.083709716796875
+      ],
+      "pixel": [
+        496.1228942871094,
+        683.8682520389557
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        2.59417724609375,
+        2.7174620628356934,
+        2.5418853759765625
+      ],
+      "pixel": [
+        536.7691040039062,
+        683.3925998210907
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_01 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.036224365234375,
+        2.810769557952881,
+        1.849380373954773
+      ],
+      "pixel": [
+        566.9118118286133,
+        679.380133152008
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.679840087890625,
+        4.260665416717529,
+        3.483093023300171
+      ],
+      "pixel": [
+        488.6908721923828,
+        628.3870160579681
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.058319091796875,
+        4.535272121429443,
+        3.5358731746673584
+      ],
+      "pixel": [
+        453.88572692871094,
+        617.1427881717682
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        2.214080810546875,
+        4.464512348175049,
+        2.865234136581421
+      ],
+      "pixel": [
+        518.8774108886719,
+        620.8800280094147
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -0.01263427734375,
+        4.398768901824951,
+        3.677673101425171
+      ],
+      "pixel": [
+        448.08966636657715,
+        622.0296657085419
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.1287689208984375,
+        3.9258923530578613,
+        2.2389371395111084
+      ],
+      "pixel": [
+        494.4367790222168,
+        636.8620133399963
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_02 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        0.5495147705078125,
+        4.162817478179932,
+        1.6616971492767334
+      ],
+      "pixel": [
+        519.884204864502,
+        628.4351348876953
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        3.6738128662109375,
+        4.364551067352295,
+        0.6613309979438782
+      ],
+      "pixel": [
+        615.1909446716309,
+        623.3183169364929
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        1.972564697265625,
+        5.223186016082764,
+        1.3037869930267334
+      ],
+      "pixel": [
+        559.8688888549805,
+        592.578399181366
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        3.9045257568359375,
+        4.213194370269775,
+        0.050658997148275375
+      ],
+      "pixel": [
+        637.4309349060059,
+        628.1382787227631
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        1.901580810546875,
+        5.176193714141846,
+        1.499419927597046
+      ],
+      "pixel": [
+        552.7133560180664,
+        594.3023729324341
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        1.5789947509765625,
+        4.206843852996826,
+        0.4142759442329407
+      ],
+      "pixel": [
+        576.7881774902344,
+        626.4771974086761
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_03 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.891021728515625,
+        4.090456485748291,
+        -0.2608491778373718
+      ],
+      "pixel": [
+        602.07275390625,
+        629.9446821212769
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.8556671142578125,
+        1.5965917110443115,
+        5.2432861328125
+      ],
+      "pixel": [
+        436.3161277770996,
+        729.5944333076477
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.664520263671875,
+        2.142934560775757,
+        5.3319091796875
+      ],
+      "pixel": [
+        408.99152755737305,
+        706.9405710697174
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        2.5496368408203125,
+        1.7548577785491943,
+        4.884918212890625
+      ],
+      "pixel": [
+        462.6510429382324,
+        724.3854975700378
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.5262603759765625,
+        2.00248122215271,
+        5.38165283203125
+      ],
+      "pixel": [
+        404.58091735839844,
+        711.8886995315552
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.8502197265625,
+        2.1445090770721436,
+        3.9216461181640625
+      ],
+      "pixel": [
+        457.9109287261963,
+        703.6898624897003
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_04 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.4193267822265625,
+        2.411907911300659,
+        3.581512451171875
+      ],
+      "pixel": [
+        480.21549224853516,
+        694.4546520709991
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        5.5052947998046875,
+        1.7056517601013184,
+        -0.05407722294330597
+      ],
+      "pixel": [
+        677.0102691650391,
+        719.1728603839874
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        4.837493896484375,
+        2.890568256378174,
+        1.181320071220398
+      ],
+      "pixel": [
+        626.6879653930664,
+        678.2773268222809
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        5.4959716796875,
+        1.6060376167297363,
+        -0.6667023301124573
+      ],
+      "pixel": [
+        693.5404586791992,
+        721.0060429573059
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.791778564453125,
+        2.837928295135498,
+        1.3852843046188354
+      ],
+      "pixel": [
+        619.7499847412109,
+        680.5302214622498
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.77557373046875,
+        2.481527805328369,
+        0.34828174114227295
+      ],
+      "pixel": [
+        626.260814666748,
+        689.1236007213593
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_05 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.8338470458984375,
+        2.3873915672302246,
+        -0.37840282917022705
+      ],
+      "pixel": [
+        647.6522827148438,
+        690.9086322784424
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        3.5882568359375,
+        -1.05240797996521,
+        4.5288238525390625
+      ],
+      "pixel": [
+        496.66311264038086,
+        831.3077419996262
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        2.400665283203125,
+        -0.1535484790802002,
+        5.365234375
+      ],
+      "pixel": [
+        443.75590324401855,
+        796.8875706195831
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.1693115234375,
+        -1.0670961141586304,
+        3.98956298828125
+      ],
+      "pixel": [
+        526.7791557312012,
+        831.6067707538605
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        2.184234619140625,
+        -0.2764108180999756,
+        5.4302825927734375
+      ],
+      "pixel": [
+        437.0387649536133,
+        800.9866833686829
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        2.4289703369140625,
+        0.3642846941947937,
+        3.9464263916015625
+      ],
+      "pixel": [
+        490.07543563842773,
+        772.1993279457092
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_06 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.0874786376953125,
+        0.5365311503410339,
+        3.4276580810546875
+      ],
+      "pixel": [
+        520.4545783996582,
+        766.0235416889191
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        5.4009857177734375,
+        -0.9687089323997498,
+        1.780670166015625
+      ],
+      "pixel": [
+        622.3177528381348,
+        822.4110853672028
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        4.86676025390625,
+        0.1212693601846695,
+        3.1071624755859375
+      ],
+      "pixel": [
+        570.1069450378418,
+        785.8303785324097
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        5.5900421142578125,
+        -0.9702867865562439,
+        1.034332275390625
+      ],
+      "pixel": [
+        648.3891677856445,
+        819.7989410161972
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.7265777587890625,
+        0.020968103781342506,
+        3.285858154296875
+      ],
+      "pixel": [
+        561.3927841186523,
+        789.8234045505524
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        4.09832763671875,
+        0.5164647698402405,
+        1.8952178955078125
+      ],
+      "pixel": [
+        589.1019630432129,
+        764.3063592910767
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_07 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        4.3631591796875,
+        0.5899019837379456,
+        1.116424560546875
+      ],
+      "pixel": [
+        617.7234077453613,
+        759.7245132923126
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_08 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.66070556640625,
+        -3.55956768989563,
+        4.2206573486328125
+      ],
+      "pixel": [
+        465.2187252044678,
+        913.3680653572083
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_08 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.097900390625,
+        -3.096372127532959,
+        3.750824213027954
+      ],
+      "pixel": [
+        510.62461853027344,
+        900.846483707428
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_08 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        1.0521392822265625,
+        -3.99171781539917,
+        4.0171051025390625
+      ],
+      "pixel": [
+        459.05261993408203,
+        924.6013176441193
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_08 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.1327056884765625,
+        -3.521024227142334,
+        4.5420379638671875
+      ],
+      "pixel": [
+        423.8528537750244,
+        906.2618154287338
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_08 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.0527801513671875,
+        -3.0590744018554688,
+        3.351166009902954
+      ],
+      "pixel": [
+        459.45033073425293,
+        882.8765147924423
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        3.6504669189453125,
+        -3.790767192840576,
+        2.324737787246704
+      ],
+      "pixel": [
+        566.3615226745605,
+        920.3589105606079
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        4.4720611572265625,
+        -2.2791717052459717,
+        2.8404693603515625
+      ],
+      "pixel": [
+        569.2559051513672,
+        872.1045595407486
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        3.2049713134765625,
+        -4.336954116821289,
+        1.984710931777954
+      ],
+      "pixel": [
+        566.623363494873,
+        935.5464363098145
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.3867645263671875,
+        -2.1614725589752197,
+        3.022705078125
+      ],
+      "pixel": [
+        561.7621421813965,
+        868.3550888299942
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.751312255859375,
+        -1.9789217710494995,
+        1.6132508516311646
+      ],
+      "pixel": [
+        589.5954322814941,
+        851.656905412674
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_09 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.6078948974609375,
+        -2.5718650817871094,
+        0.9504395723342896
+      ],
+      "pixel": [
+        605.518684387207,
+        868.7874341011047
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        4.63677978515625,
+        -3.38965106010437,
+        -0.32212814688682556
+      ],
+      "pixel": [
+        664.2788314819336,
+        895.3972434997559
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        5.4105682373046875,
+        -1.9801735877990723,
+        -0.10087576508522034
+      ],
+      "pixel": [
+        676.0862159729004,
+        850.1100379228592
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        3.8629150390625,
+        -4.136743545532227,
+        -0.9913786053657532
+      ],
+      "pixel": [
+        664.8878288269043,
+        913.8912570476532
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        5.430633544921875,
+        -1.8635210990905762,
+        0.14137275516986847
+      ],
+      "pixel": [
+        669.8489570617676,
+        847.2127693891525
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        4.0998382568359375,
+        -1.7507262229919434,
+        -0.8439483046531677
+      ],
+      "pixel": [
+        666.2522506713867,
+        833.4149444103241
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_10 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.5557403564453125,
+        -2.4198765754699707,
+        -1.4345091581344604
+      ],
+      "pixel": [
+        669.8240089416504,
+        851.541098356247
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        0.6579437255859375,
+        -1.4613659381866455,
+        5.563720703125
+      ],
+      "pixel": [
+        401.2338638305664,
+        839.5737683773041
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.030670166015625,
+        -2.883378028869629,
+        5.0060882568359375
+      ],
+      "pixel": [
+        406.93013191223145,
+        885.552613735199
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        0.3482666015625,
+        -0.8753974437713623,
+        5.7159881591796875
+      ],
+      "pixel": [
+        389.9956226348877,
+        817.6248872280121
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.127655029296875,
+        -2.975311279296875,
+        4.9258270263671875
+      ],
+      "pixel": [
+        411.4486598968506,
+        888.8655710220337
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -0.348968505859375,
+        -2.042011022567749,
+        4.0528717041015625
+      ],
+      "pixel": [
+        429.74138259887695,
+        849.0143769979477
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_11 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -0.648223876953125,
+        -1.5045201778411865,
+        4.2517852783203125
+      ],
+      "pixel": [
+        417.6220893859863,
+        829.8460400104523
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_12 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -0.5448150634765625,
+        1.0726392269134521,
+        5.687469482421875
+      ],
+      "pixel": [
+        373.3711624145508,
+        743.8768744468689
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_12 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -1.1216583251953125,
+        -0.4600512981414795,
+        5.6860504150390625
+      ],
+      "pixel": [
+        362.30252265930176,
+        797.2149395942688
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_12 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -1.1120452880859375,
+        1.4475438594818115,
+        5.5162200927734375
+      ],
+      "pixel": [
+        368.0617618560791,
+        728.4493982791901
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_12 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -0.3855438232421875,
+        2.1022489070892334,
+        5.3769073486328125
+      ],
+      "pixel": [
+        386.6763210296631,
+        706.2625300884247
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_12 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -0.8172454833984375,
+        1.7290723323822021,
+        4.155914306640625
+      ],
+      "pixel": [
+        417.3350143432617,
+        715.4090988636017
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_13 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -0.2396240234375,
+        3.1171576976776123,
+        4.85455322265625
+      ],
+      "pixel": [
+        406.4711380004883,
+        668.9680874347687
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_13 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -1.25323486328125,
+        2.4285552501678467,
+        5.0942840576171875
+      ],
+      "pixel": [
+        379.0745544433594,
+        692.1789050102234
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_13 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -0.31878662109375,
+        3.7491557598114014,
+        4.3675994873046875
+      ],
+      "pixel": [
+        420.4353904724121,
+        645.5297434329987
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_13 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.671844482421875,
+        3.797051191329956,
+        4.2570648193359375
+      ],
+      "pixel": [
+        443.7349319458008,
+        644.9170410633087
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_13 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.106658935546875,
+        3.3761889934539795,
+        3.0217130184173584
+      ],
+      "pixel": [
+        470.56589126586914,
+        657.0549595355988
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        5.5397186279296875,
+        -0.8194203972816467,
+        -1.38275146484375
+      ],
+      "pixel": [
+        713.7197685241699,
+        803.9080595970154
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        5.0528106689453125,
+        -2.3027029037475586,
+        -1.5407103300094604
+      ],
+      "pixel": [
+        706.5538215637207,
+        852.9861277341843
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        5.681396484375,
+        -0.2721000015735626,
+        -0.9587249755859375
+      ],
+      "pixel": [
+        705.758228302002,
+        786.8381381034851
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.9228973388671875,
+        -2.3737244606018066,
+        -1.764053225517273
+      ],
+      "pixel": [
+        709.4120407104492,
+        853.8418382406235
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        4.2035064697265625,
+        -1.6463193893432617,
+        -0.4545897841453552
+      ],
+      "pixel": [
+        658.0455780029297,
+        831.933206319809
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_14 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        4.401275634765625,
+        -1.101522445678711,
+        0.14982609450817108
+      ],
+      "pixel": [
+        645.8905792236328,
+        816.2276548147202
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        4.28033447265625,
+        3.374290943145752,
+        -1.849044919013977
+      ],
+      "pixel": [
+        696.954402923584,
+        654.8693025112152
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        4.4139404296875,
+        2.4630215167999268,
+        -2.7742462158203125
+      ],
+      "pixel": [
+        723.7531471252441,
+        684.2596077919006
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.222259521484375,
+        3.694423198699951,
+        -1.2644654512405396
+      ],
+      "pixel": [
+        680.2585601806641,
+        644.7276556491852
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.2735748291015625,
+        2.4517080783843994,
+        -2.9588165283203125
+      ],
+      "pixel": [
+        725.2322959899902,
+        684.023551940918
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.8330535888671875,
+        1.8316549062728882,
+        -1.5973817110061646
+      ],
+      "pixel": [
+        680.2982711791992,
+        707.1733438968658
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_15 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.9935455322265625,
+        1.9694314002990723,
+        -0.8643494248390198
+      ],
+      "pixel": [
+        664.4081497192383,
+        704.5555830001831
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_16 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        5.0322113037109375,
+        1.249520182609558,
+        -2.5330810546875
+      ],
+      "pixel": [
+        731.7817497253418,
+        727.1769690513611
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_16 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        4.6898651123046875,
+        0.441790908575058,
+        -3.3430938720703125
+      ],
+      "pixel": [
+        744.3130874633789,
+        751.2658023834229
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_16 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        5.3240509033203125,
+        0.8453382253646851,
+        -2.057403564453125
+      ],
+      "pixel": [
+        726.3290977478027,
+        743.1084215641022
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_16 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        5.3898162841796875,
+        1.4674668312072754,
+        -1.3481751680374146
+      ],
+      "pixel": [
+        709.2996597290039,
+        723.7500071525574
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_16 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        4.3812713623046875,
+        0.701201856136322,
+        -0.9691315293312073
+      ],
+      "pixel": [
+        675.9824752807617,
+        749.0073716640472
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -4.54302978515625,
+        1.0520657300949097,
+        -3.4074554443359375
+      ],
+      "pixel": [
+        557.5308036804199,
+        711.6319155693054
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -5.212982177734375,
+        1.9524005651474,
+        -1.4969788789749146
+      ],
+      "pixel": [
+        496.8798065185547,
+        687.2413980960846
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -4.2601470947265625,
+        0.17117007076740265,
+        -3.9023895263671875
+      ],
+      "pixel": [
+        574.8791885375977,
+        737.2874915599823
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -5.089263916015625,
+        2.2579598426818848,
+        -1.407028317451477
+      ],
+      "pixel": [
+        496.7402458190918,
+        678.2822513580322
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -4.3383026123046875,
+        0.5424064993858337,
+        -1.2328033447265625
+      ],
+      "pixel": [
+        505.71985244750977,
+        732.6859152317047
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_17 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -4.1976165771484375,
+        -0.47678142786026,
+        -1.6735076904296875
+      ],
+      "pixel": [
+        519.8238372802734,
+        763.1819236278534
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -3.9546966552734375,
+        4.158438205718994,
+        -0.2722780108451843
+      ],
+      "pixel": [
+        487.06111907958984,
+        622.3135828971863
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -2.351043701171875,
+        5.173564434051514,
+        0.7592618465423584
+      ],
+      "pixel": [
+        488.529052734375,
+        591.7192447185516
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -4.6026458740234375,
+        3.4350428581237793,
+        -0.32371535897254944
+      ],
+      "pixel": [
+        476.676607131958,
+        644.2756927013397
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -2.1708984375,
+        5.243431568145752,
+        0.6505734920501709
+      ],
+      "pixel": [
+        495.00389099121094,
+        589.4661569595337
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.227691650390625,
+        3.795989513397217,
+        1.023483157157898
+      ],
+      "pixel": [
+        483.4309387207031,
+        637.0656251907349
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_18 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -2.9599456787109375,
+        3.2341208457946777,
+        1.1224364042282104
+      ],
+      "pixel": [
+        466.8234443664551,
+        654.6800780296326
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -1.5186920166015625,
+        4.285298824310303,
+        -3.526550531387329
+      ],
+      "pixel": [
+        617.5802421569824,
+        617.1940612792969
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.29583740234375,
+        4.7382636070251465,
+        -3.2386324405670166
+      ],
+      "pixel": [
+        646.7126083374023,
+        604.5241641998291
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -2.2345123291015625,
+        4.45871114730835,
+        -2.858459711074829
+      ],
+      "pixel": [
+        586.9992828369141,
+        611.8918812274933
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.4147186279296875,
+        4.607486248016357,
+        -3.380218744277954
+      ],
+      "pixel": [
+        652.6786422729492,
+        608.6392414569855
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.0021209716796875,
+        4.064492702484131,
+        -1.973556637763977
+      ],
+      "pixel": [
+        608.5154914855957,
+        627.0061826705933
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_19 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -0.5433502197265625,
+        4.260484218597412,
+        -1.3874971866607666
+      ],
+      "pixel": [
+        582.1979141235352,
+        620.8231222629547
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -5.686767578125,
+        0.80792236328125,
+        0.5143126845359802
+      ],
+      "pixel": [
+        434.52409744262695,
+        726.0130727291107
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -5.1210479736328125,
+        2.5112462043762207,
+        0.8027037382125854
+      ],
+      "pixel": [
+        436.48850440979004,
+        674.290384054184
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -5.695648193359375,
+        -0.09822746366262436,
+        0.906341552734375
+      ],
+      "pixel": [
+        423.48727226257324,
+        755.3605699539185
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -5.0461273193359375,
+        2.6599841117858887,
+        0.6287840604782104
+      ],
+      "pixel": [
+        442.65541076660156,
+        669.4174110889435
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -4.082733154296875,
+        1.5776782035827637,
+        1.201492190361023
+      ],
+      "pixel": [
+        443.91185760498047,
+        706.5344738960266
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_20 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -4.17413330078125,
+        0.7842474579811096,
+        1.613037109375
+      ],
+      "pixel": [
+        430.54049491882324,
+        732.8909111022949
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -0.90606689453125,
+        0.9864575862884521,
+        -5.6416015625
+      ],
+      "pixel": [
+        680.4991722106934,
+        715.422488451004
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -0.7629852294921875,
+        -0.9982836246490479,
+        -5.660400390625
+      ],
+      "pixel": [
+        683.7850570678711,
+        775.6992888450623
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -0.4858856201171875,
+        1.689422845840454,
+        -5.5217742919921875
+      ],
+      "pixel": [
+        686.088924407959,
+        695.1231980323792
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -0.9536895751953125,
+        -1.1761558055877686,
+        -5.575164794921875
+      ],
+      "pixel": [
+        678.0029296875,
+        780.8422744274139
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.05633544921875,
+        -0.3545534312725067,
+        -4.5545501708984375
+      ],
+      "pixel": [
+        674.0937423706055,
+        761.4596879482269
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_21 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        0.549957275390625,
+        0.3892104923725128,
+        -4.5183258056640625
+      ],
+      "pixel": [
+        683.3185958862305,
+        739.5839667320251
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -5.0274810791015625,
+        -2.633608341217041,
+        -1.362197756767273
+      ],
+      "pixel": [
+        496.67301177978516,
+        827.9593312740326
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -5.531707763671875,
+        -1.8014488220214844,
+        0.5113373398780823
+      ],
+      "pixel": [
+        437.3266124725342,
+        807.7575016021729
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -4.41143798828125,
+        -3.438795328140259,
+        -1.620956301689148
+      ],
+      "pixel": [
+        514.5561790466309,
+        853.6663091182709
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -5.5944671630859375,
+        -1.5221776962280273,
+        0.5348358750343323
+      ],
+      "pixel": [
+        435.57543754577637,
+        798.9392030239105
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -4.0236968994140625,
+        -2.187626361846924,
+        0.47198495268821716
+      ],
+      "pixel": [
+        465.40955543518066,
+        824.6180498600006
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_22 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -3.5076751708984375,
+        -2.955850601196289,
+        0.16667188704013824
+      ],
+      "pixel": [
+        483.3091735839844,
+        849.5793145895004
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -2.4898834228515625,
+        -2.5072100162506104,
+        -4.569580078125
+      ],
+      "pixel": [
+        624.2281723022461,
+        820.0143653154373
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -4.270050048828125,
+        -1.7827578783035278,
+        -3.4521026611328125
+      ],
+      "pixel": [
+        563.6248397827148,
+        796.9302177429199
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -1.7242279052734375,
+        -3.15809965133667,
+        -4.5122222900390625
+      ],
+      "pixel": [
+        637.6344108581543,
+        842.4308359622955
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -4.3619232177734375,
+        -1.436794400215149,
+        -3.468109130859375
+      ],
+      "pixel": [
+        562.3383522033691,
+        786.2688553333282
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -3.026519775390625,
+        -2.3768863677978516,
+        -2.40533447265625
+      ],
+      "pixel": [
+        560.4287910461426,
+        822.534311413765
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_23 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -2.2437591552734375,
+        -3.1648218631744385,
+        -2.3401944637298584
+      ],
+      "pixel": [
+        573.6515235900879,
+        849.8955148458481
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -3.00384521484375,
+        -4.7560224533081055,
+        1.289245843887329
+      ],
+      "pixel": [
+        461.27028465270996,
+        915.1265752315521
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -0.983062744140625,
+        -5.611499786376953,
+        0.7093660831451416
+      ],
+      "pixel": [
+        516.3752746582031,
+        949.6617087721825
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -3.620758056640625,
+        -4.457211494445801,
+        0.6184846758842468
+      ],
+      "pixel": [
+        468.7237358093262,
+        899.1875910758972
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -0.94525146484375,
+        -5.598142623901367,
+        0.7046663761138916
+      ],
+      "pixel": [
+        517.2517204284668,
+        949.3835046887398
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -0.7072296142578125,
+        -4.437027931213379,
+        0.5135499835014343
+      ],
+      "pixel": [
+        527.3101615905762,
+        910.9480905532837
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_24 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -1.30621337890625,
+        -4.330986976623535,
+        0.19870014488697052
+      ],
+      "pixel": [
+        524.2727279663086,
+        903.0408954620361
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_25 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -1.6233062744140625,
+        -5.255693435668945,
+        -1.618224859237671
+      ],
+      "pixel": [
+        566.9585609436035,
+        921.6650068759918
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_25 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.3217620849609375,
+        -5.427803993225098,
+        -1.8139493465423584
+      ],
+      "pixel": [
+        610.8738327026367,
+        935.1909041404724
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_25 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -2.364349365234375,
+        -4.649084091186523,
+        -2.4065701961517334
+      ],
+      "pixel": [
+        573.0375480651855,
+        895.3213959932327
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_25 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -3.4481201171875,
+        -4.199123382568359,
+        -1.8115079402923584
+      ],
+      "pixel": [
+        537.2452354431152,
+        879.8569375276566
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_25 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.6607666015625,
+        -3.098539113998413,
+        -1.958877444267273
+      ],
+      "pixel": [
+        555.8736419677734,
+        847.9648232460022
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        0.9819793701171875,
+        -4.4426493644714355,
+        -3.5191495418548584
+      ],
+      "pixel": [
+        667.8462982177734,
+        897.3001259565353
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        2.7612152099609375,
+        -4.5516157150268555,
+        -2.157989263534546
+      ],
+      "pixel": [
+        671.253490447998,
+        916.0651499032974
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        0.11029052734375,
+        -4.180785179138184,
+        -3.957183599472046
+      ],
+      "pixel": [
+        660.6983184814453,
+        883.2566857337952
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        2.8105926513671875,
+        -4.660524845123291,
+        -1.766723394393921
+      ],
+      "pixel": [
+        662.1614456176758,
+        922.1502828598022
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        2.0279388427734375,
+        -2.999345302581787,
+        -2.7298734188079834
+      ],
+      "pixel": [
+        670.0905418395996,
+        858.8315677642822
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_26 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.2787933349609375,
+        -2.4832351207733154,
+        -3.584991455078125
+      ],
+      "pixel": [
+        675.6731986999512,
+        835.6265115737915
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -4.5774078369140625,
+        -2.4544315338134766,
+        2.5012054443359375
+      ],
+      "pixel": [
+        397.54520416259766,
+        839.696946144104
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -4.7165069580078125,
+        -3.2242841720581055,
+        0.686721920967102
+      ],
+      "pixel": [
+        446.92806243896484,
+        855.9189462661743
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -4.7347259521484375,
+        -1.746343970298767,
+        2.797271728515625
+      ],
+      "pixel": [
+        386.01842880249023,
+        817.3248445987701
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -4.538909912109375,
+        -3.4409637451171875,
+        0.6491243243217468
+      ],
+      "pixel": [
+        451.1616325378418,
+        863.2711493968964
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -4.1397552490234375,
+        -1.7931971549987793,
+        0.47540292143821716
+      ],
+      "pixel": [
+        463.2012748718262,
+        811.7301535606384
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_27 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -4.3642425537109375,
+        -1.007680892944336,
+        0.7436371445655823
+      ],
+      "pixel": [
+        451.6778755187988,
+        787.0849764347076
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_28 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -4.61517333984375,
+        0.6334120631217957,
+        3.4156494140625
+      ],
+      "pixel": [
+        369.6397018432617,
+        741.794890165329
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_28 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -4.2388763427734375,
+        -1.0746220350265503,
+        3.7759857177734375
+      ],
+      "pixel": [
+        365.3726577758789,
+        800.6413543224335
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_28 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -5.0182647705078125,
+        0.8268028497695923,
+        2.7308197021484375
+      ],
+      "pixel": [
+        382.9798221588135,
+        732.6180982589722
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_28 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -4.593841552734375,
+        1.772229790687561,
+        2.97125244140625
+      ],
+      "pixel": [
+        383.3467483520508,
+        703.2850527763367
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_28 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -3.982086181640625,
+        1.2664662599563599,
+        1.780426025390625
+      ],
+      "pixel": [
+        429.21143531799316,
+        718.1486535072327
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_29 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -4.2799224853515625,
+        2.930537700653076,
+        2.5090787410736084
+      ],
+      "pixel": [
+        402.6295852661133,
+        665.0202190876007
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_29 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -5.163787841796875,
+        1.7386709451675415,
+        1.8896483182907104
+      ],
+      "pixel": [
+        404.9421501159668,
+        700.888831615448
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_29 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -4.0583953857421875,
+        3.5811715126037598,
+        1.954299807548523
+      ],
+      "pixel": [
+        422.8081512451172,
+        643.277428150177
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_29 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -3.134521484375,
+        4.0743231773376465,
+        2.535674810409546
+      ],
+      "pixel": [
+        422.6978302001953,
+        628.809689283371
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_29 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.5146331787109375,
+        3.4624552726745605,
+        1.4693907499313354
+      ],
+      "pixel": [
+        465.29860496520996,
+        648.2891571521759
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.2303314208984375,
+        -1.6750352382659912,
+        -5.4015960693359375
+      ],
+      "pixel": [
+        718.4261512756348,
+        802.9335165023804
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.0323333740234375,
+        -3.1382925510406494,
+        -4.8464508056640625
+      ],
+      "pixel": [
+        680.5982208251953,
+        846.535130739212
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        2.03619384765625,
+        -1.534057378768921,
+        -5.1945648193359375
+      ],
+      "pixel": [
+        730.572566986084,
+        801.7116522789001
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -0.3086090087890625,
+        -3.124180793762207,
+        -4.82220458984375
+      ],
+      "pixel": [
+        673.1201362609863,
+        845.0058370828629
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        1.0224456787109375,
+        -2.518051862716675,
+        -3.6427001953125
+      ],
+      "pixel": [
+        671.7459297180176,
+        835.5985254049301
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_30 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.924102783203125,
+        -2.207674264907837,
+        -3.477081298828125
+      ],
+      "pixel": [
+        686.6295433044434,
+        829.4774723052979
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.32720947265625,
+        3.2526695728302,
+        -4.57843017578125
+      ],
+      "pixel": [
+        700.9096527099609,
+        650.9751534461975
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.9620513916015625,
+        1.9558460712432861,
+        -5.359710693359375
+      ],
+      "pixel": [
+        711.8512916564941,
+        689.6673595905304
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        2.1756439208984375,
+        3.4151060581207275,
+        -4.105133056640625
+      ],
+      "pixel": [
+        707.4419975280762,
+        647.4878096580505
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.6982879638671875,
+        1.8485748767852783,
+        -5.418182373046875
+      ],
+      "pixel": [
+        707.7622032165527,
+        692.4346911907196
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        1.5504302978515625,
+        1.7075532674789429,
+        -3.9251861572265625
+      ],
+      "pixel": [
+        689.7573852539062,
+        701.4767181873322
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_31 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        2.22222900390625,
+        2.0255281925201416,
+        -3.4105987548828125
+      ],
+      "pixel": [
+        691.3497734069824,
+        693.5704565048218
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_32 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        2.254486083984375,
+        0.9280688762664795,
+        -5.3065338134765625
+      ],
+      "pixel": [
+        737.8763008117676,
+        724.3396961688995
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_32 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        1.0230712890625,
+        -0.0114066731184721,
+        -5.7530364990234375
+      ],
+      "pixel": [
+        722.3086738586426,
+        749.7136402130127
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_32 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        2.8165130615234375,
+        0.5083820819854736,
+        -5.0886383056640625
+      ],
+      "pixel": [
+        744.8743057250977,
+        739.4480109214783
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_32 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        3.0648956298828125,
+        1.3543684482574463,
+        -4.75030517578125
+      ],
+      "pixel": [
+        742.2553253173828,
+        713.7986469268799
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_32 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        2.6258697509765625,
+        0.481096088886261,
+        -3.7519989013671875
+      ],
+      "pixel": [
+        708.4976577758789,
+        743.6252725124359
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        0.1403350830078125,
+        5.716336727142334,
+        0.2837827205657959
+      ],
+      "pixel": [
+        550.7046318054199,
+        574.5545983314514
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        1.9897003173828125,
+        5.371937274932861,
+        0.1285398006439209
+      ],
+      "pixel": [
+        593.4402465820312,
+        586.7792594432831
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -0.382659912109375,
+        5.643640995025635,
+        0.8937070369720459
+      ],
+      "pixel": [
+        523.0763053894043,
+        577.0452547073364
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        2.02947998046875,
+        5.337319850921631,
+        -0.071609728038311
+      ],
+      "pixel": [
+        599.8200416564941,
+        587.8694808483124
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        1.553253173828125,
+        4.173441410064697,
+        0.7346799969673157
+      ],
+      "pixel": [
+        567.2403717041016,
+        627.9691386222839
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_33 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.1741180419921875,
+        4.138691425323486,
+        1.3709867000579834
+      ],
+      "pixel": [
+        541.160717010498,
+        629.5455694198608
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_34 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.9536285400390625,
+        4.985097408294678,
+        -2.065216302871704
+      ],
+      "pixel": [
+        651.4628219604492,
+        598.3943724632263
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_34 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.127105712890625,
+        4.713469982147217,
+        -0.9723665118217468
+      ],
+      "pixel": [
+        648.0569458007812,
+        609.1232943534851
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_34 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        1.108245849609375,
+        5.332751750946045,
+        -1.7896883487701416
+      ],
+      "pixel": [
+        626.4765930175781,
+        586.7105412483215
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_34 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.134368896484375,
+        5.054503917694092,
+        -2.675079584121704
+      ],
+      "pixel": [
+        629.2155647277832,
+        594.7520184516907
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_34 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -0.166229248046875,
+        4.187119960784912,
+        -1.6823275089263916
+      ],
+      "pixel": [
+        597.5211524963379,
+        623.2131314277649
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_35 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        3.9241943359375,
+        1.4102100133895874,
+        -3.999603271484375
+      ],
+      "pixel": [
+        743.1620979309082,
+        715.5602788925171
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_35 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.5588531494140625,
+        0.41255977749824524,
+        -4.540924072265625
+      ],
+      "pixel": [
+        748.1231117248535,
+        745.8275055885315
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_35 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.190948486328125,
+        1.7524064779281616,
+        -3.5640869140625
+      ],
+      "pixel": [
+        738.4638977050781,
+        705.8573663234711
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_35 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        3.7384185791015625,
+        2.82912278175354,
+        -3.322784662246704
+      ],
+      "pixel": [
+        722.3273849487305,
+        669.9040389060974
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_35 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.27337646484375,
+        2.012538433074951,
+        -2.4195709228515625
+      ],
+      "pixel": [
+        689.1989707946777,
+        698.0663323402405
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        4.15472412109375,
+        -0.543012797832489,
+        -3.981475830078125
+      ],
+      "pixel": [
+        747.8965187072754,
+        780.4133248329163
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.2760009765625,
+        -1.818035364151001,
+        -4.399932861328125
+      ],
+      "pixel": [
+        738.4822654724121,
+        817.7402758598328
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.5211944580078125,
+        -0.22749440371990204,
+        -3.590484619140625
+      ],
+      "pixel": [
+        746.5962982177734,
+        772.3579430580139
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        2.9779052734375,
+        -1.8629629611968994,
+        -4.5653228759765625
+      ],
+      "pixel": [
+        735.9249114990234,
+        817.547253370285
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.3366241455078125,
+        -1.327724575996399,
+        -2.788543701171875
+      ],
+      "pixel": [
+        699.9933815002441,
+        808.2316732406616
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_36 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        3.87799072265625,
+        -0.9326483011245728,
+        -2.1790313720703125
+      ],
+      "pixel": [
+        696.4516067504883,
+        799.1424286365509
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_37 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        3.9064788818359375,
+        -2.7984273433685303,
+        -3.186034917831421
+      ],
+      "pixel": [
+        722.6711082458496,
+        857.4227321147919
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_37 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        2.430328369140625,
+        -3.321216106414795,
+        -4.0392913818359375
+      ],
+      "pixel": [
+        711.3108444213867,
+        864.7604191303253
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_37 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        4.2552032470703125,
+        -3.0115509033203125,
+        -2.4513089656829834
+      ],
+      "pixel": [
+        711.9383239746094,
+        869.510600566864
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_37 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        4.878662109375,
+        -1.9780126810073853,
+        -2.3051910400390625
+      ],
+      "pixel": [
+        722.4121856689453,
+        837.5883436203003
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_37 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        3.8821868896484375,
+        -1.813900113105774,
+        -1.495101809501648
+      ],
+      "pixel": [
+        678.7065696716309,
+        831.8760591745377
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        1.50750732421875,
+        -5.492233753204346,
+        0.6163027286529541
+      ],
+      "pixel": [
+        569.6184539794922,
+        958.1180942058563
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        3.218719482421875,
+        -4.7425384521484375,
+        0.2773897349834442
+      ],
+      "pixel": [
+        615.8993911743164,
+        939.1983336210251
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        0.742156982421875,
+        -5.6764655113220215,
+        0.0989382341504097
+      ],
+      "pixel": [
+        568.1325531005859,
+        956.9990175962448
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        3.27520751953125,
+        -4.6589531898498535,
+        0.5308992266654968
+      ],
+      "pixel": [
+        610.0420188903809,
+        938.1587737798691
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        2.3957672119140625,
+        -3.776423692703247,
+        -0.6441038250923157
+      ],
+      "pixel": [
+        623.3079528808594,
+        896.6726016998291
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_38 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        1.79168701171875,
+        -3.948446750640869,
+        -1.267684817314148
+      ],
+      "pixel": [
+        627.110538482666,
+        896.4089781045914
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_39 \u2022 5 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -0.1831817626953125,
+        -4.981334209442139,
+        2.8500216007232666
+      ],
+      "pixel": [
+        469.9552059173584,
+        945.7336431741714
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_39 \u2022 5 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        1.7809295654296875,
+        -4.81060791015625,
+        2.5821382999420166
+      ],
+      "pixel": [
+        518.2473564147949,
+        948.573442697525
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_39 \u2022 5 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -0.164337158203125,
+        -5.342325210571289,
+        2.076263666152954
+      ],
+      "pixel": [
+        493.3469009399414,
+        953.3639940619469
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_39 \u2022 5 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -1.429779052734375,
+        -5.218136787414551,
+        1.840728998184204
+      ],
+      "pixel": [
+        475.3193950653076,
+        941.1393409967422
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_39 \u2022 5 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -0.7979583740234375,
+        -4.376087188720703,
+        0.7466279864311218
+      ],
+      "pixel": [
+        518.9776611328125,
+        909.7883784770966
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -1.4920806884765625,
+        -3.507805347442627,
+        4.327301025390625
+      ],
+      "pixel": [
+        398.9433002471924,
+        896.8094265460968
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -3.066741943359375,
+        -3.6534993648529053,
+        3.2263948917388916
+      ],
+      "pixel": [
+        403.31934928894043,
+        888.7641996145248
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -0.94158935546875,
+        -3.140331983566284,
+        4.751953125
+      ],
+      "pixel": [
+        396.06093406677246,
+        888.8112562894821
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -3.054656982421875,
+        -3.745547294616699,
+        3.0913851261138916
+      ],
+      "pixel": [
+        407.6103115081787,
+        891.1941683292389
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.5298919677734375,
+        -2.5111501216888428,
+        2.810516357421875
+      ],
+      "pixel": [
+        425.7842445373535,
+        850.6251829862595
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_40 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -2.1103515625,
+        -2.168292284011841,
+        3.392364501953125
+      ],
+      "pixel": [
+        416.13112449645996,
+        843.3365964889526
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -2.2960357666015625,
+        -1.6366312503814697,
+        5.051116943359375
+      ],
+      "pixel": [
+        360.7993412017822,
+        831.8486684560776
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -3.314208984375,
+        -2.5993144512176514,
+        3.9457855224609375
+      ],
+      "pixel": [
+        376.825590133667,
+        855.8301919698715
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -2.5712127685546875,
+        -0.6627585887908936,
+        5.1435394287109375
+      ],
+      "pixel": [
+        352.7343463897705,
+        797.3496401309967
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -3.2067413330078125,
+        -2.789107084274292,
+        3.8728487491607666
+      ],
+      "pixel": [
+        381.03650093078613,
+        862.3271995782852
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.9601593017578125,
+        -1.4452961683273315,
+        3.136077880859375
+      ],
+      "pixel": [
+        408.01051139831543,
+        814.7300970554352
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_41 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -2.9984893798828125,
+        -0.6369017362594604,
+        3.3658599853515625
+      ],
+      "pixel": [
+        400.35664558410645,
+        788.3511936664581
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -2.49713134765625,
+        2.448754072189331,
+        4.5979766845703125
+      ],
+      "pixel": [
+        371.49121284484863,
+        688.059675693512
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        -3.1524658203125,
+        0.6707284450531006,
+        4.8048553466796875
+      ],
+      "pixel": [
+        352.8983688354492,
+        748.3628690242767
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -2.4066314697265625,
+        3.0751731395721436,
+        4.247833251953125
+      ],
+      "pixel": [
+        384.1775608062744,
+        665.9426844120026
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        -3.027191162109375,
+        0.4335596263408661,
+        4.889434814453125
+      ],
+      "pixel": [
+        352.4945068359375,
+        757.1199810504913
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        -2.846405029296875,
+        1.1168938875198364,
+        3.3710479736328125
+      ],
+      "pixel": [
+        403.01087379455566,
+        729.7396910190582
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_42 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -2.885223388671875,
+        1.9317537546157837,
+        2.931549072265625
+      ],
+      "pixel": [
+        415.53966522216797,
+        701.1897110939026
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 0,
+      "worldRelativeThree": [
+        -1.5916748046875,
+        4.702568531036377,
+        2.892211675643921
+      ],
+      "pixel": [
+        441.1304569244385,
+        609.413069486618
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 43,
+      "worldRelativeThree": [
+        0.1898040771484375,
+        5.158813953399658,
+        2.5052335262298584
+      ],
+      "pixel": [
+        487.7624702453613,
+        594.6210837364197
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 86,
+      "worldRelativeThree": [
+        -1.931854248046875,
+        4.2569899559021,
+        3.3533780574798584
+      ],
+      "pixel": [
+        420.6960868835449,
+        624.7621071338654
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 129,
+      "worldRelativeThree": [
+        0.261138916015625,
+        5.22398042678833,
+        2.3066556453704834
+      ],
+      "pixel": [
+        495.1047134399414,
+        592.279064655304
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 172,
+      "worldRelativeThree": [
+        0.0733642578125,
+        3.7580018043518066,
+        2.5191190242767334
+      ],
+      "pixel": [
+        485.0047302246094,
+        642.9773533344269
+      ]
+    },
+    {
+      "object": "Travel exterior ball | Panel_43 \u2022 6 sides",
+      "vertex": 215,
+      "worldRelativeThree": [
+        -0.34100341796875,
+        3.3565289974212646,
+        3.0266263484954834
+      ],
+      "pixel": [
+        461.4829730987549,
+        657.1185600757599
+      ]
+    }
+  ]
+}

@@ -17,34 +17,40 @@ const neonScoreboard=$('neon-scoreboard'),updateNeonScoreboard=connectNeonScoreb
 updateNeonScoreboard(0,null);
 const view=new TableView(canvas,viewport);let inspecting=false,loaded=false,physics:PinballPhysics;
 let physicsAssets:{vertices:Float32Array;indices:Uint32Array;obstacles:Obstacle[]},starting=false,highScore:number|null=null;
-const keys=new Set<string>(),sound=createGameSound();let accumulator=0,lastFrame=0,lastState='',holdCharge=false;
+const keys=new Set<string>(),sound=createGameSound();void sound.load();let accumulator=0,lastFrame=0,lastState='',holdCharge=false;
 const menu=$<HTMLDialogElement>('game-menu');
+const siteNavigation=$('site-navigation'),navToggle=$<HTMLButtonElement>('nav-toggle'),navPanel=$('nav-panel');
+function setNavOpen(open:boolean,restoreFocus=false){navPanel.hidden=!open;navToggle.setAttribute('aria-expanded',String(open));navToggle.setAttribute('aria-label',open?'Close game menu':'Open game menu');if(restoreFocus)navToggle.focus()}
+navToggle.onclick=()=>setNavOpen(navPanel.hidden===true);
+navPanel.addEventListener('click',event=>{const button=(event.target as HTMLElement).closest('button');if(button&&['member','pause','restart','settings','profile-member'].includes(button.id))setNavOpen(false)});
+document.addEventListener('pointerdown',event=>{if(!siteNavigation.contains(event.target as Node))setNavOpen(false)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!navPanel.hidden&&$('profile-menu').hidden){event.preventDefault();event.stopImmediatePropagation();setNavOpen(false,true)}},true);
 const howToPlay=$('how-to-play-toggle'),controlsGuide=$('how-to-play-controls');
 howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!=='true';howToPlay.setAttribute('aria-expanded',String(expanded));howToPlay.parentElement!.classList.toggle('is-open',expanded);controlsGuide.inert=!expanded};
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false;
 let membership:ReturnType<typeof connectMembership>|undefined;
-const leaderboard=connectLeaderboard(()=>{$('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;updateNeonScoreboard(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player));
+const leaderboard=connectLeaderboard(()=>{$('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;updateNeonScoreboard(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),()=>membership?.open());
 membership=connectMembership({
  beforeOpen(){resumeAfterMembership=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';clearKeys();if(resumeAfterMembership){holdCharge=physics.state==='charging';physics.setPaused(true);accumulator=0}if(menu.open)menu.close()},
- afterClose(){const resume=resumeAfterMembership&&loaded;if(resume){physics.setPaused(false);accumulator=0}resumeAfterMembership=false;if(loaded)sync();if(resume)canvas.focus();else if(menu.open)$('resume').focus()},
+ afterClose(){const resume=resumeAfterMembership&&loaded;if(resume){physics.setPaused(false);accumulator=0}resumeAfterMembership=false;if(loaded)sync();if(loaded&&physics.state==='finished')leaderboard.show();if(resume)canvas.focus();else if(menu.open)$('resume').focus()},
  refreshPlayer:()=>leaderboard.memberChanged(),
 });
 const launchButton=$<HTMLButtonElement>('touch-launch'),touchHints=$('touch-hints');
-const releasedPaddles={left:false,right:false},previousTouch={left:false,right:false};
+const releasedPaddles={left:false,right:false},previousTouch={left:false,right:false},paddleSoundHeld={left:false,right:false};
 const keyboardPaddle=(side:'left'|'right')=>side==='left'?keys.has('KeyA')||keys.has('ArrowLeft'):keys.has('KeyD')||keys.has('ArrowRight');
 const touchInput=matchMedia('(any-pointer: coarse)');
 const primaryTouch=matchMedia('(pointer: coarse)'),cameraChoice=$<HTMLSelectElement>('camera');let desktopCamera:'ball'|'complete'='ball',phone=false;
 const mobileView=()=>completeViewOnly(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches);
 const selectedCamera=()=>mobileView()?'complete':desktopCamera;
 function applyScoreboardLayout(){const visible=!phone&&!inspecting&&view.cameraMode==='complete';if(neonScoreboard.hidden===!visible)return;neonScoreboard.hidden=!visible;stage.classList.toggle('has-neon-scoreboard',visible);const artwork=$<HTMLTemplateElement>('neon-scoreboard-artwork');if(visible&&artwork)artwork.replaceWith(artwork.content);view.resize()}
-function applyNavigationLayout(){const compact=phone||loaded&&physics.active&&physics.state!=='finished'&&!inspecting;document.body.classList.toggle('compact-navigation',compact);$('navbar-extras').inert=compact}
+function applyNavigationLayout(){const compact=phone||loaded&&physics.active&&physics.state!=='finished'&&!inspecting;document.body.classList.toggle('compact-navigation',compact)}
 function applyDeviceView(){const mobile=mobileView();phone=phoneDevice(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches,Math.min(screen.width,screen.height));cameraChoice.disabled=mobile;cameraChoice.value=selectedCamera();cameraChoice.querySelector<HTMLOptionElement>('option[value="ball"]')!.disabled=mobile;document.body.classList.toggle('handheld',mobile);document.body.classList.toggle('phone-layout',phone);if(loaded&&!inspecting)view.setCameraMode(physics.active&&physics.state!=='finished'?selectedCamera():'complete');applyScoreboardLayout();applyNavigationLayout()}
 applyDeviceView();primaryTouch.addEventListener('change',applyDeviceView);
 const canTouch=(control:'paddle'|'launch')=>loaded&&!starting&&!inspecting&&physics.active&&!physics.paused&&physics.state!=='finished'&&!menu.open&&!registration.open&&!leaderboard.dialog.open&&(control==='paddle'||physics.state==='launcher'||physics.state==='charging');
 const touch=connectTouchControls(canvas,launchButton,canTouch,()=>{holdCharge=false},state=>{for(const side of ['left','right'] as const){if(previousTouch[side]&&!state[side]&&!keyboardPaddle(side))releasedPaddles[side]=true;previousTouch[side]=state[side]}stage.classList.toggle('left-held',state.left);stage.classList.toggle('right-held',state.right)});
 const input=()=>{const controls={left:!releasedPaddles.left&&(keyboardPaddle('left')||touch.state.left),right:!releasedPaddles.right&&(keyboardPaddle('right')||touch.state.right),space:keys.has('Space')||touch.state.space,holdCharge};releasedPaddles.left=releasedPaddles.right=false;return controls};
-const clearKeys=()=>{keys.clear();touch.clear();releasedPaddles.left=releasedPaddles.right=true};
+const clearKeys=()=>{keys.clear();touch.clear();releasedPaddles.left=releasedPaddles.right=true;paddleSoundHeld.left=paddleSoundHeld.right=false};
 const applyInspectionLayout=()=>{if(!inspecting){viewport.style.width='100%';viewport.style.height='100%'}else{
  const ref=view.references[view.referenceIndex];const ratio=ref.resolution[0]/ref.resolution[1];const w=Math.min(stage.clientWidth,stage.clientHeight*ratio);viewport.style.width=w+'px';viewport.style.height=w/ratio+'px'}view.resize()};
 let completedRunRecorded=false;
@@ -52,10 +58,11 @@ function sync(){
  const p=physics.pose();
  applyNavigationLayout();stage.classList.toggle('showing-play',!physics.active||p.state==='finished');
  if(p.paused&&!inspecting&&!starting&&!registration.open&&!leaderboard.dialog.open){if(!menu.open)menu.showModal()}else if(menu.open)menu.close();
+ sound.setMusic(physics.active&&!p.paused&&p.state!=='finished'&&!registration.open&&!leaderboard.dialog.open);
  $('resume').textContent=physics.active&&p.state!=='finished'?'Resume game':'Back to game';
  $('menu-description').textContent=physics.active&&p.state!=='finished'?'Game paused. Your progress is saved here.':'Choose your gameplay view.';
  if(p.state==='finished'&&!completedRunRecorded){completedRunRecorded=true;
-  clearKeys();holdCharge=false;leaderboard.show();
+  clearKeys();holdCharge=false;sound.play('game-over');if(membership?.isMember())leaderboard.show();else membership?.open();
  }
  if(view.scoreboard.update(p.score,highScore??0,p.lives))view.needsRender=true;
  updateNeonScoreboard(p.score,highScore);applyScoreboardLayout();
@@ -86,9 +93,8 @@ cameraChoice.onchange=()=>{if(!mobileView())desktopCamera=cameraChoice.value as 
 function updateSoundSettings(){$('volume-value').textContent=Math.round(sound.volume)+'%';$('sound-label').textContent=sound.muted?'Unmute':'Mute';$('sound').setAttribute('aria-pressed',String(sound.muted));$('sound').setAttribute('aria-label',sound.muted?'Unmute game sound':'Mute game sound')}
 $('sound').onclick=()=>{sound.setMuted(!sound.muted);updateSoundSettings()};
 $<HTMLInputElement>('volume').oninput=event=>{sound.setVolume(Number((event.target as HTMLInputElement).value));sound.unlock();updateSoundSettings()};
-function playTone(frequency:number){sound.play(frequency)}
-$('start').onclick=async()=>{if(!loaded||starting)return;sound.unlock();starting=true;if(inspecting)toggleInspection();clearKeys();holdCharge=false;physics.setPaused(true);sync();
- try{const seed=await leaderboard.start(),fresh=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,physicsAssets.obstacles);const old=physics;physics=fresh;old.dispose();bindFeedback();completedRunRecorded=false;view.setCameraMode(selectedCamera(),true);physics.start(seed);view.resetFeedback();accumulator=0;lastFrame=0;lastState='';view.setReference(0);view.resize();canvas.focus();playTone(440)}
+$('start').onclick=async()=>{if(!loaded||starting)return;sound.unlock();sound.setMusic(false);starting=true;if(inspecting)toggleInspection();clearKeys();holdCharge=false;physics.setPaused(true);sync();
+ try{const seed=await leaderboard.start(),fresh=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,physicsAssets.obstacles);const old=physics;physics=fresh;old.dispose();bindFeedback();completedRunRecorded=false;view.setCameraMode(selectedCamera(),true);physics.start(seed);view.resetFeedback();accumulator=0;lastFrame=0;lastState='';view.setReference(0);view.resize();canvas.focus();sound.play('start');sound.setMusic(true,1.5)}
  catch(error){loaded=false;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error);$('action').hidden=true}
  finally{starting=false;if(loaded)sync()}
 };
@@ -107,7 +113,7 @@ addEventListener('keyup',event=>{const wasHeld=keys.delete(event.code);if(wasHel
 function pauseOnFocusLoss(){clearKeys();if(loaded&&physics.active&&physics.state!=='finished')setGamePaused(true)}
 addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseOnFocusLoss()});
 window.addEventListener('resize',()=>{clearKeys();applyDeviceView();applyInspectionLayout()});
-function bindFeedback(){physics.onHit=(id,delta)=>{view.hit(id);playTone(id.startsWith('ring_')?620:delta>0?880:delta<0?330:620)};physics.onTarget=()=>playTone(1046);physics.onTransport=source=>view.teleport(source,physics.pose().position)}
+function bindFeedback(){physics.onHit=(id)=>{view.hit(id);sound.play(id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>sound.play('collect');physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
 async function start(){try{
  await view.load((value,label)=>{document.querySelector<HTMLProgressElement>('progress')!.value=value*.9;$('loading-detail').textContent=label});
  $('loading-detail').textContent='Preparing ball and paddle movement…';
@@ -117,7 +123,9 @@ async function start(){try{
  loaded=true;view.needsRender=true;$('loading').hidden=true;for(const id of ['inspect','start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();requestAnimationFrame(frame);
  }catch(error){$('loading').hidden=true;$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
 function frame(now:number){if(!loaded)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!physics.paused)accumulator+=delta;else accumulator=0;
- while(accumulator>=DT){const controls=input();if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);accumulator-=DT}
+ while(accumulator>=DT){const controls=input(),playing=physics.active&&!physics.paused&&physics.state==='playing',launches=physics.launches;
+  for(const side of ['left','right'] as const){if(playing&&controls[side]&&!paddleSoundHeld[side])sound.play('flap',side==='left'?-.4:.4);paddleSoundHeld[side]=playing&&controls[side]}
+  if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
  const p=physics.pose();view.updateFeedback(physics.active&&!physics.paused&&!inspecting?delta:0);view.updateBall(p.position,p.rotation,p.ballVisible);for(const paddle of p.paddles)view.updatePaddle(paddle.id,paddle.angle);
  for(const target of p.targets)view.updateTarget(target.id,target.position);
  view.updateSpring(p.springCompression);view.updateCaveCharge(p.cave?.phase==='charging'?p.cave.progress:0,!!p.cave);

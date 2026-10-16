@@ -1,0 +1,54 @@
+:root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
+*{box-sizing:border-box}
+html{overscroll-behavior:none;scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{margin:0}
+body[data-phase="opening"]{overflow:hidden}
+main{position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#scene-frame{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;isolation:isolate}
+#scene-frame img,#scene-frame canvas,#opening{position:absolute;inset:0;display:block;width:100%;height:100%}
+#scene-frame img{pointer-events:none;user-select:none}
+#ball-canvas{touch-action:pan-y}
+body:not([data-phase="idle"]) #ball-canvas{pointer-events:none}
+#hold-frame{z-index:1}
+#journey-frame{z-index:2;pointer-events:none}
+#opening{z-index:3;object-fit:contain;pointer-events:none}
+[hidden],#scene-frame [hidden]{display:none!important}
+.wordmark{position:absolute;top:calc(28px + env(safe-area-inset-top,0px));left:calc(32px + env(safe-area-inset-left,0px));font-size:12px;font-weight:600;letter-spacing:.28em;text-shadow:0 1px 12px #0008;pointer-events:none}
+.site-navigation{position:absolute;z-index:4;top:calc(14px + env(safe-area-inset-top,0px));right:calc(24px + env(safe-area-inset-right,0px));display:flex;align-items:center;gap:16px}
+.play-now{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.035em;transition:background .18s,color .18s}
+.play-now:hover{background:#e8fd00;border-color:#e8fd00}
+#site-menu{position:relative}
+#site-menu summary{list-style:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:44px;height:44px;border:0;border-radius:4px;cursor:pointer;background:#10152266}
+#site-menu summary::-webkit-details-marker{display:none}
+#site-menu summary span{display:block;width:23px;height:1px;background:#fff;transition:transform .18s,opacity .18s}
+#site-menu[open] summary span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+#site-menu[open] summary span:nth-child(2){opacity:0}
+#site-menu[open] summary span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+#site-menu nav{position:absolute;right:0;top:calc(100% + 12px);min-width:220px;padding:8px;background:#101522f5;border:1px solid #ffffff26;border-radius:8px;box-shadow:0 12px 36px #0005}
+#site-menu nav a{display:block;padding:15px 16px;color:#f6f2ff;font-size:13px;letter-spacing:.025em;text-decoration:none;border-radius:4px}
+#site-menu nav a:hover{background:#ffffff0d}
+.site-navigation a:focus-visible,#site-menu summary:focus-visible,.info-page a:focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+#status{position:absolute;inset:46% 20px auto;margin:0;text-align:center;font-size:12px;letter-spacing:.08em;color:#e2d8f5;pointer-events:none}
+#status.error{color:#ffb3b3}
+#hint{position:absolute;left:calc(20px + env(safe-area-inset-left,0px));right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(25px + env(safe-area-inset-bottom,0px));margin:0;text-align:center;font-size:11px;letter-spacing:.09em;color:#f3edff;text-shadow:0 1px 6px #000;pointer-events:none}
+#enter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:16px 22px;border:1px solid #ffffff80;border-radius:0;background:#101020dd;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+#enter span{margin-left:24px}
+#enter:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+#progress{position:absolute;bottom:env(safe-area-inset-bottom,0px);left:0;height:2px;width:100%;background:#e8fd00;transform:scaleX(0);transform-origin:left;pointer-events:none}
+#blackout{position:fixed;inset:0;z-index:10;background:#000;opacity:0;pointer-events:none;transition:opacity 2s ease-in-out}
+#blackout.visible{opacity:1}
+#game-page{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;z-index:11;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .8s ease-in-out}
+body[data-game="visible"]{overflow:hidden}
+body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events:auto}
+#scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
+noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
+@media(max-width:600px){.wordmark{top:calc(22px + env(safe-area-inset-top,0px));left:calc(20px + env(safe-area-inset-left,0px));font-size:10px}#hint{bottom:calc(22px + env(safe-area-inset-bottom,0px));font-size:10px;letter-spacing:.04em}}
+@media(max-width:600px){.site-navigation{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));gap:10px}.play-now{padding:0 18px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.play-now,#site-menu summary span{transition:none}}
+.info-page{min-height:100vh;min-height:100dvh;background:#0b1022}
+.info-page .wordmark{pointer-events:auto;color:inherit;text-decoration:none}
+.info-page .back-link{position:absolute;top:28px;right:32px;color:#d4cfe0;font-size:12px;text-decoration:none}
+.info-page .info-content{position:static;display:block;width:min(680px,100%);margin:0 auto;padding:clamp(150px,25vh,260px) 24px 80px;overflow:visible}
+.info-content h1{font-size:clamp(36px,7vw,64px);font-weight:500;letter-spacing:-.04em;margin:0 0 28px}
+.info-content p{max-width:520px;color:#c4bfd0;font-size:16px;line-height:1.8;margin:0}

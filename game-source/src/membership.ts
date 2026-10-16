@@ -37,7 +37,7 @@ export function connectMembership(options:Options){
  function close(){
   if(!dialog.open)return;
   dialog.close();frame.removeAttribute('src');document.body.classList.remove('membership-open');
-  (opener.hidden||opener.closest('[hidden],[inert]')?profile:opener).focus();
+  (opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
   options.afterClose(completed);
  }
  profile.onclick=showProfile;
@@ -64,5 +64,5 @@ export function connectMembership(options:Options){
   }
  });
  paint();
- return {updatePlayer,open,close};
+ return {updatePlayer,open,close,isMember:()=>player?.member===true};
 }
