@@ -1,6 +1,6 @@
 # SOFACET website and pinball game
 
-This is the combined website prepared for your GitHub repository. It includes the cinematic landing sequence and the current pinball game from the page previously running on port 5173, including the latest 0.18-second “Hitting flaps” sound used by both flippers.
+This website includes the cinematic landing sequence and the current pinball game from the page previously running on port 5173, including the latest 0.18-second “Hitting flaps” sound used by both flippers.
 
 ## Run
 
