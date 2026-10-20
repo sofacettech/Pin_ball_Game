@@ -119,27 +119,36 @@ try{
     const {waitForVideo}=await import('./assets/video-playback.js');
     const reference=document.createElement('video');
     reference.muted=true;reference.playsInline=true;reference.crossOrigin='anonymous';
-    reference.style.cssText='position:fixed;width:1px;height:1px;opacity:.001;pointer-events:none';
+    // WebKit may report HAVE_CURRENT_DATA before a tiny, nearly transparent
+    // reference video has a drawable compositor surface. Give the reference a
+    // visible test-only surface and wait for paints before reading its pixels.
+    reference.style.cssText='position:fixed;width:192px;height:108px;bottom:0;right:0;z-index:2147483647;pointer-events:none';
     document.body.append(reference);
     try{
      reference.src=document.querySelector('#journey').currentSrc;reference.preload='auto';reference.load();
      await reference.play();reference.pause();await waitForVideo(reference,{readyState:2});
      reference.currentTime=200.25/60;await waitForVideo(reference,{readyState:2});
      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
-     const context=canvas.getContext('2d',{alpha:false});context.drawImage(reference,0,0);
-     const expected=context.getImageData(0,0,1920,1080).data;
+     const context=canvas.getContext('2d',{alpha:false});
      const sequence=window.sofacetPreview.sequence;
      const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
      const bounds=active.getBoundingClientRect();
      if(active.hidden||bounds.width<100||bounds.height<100||getComputedStyle(active).opacity!=='1')throw Error('The journey renderer must be visible at full stage size');
-     context.drawImage(active,0,0);
-     const actual=context.getImageData(0,0,1920,1080).data;
-     let max=0,total=0;for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta}
-     return{maxChannelDifference:max,meanChannelDifference:total/actual.length};
+     let result;
+     for(let attempt=1;attempt<=3;attempt++){
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      context.drawImage(reference,0,0);const expected=context.getImageData(0,0,1920,1080).data;
+      context.drawImage(active,0,0);const actual=context.getImageData(0,0,1920,1080).data;
+      let max=0,total=0,referenceRGB=0;
+      for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta;if(i%4!==3)referenceRGB+=expected[i]}
+      result={maxChannelDifference:max,meanChannelDifference:total/actual.length,referenceRGB:referenceRGB/(1920*1080*3),paintAttempts:attempt};
+      if(result.referenceRGB>1&&max<=2&&result.meanChannelDifference<=.05)break;
+     }
+     return result;
     }finally{reference.pause();reference.removeAttribute('src');reference.load();reference.remove()}
    });
    console.log('Original Full HD pixel comparison',JSON.stringify({native,...quality}));
-   assert.ok(quality.maxChannelDifference<=2&&quality.meanChannelDifference<=.05,'Cached frames must preserve original native-video pixels');
+   assert.ok(quality.referenceRGB>1&&quality.maxChannelDifference<=2&&quality.meanChannelDifference<=.05,'Rendered frames must preserve original native-video pixels');
    assert.deepEqual(errors,[]);
   }catch(error){
    console.error('Browser state',await page.evaluate(()=>({
