@@ -52,6 +52,19 @@ test('native snapshots buffer in travel order, reuse reversals and settle within
  }finally{cache.destroy();await wait(10)}
  assert.equal(alive,0);
 });
+test('native seeking starts the latest target without waiting behind synthetic downloads',async()=>{
+ const calls=[];
+ const source={mode:'video',stats:{},load(){assert.fail('Native video has no per-frame download')},
+  async decode(frame){calls.push(frame);return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{decoded:4}});
+ try{
+  await until(()=>cache.stats.pending===0);
+  cache.request(50,50,0);assert.equal(calls.at(-1),50);
+  await until(()=>cache.stats.pending===0);
+  cache.request(60,60,50);assert.equal(calls.at(-1),60);
+  assert.equal(cache.stats.peakNetwork,0);
+ }finally{cache.destroy();await wait(10)}
+});
 test('a byte-limited prefetch window settles instead of refetching its evictions',async()=>{
  let loads=0;const source={mode:'webcodecs',stats:{},load:async()=>{loads++;return new Uint8Array(100000)},decode:async()=>({close(){}}),fallback:()=>false,destroy(){}};
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:600000,idleMs:5}});

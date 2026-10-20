@@ -42,7 +42,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     const frames = [target];
     // A completed range can trail a moving target and still advance the image.
     // Present that progress instead of cancelling every request on a slow link.
-    const progress = progressFrame();
+    const progress = source.mode === 'video' ? undefined : progressFrame();
     if (progress !== undefined) frames.push(progress);
     // Decode ahead during scrolling, keeping a couple of frames for reversals.
     const ahead = Math.max(1, settings.decoded - 2);
@@ -96,7 +96,11 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   function pump() {
     if (destroyed || suspended) return;
     const video = source.mode === 'video';
-    const downloads = video ? warmFrames() : order;
+    // Native seeking has no compressed-sample download. Make the target ready
+    // synchronously; an artificial download promise otherwise lets old
+    // lookahead take the decoder before the latest scroll target.
+    if (video) for (const frame of warmFrames()) if (!compressed.has(frame)) compressed.set(frame, null);
+    const downloads = video ? [] : order;
     const unavailable = frame => compressed.has(frame) || decoded.has(frame) || loading.has(frame) || (failures.get(frame) || 0) > Date.now();
     for (const frame of downloads) {
       if (active.size >= (video ? 1 : settings.network)) break;

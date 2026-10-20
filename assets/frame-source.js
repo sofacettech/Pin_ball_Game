@@ -12,7 +12,7 @@ export async function createFrameSource(video,index,indexURL){
  if(fallbackURL&&index.sha256)fallbackURL.searchParams.set('v',index.sha256);
  const config={codec:index.codec,codedWidth:index.width,codedHeight:index.height,description,colorSpace:index.colorSpace,optimizeForLatency:true};
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
- const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,deliveryFallbacks:0};
+ const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,deliveryFallbacks:0};
  function useLocal(){
   if(!fallbackURL||url.href===fallbackURL.href)return false;
   url=fallbackURL;stats.deliveryFallbacks++;return true;
@@ -132,14 +132,16 @@ export async function createFrameSource(video,index,indexURL){
   await ready();if(disposed)throw abortError();
   const time=(frame+.25)/index.fps;
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001){
+   const start=performance.now();
    video.currentTime=time;
    await waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).catch(error=>{nativeReady=undefined;throw error});
+   stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
   // Retain the native decoder's surface before the next seek. VideoFrame avoids
   // the GPU readback/copy of createImageBitmap(video) in WebKit. Older browsers
   // keep a full-size canvas instead. No resize or re-encoding.
-  let image;
+  const retainStart=performance.now();let image;
   if(typeof VideoFrame==='function'){
    try{image=new VideoFrame(video,{timestamp:Math.round(frame*1e6/index.fps)})}catch{/* Older browsers may not support video-backed frames. */}
   }
@@ -152,6 +154,7 @@ export async function createFrameSource(video,index,indexURL){
    context.drawImage(video,0,0);
   }
   if(disposed||generation!==nativeGeneration){image.close();throw abortError()}
+  stats.nativeRetainMs+=performance.now()-retainStart;
   return image;
  }
  async function decode(frame,bytes){
