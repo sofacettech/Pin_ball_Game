@@ -128,14 +128,32 @@ export async function createFrameSource(video,index,indexURL){
  }
  for(const event of ['touchend','click','keydown'])globalThis.document?.addEventListener(event,activateNative,{passive:true,signal:gestures.signal});
  async function nativeDecode(frame){
+  const generation=nativeGeneration;
   await ready();if(disposed)throw abortError();
   const time=(frame+.25)/index.fps;
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001){
    video.currentTime=time;
    await waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).catch(error=>{nativeReady=undefined;throw error});
   }
-  // A native video is mutable: the cache may use it only for this completed seek.
-  video.transient=true;video.close=()=>{};return video;
+  if(disposed||generation!==nativeGeneration)throw abortError();
+  // Freeze the native decoder's full-size pixels before the next seek. This
+  // keeps Safari's colour conversion while allowing bounded lookahead and
+  // presentation on the next animation frame. No resize or re-encoding.
+  let image;
+  if(typeof createImageBitmap==='function'){
+   try{image=await createImageBitmap(video)}catch{/* Older WebKit can reject video bitmap sources. */}
+  }
+  if(disposed||generation!==nativeGeneration){image?.close();throw abortError()}
+  if(!image){
+   image=document.createElement('canvas');
+   image.width=video.videoWidth;image.height=video.videoHeight;
+   image.close=()=>{image.width=0;image.height=0};
+   const context=image.getContext('2d',{alpha:false});
+   if(!context){image.close();throw new DOMException('Frame canvas unavailable','NotSupportedError')}
+   context.drawImage(video,0,0);
+  }
+  if(disposed||generation!==nativeGeneration){image.close();throw abortError()}
+  return image;
  }
  async function decode(frame,bytes){
   const start=performance.now();let timeout;

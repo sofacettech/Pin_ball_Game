@@ -39,14 +39,13 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   }
 
   function warmFrames() {
-    if (source.mode === 'video') return [target];
     const frames = [target];
     // A completed range can trail a moving target and still advance the image.
     // Present that progress instead of cancelling every request on a slow link.
     const progress = progressFrame();
     if (progress !== undefined) frames.push(progress);
     // Decode ahead during scrolling, keeping a couple of frames for reversals.
-    const ahead = Math.max(1, settings.decoded - 3);
+    const ahead = Math.max(1, settings.decoded - 2);
     for (let i = 1; i <= ahead; i++) if (valid(target + i * direction)) frames.push(target + i * direction);
     for (let i = 1; frames.length < settings.decoded && i <= settings.decoded; i++) {
       if (valid(target - i * direction)) frames.push(target - i * direction);
@@ -97,7 +96,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   function pump() {
     if (destroyed || suspended) return;
     const video = source.mode === 'video';
-    const downloads = video ? [target] : order;
+    const downloads = video ? warmFrames() : order;
     const unavailable = frame => compressed.has(frame) || decoded.has(frame) || loading.has(frame) || (failures.get(frame) || 0) > Date.now();
     for (const frame of downloads) {
       if (active.size >= (video ? 1 : settings.network)) break;
@@ -184,7 +183,6 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     const epoch = generation;
     source.decode(next, compressed.get(next)).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
-      if (image.transient && next !== target) { onReady(next, image); return; }
       decoded.set(next, image); trim(); counters.decodedTotal++;
       counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
       if (next === target) counters.latencyMs = performance.now() - requestedAt;
@@ -198,7 +196,6 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
-    for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
       if (!useful(index)) { bytes -= data?.byteLength || 0; compressed.delete(index); }
     }
@@ -227,14 +224,15 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
         ...counters, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
         compressed: compressed.size, compressedBytes: bytes, reservedBytes: reserved,
         pending: active.size + (decoding ? 1 : 0), network: active.size,
-        queued: (source.mode === 'video' ? [target] : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,
+        queued: (source.mode === 'video' ? warmFrames() : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,
         settings, ...source.stats,
       };
     },
     suspend() {
       suspended = true; generation++; clearTimeout(timer);
       for (const job of active) job.controller.abort();
-      for (const [frame, image] of decoded) if (image.transient) decoded.delete(frame);
+      for (const image of decoded.values()) image.close();
+      decoded.clear();
       source.suspend?.();
     },
     resume() { if (!destroyed) { suspended = false; pump(); arm(); } },

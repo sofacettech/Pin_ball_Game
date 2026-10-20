@@ -4,6 +4,7 @@ import {prepareInlineVideo,waitForVideo,connectOpeningVideo} from '../assets/vid
 import {createFrameSource} from '../assets/frame-source.js';
 
 class Video extends EventTarget {
+ videoWidth=1920;videoHeight=1080;
  readyState=0;seeking=false;paused=true;ended=false;error=null;attrs=new Map();calls=0;loads=0;time=0;
  setAttribute(name,value){this.attrs.set(name,value)}
  removeAttribute(name){this.attrs.delete(name)}
@@ -14,6 +15,11 @@ class Video extends EventTarget {
  play(){this.calls++;if(this.reject)return Promise.reject(new DOMException('Gesture required','NotAllowedError'));this.paused=false;this.dispatchEvent(new Event('playing'));return Promise.resolve()}
 }
 const turn=()=>new Promise(resolve=>setTimeout(resolve,0));
+function bitmapEnvironment(t){
+ const previous=globalThis.createImageBitmap;
+ globalThis.createImageBitmap=async video=>({time:video.currentTime,width:video.videoWidth,height:video.videoHeight,closed:false,close(){this.closed=true}});
+ t.after(()=>{globalThis.createImageBitmap=previous});
+}
 function environment(t){
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
  globalThis.document=Object.assign(new EventTarget(),{hidden:false});globalThis.window=new EventTarget();
@@ -62,14 +68,17 @@ test('destroy ignores a late rejected play promise and removes controls/listener
  const e=environment(t);let reject;e.video.play=()=>{e.video.calls++;return new Promise((_,r)=>reject=r)};e.player.start();e.player.destroy();reject(Error('late'));await turn();
  e.button.dispatchEvent(new Event('click'));assert.equal(e.video.calls,1);assert.equal(e.button.hidden,true);assert.equal(e.ended,0);
 });
-test('native journey suspends pending work and recovers from a fresh metadata load',async()=>{
+test('native journey suspends pending work and recovers from a fresh metadata load',async t=>{
+ bitmapEnvironment(t);
  const video=new Video(),source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/assets/index.json'));
  const first=source.decode(4);source.suspend();await assert.rejects(first,{name:'AbortError'});
  const next=source.decode(4);video.readyState=1;video.dispatchEvent(new Event('loadedmetadata'));await turn();assert.equal(video.currentTime,0);
  video.readyState=2;video.dispatchEvent(new Event('loadeddata'));await turn();assert.equal(video.currentTime,4.25/60);
- video.readyState=2;video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await next,video);source.destroy();
+ video.readyState=2;video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await next;
+ assert.notEqual(image,video);assert.equal(image.time,4.25/60);image.close();source.destroy();
 });
 test('native video warms decoded data before seeking and retries blocked playback in the gesture',async t=>{
+ bitmapEnvironment(t);
  const previousDocument=globalThis.document;
  globalThis.document=Object.assign(new EventTarget(),{hidden:false});
  t.after(()=>{globalThis.document=previousDocument});
@@ -84,9 +93,33 @@ test('native video warms decoded data before seeking and retries blocked playbac
  assert.equal(video.calls,2,'play must run inside the gesture, before an async boundary');
  video.readyState=2;video.dispatchEvent(new Event('loadeddata'));await turn();
  assert.ok(video.paused);assert.equal(video.currentTime,60.25/60);
- video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await decoded,video);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await decoded;
+ assert.equal(image.time,60.25/60);assert.equal(image.width,1920);assert.equal(image.height,1080);
+ video.time=2;assert.equal(image.time,60.25/60,'Cached pixels must survive another seek');image.close();
  document.dispatchEvent(new Event('click'));assert.equal(video.calls,2,'normal scrolling must not restart playback');
  source.destroy();document.dispatchEvent(new Event('touchend'));assert.equal(video.calls,2);
+});
+test('suspending a pending native snapshot releases the late full-size bitmap',async t=>{
+ bitmapEnvironment(t);let resolve,closed=0;
+ globalThis.createImageBitmap=()=>new Promise(r=>resolve=r);
+ const video=new Video();video.readyState=2;video.time=4.25/60;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(4);await turn();assert.ok(resolve);
+ source.suspend();resolve({close(){closed++}});
+ await assert.rejects(pending,{name:'AbortError'});assert.equal(closed,1);
+});
+test('a browser without video bitmap support keeps an unscaled native canvas snapshot',async t=>{
+ bitmapEnvironment(t);globalThis.createImageBitmap=async()=>{throw new TypeError('Unsupported source')};
+ const previous=globalThis.document,draws=[],canvas={getContext:()=>({drawImage:(...args)=>draws.push(args)})};
+ globalThis.document=Object.assign(new EventTarget(),{createElement:()=>canvas});
+ t.after(()=>{globalThis.document=previous});
+ const video=new Video();video.readyState=2;video.time=4.25/60;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const image=await source.decode(4);
+ assert.equal(image.width,1920);assert.equal(image.height,1080);assert.deepEqual(draws,[[video,0,0]]);
+ image.close();assert.equal(image.width,0);assert.equal(image.height,0);
 });
 test('a stalled compressed-frame request times out and releases its request slot',async t=>{
  const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder;let fetching=false;

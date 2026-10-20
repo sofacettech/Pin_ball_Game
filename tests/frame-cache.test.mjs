@@ -35,10 +35,22 @@ test('disposing during decode closes its late resource',async()=>{
  const cache=createFrameCache({count:2,source,onReady(){assert.fail('Disposed cache notified')},onError(){},config:{network:1}});
  await until(()=>resolve);cache.destroy();resolve({close(){closed++}});await wait(10);assert.equal(closed,1);assert.equal(cache.stats.decoded,0);
 });
-test('native video frames are never reused after their source seeks elsewhere',async()=>{
- const source={mode:'video',stats:{},load:async()=>null,decode:async frame=>{await wait(8);return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
- const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error}});
- try{cache.request(10);await until(()=>cache.get(10));cache.request(20);assert.equal(cache.get(10),undefined);cache.request(30);await until(()=>cache.get(30));assert.equal(cache.get(20),undefined);assert.equal(cache.get(30).frame,30)}finally{cache.destroy()}
+test('native snapshots buffer in travel order, reuse reversals and settle within the memory limit',async()=>{
+ let alive=0,total=0,peak=0;
+ const source={mode:'video',stats:{},frameBytes:()=>0,load:async()=>null,decode:async frame=>{
+  await wait(2);total++;peak=Math.max(peak,++alive);return{frame,close(){alive--}};
+ },fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{decoded:4,idleMs:5}});
+ try{
+  cache.request(10);await until(()=>cache.get(10)&&cache.get(11)&&cache.get(12)&&cache.stats.pending===0);
+  const retained=cache.get(10),settled=total;await wait(30);assert.equal(total,settled);
+  cache.request(11);assert.equal(cache.get(11).frame,11);
+  cache.request(10);assert.equal(cache.get(10),retained);
+  await until(()=>cache.get(9)&&cache.get(8)&&cache.stats.pending===0);
+  assert.equal(cache.stats.direction,-1);assert.ok(peak<=5,'At most four retained frames and one in-flight snapshot');
+  cache.suspend();assert.equal(alive,0);cache.resume();await until(()=>cache.get(10));
+ }finally{cache.destroy();await wait(10)}
+ assert.equal(alive,0);
 });
 test('a byte-limited prefetch window settles instead of refetching its evictions',async()=>{
  let loads=0;const source={mode:'webcodecs',stats:{},load:async()=>{loads++;return new Uint8Array(100000)},decode:async()=>({close(){}}),fallback:()=>false,destroy(){}};

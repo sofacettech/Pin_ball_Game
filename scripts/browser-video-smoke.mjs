@@ -56,6 +56,27 @@ try{
    // prove that intermediate frames are being presented evenly.
    await page.evaluate(()=>window.scrollTo(0,1600));
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
+   await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
+   const quality=await page.evaluate(async()=>{
+    const {waitForVideo}=await import('./assets/video-playback.js');
+    const reference=document.createElement('video');
+    reference.muted=true;reference.playsInline=true;reference.crossOrigin='anonymous';
+    reference.style.cssText='position:fixed;width:1px;height:1px;opacity:.001;pointer-events:none';
+    document.body.append(reference);
+    try{
+     reference.src=document.querySelector('#journey').currentSrc;reference.preload='auto';reference.load();
+     await reference.play();reference.pause();await waitForVideo(reference,{readyState:2});
+     reference.currentTime=200.25/60;await waitForVideo(reference,{readyState:2});
+     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
+     const context=canvas.getContext('2d',{alpha:false});context.drawImage(reference,0,0);
+     const expected=context.getImageData(0,0,1920,1080).data;
+     const actual=document.querySelector('#journey-frame').getContext('2d').getImageData(0,0,1920,1080).data;
+     let max=0,total=0;for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta}
+     return{maxChannelDifference:max,meanChannelDifference:total/actual.length};
+    }finally{reference.pause();reference.removeAttribute('src');reference.load();reference.remove()}
+   });
+   console.log('Original Full HD pixel comparison',JSON.stringify({native,...quality}));
+   assert.ok(quality.maxChannelDifference<=2&&quality.meanChannelDifference<=.05,'Cached frames must preserve original native-video pixels');
    const motion=await page.evaluate(async()=>{
     const sequence=window.sofacetPreview.sequence,draw=CanvasRenderingContext2D.prototype.drawImage;
     const times=[];

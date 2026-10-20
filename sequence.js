@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
-import { createFrameSource } from './assets/frame-source.js?v=frames-d42b43723f03';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-bcf27f8be91a';
+import { createFrameSource } from './assets/frame-source.js?v=frames-cbe98f608065';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-05437ea6cdaf';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
@@ -56,18 +56,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let gameLoaded = false;
   let gameVisible = false;
   let scrollDirty = false;
-  let wantedFrame = 0;
   let refreshFrame = false;
   const events = new AbortController();
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
-  const cache = createFrameCache({count: frameCount, source, onReady(available = wantedFrame, readyImage) {
-    const valid = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
-    // Native video is mutable and must be copied before the next seek. Immutable
-    // decoder frames are presented by tick(), once per browser animation frame.
-    if (readyImage?.transient && (valid || refreshFrame && available === wantedFrame && phase === 'journey')) display(readyImage,available);
-    requestFrame();
-  },
+  // Both decoders return immutable frames. Present only in tick(), together
+  // with scene positioning and copy, once per browser animation frame.
+  const cache = createFrameCache({count: frameCount, source, onReady: requestFrame,
     config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
@@ -194,7 +189,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
       easedFrame += (desiredFrame - easedFrame) * (1 - Math.exp(-16 * delta));
       if (Math.abs(easedFrame - desiredFrame) < .05) easedFrame = desiredFrame;
       const target = Math.round(easedFrame);
-      wantedFrame = target;
       cache.request(target,desiredFrame,displayedFrame);
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
