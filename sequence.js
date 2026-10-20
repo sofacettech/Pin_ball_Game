@@ -1,7 +1,7 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
-import { createFrameSource } from './assets/frame-source.js?v=frames-cbe98f608065';
+import { createFrameSource } from './assets/frame-source.js?v=frames-ca252b3882c3';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-05437ea6cdaf';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 

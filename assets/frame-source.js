@@ -136,14 +136,13 @@ export async function createFrameSource(video,index,indexURL){
    await waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).catch(error=>{nativeReady=undefined;throw error});
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
-  // Freeze the native decoder's full-size pixels before the next seek. This
-  // keeps Safari's colour conversion while allowing bounded lookahead and
-  // presentation on the next animation frame. No resize or re-encoding.
+  // Retain the native decoder's surface before the next seek. VideoFrame avoids
+  // the GPU readback/copy of createImageBitmap(video) in WebKit. Older browsers
+  // keep a full-size canvas instead. No resize or re-encoding.
   let image;
-  if(typeof createImageBitmap==='function'){
-   try{image=await createImageBitmap(video)}catch{/* Older WebKit can reject video bitmap sources. */}
+  if(typeof VideoFrame==='function'){
+   try{image=new VideoFrame(video,{timestamp:Math.round(frame*1e6/index.fps)})}catch{/* Older browsers may not support video-backed frames. */}
   }
-  if(disposed||generation!==nativeGeneration){image?.close();throw abortError()}
   if(!image){
    image=document.createElement('canvas');
    image.width=video.videoWidth;image.height=video.videoHeight;

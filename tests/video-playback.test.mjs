@@ -15,10 +15,10 @@ class Video extends EventTarget {
  play(){this.calls++;if(this.reject)return Promise.reject(new DOMException('Gesture required','NotAllowedError'));this.paused=false;this.dispatchEvent(new Event('playing'));return Promise.resolve()}
 }
 const turn=()=>new Promise(resolve=>setTimeout(resolve,0));
-function bitmapEnvironment(t){
- const previous=globalThis.createImageBitmap;
- globalThis.createImageBitmap=async video=>({time:video.currentTime,width:video.videoWidth,height:video.videoHeight,closed:false,close(){this.closed=true}});
- t.after(()=>{globalThis.createImageBitmap=previous});
+function snapshotEnvironment(t){
+ const previous=globalThis.VideoFrame;
+ globalThis.VideoFrame=class{constructor(video){this.time=video.currentTime;this.width=video.videoWidth;this.height=video.videoHeight}close(){this.closed=true}};
+ t.after(()=>{globalThis.VideoFrame=previous});
 }
 function environment(t){
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
@@ -69,7 +69,7 @@ test('destroy ignores a late rejected play promise and removes controls/listener
  e.button.dispatchEvent(new Event('click'));assert.equal(e.video.calls,1);assert.equal(e.button.hidden,true);assert.equal(e.ended,0);
 });
 test('native journey suspends pending work and recovers from a fresh metadata load',async t=>{
- bitmapEnvironment(t);
+ snapshotEnvironment(t);
  const video=new Video(),source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/assets/index.json'));
  const first=source.decode(4);source.suspend();await assert.rejects(first,{name:'AbortError'});
  const next=source.decode(4);video.readyState=1;video.dispatchEvent(new Event('loadedmetadata'));await turn();assert.equal(video.currentTime,0);
@@ -78,7 +78,7 @@ test('native journey suspends pending work and recovers from a fresh metadata lo
  assert.notEqual(image,video);assert.equal(image.time,4.25/60);image.close();source.destroy();
 });
 test('native video warms decoded data before seeking and retries blocked playback in the gesture',async t=>{
- bitmapEnvironment(t);
+ snapshotEnvironment(t);
  const previousDocument=globalThis.document;
  globalThis.document=Object.assign(new EventTarget(),{hidden:false});
  t.after(()=>{globalThis.document=previousDocument});
@@ -99,18 +99,18 @@ test('native video warms decoded data before seeking and retries blocked playbac
  document.dispatchEvent(new Event('click'));assert.equal(video.calls,2,'normal scrolling must not restart playback');
  source.destroy();document.dispatchEvent(new Event('touchend'));assert.equal(video.calls,2);
 });
-test('suspending a pending native snapshot releases the late full-size bitmap',async t=>{
- bitmapEnvironment(t);let resolve,closed=0;
- globalThis.createImageBitmap=()=>new Promise(r=>resolve=r);
- const video=new Video();video.readyState=2;video.time=4.25/60;
+test('suspending a native seek does not retain a frame from the cancelled generation',async t=>{
+ snapshotEnvironment(t);let created=0;
+ globalThis.VideoFrame=class{constructor(){created++}close(){}};
+ const video=new Video();video.readyState=2;
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());
- const pending=source.decode(4);await turn();assert.ok(resolve);
- source.suspend();resolve({close(){closed++}});
- await assert.rejects(pending,{name:'AbortError'});assert.equal(closed,1);
+ const pending=source.decode(4);await turn();assert.ok(video.seeking);
+ source.suspend();video.seeking=false;video.dispatchEvent(new Event('seeked'));
+ await assert.rejects(pending,{name:'AbortError'});assert.equal(created,0);
 });
-test('a browser without video bitmap support keeps an unscaled native canvas snapshot',async t=>{
- bitmapEnvironment(t);globalThis.createImageBitmap=async()=>{throw new TypeError('Unsupported source')};
+test('a browser without native VideoFrame support keeps an unscaled canvas snapshot',async t=>{
+ snapshotEnvironment(t);globalThis.VideoFrame=class{constructor(){throw new TypeError('Unsupported source')}};
  const previous=globalThis.document,draws=[],canvas={getContext:()=>({drawImage:(...args)=>draws.push(args)})};
  globalThis.document=Object.assign(new EventTarget(),{createElement:()=>canvas});
  t.after(()=>{globalThis.document=previous});
