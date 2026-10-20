@@ -52,6 +52,36 @@ try{
     console.log(JSON.stringify({native,frame:state.frame,phase:state.phase,mode:state.stats.mode,fallback:state.stats.fallbackReason}));
    }
    assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
+   // Measure sustained scrolling as well as jumps: arriving eventually does not
+   // prove that intermediate frames are being presented evenly.
+   await page.evaluate(()=>window.scrollTo(0,1600));
+   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
+   const motion=await page.evaluate(async()=>{
+    const sequence=window.sofacetPreview.sequence,draw=CanvasRenderingContext2D.prototype.drawImage;
+    const times=[];
+    CanvasRenderingContext2D.prototype.drawImage=function(...args){
+     if(this.canvas.id==='journey-frame')times.push(performance.now());
+     return draw.apply(this,args);
+    };
+    try{
+     const start=performance.now();
+     await new Promise(resolve=>{
+      function step(now){
+       const elapsed=now-start;
+       window.scrollTo(0,1600+(elapsed<3000?elapsed:6000-elapsed)*.48);
+       if(elapsed<6000)requestAnimationFrame(step);else resolve();
+      }
+      requestAnimationFrame(step);
+     });
+     const gaps=times.slice(1).map((time,i)=>time-times[i]).sort((a,b)=>a-b);
+     return{updates:times.length,updatesPerSecond:times.length/6,
+      p95GapMs:gaps[Math.floor(gaps.length*.95)]||0,maxGapMs:gaps.at(-1)||0,stats:sequence.stats};
+    }finally{CanvasRenderingContext2D.prototype.drawImage=draw;window.scrollTo(0,1600)}
+   });
+   console.log('Continuous scroll',JSON.stringify({native,...motion}));
+   assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
+   assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
+   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
    assert.deepEqual(errors,[]);
   }catch(error){
    console.error('Browser state',await page.evaluate(()=>({
