@@ -2,7 +2,7 @@ import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
 import { createFrameSource } from './assets/frame-source.js?v=frames-8657a69d1823';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-edcabe4142ff';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-09f6f098ca21';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
@@ -68,7 +68,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (readyImage?.transient && (valid || refreshFrame && available === wantedFrame && phase === 'journey')) display(readyImage,available);
     requestFrame();
   },
-    config: constrained ? {network:2,decoded:4,compressedBytes:6*1024*1024} : {},
+    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {
@@ -195,7 +195,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (Math.abs(easedFrame - desiredFrame) < .05) easedFrame = desiredFrame;
       const target = Math.round(easedFrame);
       wantedFrame = target;
-      cache.request(target,desiredFrame);
+      cache.request(target,desiredFrame,displayedFrame);
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);

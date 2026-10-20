@@ -1,5 +1,5 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 12, ahead: 32, prefetch: 56, network: 3, batch: 8,
+  behind: 12, ahead: 48, prefetch: 72, network: 3, batch: 16,
   decoded: 8, compressedBytes: 8 * 1024 * 1024, idleMs: 100,
 };
 
@@ -11,11 +11,20 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       throw RangeError('Invalid frame cache setting: ' + name);
     }
   }
-  let target = 0, lead = 0, direction = 1, order = [], timer, decoding = false;
+  let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
+  const advances = frame => frame > Math.min(presented, target) && frame < Math.max(presented, target);
+  const useful = frame => order.includes(frame) || advances(frame);
+  function progressFrame() {
+    let best;
+    for (const frame of compressed.keys()) {
+      if (advances(frame) && (best === undefined || Math.abs(target - frame) < Math.abs(target - best))) best = frame;
+    }
+    return best;
+  }
 
   function plan() {
     const result = new Set([target]);
@@ -32,6 +41,10 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   function warmFrames() {
     if (source.mode === 'video') return [target];
     const frames = [target];
+    // A completed range can trail a moving target and still advance the image.
+    // Present that progress instead of cancelling every request on a slow link.
+    const progress = progressFrame();
+    if (progress !== undefined) frames.push(progress);
     // Decode ahead during scrolling, keeping a couple of frames for reversals.
     const ahead = Math.max(1, settings.decoded - 3);
     for (let i = 1; i <= ahead; i++) if (valid(target + i * direction)) frames.push(target + i * direction);
@@ -39,10 +52,16 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       if (valid(target - i * direction)) frames.push(target - i * direction);
     }
     for (let i = ahead + 1; frames.length < settings.decoded && valid(target + i * direction); i++) frames.push(target + i * direction);
-    return frames.filter(frame => order.includes(frame)).slice(0, settings.decoded);
+    return [...new Set(frames)].filter(useful).slice(0, settings.decoded);
   }
 
   function trim() {
+    const progress = progressFrame();
+    for (const [frame, data] of compressed) {
+      if (!order.includes(frame) && frame !== progress) {
+        bytes -= data?.byteLength || 0; compressed.delete(frame);
+      }
+    }
     while (compressed.size > settings.prefetch || bytes > settings.compressedBytes) {
       const key = [...compressed.keys()].find(key => key !== target);
       if (key === undefined) break;
@@ -87,8 +106,9 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       const required = Math.min(estimate(frame), settings.compressedBytes);
       const priority = order.indexOf(frame);
       if (settings.compressedBytes - bytes - reserved < required) {
-        const candidates = [...compressed.keys()].filter(key => order.indexOf(key) > priority)
-          .sort((a, b) => order.indexOf(b) - order.indexOf(a));
+        const rank = key => order.includes(key) ? order.indexOf(key) : 1;
+        const candidates = [...compressed.keys()].filter(key => rank(key) > priority)
+          .sort((a, b) => rank(b) - rank(a));
         const reclaimable = candidates.reduce((total, key) => total + (compressed.get(key)?.byteLength || 0), 0);
         if (settings.compressedBytes - bytes - reserved + reclaimable >= required) {
           for (const evict of candidates) {
@@ -115,7 +135,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       // Let the far edge accumulate a useful range instead of opening one HTTP
       // request for every new frame entering the window during a slow scroll.
       if (source.loadFrames && !video && performance.now() - requestedAt < settings.idleMs &&
-        frames.length < Math.min(4, settings.batch) && Math.abs(frame - target) > settings.decoded &&
+        frames.length < settings.batch && Math.abs(frame - target) > settings.decoded &&
         frame !== lead && valid(frames.at(-1) + direction)) continue;
       const controller = new AbortController(), job = {controller, frames, size}, epoch = generation;
       active.add(job); reserved += size;
@@ -135,7 +155,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
         for (const data of samples.values()) total += data?.byteLength || 0;
         if (total > settings.compressedBytes) throw Error('Compressed frames exceed the cache budget');
         for (const [next, data] of samples) {
-          if (!order.includes(next) || compressed.has(next)) continue;
+          if (!useful(next) || compressed.has(next)) continue;
           compressed.set(next, data); bytes += data?.byteLength || 0; failures.delete(next);
         }
         trim();
@@ -163,7 +183,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     decoding = true;
     const epoch = generation;
     source.decode(next, compressed.get(next)).then(image => {
-      if (destroyed || suspended || epoch !== generation || !order.includes(next)) { image.close(); return; }
+      if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
       if (image.transient && next !== target) { onReady(next, image); return; }
       decoded.set(next, image); trim(); counters.decodedTotal++;
       counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
@@ -172,18 +192,19 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }).catch(error => { if (epoch === generation) fail(error, next); }).finally(() => { decoding = false; pump(); });
   }
 
-  function request(frame, next = frame) {
-    if (!Number.isInteger(frame) || !valid(frame) || !Number.isInteger(next) || !valid(next)) throw RangeError('Frame is outside the source sequence');
-    if (order.length && target === frame && lead === next) return;
+  function request(frame, next = frame, visible = frame) {
+    if (![frame, next, visible].every(value => Number.isInteger(value) && valid(value))) throw RangeError('Frame is outside the source sequence');
+    if (order.length && target === frame && lead === next && presented === visible) return;
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
-    target = frame; lead = next; requestedAt = performance.now(); plan();
+    target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
-      if (!order.includes(index)) { bytes -= data?.byteLength || 0; compressed.delete(index); }
+      if (!useful(index)) { bytes -= data?.byteLength || 0; compressed.delete(index); }
     }
+    trim();
     for (const job of active) {
-      if (!job.frames.some(index => order.includes(index)) && !job.controller.signal.aborted) { job.controller.abort(); counters.cancelled++; }
+      if (!job.frames.some(useful) && !job.controller.signal.aborted) { job.controller.abort(); counters.cancelled++; }
     }
     if (decoded.has(frame)) { counters.hits++; counters.latencyMs = 0; }
     pump(); arm();

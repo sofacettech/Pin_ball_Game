@@ -138,3 +138,29 @@ test('variable sample sizes do not repeatedly reload a small distant frame',asyn
   cache.request(6);await until(()=>cache.get(6));
  }finally{cache.destroy()}
 });
+test('a moving target retains slow downloads that can still advance the displayed frame',async()=>{
+ const jobs=[];
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  loadFrames(frames,signal){if(frames[0]<40)return Promise.resolve(new Map(frames.map(frame=>[frame,new Uint8Array(100)])));return new Promise((resolve,reject)=>{
+   jobs.push({frames,signal,resolve:()=>resolve(new Map(frames.map(frame=>[frame,new Uint8Array(100)])))});
+   signal.addEventListener('abort',()=>reject(new DOMException('cancelled','AbortError')),{once:true});
+  })},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:300,source,onReady(){},onError:error=>{throw error},config:{network:1,decoded:4,prefetch:16,ahead:10,behind:4,batch:4,compressedBytes:1600}});
+ try{
+  cache.request(40,40,0);
+  await until(()=>jobs.some(job=>job.frames.includes(40)));
+  const slow=jobs.find(job=>job.frames.includes(40));
+  // The target has travelled beyond the entire prefetch window before arrival.
+  for(let target=50;target<=100;target+=10)cache.request(target,target,0);
+  assert.equal(slow.signal.aborted,false);
+  slow.resolve();
+  await until(()=>cache.get(43));
+  assert.equal(cache.closest(100,0),43);
+  assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=1600);
+  const forward=jobs.at(-1);
+  cache.request(10,10,43);
+  assert.equal(forward.signal.aborted,true);
+  assert.equal(cache.closest(10,43),43);
+ }finally{cache.destroy()}
+});
