@@ -109,17 +109,17 @@ test('suspending a native seek does not retain a frame from the cancelled genera
  source.suspend();video.seeking=false;video.dispatchEvent(new Event('seeked'));
  await assert.rejects(pending,{name:'AbortError'});assert.equal(created,0);
 });
-test('a browser without native VideoFrame support keeps an unscaled canvas snapshot',async t=>{
+test('a browser without native VideoFrame support uses the original native video compositor',async t=>{
  snapshotEnvironment(t);globalThis.VideoFrame=class{constructor(){throw new TypeError('Unsupported source')}};
- const previous=globalThis.document,draws=[],canvas={getContext:()=>({drawImage:(...args)=>draws.push(args)})};
- globalThis.document=Object.assign(new EventTarget(),{createElement:()=>canvas});
- t.after(()=>{globalThis.document=previous});
  const video=new Video();video.readyState=2;video.time=4.25/60;
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());
  const image=await source.decode(4);
- assert.equal(image.width,1920);assert.equal(image.height,1080);assert.deepEqual(draws,[[video,0,0]]);
- image.close();assert.equal(image.width,0);assert.equal(image.height,0);
+ assert.equal(image,video);assert.equal(image.videoWidth,1920);assert.equal(image.videoHeight,1080);
+ assert.equal(source.transient,true);assert.equal(source.stats.renderer,'native-video');image.close();
+ source.suspend();await source.decode(4);
+ assert.equal(video.loads,1,'Returning to an already decoded frame must keep its native buffer');
+ assert.equal(video.currentTime,4.25/60);
 });
 test('a stalled compressed-frame request times out and releases its request slot',async t=>{
  const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder;let fetching=false;

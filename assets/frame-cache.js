@@ -39,6 +39,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   }
 
   function warmFrames() {
+    if (source.transient) return [target];
     const frames = [target];
     // A completed range can trail a moving target and still advance the image.
     // Present that progress instead of cancelling every request on a slow link.
@@ -187,6 +188,11 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     const epoch = generation;
     source.decode(next, compressed.get(next)).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
+      if (image.transient) {
+        for (const retained of decoded.values()) retained.close();
+        decoded.clear();
+        if (next !== target) { onReady(next, image); return; }
+      }
       decoded.set(next, image); trim(); counters.decodedTotal++;
       counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
       if (next === target) counters.latencyMs = performance.now() - requestedAt;
@@ -200,6 +206,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
+    for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
       if (!useful(index)) { bytes -= data?.byteLength || 0; compressed.delete(index); }
     }

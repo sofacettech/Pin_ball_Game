@@ -65,6 +65,17 @@ test('native seeking starts the latest target without waiting behind synthetic d
   assert.equal(cache.stats.peakNetwork,0);
  }finally{cache.destroy();await wait(10)}
 });
+test('direct native video never pre-seeks a future frame or reuses a mutable old position',async()=>{
+ const frames=[];
+ const source={mode:'video',transient:true,stats:{},async decode(frame){frames.push(frame);return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error}});
+ try{
+  await until(()=>cache.get(0));await wait(20);assert.deepEqual(frames,[0]);
+  cache.request(20);assert.equal(cache.get(0),undefined);await until(()=>cache.get(20));
+  await wait(20);assert.deepEqual(frames,[0,20]);
+  cache.request(5);assert.equal(cache.get(20),undefined);await until(()=>cache.get(5));
+ }finally{cache.destroy()}
+});
 test('a byte-limited prefetch window settles instead of refetching its evictions',async()=>{
  let loads=0;const source={mode:'webcodecs',stats:{},load:async()=>{loads++;return new Uint8Array(100000)},decode:async()=>({close(){}}),fallback:()=>false,destroy(){}};
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:600000,idleMs:5}});

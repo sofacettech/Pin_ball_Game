@@ -87,7 +87,7 @@ export async function createFrameSource(video,index,indexURL){
   return bytes;
  }
  async function load(frame,signal,maxBytes){return(await loadFrames([frame],signal,maxBytes)).get(frame)}
- let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0;
+ let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=typeof VideoFrame!=='function';
  const gestures=new AbortController();
  function primeNative(){
   if(disposed||nativePrimed||nativePlaying||globalThis.document?.hidden)return;
@@ -105,9 +105,9 @@ export async function createFrameSource(video,index,indexURL){
   if(!nativeReady){
    // A display:none video can stop producing seeked/decoded frames in WebKit.
    video.hidden=false;
-   video.preload='auto';video.src=url.href;
-   video.load();
-   primeNative();
+   const buffered=video.src===url.href&&video.readyState>=2&&!video.seeking&&!video.error;
+   if(buffered){nativePrimed=true;video.pause()}
+   else{video.preload='auto';video.src=url.href;video.load();primeNative()}
    const signal=nativeEvents.signal;
    const request=waitForVideo(video,{readyState:2,signal}).then(()=>{
     if(signal.aborted||disposed)throw abortError();
@@ -138,20 +138,14 @@ export async function createFrameSource(video,index,indexURL){
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
-  // Retain the native decoder's surface before the next seek. VideoFrame avoids
-  // the GPU readback/copy of createImageBitmap(video) in WebKit. Older browsers
-  // keep a full-size canvas instead. No resize or re-encoding.
+  // Retain the native decoder's surface before the next seek. On older Safari,
+  // use the native video compositor rather than making two full-size RGB copies.
   const retainStart=performance.now();let image;
-  if(typeof VideoFrame==='function'){
-   try{image=new VideoFrame(video,{timestamp:Math.round(frame*1e6/index.fps)})}catch{/* Older browsers may not support video-backed frames. */}
+  if(!nativeDirect){
+   try{image=new VideoFrame(video,{timestamp:Math.round(frame*1e6/index.fps)})}catch{nativeDirect=true}
   }
   if(!image){
-   image=document.createElement('canvas');
-   image.width=video.videoWidth;image.height=video.videoHeight;
-   image.close=()=>{image.width=0;image.height=0};
-   const context=image.getContext('2d',{alpha:false});
-   if(!context){image.close();throw new DOMException('Frame canvas unavailable','NotSupportedError')}
-   context.drawImage(video,0,0);
+   video.transient=true;video.close=()=>{};image=video;
   }
   if(disposed||generation!==nativeGeneration){image.close();throw abortError()}
   stats.nativeRetainMs+=performance.now()-retainStart;
@@ -177,7 +171,7 @@ export async function createFrameSource(video,index,indexURL){
   mode='video';pending?.image?.close();pending?.reject(abortError());pending=null;
   if(decoder?.state!=='closed')decoder?.close();decoder=null;return true;
  }
- return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,get mode(){return mode},get stats(){return{...stats,mode,fallbacks,fallbackReason,mediaOrigin:url.origin}},
+ return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,get mode(){return mode},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin}},
   suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

@@ -28,14 +28,14 @@ try{
   assert.ok(started,'Preview server did not start');
  }
  browser=await webkit.launch();
- const cases=[false,true,'canvas'].flatMap(native=>baseline&&native!=='canvas'
+ const cases=[false,true,'legacy'].flatMap(native=>baseline&&native!=='legacy'
   ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
  for(const {native,previous} of cases){
   const context=await browser.newContext({...devices['iPhone 13']});
   const page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
-  if(native==='canvas')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
+  if(native==='legacy')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
   // Both versions use identical local videos and routing/cache conditions on
   // the same runner. Only the five renderer entry files come from the baseline.
   if(baseline)await page.route('**/*',async route=>{
@@ -60,7 +60,10 @@ try{
      return sequence.desiredFrame===frame&&sequence.displayedFrame===frame;
     },y/8,{timeout:30000});
     const state=await page.evaluate(()=>{
-     const sequence=window.sofacetPreview.sequence,canvas=document.querySelector('#journey-frame');
+     const sequence=window.sofacetPreview.sequence;
+     const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
+     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
+     if(sequence.displayedFrame)canvas.getContext('2d',{alpha:false}).drawImage(active,0,0);
      return{frame:sequence.displayedFrame,phase:sequence.phase,stats:sequence.stats,
       image:sequence.displayedFrame?canvas.toDataURL():null};
     });
@@ -76,16 +79,15 @@ try{
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
    await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
    const motion=await page.evaluate(async()=>{
-    const sequence=window.sofacetPreview.sequence,draw=CanvasRenderingContext2D.prototype.drawImage;
-    const times=[];
-    CanvasRenderingContext2D.prototype.drawImage=function(...args){
-     if(this.canvas.id==='journey-frame')times.push(performance.now());
-     return draw.apply(this,args);
-    };
+    const sequence=window.sofacetPreview.sequence,times=[];
+    let presented=sequence.displayedFrame;
     try{
      const start=performance.now();
      await new Promise(resolve=>{
       function step(now){
+       // Count positions visible at animation frames, including the native
+       // compositor. Multiple canvas writes between paints count only once.
+       if(sequence.displayedFrame!==presented){times.push(now);presented=sequence.displayedFrame}
        const elapsed=now-start;
        window.scrollTo(0,1600+(elapsed<3000?elapsed:6000-elapsed)*.48);
        if(elapsed<6000)requestAnimationFrame(step);else resolve();
@@ -95,7 +97,7 @@ try{
      const gaps=times.slice(1).map((time,i)=>time-times[i]).sort((a,b)=>a-b);
      return{updates:times.length,updatesPerSecond:times.length/6,
       p95GapMs:gaps[Math.floor(gaps.length*.95)]||0,maxGapMs:gaps.at(-1)||0,stats:sequence.stats};
-    }finally{CanvasRenderingContext2D.prototype.drawImage=draw;window.scrollTo(0,1600)}
+    }finally{window.scrollTo(0,1600)}
    });
    console.log('Continuous scroll',JSON.stringify({native,previous,...motion}));
    assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
@@ -103,7 +105,7 @@ try{
    assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
    if(previous)measurements.set(String(native),motion);
    else if(baseline){
-    const before=measurements.get(String(native==='canvas'?true:native));
+    const before=measurements.get(String(native==='legacy'?true:native));
     const comparison={native,updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs};
     console.log('Same-runner comparison',JSON.stringify(comparison));
     assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
@@ -126,7 +128,12 @@ try{
      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
      const context=canvas.getContext('2d',{alpha:false});context.drawImage(reference,0,0);
      const expected=context.getImageData(0,0,1920,1080).data;
-     const actual=document.querySelector('#journey-frame').getContext('2d').getImageData(0,0,1920,1080).data;
+     const sequence=window.sofacetPreview.sequence;
+     const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
+     const bounds=active.getBoundingClientRect();
+     if(active.hidden||bounds.width<100||bounds.height<100||getComputedStyle(active).opacity!=='1')throw Error('The journey renderer must be visible at full stage size');
+     context.drawImage(active,0,0);
+     const actual=context.getImageData(0,0,1920,1080).data;
      let max=0,total=0;for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta}
      return{maxChannelDifference:max,meanChannelDifference:total/actual.length};
     }finally{reference.pause();reference.removeAttribute('src');reference.load();reference.remove()}

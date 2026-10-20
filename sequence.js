@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
-import { createFrameSource } from './assets/frame-source.js?v=frames-3589feefe42e';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-12c4742e01bc';
+import { createFrameSource } from './assets/frame-source.js?v=frames-c7849de7f5d4';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-afcf01608ba0';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
@@ -56,13 +56,18 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let gameLoaded = false;
   let gameVisible = false;
   let scrollDirty = false;
+  let wantedFrame = 0;
   let refreshFrame = false;
   const events = new AbortController();
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
-  // Both decoders return immutable frames. Present only in tick(), together
-  // with scene positioning and copy, once per browser animation frame.
-  const cache = createFrameCache({count: frameCount, source, onReady: requestFrame,
+  // Immutable frames are presented in tick(). Older Safari presents the video
+  // itself through its compositor; only its completed position is reported here.
+  const cache = createFrameCache({count: frameCount, source, onReady(available, image) {
+    const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
+    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) display(image,available);
+    requestFrame();
+  },
     config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
@@ -131,7 +136,11 @@ export async function createSequence(setInteractive, requestFrame, media) {
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {
-    context.drawImage(image, 0, 0, frame.width, frame.height);
+    const direct = image === journey;
+    if (direct) {
+      if (journey.parentNode !== frame.parentNode) frame.after(journey);
+      journey.classList.add('native-renderer');
+    } else context.drawImage(image, 0, 0, frame.width, frame.height);
     refreshFrame = false;
     displayedFrame = index;
     updateCopy(240 + displayedFrame);
@@ -152,7 +161,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       game.setAttribute('aria-hidden', 'true');
     }
     if (displayedFrame > 0) {
-      frame.hidden = false;
+      frame.hidden = direct;
       changePhase('journey');
     } else if (desiredFrame === 0) {
       frame.hidden = true;
@@ -189,6 +198,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       easedFrame += (desiredFrame - easedFrame) * (1 - Math.exp(-16 * delta));
       if (Math.abs(easedFrame - desiredFrame) < .05) easedFrame = desiredFrame;
       const target = Math.round(easedFrame);
+      wantedFrame = target;
       cache.request(target,desiredFrame,displayedFrame);
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
