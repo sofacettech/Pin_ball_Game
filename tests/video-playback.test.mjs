@@ -121,6 +121,15 @@ test('a browser without native VideoFrame support uses the original native video
  assert.equal(video.loads,1,'Returning to an already decoded frame must keep its native buffer');
  assert.equal(video.currentTime,4.25/60);
 });
+test('touch devices use the native compositor even when VideoFrame is supported',async t=>{
+ snapshotEnvironment(t);const previous=globalThis.matchMedia;
+ globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previous});
+ globalThis.VideoFrame=class{constructor(){assert.fail('Touch playback should not copy the native decoder surface')}};
+ const video=new Video();video.readyState=2;video.time=4.25/60;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());assert.equal(await source.decode(4),video);
+ assert.equal(source.stats.renderer,'native-video');assert.equal(source.transient,true);
+});
 test('a stalled compressed-frame request times out and releases its request slot',async t=>{
  const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder;let fetching=false;
  globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};

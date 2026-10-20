@@ -87,7 +87,8 @@ export async function createFrameSource(video,index,indexURL){
   return bytes;
  }
  async function load(frame,signal,maxBytes){return(await loadFrames([frame],signal,maxBytes)).get(frame)}
- let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=typeof VideoFrame!=='function';
+ const nativeCompositor=globalThis.matchMedia?.('(any-pointer: coarse)')?.matches||typeof VideoFrame!=='function';
+ let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor;
  const gestures=new AbortController();
  function primeNative(){
   if(disposed||nativePrimed||nativePlaying||globalThis.document?.hidden)return;
