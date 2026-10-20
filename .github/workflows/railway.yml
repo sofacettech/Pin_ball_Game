@@ -30,6 +30,7 @@ jobs:
       - run: npm ci
       - run: git lfs fsck
       - run: npm run build
+      - run: node --test --test-concurrency=1 tests/*.test.mjs
       - run: npm run smoke
 
   video:
