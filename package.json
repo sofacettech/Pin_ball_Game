@@ -5,11 +5,22 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "build": "node scripts/materialize-video.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs",
+    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs",
+    "build:membership": "node scripts/build-membership.mjs",
+    "test:membership": "node --test tests/membership.test.mjs",
+    "test:frontend": "node --test tests/frontend.test.mjs",
+    "test:leaderboard": "node --test tests/leaderboard.test.mjs",
+    "build:faq": "node scripts/build-faq.mjs",
+    "build:frames": "node scripts/build-frame-index.mjs",
+    "test:frames": "node --test tests/frame-cache.test.mjs",
+    "build:about": "node scripts/build-about.mjs",
     "smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
+    "libphonenumber-js": "1.13.15",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "three": "0.186.1"
   },
   "devDependencies": {

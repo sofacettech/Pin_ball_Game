@@ -5,44 +5,176 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1022">
   <title>SOFACET — Enter the world</title>
+  <script>if (location.hash === '#experience') document.documentElement.setAttribute('data-skip-intro', '');</script>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./style.css?v=pinball-handoff">
+  <link rel="stylesheet" href="./style.css?v=about-navigation">
+  <link rel="preload" href="./assets/fonts/AcuminVariableConcept.otf" as="font" type="font/otf" crossorigin>
+  <link rel="stylesheet" href="./assets/loading/intro.css?v=return-c0b7a332">
   <link rel="preload" as="image" href="./assets/opening-poster.webp">
   <script type="importmap">
     {"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/jsm/"}}
   </script>
 </head>
-<body data-phase="opening">
-  <main aria-label="SOFACET cinematic experience">
+<body data-phase="opening" data-loading>
+  <div id="site-loader" role="region" aria-label="Loading SOFACET">
+    <div id="loading-stage" tabindex="0" aria-label="SOFACET logo reveal" aria-describedby="loading-instructions">
+      <p id="loading-instructions">SOFACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
+      <audio id="introAudio" src="./assets/loading/sofacet-intro-audio.m4a" preload="auto" aria-hidden="true"></audio>
+    <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3648 2160" aria-hidden="true">
+      <defs>
+        
+        <path id="mark" fill-rule="evenodd" d="M60 0H284L344 60V275H229L286 177H198L172 117L145 177H58L115 275H0V60ZM92 59L58 93V117H286V93L252 59Z"/>
+        <linearGradient id="lime" x1="0" y1="0" x2=".25" y2="1">
+          <stop stop-color="#b5ca42"/><stop offset=".5" stop-color="#bbcf47"/><stop offset="1" stop-color="#b9cd45"/>
+        </linearGradient>
+        <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#13180b"/><stop offset=".32" stop-color="#060904"/>
+          <stop offset=".55" stop-color="#1b200f"/><stop offset=".72" stop-color="#050703"/><stop offset="1" stop-color="#0e1107"/>
+        </linearGradient>
+        <radialGradient id="ambient">
+          <stop stop-color="#323b1d" stop-opacity=".34"/><stop offset=".42" stop-color="#151e0f" stop-opacity=".18"/>
+          <stop offset="1" stop-color="#000100" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="floorSheen">
+          <stop stop-color="#6a7735" stop-opacity=".16"/><stop offset=".5" stop-color="#27331c" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#000100" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="reflectionFade" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="white" stop-opacity=".21"/><stop offset=".25" stop-color="white" stop-opacity=".065"/>
+          <stop offset=".7" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="sideFade">
+          <stop stop-color="black"/><stop offset=".3" stop-color="white" stop-opacity=".5"/>
+          <stop offset=".5" stop-color="white"/><stop offset=".7" stop-color="white" stop-opacity=".5"/><stop offset="1" stop-color="black"/>
+        </linearGradient>
+        <linearGradient id="beamInk" x1="0" y1="1" x2="1" y2="0">
+          <stop stop-color="#a6b941" stop-opacity="0"/><stop offset=".17" stop-color="#d3df88"/>
+          <stop offset=".8" stop-color="#c4d16b"/><stop offset="1" stop-color="#a6b941" stop-opacity="0"/>
+        </linearGradient>
+        <pattern id="hatching" width="11" height="12" patternUnits="userSpaceOnUse">
+          <path d="M1 9L6 3" fill="none" stroke="#b9cd62" stroke-width="1.6" stroke-linecap="square"/>
+        </pattern>
+        <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/></filter>
+        <filter id="bloom" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="16"/></filter>
+        <filter id="beamBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+        <clipPath id="topReveal"><path id="revealEdge" d="M0 0H344V275H0Z"/></clipPath>
+        <clipPath id="scanReveal"><path id="scanArea" d="M0 0H344V275H0Z"/></clipPath>
+        <mask id="floorMask" maskUnits="userSpaceOnUse" x="1300" y="1225" width="1050" height="195">
+          <rect x="1300" y="1225" width="1050" height="195" fill="url(#reflectionFade)"/>
+        </mask>
+        <mask id="sidesMask" maskUnits="userSpaceOnUse" x="1370" y="880" width="906" height="345">
+          <rect x="1370" y="880" width="906" height="345" fill="url(#sideFade)"/>
+        </mask>
+        <clipPath id="lightBounds"><rect x="1368" y="825" width="912" height="515"/></clipPath>
+        <g id="litMark">
+          <use href="#mark" fill="url(#metal)" opacity=".3"/>
+          <g clip-path="url(#topReveal)">
+            <use id="texture" href="#mark" fill="url(#hatching)" opacity=".68"/>
+          </g>
+          <g clip-path="url(#scanReveal)">
+            <use href="#mark" fill="url(#lime)"/>
+            <use href="#mark" fill="none" stroke="#d2e183" stroke-width=".65" opacity=".36"/>
+          </g>
+        </g>
+      </defs>
+      <rect width="3648" height="2160" fill="#000100"/>
+      <g id="atmosphere">
+        <ellipse cx="1824" cy="1073" rx="660" ry="360" fill="url(#ambient)"/>
+        <path d="M1372 1225H2276V1375H1372Z" fill="#10180d" opacity=".16"/>
+        <ellipse cx="1824" cy="1226" rx="480" ry="116" fill="url(#floorSheen)"/>
+        <path d="M1372 1225H2276" stroke="#485139" stroke-width="1" opacity=".1"/>
+      </g>
+      
+      <g id="sideReflections" mask="url(#sidesMask)" opacity=".055">
+        <use href="#litMark" transform="translate(1568 943) scale(-1 1)"/>
+        <use href="#litMark" transform="translate(2424 943) scale(-1 1)"/>
+      </g>
+      <g id="groundReflection" mask="url(#floorMask)" filter="url(#soft)">
+        <use href="#litMark" transform="translate(1652 1420) scale(1 -.69)"/>
+      </g>
+      <use id="logoBloom" href="#mark" transform="translate(1652 943)" fill="#b9cd45" filter="url(#bloom)" opacity=".025"/>
+      <use href="#litMark" transform="translate(1652 943)"/>
+      <g id="scanner" clip-path="url(#lightBounds)" opacity="0">
+        <g id="lightReflection" opacity=".13" filter="url(#beamBlur)" stroke="#8c9a48" stroke-width="8">
+          <path id="reflectedBeamA"/><path id="reflectedBeamB"/>
+        </g>
+        <g fill="none" stroke="url(#beamInk)" stroke-width="1.8">
+          <path id="beamA"/><path id="beamB"/>
+        </g>
+      </g>
+    </svg>
+    </div>
+  </div>
+
+  <main aria-label="SOFACET cinematic experience" inert aria-hidden="true">
     <div id="scene-frame">
       <img id="background" src="./assets/idle-background.webp" width="1920" height="1080" alt="Purple SOFACET building and illuminated walkway at night.">
       <canvas id="ball-canvas" aria-label="Interactive SOFACET ball. Hover over a plate to lift it and its neighbours."></canvas>
       <img id="hold-frame" src="./assets/handoff.webp" width="1920" height="1080" alt="" aria-hidden="true">
       <canvas id="journey-frame" width="1920" height="1080" aria-label="Scroll down to follow the ball; scroll up to move back." hidden></canvas>
-      <video id="opening" src="./assets/clip-1.mp4" poster="./assets/opening-poster.webp" muted playsinline preload="auto" aria-label="SOFACET opening animation"></video>
+      <video id="opening" src="./assets/sofacet-opening.mp4?v=safari-52186af574c5" poster="./assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SOFACET opening animation"></video>
+      <svg id="scroll-cue" data-from="144" viewBox="0 0 1920 1080" role="img" aria-label="Scroll to start" hidden>
+        <defs>
+          <path id="scroll-cue-arc" d="M -224 0 A 224 224 0 0 1 224 0"/>
+          <mask id="scroll-cue-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080">
+            <rect width="1920" height="1080" fill="white"/>
+            <ellipse id="scroll-cue-ball" fill="black"/>
+          </mask>
+        </defs>
+        <g mask="url(#scroll-cue-mask)">
+          <g id="scroll-cue-orbit">
+            <text text-anchor="middle"><textPath href="#scroll-cue-arc" startOffset="50%">Scroll to start</textPath></text>
+          </g>
+        </g>
+      </svg>
     </div>
-    <div class="wordmark" aria-hidden="true">SOFACET</div>
-    <header class="site-navigation">
+    <div id="story-copy" aria-label="The SOFACET story">
+      <section class="story-line story-opening" data-from="51" data-until="228" aria-hidden="true">
+        <h1><span class="opening-welcome">WELCOME TO</span> <span class="opening-brand">SO/FACET</span></h1>
+        <p>Lab-grown diamonds, redefined.</p>
+      </section>
+      <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
+        <h2><span>For years,</span> <span class="rules-continuation">diamonds came with rules.</span></h2>
+      </section>
+      <section class="story-line story-approach" data-from="516" data-until="951" aria-hidden="true">
+        <h2><span class="story-text-line">So we</span> <span class="story-text-line">built a world without</span> <span class="story-text-line">them.</span></h2>
+        <p>Step inside.</p>
+      </section>
+      <section class="story-line story-butterflies" data-from="951" data-until="1301" aria-hidden="true">
+        <h2><span class="story-text-line">Here, diamonds</span> <span class="story-text-line">come in shapes</span> <span class="story-text-line">that mean something.</span></h2>
+      </section>
+      <section class="story-line story-choice" data-from="1301" data-until="1630" aria-hidden="true">
+        <h2>And you're the one who chooses.</h2>
+        <p>No special occasion needed. Just you, today.</p>
+      </section>
+      <section class="story-line story-rules" data-from="1630" data-until="2049" aria-hidden="true">
+        <h2><span class="story-text-line">Your rules.</span> <span class="story-text-line">Your shape.</span> <span class="story-text-line">Your diamond.</span></h2>
+      </section>
+      <section class="story-line story-finale" data-from="2049" aria-hidden="true">
+        <h2><span class="story-text-line">So,</span> <span class="story-text-line">what's yours?</span></h2>
+        <p>Play to find out.</p>
+      </section>
+    </div>
+    <div class="wordmark brand-logo site-brand"><img src="./assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></div>
+    <header class="site-navigation site-nav">
       <a class="play-now" href="./play.html">Play now</a>
-      <details id="site-menu">
-        <summary aria-label="Navigation menu"><span></span><span></span><span></span></summary>
-        <nav aria-label="Main navigation">
-          <a href="./about.html">About</a>
-          <a href="./privacy.html">Privacy Policies</a>
+      <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
+      <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
+          <a class="menu-item" href="./about.html" target="_top">About</a>
+          <a class="menu-item" href="./faq.html" target="_top">FAQs</a>
+          <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
-      </details>
     </header>
     <p id="status" role="status">Loading experience…</p>
     <button id="enter" hidden>Enter SOFACET <span aria-hidden="true">↗</span></button>
-    <p id="hint" aria-live="polite"></p>
     <div id="progress" aria-hidden="true"></div>
   </main>
-  <div id="blackout" aria-hidden="true"></div>
   <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
-  <video id="journey" src="./assets/journey-through-clip6.mp4" muted playsinline preload="metadata" hidden></video>
-  <noscript>This experience needs JavaScript to play the opening and explore the ball.</noscript>
-  <script type="module" src="./viewer.js?v=pinball-handoff"></script>
-  <script type="module" src="./navigation.js"></script>
+  <video id="journey" data-src="./assets/sofacet-experience.mp4" muted playsinline webkit-playsinline preload="none" hidden></video>
+  <noscript><style>#site-loader{display:none}</style>This experience needs JavaScript to play the opening and explore the ball.</noscript>
+  <script type="module" src="./assets/loading/intro.js?v=return-24daee91"></script>
+  <script type="module" src="./viewer.js?v=frames-53b4c78ec183"></script>
+  <script type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
 </body>
 </html>

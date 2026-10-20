@@ -1,9 +1,9 @@
 {
   "asset_checksums": {
-    "collider-entities.json": "b6a018bbee20d35f2e672586db56973a3c59a9e74f6f652dd2f5001e9d02118f",
+    "collider-entities.json": "78dd90fd06fc8a114df207819d35e0cc35be25cbab7571ea7742164310a63a47",
     "collision-indices.bin": "e5156d0b1c69c10aa46d1a7fb4c89aab09cdc0b80bb8e2b2c696017c85e7a9c5",
     "collision-vertices.bin": "3329d7cb9364406e8e5aeb0590345e8b169116b0be0d79ebb430b8f140b0f56c",
-    "facet-table.glb": "b90ed4044c928ed60b9f7c2bf605e29f56e618386d67b8bd5a43b779a099586f",
+    "facet-table.glb": "d2cdf251fddc2b406e47b49f2d27ea1c5b7ac3614c70b627159f10c9c8e47e81",
     "floor-appearance.exr": "bbba87f0ce3c33e22c1684c62a7276175a4a3233b0dacab4e6355f6d8c71d996",
     "floor-appearance.json": "79274ddd6ca1219dd42b3e6d7e4010ddbcd7b7dc55c9720b25540ec041f8fe68",
     "floor-base.png": "d313c6e672b7f70481fa7428685e2ec012eab04a1cd4e4f3b15204cd2bfb19a0",
@@ -13,7 +13,7 @@
     "reference-cameras.json": "aad0238a66840dc6a875f12305b4e4606b0dcb5afa824882b773e6a9919dfe29",
     "reflection.hdr": "ce0fca7e2d20df23a2d97297b8c86b610b5b03a9ef004757b8ea0e3c6b300aa3",
     "scoreboard-layout.json": "7aefbd28e06ffd2c066ae38d4b66f172ebace49590d551f6601b5e83fceda903",
-    "target-slot-pool.json": "12fe4ad13de6fc5ad9756cf4f3acc12172770ffff2311a883333d53ad827ea4b"
+    "target-slot-pool.json": "620ad338d0b7f57d8122c30f30dfbb7df970c9a9a81899e8e93a1856708d2b4d"
   },
   "schema_version": 1,
   "runtime_contract_version": 6,
@@ -27928,7 +27928,7 @@
         -3.9947900772094727,
         0.5630276203155518
       ],
-      "score_delta": 0,
+      "score_delta": 450,
       "details": {
         "control": "Space",
         "full_charge": "automatic_release_once",
@@ -27964,7 +27964,7 @@
         6.198432922363281,
         0.36189999580383303
       ],
-      "score_delta": 1000,
+      "score_delta": 500,
       "details": {
         "feedback": "brighter_emission_and_sound",
         "hit_impulse": "bounded_to_be_tuned",
@@ -27979,7 +27979,7 @@
         1.6535999664881393,
         0.3722400069236756
       ],
-      "score_delta": -1000,
+      "score_delta": -500,
       "details": {
         "feedback": "brighter_emission_and_sound",
         "hit_impulse": "bounded_to_be_tuned",
@@ -27994,7 +27994,7 @@
         2.4185409545898438,
         0.3722400069236756
       ],
-      "score_delta": -1000,
+      "score_delta": -500,
       "details": {
         "feedback": "brighter_emission_and_sound",
         "hit_impulse": "bounded_to_be_tuned",
@@ -28346,11 +28346,11 @@
       "game_id": "target_f",
       "role": "letter_target",
       "anchor_world": [
-        -3.624358892440796,
-        7.154961585998535,
-        0.43885934352874756
+        -6.618208384357257,
+        7.740660598864283,
+        0.4447391863774371
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28394,11 +28394,11 @@
       "game_id": "target_a",
       "role": "letter_target",
       "anchor_world": [
-        1.775757074356079,
-        6.0167012214660645,
-        0.4455360472202301
+        2.3567454821573595,
+        11.574653487245165,
+        0.45141589006891963
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28442,11 +28442,11 @@
       "game_id": "target_c",
       "role": "letter_target",
       "anchor_world": [
-        5.964945316314697,
-        6.102573871612549,
-        0.4448758363723755
+        5.44520382619731,
+        9.911666646108957,
+        0.4507547255467486
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28490,11 +28490,11 @@
       "game_id": "target_e",
       "role": "letter_target",
       "anchor_world": [
-        -3.9081175327301025,
-        3.316516876220703,
-        0.4370666444301605
+        -2.725550423514266,
+        3.4018420566812275,
+        0.44294648727885
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28538,11 +28538,11 @@
       "game_id": "target_t",
       "role": "letter_target",
       "anchor_world": [
-        4.614743232727051,
-        4.48342752456665,
-        0.44884902238845825
+        4.361686457606981,
+        4.557514706584708,
+        0.44973000994435064
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28586,11 +28586,11 @@
       "game_id": "target_s",
       "role": "letter_target",
       "anchor_world": [
-        3.407992358425195,
-        11.293205166502034,
-        1.3237491452074728
+        -2.1116189190161787,
+        11.75670569351157,
+        1.6908647555316432
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28634,11 +28634,11 @@
       "game_id": "target_o_lower",
       "role": "letter_target",
       "anchor_world": [
-        -0.04827982932329178,
-        11.689596176147461,
-        0.4625363051891327
+        -5.67833534944275,
+        12.065592589489471,
+        0.45141590497008083
       ],
-      "score_delta": 1500,
+      "score_delta": 1000,
       "details": {
         "pass_through": true,
         "solid_ball_collider": false,
@@ -28802,7 +28802,7 @@
         10.732540130615234,
         0.10999999940395355
       ],
-      "score_delta": 0,
+      "score_delta": 500,
       "details": {
         "user_confirmed_bumper": true,
         "colliders_created": false,
@@ -28845,7 +28845,7 @@
         10.732540130615234,
         0.10999999940395355
       ],
-      "score_delta": 0,
+      "score_delta": 500,
       "details": {
         "user_confirmed_bumper": true,
         "colliders_created": false,
@@ -28888,7 +28888,7 @@
         7.385063870668941,
         0.3722400069236756
       ],
-      "score_delta": -1000,
+      "score_delta": -500,
       "details": {
         "feedback": "brighter_emission_and_sound",
         "hit_impulse": "bounded_to_be_tuned",
@@ -28919,8 +28919,8 @@
     "high score and modeled display updates",
     "final appearance and device performance acceptance"
   ],
-  "model_bytes": 26108444,
-  "model_sha256": "b90ed4044c928ed60b9f7c2bf605e29f56e618386d67b8bd5a43b779a099586f",
+  "model_bytes": 28158040,
+  "model_sha256": "d2cdf251fddc2b406e47b49f2d27ea1c5b7ac3614c70b627159f10c9c8e47e81",
   "geometry_compression": "EXT_meshopt_compression",
   "collision_simplification": {
     "source_triangle_count": 120894,
@@ -28932,12 +28932,12 @@
   "target_gameplay": [
     {
       "id": "target_f",
-      "score": 1500,
-      "initial_slot": "target_slot_08",
+      "score": 1000,
+      "initial_slot": "target_20261020_05",
       "initial_position": [
-        -0.13170676405825527,
-        0.015947853324750655,
-        -0.2600064909185542
+        -0.24050124064283646,
+        0.016161522858523136,
+        -0.2812903990485
       ],
       "bounds_local": [
         [
@@ -28953,186 +28953,114 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04472493336764694,
-            0.01612964698691163,
-            -0.47277749832015237
+            -0.20604221583395094,
+            0.016161522858523136,
+            -0.43903424547807585
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05765741728956338,
-            0.01612964698691163,
-            -0.4711672820225174
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.0006935656168634886,
-            0.01612957767514538,
-            -0.4525742621024441
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.0002257500471705076,
-            0.016565630721830704,
-            -0.4256486509555718
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.17858144729151376,
-            0.04933485276354621,
-            -0.3285788440378074
+            -0.07643014250615987,
+            0.0612022595029498,
+            -0.42780946880944704
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.18795056787515155,
-            0.01612957767514538,
-            -0.28724402234149266
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.11584755615055287,
-            0.01612950836337913,
-            -0.26021841164386333
+            0.085947218311993,
+            0.016161522858523136,
+            -0.42119382276355366
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.1322152698313478,
-            0.015947853324750655,
-            -0.2600064909185542
+            0.198387942481482,
+            0.016161522858523136,
+            -0.3601682923801075
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.027875316636043274,
-            0.01612957767514538,
-            -0.2576087196769045
+            -0.24050124064283646,
+            0.016161522858523136,
+            -0.2812903990485
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.22043546785763107,
-            0.01594788798063378,
-            -0.2218523043274288
+            0.15896009818170317,
+            0.016161522858523136,
+            -0.1647289529446754
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06605852319730043,
-            0.015947853324750655,
-            -0.21949944711030905
+            -0.09903938823246163,
+            0.016161522858523136,
+            -0.12273390318752946
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.17022865823330727,
-            0.01612950836337913,
-            -0.16062703787823848
+            -0.24016316452756134,
+            0.016161522858523136,
+            -0.04385259294945185
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.1454658774324098,
-            0.015947853324750655,
-            -0.11821793191659229
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.14364980518901255,
-            0.015947853324750655,
-            -0.11821793191659229
+            0.18443241903227714,
+            0.016161522858523136,
+            0.04480927864906328
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12515004408505262,
-            0.04786152518110512,
-            -0.4112440336599642
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     },
     {
       "id": "target_a",
-      "score": 1500,
-      "initial_slot": "target_slot_11",
+      "score": 1000,
+      "initial_slot": "target_20261020_03",
       "initial_position": [
-        0.06452981753677535,
-        0.016190480245504846,
-        -0.218642874975051
+        0.08564254544748531,
+        0.016404149779277327,
+        -0.4206151214991915
       ],
       "bounds_local": [
         [
@@ -29148,186 +29076,114 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04603083635556166,
-            0.016372273907665817,
-            -0.4719209261848943
+            -0.20634688869845863,
+            0.016404149779277327,
+            -0.4384555442137137
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05635151430164866,
-            0.016372273907665817,
-            -0.4703107098872593
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.0019994686047782122,
-            0.016372204595899567,
-            -0.45171768996718603
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.0015316530350852312,
-            0.016808257642584895,
-            -0.4247920788203138
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.177275544303599,
-            0.0495774796843004,
-            -0.3277222719025494
+            -0.07673481537066756,
+            0.06144488642370399,
+            -0.4272307675450849
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.18925647086306627,
-            0.016372204595899567,
-            -0.28638745020623463
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.11454165316263815,
-            0.016372135284133317,
-            -0.25936183950860525
+            0.08564254544748531,
+            0.016404149779277327,
+            -0.4206151214991915
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.1335211728192625,
-            0.016190480245504846,
-            -0.25914991878329613
+            0.1980832696169743,
+            0.016404149779277327,
+            -0.35958959111574534
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.02656941364812855,
-            0.016372204595899567,
-            -0.25675214754164644
+            -0.24080591350734415,
+            0.016404149779277327,
+            -0.28071169778413785
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.21912956486971635,
-            0.01619051490138797,
-            -0.22099573219217072
+            0.15865542531719548,
+            0.016404149779277327,
+            -0.16415025168031325
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06475262020938571,
-            0.016190480245504846,
-            -0.218642874975051
+            -0.09934406109696932,
+            0.016404149779277327,
+            -0.1221552019231673
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.16892275524539255,
-            0.016372135284133317,
-            -0.15977046574298043
+            -0.24046783739206903,
+            0.016404149779277327,
+            -0.043273891685089695
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14415997444449508,
-            0.016190480245504846,
-            -0.11736135978133422
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.14495570817692727,
-            0.016190480245504846,
-            -0.11736135978133422
+            0.18412774616776945,
+            0.016404149779277327,
+            0.04538797991342544
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12384414109713796,
-            0.04810415210185931,
-            -0.4103874615247062
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     },
     {
       "id": "target_c",
-      "score": 1500,
-      "initial_slot": "target_slot_10",
+      "score": 1000,
+      "initial_slot": "target_20261020_04",
       "initial_position": [
-        0.21676210019785944,
-        0.016166488627415244,
-        -0.22176342931515483
+        0.1978750440752034,
+        0.0163801235053046,
+        -0.36018329837750057
       ],
       "bounds_local": [
         [
@@ -29343,186 +29199,114 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04740563523912881,
-            0.01634824763369309,
-            -0.4726886233078784
+            -0.20655511424022954,
+            0.0163801235053046,
+            -0.4390492514754689
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.054976715418081516,
-            0.01634824763369309,
-            -0.4710784070102434
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.0033742674883453553,
-            0.016348178321926844,
-            -0.45248538709017017
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.0029064519186523742,
-            0.01678423136861217,
-            -0.42555977594329786
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.17590074542003187,
-            0.04955345341032766,
-            -0.32848996902553357
+            -0.07694304091243849,
+            0.06142086014973127,
+            -0.4278244748068401
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.1906312697466334,
-            0.016348178321926844,
-            -0.2871551473292187
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.113166854279071,
-            0.016348109010160594,
-            -0.2601295366315894
+            0.08543431990571439,
+            0.0163801235053046,
+            -0.42120882876094673
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.13489597170282966,
-            0.01616645397153212,
-            -0.25991761590628026
+            0.1978750440752034,
+            0.0163801235053046,
+            -0.36018329837750057
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.025194614764561408,
-            0.016348178321926844,
-            -0.25751984466463057
+            -0.24101413904911506,
+            0.0163801235053046,
+            -0.2813054050458931
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.2177547659861492,
-            0.016166488627415244,
-            -0.22176342931515483
+            0.15844719977542454,
+            0.0163801235053046,
+            -0.16474395894206847
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06337782132581857,
-            0.01616645397153212,
-            -0.21941057209803508
+            -0.09955228663874024,
+            0.0163801235053046,
+            -0.12274890918492253
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.1675479563618254,
-            0.016348109010160594,
-            -0.16053816286596453
+            -0.24067606293383997,
+            0.0163801235053046,
+            -0.04386759894684492
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14278517556092793,
-            0.01616645397153212,
-            -0.11812905690431832
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.1463305070604944,
-            0.01616645397153212,
-            -0.11812905690431832
+            0.18391952062599853,
+            0.0163801235053046,
+            0.044794272651670214
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12213546026625355,
-            0.0480849930631047,
-            -0.41103547143513114
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     },
     {
       "id": "target_e",
-      "score": 1500,
-      "initial_slot": "target_slot_14",
+      "score": 1000,
+      "initial_slot": "target_20261020_07",
       "initial_position": [
-        -0.1420183621629635,
-        0.015882707845450164,
-        -0.12051999227302163
+        -0.09904466892265278,
+        0.016096377379222645,
+        -0.12362065193301855
       ],
       "bounds_local": [
         [
@@ -29538,170 +29322,100 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04400509601925841,
-            0.01606450150761114,
-            -0.4750795586765817
+            -0.2060474965241421,
+            0.016096377379222645,
+            -0.43992099422356495
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05837725463795192,
-            0.01606450150761114,
-            -0.4734693423789467
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            2.6271731525044973e-05,
-            0.01606443219584489,
-            -0.45487632245887344
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            0.0004940873012180259,
-            0.016500485242530213,
-            -0.4279507113120012
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.17919376490800037,
-            0.04926903847773627,
-            -0.33099286731336464
+            -0.07643542319635102,
+            0.06113711402364931,
+            -0.42869621755493614
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.187230730526763,
-            0.01606443219584489,
-            -0.28954608269792204
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.1165673934989414,
-            0.01606436288407864,
-            -0.26252047200029266
+            0.08594193762180186,
+            0.016096377379222645,
+            -0.42208057150904277
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.13149543248295925,
-            0.015882707845450164,
-            -0.26230855127498354
+            0.19838266179129085,
+            0.016096377379222645,
+            -0.3610550411255966
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.02859515398443181,
-            0.01606443219584489,
-            -0.25991078003333384
+            -0.2405065213330276,
+            0.016096377379222645,
+            -0.2821771477939891
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.22115530520601961,
-            0.01588274250133329,
-            -0.22415436468385813
+            0.15895481749151202,
+            0.016096377379222645,
+            -0.16561570169016449
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06677836054568898,
-            0.015882707845450164,
-            -0.22180150746673838
+            -0.09904466892265278,
+            0.016096377379222645,
+            -0.12362065193301855
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.1709484955816958,
-            0.01606436288407864,
-            -0.16292909823466784
+            -0.2401684452177525,
+            0.016096377379222645,
+            -0.04473934169494095
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14618571478079834,
-            0.015882707845450164,
-            -0.12051999227302163
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.14292996784062403,
-            0.015882707845450164,
-            -0.12051999227302163
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12553599948612396,
-            0.047801246937022736,
-            -0.4134264068038345
+            0.184427138342086,
+            0.016096377379222645,
+            0.04392252990357419
           ],
           "safe": true,
           "blocked_by": []
@@ -29710,12 +29424,12 @@
     },
     {
       "id": "target_t",
-      "score": 1500,
-      "initial_slot": "target_slot_12",
+      "score": 1000,
+      "initial_slot": "target_20261020_06",
       "initial_position": [
-        0.1676966647563146,
-        0.01631087153449191,
-        -0.16292474025736486
+        0.1585007517788234,
+        0.016342886029635916,
+        -0.16561701861372324
       ],
       "bounds_local": [
         [
@@ -29731,186 +29445,114 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.047256926844639606,
-            0.01631101015802441,
-            -0.4750752006992787
+            -0.20650156223683072,
+            0.016342886029635916,
+            -0.43992231114712366
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05512542381257072,
-            0.01631101015802441,
-            -0.47346498440164375
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.003225559093856154,
-            0.01631094084625816,
-            -0.45487196448157047
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.002757743524163173,
-            0.016746993892943485,
-            -0.4279463533346982
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.17594193408261916,
-            0.049515547128149526,
-            -0.3309885093360616
+            -0.07688948890903965,
+            0.06138362267406258,
+            -0.4286975344784949
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.19048256135214423,
-            0.01631094084625816,
-            -0.28954172472061906
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.1133155626735602,
-            0.01631087153449191,
-            -0.2625161140229897
+            0.08548787190911322,
+            0.016342886029635916,
+            -0.4220818884326015
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.13474726330834047,
-            0.016129216495863435,
-            -0.26230419329768057
+            0.19792859607860222,
+            0.016342886029635916,
+            -0.36105635804915537
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.02534332315905061,
-            0.01631094084625816,
-            -0.2599064220560309
+            -0.24096058704571624,
+            0.016342886029635916,
+            -0.2821784647175478
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.21790347438063842,
-            0.01612925115174656,
-            -0.2241500067065552
+            0.1585007517788234,
+            0.016342886029635916,
+            -0.16561701861372324
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06352652972030777,
-            0.016129216495863435,
-            -0.22179714948943544
+            -0.09949873463534141,
+            0.016342886029635916,
+            -0.1236219688565773
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.1676966647563146,
-            0.01631087153449191,
-            -0.16292474025736486
+            -0.24062251093044112,
+            0.016342886029635916,
+            -0.04474065861849969
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14293388395541715,
-            0.016129216495863435,
-            -0.12051563429571865
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.14618179866600522,
-            0.016129216495863435,
-            -0.12051563429571865
+            0.18397307262939736,
+            0.016342886029635916,
+            0.043921212980015445
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12196529490548247,
-            0.04805315156170878,
-            -0.41330536572117554
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     },
     {
       "id": "target_s",
-      "score": 1500,
-      "initial_slot": "target_slot_15",
+      "score": 1000,
+      "initial_slot": "target_20261020_02",
       "initial_position": [
-        0.12384414976110872,
-        0.048104153455604745,
-        -0.4103874788526477
+        -0.07673481103868217,
+        0.06144488777744943,
+        -0.4272307762090557
       ],
       "bounds_local": [
         [
@@ -29926,186 +29568,114 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04603082769159088,
-            0.016372275261411252,
-            -0.47192094351283587
+            -0.20634688436647325,
+            0.016404151133022758,
+            -0.43845555287768445
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05635152296561944,
-            0.016372275261411252,
-            -0.4703107272152009
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.001999459940807431,
-            0.016372205949645002,
-            -0.4517177072951276
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.00153164437111445,
-            0.016808258996330327,
-            -0.4247920961482553
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.17727555296756975,
-            0.04957748103804582,
-            -0.3277222892304909
+            -0.07673481103868217,
+            0.06144488777744943,
+            -0.4272307762090557
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.1892564621990955,
-            0.016372205949645002,
-            -0.28638746753417615
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.11454166182660892,
-            0.016372136637878752,
-            -0.25936185683654683
+            0.08564254977947071,
+            0.016404151133022758,
+            -0.4206151301631623
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.13352116415529175,
-            0.016190481599250277,
-            -0.2591499361112377
+            0.1980832739489597,
+            0.016404151133022758,
+            -0.35958959977971616
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.026569422312099335,
-            0.016372205949645002,
-            -0.256752164869588
+            -0.24080590917535877,
+            0.016404151133022758,
+            -0.2807117064481086
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.21912957353368714,
-            0.016190516255133403,
-            -0.2209957495201123
+            0.1586554296491809,
+            0.016404151133022758,
+            -0.16415026034428404
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.06475262887335649,
-            0.016190481599250277,
-            -0.21864289230299255
+            -0.09934405676498392,
+            0.016404151133022758,
+            -0.12215521058713809
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.16892276390936334,
-            0.016372136637878752,
-            -0.15977048307092198
+            -0.24046783306008362,
+            0.016404151133022758,
+            -0.043273900349060486
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14415998310846587,
-            0.016190481599250277,
-            -0.11736137710927579
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.1449556995129565,
-            0.016190481599250277,
-            -0.11736137710927579
+            0.18412775049975483,
+            0.016404151133022758,
+            0.04538797124945465
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.12384414976110872,
-            0.048104153455604745,
-            -0.4103874788526477
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     },
     {
       "id": "target_o_lower",
-      "score": 1500,
-      "initial_slot": "target_slot_04",
+      "score": 1000,
+      "initial_slot": "target_20261020_01",
       "initial_position": [
-        -0.0017544565199428565,
-        0.016808258184083068,
-        -0.4247920614923722
+        -0.20634688680321503,
+        0.0164041503207755,
+        -0.4384555182218013
       ],
       "bounds_local": [
         [
@@ -30121,175 +29691,103 @@
       ],
       "placements": [
         {
-          "slot": "target_slot_01",
+          "slot": "target_20261020_01",
           "surface": "floor",
           "position": [
-            -0.04603083513719077,
-            0.016372274449163993,
-            -0.47192090885695276
+            -0.20634688680321503,
+            0.0164041503207755,
+            -0.4384555182218013
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_02",
-          "surface": "floor",
-          "position": [
-            0.05635151552001955,
-            0.016372274449163993,
-            -0.47031069255931773
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_03",
-          "surface": "floor",
-          "position": [
-            -0.001999467386407321,
-            0.016372205137397743,
-            -0.4517176726392445
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_04",
-          "surface": "floor",
-          "position": [
-            -0.00153165181671434,
-            0.016808258184083068,
-            -0.4247920614923722
-          ],
-          "safe": true,
-          "blocked_by": []
-        },
-        {
-          "slot": "target_slot_05",
+          "slot": "target_20261020_02",
           "surface": "rail",
           "position": [
-            0.1772755455219699,
-            0.04957748022579857,
-            -0.32772225457460785
+            -0.07673481347542395,
+            0.06144488696520217,
+            -0.42723074155317253
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_06",
+          "slot": "target_20261020_03",
           "surface": "floor",
           "position": [
-            -0.1892564696446954,
-            0.016372205137397743,
-            -0.28638743287829305
-          ],
-          "safe": false,
-          "blocked_by": [
-            "Cave | assembly"
-          ]
-        },
-        {
-          "slot": "target_slot_07",
-          "surface": "floor",
-          "position": [
-            0.11454165438100904,
-            0.016372135825631493,
-            -0.2593618221806637
+            0.08564254734272893,
+            0.0164041503207755,
+            -0.42061509550727916
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_08",
+          "slot": "target_20261020_04",
           "surface": "floor",
           "position": [
-            -0.13352117160089164,
-            0.01619048078700302,
-            -0.2591499014553546
+            0.1980832715122179,
+            0.0164041503207755,
+            -0.359589565123833
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_09",
+          "slot": "target_20261020_05",
           "surface": "floor",
           "position": [
-            0.026569414866499445,
-            0.016372205137397743,
-            -0.25675213021370485
+            -0.24080591161210055,
+            0.0164041503207755,
+            -0.28071167179222545
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_10",
+          "slot": "target_20261020_06",
           "surface": "floor",
           "position": [
-            0.21912956608808726,
-            0.016190515442886143,
-            -0.22099571486422917
+            0.15865542721243908,
+            0.0164041503207755,
+            -0.16415022568840087
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_11",
+          "slot": "target_20261020_07",
           "surface": "floor",
           "position": [
-            0.0647526214277566,
-            0.01619048078700302,
-            -0.21864285764710942
+            -0.0993440592017257,
+            0.0164041503207755,
+            -0.12215517593125493
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_12",
+          "slot": "target_20261020_08",
           "surface": "floor",
           "position": [
-            0.16892275646376342,
-            0.016372135825631493,
-            -0.15977044841503887
+            -0.24046783549682543,
+            0.0164041503207755,
+            -0.04327386569317732
           ],
           "safe": true,
           "blocked_by": []
         },
         {
-          "slot": "target_slot_13",
+          "slot": "target_20261020_09",
           "surface": "floor",
           "position": [
-            0.14415997566286598,
-            0.01619048078700302,
-            -0.11736134245339266
-          ],
-          "safe": false,
-          "blocked_by": [
-            "bumper_minus_right"
-          ]
-        },
-        {
-          "slot": "target_slot_14",
-          "surface": "floor",
-          "position": [
-            -0.1449557069585564,
-            0.01619048078700302,
-            -0.11736134245339266
+            0.18412774806301305,
+            0.0164041503207755,
+            0.045388005905337814
           ],
           "safe": true,
           "blocked_by": []
-        },
-        {
-          "slot": "target_slot_15",
-          "surface": "rail",
-          "position": [
-            0.1238441423155088,
-            0.048104152643357476,
-            -0.41038744419676454
-          ],
-          "safe": false,
-          "blocked_by": [
-            "drum_base_right"
-          ]
         }
       ]
     }
@@ -45150,5 +44648,23 @@
       ]
     ],
     "entrance_geometry_unchanged": true
+  },
+  "engraving_visual_override": {
+    "source_sha256": "ddaaaa5618de8037143e914aa8dcb34f239219693a38d19c01a5e1d76046531b",
+    "svg_sha256": "a59749359808daaa147cac794a74c85c3b779fad90234c2baf6260d97eb87c6c",
+    "changed_groups": [
+      "flipper_left",
+      "flipper_right"
+    ],
+    "preserved": "ball, materials, lighting, reflections, transforms and collision data"
+  },
+  "side_sign_visual_override": {
+    "source_sha256": "358b7fe270c65fce8f5b239c87cee4b8dc985a5fbab324cca8930bf9829d02d6",
+    "messages": [
+      "PLAY YOUR STORY",
+      "WHAT'S YOURS"
+    ],
+    "layout": "Single-line bold labels; taller blocks seated flush to the existing inner sidewalls",
+    "preserved": "ball, approved flap engravings, all materials, lights, reflections, background and gameplay"
   }
 }

@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
 import { createPlateHover } from './plate-hover.js';
-import { matchRenderedAppearance } from './reference-appearance.js';
-import { createSequence } from './sequence.js';
+import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
+import { createSequence } from './sequence.js?v=frames-ace4c656e92f';
 import { framePlacement } from './frame-placement.js';
+import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
+import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
+import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-75503048eed8';
 
 const canvas = document.querySelector('#ball-canvas');
 const status = document.querySelector('#status');
@@ -22,6 +25,7 @@ async function main() {
   ]);
   if (!referenceResponse.ok || !framingResponse.ok) throw new Error('Could not load source camera framing');
   const [reference, framing] = await Promise.all([referenceResponse.json(), framingResponse.json()]);
+  const updateScrollCue = createScrollCue(reference);
   if (framing.fps !== 60 || framing.points.length !== 2230 || !framing.points.every(p => p.length === 2 && p.every(v => Number.isFinite(v) && v >= 0 && v <= 1))) {
     throw new Error('Invalid ball framing data');
   }
@@ -48,7 +52,7 @@ async function main() {
   // Clip 1 ends at 240, after the last animated plate has closed.
   mixer.setTime(240 / 60);
   hover.update(0);
-  await matchRenderedAppearance(gltf.scene, camera);
+  const referenceImage = await matchRenderedAppearance(gltf.scene, camera);
   const mouse = new THREE.Vector2();
   let mouseInside = false;
   let pickDirty = false;
@@ -60,7 +64,10 @@ async function main() {
   const coverViewport = matchMedia('(max-width: 1024px), (any-pointer: coarse)');
   let viewportWidth = 0;
   let viewportHeight = 0;
+  let drawingWidth = 0, drawingHeight = 0;
   let placement;
+  let contextLost = false;
+  const events = new AbortController();
   function requestFrame() {
     if (!sequence || frameRequest || document.hidden) return;
     frameRequest = requestAnimationFrame(renderFrame);
@@ -79,19 +86,25 @@ async function main() {
   }
   canvas.addEventListener('pointermove', event => {
     if (interactive && event.pointerType !== 'touch') trackMouse(event);
-  });
-  canvas.addEventListener('pointerleave', clearHover);
-  canvas.addEventListener('pointercancel', clearHover);
-  window.addEventListener('blur', clearHover);
+  }, {signal: events.signal});
+  canvas.addEventListener('pointerleave', clearHover, {signal: events.signal});
+  canvas.addEventListener('pointercancel', clearHover, {signal: events.signal});
+  window.addEventListener('blur', clearHover, {signal: events.signal});
+  canvas.addEventListener('webglcontextlost', event => {
+    event.preventDefault();contextLost = true;hover.reset();drawDirty = true;requestFrame();
+  }, {signal: events.signal});
   canvas.addEventListener('webglcontextrestored', () => {
+    contextLost = false;
     drawDirty = true;
+    pickDirty = true;
     requestFrame();
-  });
+  }, {signal: events.signal});
   function placeStage() {
     const sourceFrame = sequence?.phase === 'journey' ? 240 + sequence.displayedFrame : sequence?.phase === 'idle' ? 240 : Math.min(240, opening.currentTime * 60);
     const index = Math.floor(sourceFrame);
     const next = framing.points[Math.min(index + 1, 2229)];
     const point = framing.points[index].map((v, i) => v + (next[i] - v) * (sourceFrame - index));
+    updateScrollCue(sourceFrame, point);
     const nextPlacement = framePlacement(viewportWidth, viewportHeight, point, coverViewport.matches);
     if (!placement || nextPlacement.width !== placement.width || nextPlacement.height !== placement.height) {
       stage.style.width = `${nextPlacement.width}px`;
@@ -108,20 +121,25 @@ async function main() {
     viewportWidth = available.width;
     viewportHeight = available.height;
     placeStage();
-    renderer.setSize(placement.width, placement.height, false);
+    if (drawingWidth !== placement.width || drawingHeight !== placement.height) {
+      renderer.setSize(placement.width, placement.height, false);
+      drawingWidth = placement.width; drawingHeight = placement.height;
+    }
     drawDirty = true;
     pickDirty = true;
     requestFrame();
   }
-  new ResizeObserver(resize).observe(stage.parentElement);
-  coverViewport.addEventListener('change', resize);
-  opening.addEventListener('seeked', requestFrame);
+  const observer = new ResizeObserver(resize);
+  observer.observe(stage.parentElement);
+  coverViewport.addEventListener('change', resize, {signal: events.signal});
+  opening.addEventListener('seeked', requestFrame, {signal: events.signal});
   resize();
   sequence = await createSequence(enabled => {
     interactive = enabled;
     if (!enabled) clearHover();
     else pickDirty = true;
   }, requestFrame);
+  const updatePerformance = createPerformanceOverlay(sequence,renderer);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       cancelAnimationFrame(frameRequest);
@@ -129,7 +147,20 @@ async function main() {
       previous = 0;
       clearHover();
     } else requestFrame();
-  });
+  }, {signal: events.signal});
+  window.addEventListener('pagehide', event => {
+    cancelAnimationFrame(frameRequest);frameRequest = 0;previous = 0;
+    if (event.persisted) return;
+    events.abort();observer.disconnect();updatePerformance.destroy?.();sequence.destroy();mixer.stopAllAction();mixer.uncacheRoot(gltf.scene);
+    const resources = new Set();
+    scene.traverse(object => {
+      if (object.geometry) resources.add(object.geometry);
+      for (const material of object.material ? Array.isArray(object.material) ? object.material : [object.material] : []) {
+        resources.add(material);for (const value of Object.values(material)) if (value?.isTexture) resources.add(value);
+      }
+    });
+    for (const resource of resources) resource.dispose();referenceImage.dispose();environment.dispose();renderer.dispose();
+  }, {signal: events.signal});
   function renderFrame(now) {
     frameRequest = 0;
     const delta = previous ? Math.min((now - previous) / 1000, .1) : 1 / 60;
@@ -153,7 +184,8 @@ async function main() {
     }
     const seeking = sequence.tick(delta, hoverWeight);
     placeStage();
-    if (drawDirty && sequence.phase === 'idle') {
+    updatePerformance(now);
+    if (drawDirty && sequence.phase === 'idle' && !contextLost) {
       renderer.setScissorTest(coverViewport.matches);
       if (coverViewport.matches) renderer.setScissor(-placement.x - 1, placement.height + placement.y - viewportHeight - 1, viewportWidth + 2, viewportHeight + 2);
       renderer.render(scene, camera);
@@ -165,9 +197,10 @@ async function main() {
   window.sofacetPreview = { scene, camera, renderer, gltf, ball, hover, reference, frame: 240, sequence };
   requestFrame();
 }
-main().catch(error => {
+main().catch(async error => {
+  await finishLoading();
   status.hidden = false;
   status.classList.add('error');
-  status.textContent = `Could not load the ball: ${error.message}. Run this folder through a local web server.`;
+  status.textContent = /WebGL/i.test(error.message) ? 'The interactive experience needs WebGL. Enable graphics acceleration or try another browser.' : `Could not load the ball: ${error.message}. Run this folder through a local web server.`;
   console.error(error);
 });

@@ -12,3 +12,15 @@ work/
 *.blend
 *.blend1
 .DS_Store
+
+*.py
+*.py[cod]
+*.md
+*.pem
+*.key
+*.p12
+*.pfx
+*.mov
+*.docx
+*.xlsx
+*-verification.json

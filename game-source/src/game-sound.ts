@@ -1,11 +1,10 @@
 const clips={
- start:{file:'start.mp3',gain:.28},music:{file:'music.mp3',gain:.075},
- bumper:{file:'bumper.mp3',gain:.2,cooldown:.055},
- launch:{file:'launch.mp3',gain:.25},teleport:{file:'teleport.mp3',gain:.24},
- flap:{file:'Hitting flaps.wav',gain:.18},
- 'game-over':{file:'game-over.mp3',gain:.3},
- rebound:{file:'rebound.mp3',gain:.2,offset:.08,duration:.3,cooldown:.1},
- collect:{file:'collect.mp3',gain:.25,duration:.9},
+ start:{file:'sofacet-game-start.mp3',gain:.28},music:{file:'sofacet-game-music.mp3',gain:.075},
+ bumper:{file:'sofacet-bumper-hit.mp3',gain:.2,cooldown:.055},
+ launch:{file:'sofacet-ball-launch.mp3',gain:.25},teleport:{file:'sofacet-cave-transport.mp3',gain:.24},
+ flap:{file:'sofacet-paddle-hit.wav',gain:.18},
+ rebound:{file:'sofacet-rebound.mp3',gain:.2,offset:.08,duration:.3,cooldown:.1},
+ collect:{file:'sofacet-target-collect.mp3',gain:.25,duration:.9},
 } as const;
 export type GameSound=keyof typeof clips;
 
@@ -31,7 +30,7 @@ export function createGameSound(){
   })).then(()=>{});}
   return loading;
  };
- const unlock=()=>{setup();void context!.resume().then(startMusic).catch(()=>{});void load()};
+ const unlock=()=>{setup();void load();return context!.resume().then(startMusic).catch(()=>{})};
  const play=(name:Exclude<GameSound,'music'>,pan=0)=>{
   if(muted||volume===0)return;
   const buffer=buffers.get(name);if(!buffer){void load().then(()=>{if(buffers.has(name))play(name,pan)});return}

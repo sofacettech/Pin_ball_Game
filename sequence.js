@@ -1,30 +1,46 @@
-const FPS = 60;
+import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
+import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
+import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
+import { createFrameSource } from './assets/frame-source.js?v=frames-a46aff423ad8';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-5ef45cf589cc';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
-function ready(video) {
-  const metadataOnly = video.preload === 'metadata';
-  if (video.readyState >= (metadataOnly ? 1 : 2)) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    video.addEventListener(metadataOnly ? 'loadedmetadata' : 'loadeddata', resolve, { once: true });
-    video.addEventListener('error', () => reject(new Error(`Could not load ${video.id} video`)), { once: true });
-  });
-}
+const FPS = 60;
 
 export async function createSequence(setInteractive, requestFrame) {
   const opening = document.querySelector('#opening');
   const journey = document.querySelector('#journey');
   const frame = document.querySelector('#journey-frame');
   const hold = document.querySelector('#hold-frame');
-  const hint = document.querySelector('#hint');
   const progress = document.querySelector('#progress');
-  const blackout = document.querySelector('#blackout');
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
+  const status = document.querySelector('#status');
+  prepareInlineVideo(opening);
+  prepareInlineVideo(journey);
   const context = frame.getContext('2d', { alpha: false });
-  await Promise.all([ready(opening), ready(journey), hold.decode(), document.querySelector('#background').decode()]);
-  const frameCount = Math.round(journey.duration * FPS);
-  if (frameCount !== 1990 || journey.videoWidth !== 1920 || journey.videoHeight !== 1080) {
-    throw new Error('The journey must contain 1990 Full HD frames, ending at the supplied Clip 6 final frame');
-  }
+  const updateCopy = await createLandingCopy();
+  const indexURL = new URL('./assets/journey-index.json', import.meta.url);
+  const indexRequest = new AbortController();
+  const indexTimeout = setTimeout(() => indexRequest.abort(), 15000);
+  const metadata = fetch(indexURL, {signal:indexRequest.signal}).then(async response => {
+    if (!response.ok) throw new Error('Frame index unavailable');
+    const index = await response.json();
+    if (index.version !== 1 || index.fps !== FPS || index.width !== frame.width || index.height !== frame.height ||
+      !/^[a-f0-9]{64}$/.test(index.sha256) || !/^avc1\.[a-f0-9]{6}$/i.test(index.codec) || !/^(?:[a-f0-9]{2}){7,}$/i.test(index.description) ||
+      index.colorSpace?.primaries !== 'bt709' || index.colorSpace?.transfer !== 'bt709' || index.colorSpace?.matrix !== 'bt709' ||
+      new URL(index.source,indexURL).href !== new URL(journey.dataset.src,location.href).href || !Number.isSafeInteger(index.bytes) ||
+      !Array.isArray(index.frames) || index.frames.length !== index.frameCount ||
+      !index.frames.every(entry => Array.isArray(entry) && entry.length === 2 && entry.every(Number.isSafeInteger) && entry[0] >= 0 && entry[1] > 0 && entry[0] + entry[1] <= index.bytes)) throw new Error('Invalid frame index');
+    return index;
+  }).catch(async () => {
+    journey.preload = 'metadata'; journey.src = journey.dataset.src;
+    await waitForVideo(journey);
+    return {source: journey.currentSrc, fps: FPS, width: journey.videoWidth, height: journey.videoHeight, frameCount: Math.round(journey.duration * FPS)};
+  }).finally(() => clearTimeout(indexTimeout));
+  const [index] = await Promise.all([metadata, hold.decode(), document.querySelector('#background').decode()]);
+  if (index.frameCount < CHESS_HIT_FRAME - 240 + 1 || index.width !== 1920 || index.height !== 1080) throw new Error('The original Full HD journey is incomplete');
+  const frameCount = CHESS_HIT_FRAME - 240 + 1;
   const travel = (frameCount - 1) * 8;
   document.documentElement.style.setProperty('--travel', `${travel}px`);
   history.scrollRestoration = 'manual';
@@ -33,15 +49,45 @@ export async function createSequence(setInteractive, requestFrame) {
   let desiredFrame = 0;
   let easedFrame = 0;
   let displayedFrame = 0;
-  let pendingFrame = null;
   let interactive = false;
-  let resumeOpening = false;
   let gameLoaded = false;
-  let fadedOut = false;
+  let gameVisible = false;
+  let scrollDirty = false;
+  let wantedFrame = 0;
+  let refreshFrame = false;
+  const events = new AbortController();
+  const source = await createFrameSource(journey,index,indexURL);
+  const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
+  const cache = createFrameCache({count: frameCount, source, onReady(available = wantedFrame, readyImage) {
+    const image = readyImage || cache.get(available);
+    const valid = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
+    if (image && (valid || refreshFrame && available === wantedFrame && phase === 'journey')) { display(image,available); requestFrame(); }
+    else if (!readyImage) requestFrame();
+  },
+    config: constrained ? {network:2,decoded:4,compressedBytes:6*1024*1024} : {},
+    onError(error) {
+      status.hidden = false;
+      if (['NotSupportedError','EncodingError'].includes(error.name)) {
+        cache.suspend();
+        status.textContent = 'This browser cannot play the journey. Use Play now to enter the game.';
+      } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
+    },
+  });
+
+  function preloadGame() {
+    if (!game.getAttribute('src')) game.src = './play.html';
+  }
+  function setGameVisibility(visible) {
+    if (gameVisible === visible) return;
+    gameVisible = visible;
+    game.contentWindow?.postMessage({type:'sofacet:experience-visibility',visible},location.origin);
+  }
 
   function showGame() {
-    if (!fadedOut || !gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1) return;
+    if (!gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1) return;
+    status.hidden = true;
     document.body.dataset.game = 'visible';
+    setGameVisibility(true);
     game.inert = false;
     game.removeAttribute('aria-hidden');
     game.focus();
@@ -50,12 +96,7 @@ export async function createSequence(setInteractive, requestFrame) {
     if (!game.getAttribute('src')) return;
     gameLoaded = true;
     showGame();
-  });
-  blackout.addEventListener('transitionend', event => {
-    if (event.target !== blackout || event.propertyName !== 'opacity') return;
-    fadedOut = blackout.classList.contains('visible');
-    showGame();
-  });
+  }, {signal: events.signal});
 
   function allowHover(value) {
     if (interactive === value) return;
@@ -66,48 +107,48 @@ export async function createSequence(setInteractive, requestFrame) {
     if (phase === value) return;
     phase = value;
     document.body.dataset.phase = value;
-    hint.textContent = value === 'idle' ? (matchMedia('(hover: hover)').matches ? 'Hover to lift the plates · Scroll to explore' : 'Scroll to explore') : value === 'journey' ? 'Scroll to explore · Scroll up to return' : '';
   }
-  opening.addEventListener('ended', () => {
+  const openingPlayback = connectOpeningVideo(opening, enter, () => {
+    updateCopy(240);
     opening.hidden = true;
-    journey.preload = 'auto';
     changePhase('idle');
     allowHover(true);
     requestFrame();
-  });
-  async function playOpening() {
-    enter.hidden = true;
-    try { await opening.play(); requestFrame(); }
-    catch { enter.hidden = false; }
-  }
-  enter.addEventListener('click', playOpening);
+  }, requestFrame);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      resumeOpening = phase === 'opening' && !opening.paused;
-      if (resumeOpening) opening.pause();
-    } else if (resumeOpening) {
-      resumeOpening = false;
-      playOpening();
+      setGameVisibility(false);
+      cache.suspend();
+    } else {
+      setGameVisibility(document.body.dataset.game === 'visible');
+      refreshFrame = true;
+      cache.resume();
+      requestFrame();
     }
-  });
+  }, {signal: events.signal});
   window.addEventListener('scroll', () => {
     if (phase === 'opening') return;
-    desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
-    if (desiredFrame > 0) allowHover(false);
+    scrollDirty = true;
     requestFrame();
-  }, { passive: true });
-  journey.addEventListener('seeked', () => {
-    if (pendingFrame === null) return;
-    context.drawImage(journey, 0, 0, frame.width, frame.height);
-    displayedFrame = pendingFrame;
-    pendingFrame = null;
-    blackout.classList.toggle('visible', displayedFrame === frameCount - 1);
+  }, { passive: true, signal: events.signal });
+  function display(image,index) {
+    context.drawImage(image, 0, 0, frame.width, frame.height);
+    refreshFrame = false;
+    displayedFrame = index;
+    updateCopy(240 + displayedFrame);
+    siteSound.frame(240 + displayedFrame);
     document.querySelector('main').inert = displayedFrame === frameCount - 1;
     if (displayedFrame === frameCount - 1) {
-      if (!game.getAttribute('src')) game.src = './play.html';
+      siteSound.handoff();
+      preloadGame();
+      status.hidden = gameLoaded;
+      status.textContent = 'Loading game…';
+      showGame();
     } else {
-      fadedOut = false;
+      siteSound.setActive(true);
+      status.hidden = true;
       delete document.body.dataset.game;
+      setGameVisibility(false);
       game.inert = true;
       game.setAttribute('aria-hidden', 'true');
     }
@@ -120,40 +161,47 @@ export async function createSequence(setInteractive, requestFrame) {
       allowHover(true);
     }
     progress.style.transform = `scaleX(${displayedFrame / (frameCount - 1)})`;
-    requestFrame();
-  });
-  for (const video of [opening, journey]) {
-    video.addEventListener('error', () => {
-      const status = document.querySelector('#status');
-      status.hidden = false;
-      status.classList.add('error');
-      status.textContent = 'The video could not load. Reload to try again.';
-    });
   }
-  document.querySelector('#status').hidden = true;
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) enter.hidden = false;
-  else playOpening();
+  const destroy = () => { openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); };
+  window.addEventListener('pagehide', event => { setGameVisibility(false); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
+  window.addEventListener('pageshow', event => { if (event.persisted) { refreshFrame = true; cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
+  status.hidden = true;
+  await finishLoading();
+  updateCopy(0);
+  siteSound.setActive(true);
+  openingPlayback.start(matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   return {
     tick(delta, hoverWeight) {
-      if (phase === 'opening') return false;
+      if (phase === 'opening') {
+        updateCopy(opening.currentTime * FPS);
+        return !opening.paused && !opening.ended;
+      }
+      if (scrollDirty) {
+        scrollDirty = false;
+        desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
+        if (desiredFrame > 0) { allowHover(false); preloadGame(); }
+      }
       hold.hidden = hoverWeight > .0001;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
       easedFrame += (desiredFrame - easedFrame) * (1 - Math.exp(-16 * delta));
       if (Math.abs(easedFrame - desiredFrame) < .05) easedFrame = desiredFrame;
       const target = Math.round(easedFrame);
-      if (pendingFrame === null && target !== displayedFrame) {
-        pendingFrame = target;
-        journey.currentTime = (target + .25) / FPS;
-      } else if (desiredFrame === 0 && displayedFrame === 0 && pendingFrame === null) allowHover(true);
-      return easedFrame !== desiredFrame || (pendingFrame === null && displayedFrame !== desiredFrame);
+      wantedFrame = target;
+      cache.request(target,desiredFrame);
+      const image = cache.get(target);
+      if (image && (target !== displayedFrame || refreshFrame && phase === 'journey')) display(image,target);
+      else if (desiredFrame === 0 && displayedFrame === 0) allowHover(true);
+      return easedFrame !== desiredFrame;
     },
     get phase() { return phase; },
     get desiredFrame() { return desiredFrame; },
     get displayedFrame() { return displayedFrame; },
-    get seeking() { return pendingFrame !== null; },
+    get seeking() { return displayedFrame !== Math.round(easedFrame); },
     get interactive() { return interactive; },
+    get stats() { return {...cache.stats,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    destroy,
     frameCount, travel,
   };
 }

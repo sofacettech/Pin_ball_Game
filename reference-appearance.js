@@ -57,4 +57,5 @@ export async function matchRenderedAppearance(model, camera) {
     };
     mesh.material.needsUpdate = true;
   });
+  return image;
 }

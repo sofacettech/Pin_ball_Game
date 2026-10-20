@@ -1,0 +1,28 @@
+# SO/FACET audio attribution
+
+The loading reveal uses the unchanged `assets/loading/sofacet-intro-audio.m4a` supplied in the Desktop `loading` reference project. Its runtime volume is 25%; it stops before the landing sequence starts. It is not a replacement for any game or website journey sound below.
+
+Most game sounds come from Pixabay under the [Pixabay Content License](https://pixabay.com/service/license-summary/). The flipper sound comes from a recording supplied for this game. Playback levels are adjusted, and rebound uses a short segment.
+
+| Game event | Sound | Creator |
+| --- | --- | --- |
+| Game start | [Game Respawn](https://pixabay.com/sound-effects/film-special-effects-game-respawn-153317/) | Universfield |
+| Background | [8-bit heaven](https://pixabay.com/sound-effects/musical-8-bit-heaven-26287/) | freesound_community |
+| Bumper | [Arcade FX](https://pixabay.com/sound-effects/film-special-effects-arcade-fx-288597/) | lucadialessandro |
+| Launch | [086354 8-Bit Arcade Video Game Start Sound Effect](https://pixabay.com/sound-effects/film-special-effects-086354-8-bit-arcade-video-game-start-sound-effect-gun-reload-and-jump-81124/) | freesound_community |
+| Rail teleport, cave entry and cave release | [Retro Arcade Level Up](https://pixabay.com/sound-effects/musical-retro-arcade-level-up-552982/) — existing `sofacet-cave-transport.mp3`, unchanged 24% gain | Vadim_Makes_Sound |
+| Left and right flaps | [Hitting flaps](../sounds/sofacet-paddle-hit.wav) — first sound only, trimmed to 0.18 seconds; keyboard/touch presses and mouse clicks on paddles also work before Play | User-provided recording |
+| Rebound | [Sound effect - Jumping in TV game/animation type of sound](https://pixabay.com/sound-effects/film-special-effects-sound-effect-jumping-in-tv-gameanimation-type-of-sound-137602/) | ShidenBeatsMusic |
+| Collection | [Achievement Badge Pop Sound #1](https://pixabay.com/sound-effects/film-special-effects-achievement-badge-pop-sound-1-547860/) | Vadim_Makes_Sound |
+
+## Website journey sounds
+
+Selected in the supplied Website Sound Reference. These tracks use the [Pixabay Content License](https://pixabay.com/service/license-summary/).
+
+| Interaction | Source | Playback |
+| --- | --- | --- |
+| Website background | [Gentle Instrumental (1)](https://pixabay.com/music/modern-classical-gentle-instrumental-1-322812/) — gensanmaier | `sofacet-experience-music.mp3`, starts and repeats at 0:52; 10% gain, lowered beneath movement and contact. Streamed, rather than decoding the entire four-minute track into mobile memory. |
+| Scroll-driven ball movement | [025442 rolling wood ball field recording](https://pixabay.com/sound-effects/film-special-effects-025442-rolling-wood-ball-field-recording-with-tascam-dr-70d-amp-rode-ntg4-79403/) — freesound_community | `sofacet-ball-roll.wav`, opening 0:00–0:03, 0.12-second equal-power loop crossfade; 6.3–14% gain responding to displayed frame movement, fades when it stops. The upper-row alternative is not used. |
+| Ball hits queen | [Low Thumpy Kick Reverb Hit](https://pixabay.com/sound-effects/technology-low-thumpy-kick-reverb-hit-494833/) — Black_Kumizhi | `sofacet-queen-impact.mp3`, first 0.45 seconds, 10% gain with a 0.18-second tail fade. Trigger at source frame 2164, once per forward pass; sustained contact and small scroll jitter do not repeat it. The reverb finishes across the 0.22-second game transition while rolling and background music fade out. |
+
+The original selected music and impact MP3s are preserved without re-encoding. The rolling extract is 44.1 kHz, 16-bit mono PCM. Its playback loop starts at 0.12 seconds after the first pass to meet the crossfaded tail. Sound attempts to start automatically; when browser autoplay is blocked, the first click/tap or keyboard interaction enables it. The bottom-left AUDIO ON/OFF button controls mute. Music position carries across About and Privacy navigation when browser playback policy permits. Hidden tabs pause audio. At queen contact, music and rolling fade immediately; the landing audio context suspends after 0.50 seconds so the impact is not cut short. No game-end victory cue is included.

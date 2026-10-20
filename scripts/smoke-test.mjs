@@ -35,7 +35,7 @@ try{
    assert.equal(asset.status,200,resource);
   }
  }
- const video=await request('/assets/journey-through-clip6.mp4',{headers:{Range:'bytes=0-31'}});
+ const video=await request('/assets/sofacet-experience.mp4',{headers:{Range:'bytes=0-31'}});
  assert.equal(video.status,206,'Video byte-range support');
  assert.match(video.headers.get('content-type'),/^video\/mp4/);
  assert.match(video.headers.get('content-range'),/^bytes 0-31\/[1-9]\d{7,}$/,'Video must be materialized, not an LFS pointer');

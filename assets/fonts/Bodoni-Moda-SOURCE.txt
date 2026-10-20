@@ -1,0 +1,4 @@
+Bodoni Moda by Owen Earl. Copyright 2020 The Bodoni Moda Project Authors.
+Source: https://github.com/google/fonts/tree/main/ofl/bodonimoda
+Original variable fonts, unmodified. Licensed under SIL Open Font License 1.1.
+License: ../../licenses/Bodoni-Moda-OFL.txt

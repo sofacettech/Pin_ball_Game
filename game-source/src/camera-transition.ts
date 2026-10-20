@@ -13,7 +13,7 @@ export class CameraTransition {
   this.progress=t*t*t*(t*(t*6-15)+10);
   this.camera.position.lerpVectors(this.from.position,to.position,this.progress);
   this.camera.quaternion.slerpQuaternions(this.from.quaternion,to.quaternion,this.progress);
-  this.camera.fov=MathUtils.lerp(this.from.fov,to.fov,this.progress);
+  this.camera.fov=MathUtils.lerp(this.from.fov,to.fov,this.progress);this.camera.zoom=MathUtils.lerp(this.from.zoom,to.zoom,this.progress);
   this.camera.aspect=to.aspect;this.camera.near=to.near;this.camera.far=to.far;
   this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld();
   if(t===1)this.active=false;

@@ -4,7 +4,7 @@ import {open,rename,rm} from 'node:fs/promises';
 import {Readable,Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 
-const path=new URL('../assets/journey-through-clip6.mp4',import.meta.url);
+const path=new URL('../assets/sofacet-experience.mp4',import.meta.url);
 const file=await open(path,'r');
 const header=Buffer.alloc(1024);
 let length;
@@ -15,7 +15,7 @@ if(!pointer){
  console.log('Journey video is already materialized.');
 }else{
  const revision=process.env.RAILWAY_GIT_COMMIT_SHA||'main';
- const url=`https://media.githubusercontent.com/media/sofacettech/Pin_ball_Game/${encodeURIComponent(revision)}/assets/journey-through-clip6.mp4`;
+ const url=`https://media.githubusercontent.com/media/sofacettech/Pin_ball_Game/${encodeURIComponent(revision)}/assets/sofacet-experience.mp4`;
  console.log(`Downloading journey video from GitHub LFS (${pointer[2]} bytes).`);
  const response=await fetch(url,{signal:AbortSignal.timeout(300_000)});
  if(!response.ok)throw new Error(`GitHub LFS download failed: HTTP ${response.status}`);

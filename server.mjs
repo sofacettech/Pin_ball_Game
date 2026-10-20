@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {ServiceError,authenticatePhone,rewardsLeaderboard,awardPoints} from './rewards.mjs';
 import {validateInputs,verifyGame} from './verify-game.mjs';
 import {REPLAY_VERSION} from './game-source/src/simulation.ts';
+import {createMembershipApi} from './membership-api.mjs';
 
 const root=resolve(fileURLToPath(new URL('.',import.meta.url)));
 const dir=resolve(process.env.DATA_DIR||resolve(root,'data'));mkdirSync(dir,{recursive:true});
@@ -32,19 +33,22 @@ const requests=new Map();
 function rateLimit(request){const now=Date.now(),key=request.socket.remoteAddress;for(const [ip,bucket] of requests)if(now>bucket.until)requests.delete(ip);const bucket=requests.get(key)||{count:0,until:now+60000};bucket.count++;requests.set(key,bucket);if(bucket.count>120)fail(429,'Too many requests. Please wait a minute and try again.')}
 function sameOrigin(request){const expected=process.env.APP_ORIGIN||'http://'+request.headers.host;if(request.headers.origin!==expected)fail(403,'Please submit this request from the game.');if(!request.headers['content-type']?.startsWith('application/json'))fail(415,'Please send JSON.');}
 function trusted(request){const secret=process.env.REWARDS_ADMIN_SECRET;if(!secret)fail(503,'Redeemable rewards are disabled.');const actual=Buffer.from(request.headers.authorization||''),expected=Buffer.from('Bearer '+secret);if(actual.length!==expected.length||!timingSafeEqual(actual,expected))fail(401,'Unauthorized.');}
-function gameBoard(id,locked){
+function gameBoard(id){
  const ranked=Object.entries(store.players).filter(([,p])=>p.bestVerified===true&&Number.isSafeInteger(p.best)).sort(([a,p],[b,q])=>q.best-p.best||p.bestAt-q.bestAt||a.localeCompare(b));
- const entry=([key,p],index)=>({rank:index+1,display_name:locked?'Locked':p.name,points:p.best,is_you:key===id});
+ const entry=([key,p],index)=>({rank:index+1,display_name:p.name,points:p.best,is_you:key===id});
  const index=ranked.findIndex(([key])=>key===id);
- return {mode:'game',locked,entries:ranked.slice(0,100).map(entry),me:index<0?null:entry(ranked[index],index)};
+ return {mode:'game',entries:ranked.slice(0,100).map(entry),me:index<0?null:entry(ranked[index],index)};
 }
 const inflight=new Map();
+const membershipApi=createMembershipApi({getStore:()=>store,commit,phone,publicPlayer});
 async function api(request,response,path){
  rateLimit(request);
  if(path==='/api/internal/rewards/award'&&request.method==='POST'){trusted(request);const data=await body(request);data.phone=phone(data.phone);return json(response,200,await awardPoints(data))}
  if(request.method==='POST')sameOrigin(request);
  const [id,p]=player(request,response);
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
+ if(path==='/api/membership/config'&&request.method==='GET')return json(response,200,await membershipApi(path,{},id));
+ if(['/api/membership','/api/membership/otp/request','/api/membership/otp/verify','/api/membership/rewards'].includes(path)&&request.method==='POST')return json(response,200,await membershipApi(path,await body(request),id));
  if(path==='/api/member'&&request.method==='POST'){
   const data=await body(request);if(data.memberConsent!==true||data.contestConsent!==true)fail(400,'Please accept the membership and contest terms.');
   const fullName=name(name(data.firstName)+' '+name(data.lastName));const normalized=phone(data.phone);
@@ -79,18 +83,18 @@ async function api(request,response,path){
   inflight.set(match[1],{hash,promise});try{await promise;return json(response,200,{...result(),replayed:false})}finally{inflight.delete(match[1])}
  }
  if((path==='/api/leaderboard'||path==='/api/rewards/leaderboard')&&request.method==='GET'){
-  const locked=!p.profile;
+  if(!p.profile)fail(403,'Please register to view the leaderboard.');
   if(path==='/api/rewards/leaderboard'||process.env.LEADERBOARD_MODE==='rewards'){
    const result=await rewardsLeaderboard();
    // Key-only lookup has no identified customer session. Do not guess a personal rewards rank.
-   return json(response,200,{mode:'rewards',locked,entries:result.entries.map(row=>({rank:row.rank,display_name:locked?'Locked':row.display_name,points:row.points,is_you:false})),me:null});
-  }return json(response,200,gameBoard(id,locked));
+   return json(response,200,{mode:'rewards',entries:result.entries.map(row=>({rank:row.rank,display_name:row.display_name,points:row.points,is_you:false})),me:null});
+  }return json(response,200,gameBoard(id));
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','faq.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.mp4':'video/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
  try{
   const path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
