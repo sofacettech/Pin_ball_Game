@@ -32,9 +32,31 @@ jobs:
       - run: npm run build
       - run: npm run smoke
 
+  video:
+    name: WebKit mobile video
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install webkit
+      - name: Check mobile opening and scroll in WebKit
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+        run: node scripts/browser-video-smoke.mjs
+
   deploy:
     name: Deploy production
-    needs: check
+    needs: [check, video]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25

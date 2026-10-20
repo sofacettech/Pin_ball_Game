@@ -65,8 +65,28 @@ test('destroy ignores a late rejected play promise and removes controls/listener
 test('native journey suspends pending work and recovers from a fresh metadata load',async()=>{
  const video=new Video(),source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/assets/index.json'));
  const first=source.decode(4);source.suspend();await assert.rejects(first,{name:'AbortError'});
- const next=source.decode(4);video.readyState=1;video.dispatchEvent(new Event('loadedmetadata'));await turn();assert.equal(video.currentTime,4.25/60);
+ const next=source.decode(4);video.readyState=1;video.dispatchEvent(new Event('loadedmetadata'));await turn();assert.equal(video.currentTime,0);
+ video.readyState=2;video.dispatchEvent(new Event('loadeddata'));await turn();assert.equal(video.currentTime,4.25/60);
  video.readyState=2;video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await next,video);source.destroy();
+});
+test('native video warms decoded data before seeking and retries blocked playback in the gesture',async t=>{
+ const previousDocument=globalThis.document;
+ globalThis.document=Object.assign(new EventTarget(),{hidden:false});
+ t.after(()=>{globalThis.document=previousDocument});
+ const video=new Video();video.hidden=true;video.reject=true;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/assets/index.json'));
+ t.after(()=>source.destroy());
+ const decoded=source.decode(60);
+ assert.equal(video.hidden,false);assert.equal(video.preload,'auto');assert.equal(video.calls,1);
+ video.readyState=1;video.dispatchEvent(new Event('loadedmetadata'));await turn();
+ assert.equal(video.currentTime,0);
+ video.reject=false;document.dispatchEvent(new Event('touchend'));
+ assert.equal(video.calls,2,'play must run inside the gesture, before an async boundary');
+ video.readyState=2;video.dispatchEvent(new Event('loadeddata'));await turn();
+ assert.ok(video.paused);assert.equal(video.currentTime,60.25/60);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await decoded,video);
+ document.dispatchEvent(new Event('click'));assert.equal(video.calls,2,'normal scrolling must not restart playback');
+ source.destroy();document.dispatchEvent(new Event('touchend'));assert.equal(video.calls,2);
 });
 test('a stalled compressed-frame request times out and releases its request slot',async t=>{
  const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder;let fetching=false;

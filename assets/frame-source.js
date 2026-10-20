@@ -87,20 +87,44 @@ export async function createFrameSource(video,index,indexURL){
   return bytes;
  }
  async function load(frame,signal,maxBytes){return(await loadFrames([frame],signal,maxBytes)).get(frame)}
- let nativeEvents=new AbortController(),nativeReady;
+ let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0;
+ const gestures=new AbortController();
+ function primeNative(){
+  if(disposed||nativePrimed||nativePlaying||globalThis.document?.hidden)return;
+  const generation=nativeGeneration;
+  nativePlaying=true;
+  // Call play synchronously from touchend/click when iOS requires activation.
+  // This only warms the decoder; the journey remains controlled by seeks.
+  try{Promise.resolve(video.play()).then(()=>{
+   if(generation===nativeGeneration){video.pause();nativePlaying=false}
+  },()=>{if(generation===nativeGeneration)nativePlaying=false})}
+  catch{nativePlaying=false}
+ }
  function ready(){
-  if(video.error||video.readyState===0)nativeReady=undefined;
+  if(video.error){nativeReady=undefined;nativePrimed=false}
   if(!nativeReady){
-   video.preload='metadata';video.src=url.href;
+   // A display:none video can stop producing seeked/decoded frames in WebKit.
+   video.hidden=false;
+   video.preload='auto';video.src=url.href;
    video.load();
-   nativeReady=waitForVideo(video,{signal:nativeEvents.signal}).catch(error=>{
-    nativeReady=undefined;
+   primeNative();
+   const request=waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).then(()=>{
+    nativePrimed=true;video.pause();
+   }).catch(error=>{
+    if(nativeReady===request)nativeReady=undefined;
     if(error.name!=='AbortError'&&!disposed&&useLocal())return ready();
     throw error;
    });
+   nativeReady=request;
   }
   return nativeReady;
  }
+ function activateNative(){
+  if(mode!=='video'||disposed||globalThis.document?.hidden)return;
+  if(!nativeReady)void ready().catch(()=>{});
+  else primeNative();
+ }
+ for(const event of ['touchend','click','keydown'])globalThis.document?.addEventListener(event,activateNative,{passive:true,signal:gestures.signal});
  async function nativeDecode(frame){
   await ready();if(disposed)throw abortError();
   const time=(frame+.25)/index.fps;
@@ -132,6 +156,6 @@ export async function createFrameSource(video,index,indexURL){
   if(decoder?.state!=='closed')decoder?.close();decoder=null;return true;
  }
  return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,get mode(){return mode},get stats(){return{...stats,mode,fallbacks,fallbackReason,mediaOrigin:url.origin}},
-  suspend(){nativeEvents.abort();nativeEvents=new AbortController()},
-  destroy(){disposed=true;nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
+  suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
+  destroy(){disposed=true;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }
