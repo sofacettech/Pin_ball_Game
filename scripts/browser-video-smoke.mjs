@@ -110,6 +110,9 @@ try{
     assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
    }
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
+   // The historical mutable-video renderer is a pacing reference, not the
+   // implementation under test for the new immutable-frame pixel guarantee.
+   if(previous){assert.deepEqual(errors,[]);continue}
    const quality=await page.evaluate(async()=>{
     const {waitForVideo}=await import('./assets/video-playback.js');
     const reference=document.createElement('video');
