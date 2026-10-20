@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -8,6 +8,13 @@ import {join} from 'node:path';
 const require=createRequire(import.meta.url);
 const {webkit,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
+const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map();
+if(baseline){
+ assert.match(baseline,/^[a-f0-9]{40}$/,'Use an exact baseline commit');
+ for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js']){
+  previousAssets.set('/'+file,execFileSync('git',['show',`${baseline}:${file}`]));
+ }
+}
 let server,browser,data;
 try{
  if(!process.env.SOFACET_VIDEO_URL){
@@ -21,12 +28,22 @@ try{
   assert.ok(started,'Preview server did not start');
  }
  browser=await webkit.launch();
- for(const native of [false,true,'canvas']){
+ const cases=[false,true,'canvas'].flatMap(native=>baseline&&native!=='canvas'
+  ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
+ for(const {native,previous} of cases){
   const context=await browser.newContext({...devices['iPhone 13']});
   const page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
   if(native==='canvas')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
+  // Both versions use identical local videos and routing/cache conditions on
+  // the same runner. Only the five renderer entry files come from the baseline.
+  if(baseline)await page.route('**/*',async route=>{
+   const path=new URL(route.request().url()).pathname;
+   const body=previous?previousAssets.get(path==='/'?'/index.html':path):undefined;
+   if(body)await route.fulfill({status:200,body,contentType:path.endsWith('.js')?'text/javascript':'text/html'});
+   else await route.continue();
+  });
   try{
    await page.goto(url,{waitUntil:'domcontentloaded'});
    // Autoplay denial must offer an actionable control, including reduced-power browsers.
@@ -80,12 +97,18 @@ try{
       p95GapMs:gaps[Math.floor(gaps.length*.95)]||0,maxGapMs:gaps.at(-1)||0,stats:sequence.stats};
     }finally{CanvasRenderingContext2D.prototype.drawImage=draw;window.scrollTo(0,1600)}
    });
-   console.log('Continuous scroll',JSON.stringify({native,...motion}));
-   // Leave headroom for shared CI hardware while rejecting the measured
-   // bitmap/queue regression (under 90 updates in this six-second run).
-   assert.ok(motion.updates>=100,'Continuous scrolling regressed below the WebKit baseline allowance');
+   console.log('Continuous scroll',JSON.stringify({native,previous,...motion}));
+   assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
    assert.ok(motion.maxGapMs<500,'Continuous scrolling must not stall for half a second');
    assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
+   if(previous)measurements.set(String(native),motion);
+   else if(baseline){
+    const before=measurements.get(String(native==='canvas'?true:native));
+    const comparison={native,updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs};
+    console.log('Same-runner comparison',JSON.stringify(comparison));
+    assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
+    assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+   }
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
    const quality=await page.evaluate(async()=>{
     const {waitForVideo}=await import('./assets/video-playback.js');

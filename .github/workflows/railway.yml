@@ -53,7 +53,10 @@ jobs:
       - name: Check mobile opening and scroll in WebKit
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
-        run: node scripts/browser-video-smoke.mjs
+          SOFACET_VIDEO_BASELINE: 97261a10cd6ad609128e07737b58f0bbb0a04d0b
+        run: |
+          git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
+          node scripts/browser-video-smoke.mjs
 
   deploy:
     name: Deploy production
