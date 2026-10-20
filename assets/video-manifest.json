@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "variants": {
+    "desktop": {
+      "journey": {
+        "file": "sofacet-experience.mp4",
+        "index": "journey-index.json",
+        "sha256": "c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2",
+        "bytes": 248630827,
+        "width": 1920,
+        "height": 1080,
+        "fps": 60,
+        "frameCount": 1990,
+        "key": "videos/c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2/sofacet-experience.mp4"
+      },
+      "opening": {
+        "file": "sofacet-opening.mp4",
+        "sha256": "52186af574c56eb50642e2703354357e1597845be0944d2bdaf3c8ce608a3976",
+        "bytes": 5191335,
+        "key": "videos/52186af574c56eb50642e2703354357e1597845be0944d2bdaf3c8ce608a3976/sofacet-opening.mp4"
+      }
+    },
+    "mobile": {
+      "journey": {
+        "file": "sofacet-experience.mp4",
+        "index": "journey-index.json",
+        "sha256": "c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2",
+        "bytes": 248630827,
+        "width": 1920,
+        "height": 1080,
+        "fps": 60,
+        "frameCount": 1990,
+        "key": "videos/c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2/sofacet-experience.mp4"
+      },
+      "opening": {
+        "file": "sofacet-opening.mp4",
+        "sha256": "52186af574c56eb50642e2703354357e1597845be0944d2bdaf3c8ce608a3976",
+        "bytes": 5191335,
+        "key": "videos/52186af574c56eb50642e2703354357e1597845be0944d2bdaf3c8ce608a3976/sofacet-opening.mp4"
+      }
+    }
+  }
+}

@@ -1,13 +1,13 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
-import { createFrameSource } from './assets/frame-source.js?v=frames-a46aff423ad8';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-5ef45cf589cc';
+import { createFrameSource } from './assets/frame-source.js?v=frames-8657a69d1823';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-edcabe4142ff';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
 
-export async function createSequence(setInteractive, requestFrame) {
+export async function createSequence(setInteractive, requestFrame, media) {
   const opening = document.querySelector('#opening');
   const journey = document.querySelector('#journey');
   const frame = document.querySelector('#journey-frame');
@@ -18,9 +18,12 @@ export async function createSequence(setInteractive, requestFrame) {
   const status = document.querySelector('#status');
   prepareInlineVideo(opening);
   prepareInlineVideo(journey);
+  journey.crossOrigin = 'anonymous';
+  frame.width = media.journey.width;
+  frame.height = media.journey.height;
   const context = frame.getContext('2d', { alpha: false });
   const updateCopy = await createLandingCopy();
-  const indexURL = new URL('./assets/journey-index.json', import.meta.url);
+  const indexURL = media.indexURL;
   const indexRequest = new AbortController();
   const indexTimeout = setTimeout(() => indexRequest.abort(), 15000);
   const metadata = fetch(indexURL, {signal:indexRequest.signal}).then(async response => {
@@ -29,17 +32,17 @@ export async function createSequence(setInteractive, requestFrame) {
     if (index.version !== 1 || index.fps !== FPS || index.width !== frame.width || index.height !== frame.height ||
       !/^[a-f0-9]{64}$/.test(index.sha256) || !/^avc1\.[a-f0-9]{6}$/i.test(index.codec) || !/^(?:[a-f0-9]{2}){7,}$/i.test(index.description) ||
       index.colorSpace?.primaries !== 'bt709' || index.colorSpace?.transfer !== 'bt709' || index.colorSpace?.matrix !== 'bt709' ||
-      new URL(index.source,indexURL).href !== new URL(journey.dataset.src,location.href).href || !Number.isSafeInteger(index.bytes) ||
+      new URL(index.source,indexURL).href !== media.journey.local || (media.journey.sha256 && index.sha256 !== media.journey.sha256) || !Number.isSafeInteger(index.bytes) ||
       !Array.isArray(index.frames) || index.frames.length !== index.frameCount ||
       !index.frames.every(entry => Array.isArray(entry) && entry.length === 2 && entry.every(Number.isSafeInteger) && entry[0] >= 0 && entry[1] > 0 && entry[0] + entry[1] <= index.bytes)) throw new Error('Invalid frame index');
-    return index;
+    return {...index,source:media.journey.url,fallbackSource:media.journey.local};
   }).catch(async () => {
-    journey.preload = 'metadata'; journey.src = journey.dataset.src;
+    journey.preload = 'metadata'; journey.src = media.journey.local;
     await waitForVideo(journey);
     return {source: journey.currentSrc, fps: FPS, width: journey.videoWidth, height: journey.videoHeight, frameCount: Math.round(journey.duration * FPS)};
   }).finally(() => clearTimeout(indexTimeout));
   const [index] = await Promise.all([metadata, hold.decode(), document.querySelector('#background').decode()]);
-  if (index.frameCount < CHESS_HIT_FRAME - 240 + 1 || index.width !== 1920 || index.height !== 1080) throw new Error('The original Full HD journey is incomplete');
+  if (index.frameCount < CHESS_HIT_FRAME - 240 + 1 || index.width !== frame.width || index.height !== frame.height) throw new Error('The journey video is incomplete');
   const frameCount = CHESS_HIT_FRAME - 240 + 1;
   const travel = (frameCount - 1) * 8;
   document.documentElement.style.setProperty('--travel', `${travel}px`);
@@ -59,10 +62,11 @@ export async function createSequence(setInteractive, requestFrame) {
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   const cache = createFrameCache({count: frameCount, source, onReady(available = wantedFrame, readyImage) {
-    const image = readyImage || cache.get(available);
     const valid = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
-    if (image && (valid || refreshFrame && available === wantedFrame && phase === 'journey')) { display(image,available); requestFrame(); }
-    else if (!readyImage) requestFrame();
+    // Native video is mutable and must be copied before the next seek. Immutable
+    // decoder frames are presented by tick(), once per browser animation frame.
+    if (readyImage?.transient && (valid || refreshFrame && available === wantedFrame && phase === 'journey')) display(readyImage,available);
+    requestFrame();
   },
     config: constrained ? {network:2,decoded:4,compressedBytes:6*1024*1024} : {},
     onError(error) {
@@ -180,7 +184,9 @@ export async function createSequence(setInteractive, requestFrame) {
       if (scrollDirty) {
         scrollDirty = false;
         desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
-        if (desiredFrame > 0) { allowHover(false); preloadGame(); }
+        if (desiredFrame > 0) allowHover(false);
+        // Avoid loading the game's large 3D assets while the journey is buffering.
+        if (desiredFrame >= frameCount - 180) preloadGame();
       }
       hold.hidden = hoverWeight > .0001;
       // Let lifted plates settle before the rendered ball starts travelling.
@@ -190,8 +196,9 @@ export async function createSequence(setInteractive, requestFrame) {
       const target = Math.round(easedFrame);
       wantedFrame = target;
       cache.request(target,desiredFrame);
-      const image = cache.get(target);
-      if (image && (target !== displayedFrame || refreshFrame && phase === 'journey')) display(image,target);
+      const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
+      const image = cache.get(available);
+      if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
       else if (desiredFrame === 0 && displayedFrame === 0) allowHover(true);
       return easedFrame !== desiredFrame;
     },

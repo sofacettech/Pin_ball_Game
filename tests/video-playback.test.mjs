@@ -78,3 +78,47 @@ test('a stalled compressed-frame request times out and releases its request slot
  const request=source.load(0,new AbortController().signal);for(let i=0;i<10&&!fetching;i++)await Promise.resolve();assert.ok(fetching);
  t.mock.timers.tick(15001);await assert.rejects(request,{name:'TimeoutError'});assert.equal(source.mode,'webcodecs');source.destroy();
 });
+test('adjacent compressed frames use one validated range and independent buffers',async t=>{
+ const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder,oldCaches=globalThis.caches;
+ const ranges=[];
+ globalThis.caches=undefined;
+ globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};
+ globalThis.fetch=async(_url,{headers})=>{
+  ranges.push(headers.Range);
+  return new Response(Uint8Array.from([1,2,3,4,5,6,7,8,9]),{status:206,headers:{'Content-Range':'bytes 100-108/200'}});
+ };
+ t.after(()=>{globalThis.fetch=oldFetch;globalThis.VideoDecoder=oldDecoder;globalThis.caches=oldCaches});
+ const index={source:'./journey.mp4',codec:'avc1.64002a',sha256:'b'.repeat(64),bytes:200,frames:[[100,2],[102,3],[105,4]]};
+ const source=await createFrameSource(new Video(),index,new URL('https://example.test/assets/index.json'));
+ t.after(()=>source.destroy());
+ const frames=await source.loadFrames([2,1,0],new AbortController().signal,9);
+ assert.deepEqual(ranges,['bytes=100-108']);
+ assert.deepEqual([...frames.get(1)],[3,4,5]);
+ assert.equal(frames.get(1).buffer.byteLength,3);
+ assert.equal(source.stats.networkRequests,1);assert.equal(source.stats.networkFrames,3);
+ await assert.rejects(source.loadFrames([0,1,2],new AbortController().signal,8),/cache budget/);
+ assert.equal(ranges.length,1);
+ globalThis.fetch=async()=>new Response(new Uint8Array(9),{status:200});
+ await assert.rejects(source.loadFrames([0,1,2],new AbortController().signal),/ranges are unavailable/);
+ const controller=new AbortController();controller.abort();
+ await assert.rejects(source.loadFrames([0],controller.signal),{name:'AbortError'});
+});
+
+test('a failed CDN range retries the identical indexed bytes on Railway without disabling WebCodecs',async t=>{
+ const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder,oldCaches=globalThis.caches,requests=[];
+ globalThis.caches=undefined;
+ globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};
+ globalThis.fetch=async(url,{headers})=>{
+  requests.push([url.origin,headers.Range]);
+  if(url.hostname==='media.example')throw new TypeError('CDN unavailable');
+  return new Response(new Uint8Array([1,2,3]),{status:206,headers:{'Content-Range':'bytes 100-102/200'}});
+ };
+ t.after(()=>{globalThis.fetch=oldFetch;globalThis.VideoDecoder=oldDecoder;globalThis.caches=oldCaches});
+ const source=await createFrameSource(new Video(),{source:'https://media.example/journey.mp4',fallbackSource:'./journey.mp4',codec:'avc1.64002a',sha256:'c'.repeat(64),bytes:200,width:1280,height:720,frames:[[100,3]]},new URL('https://app.example/assets/index.json'));
+ t.after(()=>source.destroy());
+ await source.load(0,new AbortController().signal);
+ await source.load(0,new AbortController().signal);
+ assert.deepEqual(requests,[['https://media.example','bytes=100-102'],['https://app.example','bytes=100-102'],['https://app.example','bytes=100-102']]);
+ assert.equal(source.mode,'webcodecs');assert.equal(source.stats.deliveryFallbacks,1);
+ assert.equal(source.decodedFrameBytes,1280*720*4);
+});

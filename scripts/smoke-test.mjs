@@ -40,6 +40,24 @@ try{
  assert.match(video.headers.get('content-type'),/^video\/mp4/);
  assert.match(video.headers.get('content-range'),/^bytes 0-31\/[1-9]\d{7,}$/,'Video must be materialized, not an LFS pointer');
  assert.equal((await video.arrayBuffer()).byteLength,32);
+ const config=await request('/api/media-config');
+ assert.equal(config.status,200);assert.equal(config.headers.get('set-cookie'),null);
+ const {baseURL}=await config.json(),manifest=await(await request('/assets/video-manifest.json')).json();
+ for(const variant of Object.values(manifest.variants)){
+  const index=await(await request('/assets/'+variant.journey.index)).json();
+  assert.equal(index.sha256,variant.journey.sha256);
+  for(const asset of [variant.journey,variant.opening]){
+   const url=baseURL?new URL(asset.key,baseURL.replace(/\/?$/,'/')).href:'/assets/'+asset.file;
+   const response=await request(url,{headers:{Range:'bytes=0-31',Origin:origin}});
+   assert.equal(response.status,206,url);
+   assert.equal(response.headers.get('content-range'),`bytes 0-31/${asset.bytes}`);
+   assert.equal((await response.arrayBuffer()).byteLength,32);
+   if(baseURL){
+    assert.ok(['*',origin].includes(response.headers.get('access-control-allow-origin')),'Video CDN CORS');
+    assert.match(response.headers.get('access-control-expose-headers')||'',/content-range/i,'Frame decoder must read Content-Range');
+   }
+  }
+ }
  for(const path of ['/.env','/data/players.json','/server.mjs'])assert.equal((await request(path)).status,404,path);
  if(!remote){
   const player=await request('/api/player');

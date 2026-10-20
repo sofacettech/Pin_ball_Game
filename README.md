@@ -121,6 +121,7 @@ The approved purchase rule is up to 10% of diamond value plus making charges, ex
 | --- | --- |
 | `HOST`, `PORT` | Listener; use `HOST=0.0.0.0` on the host |
 | `APP_ORIGIN` | Exact public HTTPS origin for cookie and write-origin checks |
+| `MEDIA_CDN_BASE_URL` | Public R2 custom domain for videos; empty keeps local delivery |
 | `DATA_DIR` | Private persistent directory for player, game and reward records |
 | `REWARDS_API_BASE` | Documented rewards service origin; adapter restricts credential forwarding |
 | `REWARDS_API_KEY` | Private server integration credential |
@@ -141,6 +142,25 @@ The configured service URL is `https://facet-pinball-production.up.railway.app`;
 Railway's build materializes the experience video from GitHub LFS and verifies its committed SHA-256 and size. Local builds with LFS already available reuse that file. A private repository would require an authenticated media download path.
 
 Keep the service at **one replica** with persistent `DATA_DIR` storage. The current atomic file store is designed for one process. Move player, score and reward state to shared transactional storage before running multiple replicas.
+
+### R2 video delivery
+
+The app, APIs, frame index and fallback media remain on Railway. When configured, the two original public MP4 files are served through an R2 custom domain. Use a dedicated bucket; `ops/r2-cors.json` permits public GET/HEAD requests and exposes the byte-range headers required by the frame decoder. The production delivery URL must be a custom domain, because `r2.dev` does not provide CDN caching.
+
+Desktop and mobile both use the exact original 1920×1080 media at 60 FPS, preserving all 1,990 journey frames and the same camera, copy, sound and game handoff timing. There is no resize or additional lossy encoding. Mobile optimizations bound download concurrency and decoded-frame memory; grouped byte-range requests, directional prefetching and animation-frame presentation improve scrolling without changing image quality. No HLS/Stream transcoding is used: every scroll frame must remain independently decodable and match its byte index.
+
+Run `npm run build:frames` after changing source media. It checks Full HD dimensions, 60 FPS, colour metadata and an IDR in every frame, then generates the matching manifest and content hashes. The manifest intentionally maps both device profiles to the same original files.
+
+After creating the bucket and connecting its custom domain:
+
+```sh
+npx wrangler r2 bucket cors set "$R2_BUCKET" --file ops/r2-cors.json
+R2_BUCKET=your-video-bucket npm run upload:videos
+```
+
+Uploads verify local hashes before writing immutable `videos/<sha256>/<filename>` keys with a one-year cache lifetime. `npm run upload:videos -- --dry-run` validates and prints the planned object uploads. Set `MEDIA_CDN_BASE_URL=https://your-media-domain` on the existing Railway service after uploading both files, then deploy normally. No Cloudflare credentials are exposed to the app or browser.
+
+`npm run smoke -- https://your-app-domain` checks both variants, exact range lengths, CORS and exposed headers. A failed CDN range retries the same indexed file on Railway. To disable CDN delivery, clear `MEDIA_CDN_BASE_URL`. Publish new media objects before deploying a new manifest; retain older immutable objects while older app versions may still reference them.
 
 ## Verification and release checks
 

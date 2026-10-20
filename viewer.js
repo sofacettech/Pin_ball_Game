@@ -2,11 +2,13 @@ import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
 import { createPlateHover } from './plate-hover.js';
 import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
-import { createSequence } from './sequence.js?v=frames-ace4c656e92f';
+import { createSequence } from './sequence.js?v=frames-c3b1e8cdd736';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
 import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-75503048eed8';
+
+import { prepareMedia } from './assets/media-delivery.js?v=frames-dc4a9c95ed77';
 
 const canvas = document.querySelector('#ball-canvas');
 const status = document.querySelector('#status');
@@ -14,6 +16,7 @@ const stage = document.querySelector('#scene-frame');
 const opening = document.querySelector('#opening');
 
 async function main() {
+  const mediaReady = prepareMedia(opening);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -138,7 +141,7 @@ async function main() {
     interactive = enabled;
     if (!enabled) clearHover();
     else pickDirty = true;
-  }, requestFrame);
+  }, requestFrame, await mediaReady);
   const updatePerformance = createPerformanceOverlay(sequence,renderer);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {

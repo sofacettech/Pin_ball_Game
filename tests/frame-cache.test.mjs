@@ -63,3 +63,78 @@ test('the decoded window stops work at a stationary middle frame',async()=>{
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{decoded:4,idleMs:5,network:2}});
  try{cache.request(50);await wait(50);const settled=decodes;await wait(50);assert.equal(decodes,settled);assert.equal(cache.stats.decoded,4);assert.equal(cache.stats.pending,0)}finally{cache.destroy()}
 });
+test('lookahead downloads and decodes before scrolling becomes idle',async()=>{
+ const f=fixture(),cache=createFrameCache({count:100,source:f.source,onReady(){},onError:error=>{throw error},config:{idleMs:60000}});
+ try{
+  cache.request(40,45);
+  await until(()=>cache.get(41)&&cache.get(42));
+  assert.equal(cache.closest(42,40),42);
+  assert.equal(cache.closest(40,42),40);
+  assert.equal(cache.closest(10,0),undefined);
+  cache.request(42,35);
+  await until(()=>cache.get(41)&&cache.get(40));
+  assert.equal(cache.stats.direction,-1);
+ }finally{cache.destroy()}
+});
+test('adjacent frames share bounded requests and release every decoded resource',async()=>{
+ const batches=[];let alive=0;
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  async loadFrames(frames){batches.push([...frames]);await wait(3);return new Map(frames.map(frame=>[frame,new Uint8Array(100)]))},
+  async decode(frame){alive++;return{frame,close(){alive--}}},
+  fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:200,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:2400,prefetch:24,decoded:4,network:2,batch:6,idleMs:5}});
+ try{
+  cache.request(40);
+  await until(()=>cache.get(41)&&cache.stats.pending===0);
+  assert.ok(batches.some(frames=>frames.length===6));
+  assert.ok(batches.every(frames=>frames.length<=6&&frames.every((n,i)=>!i||Math.abs(n-frames[i-1])===1)));
+  assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=2400);
+  cache.request(39,30);
+  await until(()=>cache.get(38));
+  assert.equal(cache.stats.direction,-1);
+  cache.suspend();const count=batches.length;await wait(20);assert.equal(batches.length,count);
+  cache.resume();await until(()=>cache.stats.pending===0);
+  assert.ok(cache.stats.peakNetwork<=2);
+ }finally{cache.destroy();await wait(10)}
+ assert.equal(alive,0);
+});
+test('a full small cache gives the next target priority over older nearby frames',async()=>{
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  load:async()=>new Uint8Array(100),decode:async frame=>({frame,close(){}}),fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:400,decoded:2,network:1,idleMs:5}});
+ try{
+  await until(()=>cache.stats.pending===0&&cache.get(0));
+  for(let frame=1;frame<=8;frame++){
+   cache.request(frame);
+   await until(()=>cache.get(frame));
+   assert.ok(cache.stats.compressedBytes<=400);
+  }
+ }finally{cache.destroy()}
+});
+test('concurrent batch completions settle within a smaller mobile byte budget',async()=>{
+ let loads=0;
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>130000,
+  async loadFrames(frames){loads++;await wait(1);return new Map(frames.map(frame=>[frame,new Uint8Array(130000)]))},
+  async decode(frame){await wait(1);return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:200,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:6*1024*1024,decoded:4,network:2,idleMs:5}});
+ try{
+  await until(()=>cache.get(0)&&cache.stats.pending===0);
+  const settled=loads;await wait(30);
+  assert.equal(loads,settled);
+  assert.ok(loads<=8,`Unexpected repeated batch loads: ${loads}`);
+  assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=6*1024*1024);
+ }finally{cache.destroy()}
+});
+test('variable sample sizes do not repeatedly reload a small distant frame',async()=>{
+ const sizes=[100,100,100,100,100,100,110,110,110,90];let loads=0;
+ const source={mode:'webcodecs',stats:{},frameBytes:frame=>sizes[frame],
+  async loadFrames(frames){loads++;await wait(1);return new Map(frames.map(frame=>[frame,new Uint8Array(sizes[frame])]))},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:sizes.length,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:700,prefetch:10,ahead:9,behind:0,decoded:2,network:2,batch:3,idleMs:5}});
+ try{
+  await wait(40);const settled=loads;await wait(30);
+  assert.equal(loads,settled);assert.ok(loads<=3);
+  assert.equal(cache.stats.pending,0);
+  cache.request(6);await until(()=>cache.get(6));
+ }finally{cache.destroy()}
+});

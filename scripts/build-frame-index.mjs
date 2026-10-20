@@ -18,7 +18,7 @@ function boxes(data,start=0){
  return result;
 }
 const child=(data,type)=>{const box=boxes(data).find(box=>box.type===type);if(!box)throw Error('Missing '+type);return box.data};
-async function indexMovie(url){
+async function indexMovie(url,widthExpected,heightExpected){
  const file=await open(url),{size:fileSize}=await file.stat();let moov;
  try{
   for(let offset=0;offset<fileSize;){
@@ -58,7 +58,7 @@ async function indexMovie(url){
     frames.push([offset,size]);offset+=size;sample++;
    }
   }
-  if(frames.length!==count||fps!==60||width!==1920||height!==1080)throw Error('Expected all original Full HD / 60 FPS frames');
+  if(frames.length!==count||fps!==60||width!==widthExpected||height!==heightExpected)throw Error(`Expected independent ${widthExpected}×${heightExpected} / 60 FPS frames`);
   // The fast decoder requires an IDR in every sample, not just an absent sync table.
   const prefix=(avcC[4]&3)+1;
   for(const [offset,size] of frames){
@@ -70,13 +70,27 @@ async function indexMovie(url){
   return{version:1,source:'./'+basename(fileURLToPath(url)),sha256:hash.digest('hex'),bytes:fileSize,fps,width,height,frameCount:count,codec:'avc1.'+avcC.subarray(1,4).toString('hex'),description:avcC.toString('hex'),colorSpace,frames};
  }finally{await file.close()}
 }
-const index=await indexMovie(new URL('assets/sofacet-experience.mp4',root));
-await writeFile(new URL('assets/journey-index.json',root),JSON.stringify(index));
+const manifest={version:1,variants:{}};
+for(const [variant,suffix,width,height] of [['desktop','',1920,1080]]){
+ const filename=`sofacet-experience${suffix}.mp4`,indexFile=`journey${suffix}-index.json`;
+ const index=await indexMovie(new URL('assets/'+filename,root),width,height);
+ await writeFile(new URL('assets/'+indexFile,root),JSON.stringify(index));
+ const openingFile=`sofacet-opening${suffix}.mp4`,opening=await readFile(new URL('assets/'+openingFile,root));
+ const openingHash=createHash('sha256').update(opening).digest('hex');
+ manifest.variants[variant]={
+  journey:{file:filename,index:indexFile,sha256:index.sha256,bytes:index.bytes,width,height,fps:index.fps,frameCount:index.frameCount,key:`videos/${index.sha256}/${filename}`},
+  opening:{file:openingFile,sha256:openingHash,bytes:opening.length,key:`videos/${openingHash}/${openingFile}`},
+ };
+ console.log(`Indexed ${variant}: ${index.frameCount} independent ${width}×${height} frames at ${index.fps} FPS (${index.bytes} bytes).`);
+}
+// Mobile keeps the exact original compressed samples: no resize or second lossy encode.
+manifest.variants.mobile=structuredClone(manifest.variants.desktop);
+await writeFile(new URL('assets/video-manifest.json',root),JSON.stringify(manifest,null,2)+'\n');
 // Content versions keep cached helper code consistent when performance settings change.
 for(const [parent,dependencies] of [
  ['assets/frame-source.js',['./video-playback.js']],
  ['sequence.js',['./assets/frame-cache.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
- ['viewer.js',['./sequence.js','./reference-appearance.js','./assets/performance-overlay.js']],
+ ['viewer.js',['./sequence.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
  ['index.html',['./viewer.js']],
 ]){
  const file=new URL(parent,root);let source=await readFile(file,'utf8');
@@ -88,4 +102,3 @@ for(const [parent,dependencies] of [
  }
  await writeFile(file,source);
 }
-console.log(`Indexed ${index.frameCount} independent ${index.width}×${index.height} frames at ${index.fps} FPS; source unchanged (${index.bytes} bytes).`);
