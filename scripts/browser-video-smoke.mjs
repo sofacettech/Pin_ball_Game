@@ -127,7 +127,19 @@ try{
     try{
      reference.src=document.querySelector('#journey').currentSrc;reference.preload='auto';reference.load();
      await reference.play();reference.pause();await waitForVideo(reference,{readyState:2});
-     reference.currentTime=200.25/60;await waitForVideo(reference,{readyState:2});
+     // A completed seek can still expose the reference's previous compositor
+     // frame in WebKit. Confirm the presented media timestamp, not just readiness.
+     const presented=new Promise((resolve,reject)=>{
+      let callback;
+      const timer=setTimeout(()=>{reference.cancelVideoFrameCallback(callback);reject(Error('Reference did not present frame 200'))},10000);
+      function check(_now,metadata){
+       if(Math.round(metadata.mediaTime*60)===200){clearTimeout(timer);resolve(metadata.mediaTime)}
+       else callback=reference.requestVideoFrameCallback(check);
+      }
+      callback=reference.requestVideoFrameCallback(check);
+     });
+     reference.currentTime=200.25/60;
+     const [referenceMediaTime]=await Promise.all([presented,waitForVideo(reference,{readyState:2})]);
      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
      const context=canvas.getContext('2d',{alpha:false});
      const sequence=window.sofacetPreview.sequence;
@@ -139,9 +151,9 @@ try{
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       context.drawImage(reference,0,0);const expected=context.getImageData(0,0,1920,1080).data;
       context.drawImage(active,0,0);const actual=context.getImageData(0,0,1920,1080).data;
-      let max=0,total=0,referenceRGB=0;
-      for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta;if(i%4!==3)referenceRGB+=expected[i]}
-      result={maxChannelDifference:max,meanChannelDifference:total/actual.length,referenceRGB:referenceRGB/(1920*1080*3),paintAttempts:attempt};
+      let max=0,total=0,referenceRGB=0,actualRGB=0;
+      for(let i=0;i<actual.length;i++){const delta=Math.abs(actual[i]-expected[i]);max=Math.max(max,delta);total+=delta;if(i%4!==3){referenceRGB+=expected[i];actualRGB+=actual[i]}}
+      result={maxChannelDifference:max,meanChannelDifference:total/actual.length,referenceRGB:referenceRGB/(1920*1080*3),actualRGB:actualRGB/(1920*1080*3),referenceMediaTime,activeMediaTime:active.currentTime,paintAttempts:attempt};
       if(result.referenceRGB>1&&max<=2&&result.meanChannelDifference<=.05)break;
      }
      return result;
