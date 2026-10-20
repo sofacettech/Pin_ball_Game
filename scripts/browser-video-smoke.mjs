@@ -81,7 +81,10 @@ try{
     }finally{CanvasRenderingContext2D.prototype.drawImage=draw;window.scrollTo(0,1600)}
    });
    console.log('Continuous scroll',JSON.stringify({native,...motion}));
-   assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
+   // Leave headroom for shared CI hardware while rejecting the measured
+   // bitmap/queue regression (under 90 updates in this six-second run).
+   assert.ok(motion.updates>=100,'Continuous scrolling regressed below the WebKit baseline allowance');
+   assert.ok(motion.maxGapMs<500,'Continuous scrolling must not stall for half a second');
    assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
    const quality=await page.evaluate(async()=>{
