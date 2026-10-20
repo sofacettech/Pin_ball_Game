@@ -1,6 +1,6 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 12, ahead: 48, prefetch: 72, network: 3, batch: 16,
-  decoded: 8, compressedBytes: 8 * 1024 * 1024, idleMs: 100,
+  behind: 12, ahead: 72, prefetch: 96, network: 3, batch: 24,
+  decoded: 8, compressedBytes: 12 * 1024 * 1024, idleMs: 100,
 };
 
 export function createFrameCache({count, source, onReady, onError, config = {}}) {
