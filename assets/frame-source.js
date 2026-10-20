@@ -108,10 +108,12 @@ export async function createFrameSource(video,index,indexURL){
    video.preload='auto';video.src=url.href;
    video.load();
    primeNative();
-   const request=waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).then(()=>{
+   const signal=nativeEvents.signal;
+   const request=waitForVideo(video,{readyState:2,signal}).then(()=>{
+    if(signal.aborted||disposed)throw abortError();
     nativePrimed=true;video.pause();
    }).catch(error=>{
-    if(nativeReady===request)nativeReady=undefined;
+    if(nativeReady===request){nativeReady=undefined;nativePrimed=false;nativePlaying=false;nativeGeneration++;video.pause()}
     if(error.name!=='AbortError'&&!disposed&&useLocal())return ready();
     throw error;
    });

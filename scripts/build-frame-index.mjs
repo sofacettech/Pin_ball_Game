@@ -91,7 +91,7 @@ for(const [parent,dependencies] of [
  ['assets/frame-source.js',['./video-playback.js']],
  ['sequence.js',['./assets/frame-cache.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
  ['viewer.js',['./sequence.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
- ['index.html',['./viewer.js']],
+ ['index.html',['./viewer.js','./style.css']],
 ]){
  const file=new URL(parent,root);let source=await readFile(file,'utf8');
  for(const dependency of dependencies){
