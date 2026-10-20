@@ -21,11 +21,12 @@ try{
   assert.ok(started,'Preview server did not start');
  }
  browser=await webkit.launch();
- for(const native of [false,true]){
+ for(const native of [false,true,'canvas']){
   const context=await browser.newContext({...devices['iPhone 13']});
   const page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
+  if(native==='canvas')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
   try{
    await page.goto(url,{waitUntil:'domcontentloaded'});
    // Autoplay denial must offer an actionable control, including reduced-power browsers.
