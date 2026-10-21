@@ -109,6 +109,20 @@ test('suspending a native seek does not retain a frame from the cancelled genera
  source.suspend();video.seeking=false;video.dispatchEvent(new Event('seeked'));
  await assert.rejects(pending,{name:'AbortError'});assert.equal(created,0);
 });
+test('reversing scroll cancels the obsolete native seek without discarding its buffer',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const forward=source.decode(20);await turn();assert.ok(video.seeking);
+ source.retarget(30,10); // A useful forward seek is allowed to finish.
+ source.retarget(15,10); // Reverse before crossing the last presented frame.
+ await assert.rejects(forward,{name:'AbortError'});
+ const reverse=source.decode(15);await turn();assert.equal(video.currentTime,15.25/60);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));
+ const image=await reverse;assert.equal(image.time,15.25/60);image.close();
+ assert.equal(video.loads,1,'Direction changes must retain the existing media buffer');
+});
 test('a browser without native VideoFrame support uses the original native video compositor',async t=>{
  snapshotEnvironment(t);globalThis.VideoFrame=class{constructor(){throw new TypeError('Unsupported source')}};
  const video=new Video();video.readyState=2;video.time=4.25/60;
@@ -129,6 +143,28 @@ test('touch devices use the native compositor even when VideoFrame is supported'
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());assert.equal(await source.decode(4),video);
  assert.equal(source.stats.renderer,'native-video');assert.equal(source.transient,true);
+});
+test('touch devices with efficient native decoding bypass per-frame downloads',async t=>{
+ const previousMedia=globalThis.matchMedia,previousDecoder=globalThis.VideoDecoder,previousCapabilities=navigator.mediaCapabilities;
+ globalThis.matchMedia=()=>({matches:true});
+ navigator.mediaCapabilities={async decodingInfo(){return{supported:true,smooth:true,powerEfficient:true}}};
+ globalThis.VideoDecoder=class{static async isConfigSupported(){assert.fail('Touch video must use the native media buffer')}};
+ t.after(()=>{globalThis.matchMedia=previousMedia;globalThis.VideoDecoder=previousDecoder;navigator.mediaCapabilities=previousCapabilities});
+ const video=new Video();video.readyState=2;video.time=4.25/60;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,codec:'avc1.64002a',sha256:'d'.repeat(64),width:1920,height:1080,frames:[[0,10]]},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ assert.equal(source.mode,'video');assert.equal(await source.decode(4),video);
+ assert.equal(source.stats.networkRequests,0);assert.equal(source.stats.fallbackReason,'native-touch');
+ assert.equal(source.transient,true);
+});
+test('touch devices retain WebCodecs when native decoding is reported inefficient',async t=>{
+ const previousMedia=globalThis.matchMedia,previousDecoder=globalThis.VideoDecoder,previousCapabilities=navigator.mediaCapabilities;
+ globalThis.matchMedia=()=>({matches:true});
+ navigator.mediaCapabilities={async decodingInfo(config){assert.equal(config.video.framerate,60);assert.equal(config.video.bitrate,4800);return{supported:true,smooth:true,powerEfficient:false}}};
+ globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};
+ t.after(()=>{globalThis.matchMedia=previousMedia;globalThis.VideoDecoder=previousDecoder;navigator.mediaCapabilities=previousCapabilities});
+ const source=await createFrameSource(new Video(),{source:'./journey.mp4',fps:60,codec:'avc1.64002a',sha256:'e'.repeat(64),width:1920,height:1080,bytes:10,frameCount:1,frames:[[0,10]]},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());assert.equal(source.mode,'webcodecs');
 });
 test('a stalled compressed-frame request times out and releases its request slot',async t=>{
  const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder;let fetching=false;

@@ -34,8 +34,16 @@ jobs:
       - run: npm run smoke
 
   video:
-    name: WebKit mobile video
-    runs-on: macos-15
+    name: ${{ matrix.browser }} mobile video
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: webkit
+            os: macos-15
+          - browser: chromium
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -49,11 +57,12 @@ jobs:
       - name: Install isolated browser test runtime
         run: |
           npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
-          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install webkit
-      - name: Check mobile opening and scroll in WebKit
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install --with-deps ${{ matrix.browser }}
+      - name: Check mobile opening, fast swipes and scroll response
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
-          SOFACET_VIDEO_BASELINE: 97261a10cd6ad609128e07737b58f0bbb0a04d0b
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
         run: |
           git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
           node scripts/browser-video-smoke.mjs

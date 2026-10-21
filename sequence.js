@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
-import { createFrameSource } from './assets/frame-source.js?v=frames-cf54d89791f3';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-afcf01608ba0';
+import { createFrameSource } from './assets/frame-source.js?v=frames-d5845d94c65a';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-7b7b97c18ea4';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
@@ -50,7 +50,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
   window.scrollTo(0, 0);
   let phase = 'opening';
   let desiredFrame = 0;
-  let easedFrame = 0;
   let displayedFrame = 0;
   let interactive = false;
   let gameLoaded = false;
@@ -195,21 +194,21 @@ export async function createSequence(setInteractive, requestFrame, media) {
       hold.hidden = hoverWeight > .0001;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
-      easedFrame += (desiredFrame - easedFrame) * (1 - Math.exp(-16 * delta));
-      if (Math.abs(easedFrame - desiredFrame) < .05) easedFrame = desiredFrame;
-      const target = Math.round(easedFrame);
+      // Native scrolling already supplies the gesture's motion and inertia.
+      // A second easing loop adds input lag and seeks through obsolete targets.
+      const target = desiredFrame;
       wantedFrame = target;
       cache.request(target,desiredFrame,displayedFrame);
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
       else if (desiredFrame === 0 && displayedFrame === 0) allowHover(true);
-      return easedFrame !== desiredFrame;
+      return false; // Scroll events and completed frames schedule the next paint.
     },
     get phase() { return phase; },
     get desiredFrame() { return desiredFrame; },
     get displayedFrame() { return displayedFrame; },
-    get seeking() { return displayedFrame !== Math.round(easedFrame); },
+    get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
     get stats() { return {...cache.stats,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,

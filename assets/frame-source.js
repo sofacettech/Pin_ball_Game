@@ -11,13 +11,24 @@ export async function createFrameSource(video,index,indexURL){
  const cacheURL=url.href,fallbackURL=index.fallbackSource?new URL(index.fallbackSource,indexURL):null;
  if(fallbackURL&&index.sha256)fallbackURL.searchParams.set('v',index.sha256);
  const config={codec:index.codec,codedWidth:index.width,codedHeight:index.height,description,colorSpace:index.colorSpace,optimizeForLatency:true};
+ const touchDevice=globalThis.matchMedia?.('(any-pointer: coarse)')?.matches===true;
+ let preferNative=touchDevice;
+ if(touchDevice&&index.codec&&globalThis.navigator?.mediaCapabilities?.decodingInfo){
+  try{
+   const capability=await navigator.mediaCapabilities.decodingInfo({type:'file',video:{contentType:`video/mp4; codecs="${index.codec}"`,width:index.width,height:index.height,bitrate:Math.ceil(index.bytes*8*index.fps/index.frameCount),framerate:index.fps}});
+   // Native buffering avoids per-frame round trips on phones. Retain the
+   // explicit decoder when this device reports inefficient native decoding.
+   preferNative=capability.supported&&capability.smooth&&capability.powerEfficient;
+  }catch{/* Older browsers retain the native mobile compatibility path. */}
+ }
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
+ if(preferNative)fallbackReason='native-touch';
  const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,deliveryFallbacks:0};
  function useLocal(){
   if(!fallbackURL||url.href===fallbackURL.href)return false;
   url=fallbackURL;stats.deliveryFallbacks++;return true;
  }
- if(index.codec&&typeof VideoDecoder==='function'){
+ if(!preferNative&&index.codec&&typeof VideoDecoder==='function'){
   try{if((await VideoDecoder.isConfigSupported(config)).supported){
    decoder=new VideoDecoder({output:frame=>{if(pending&&!pending.image){pending.image=frame;pending.resolve(frame)}else frame.close()},error:error=>pending?.reject(error)});
    decoder.configure(config);mode='webcodecs';fallbackReason=null;
@@ -87,8 +98,8 @@ export async function createFrameSource(video,index,indexURL){
   return bytes;
  }
  async function load(frame,signal,maxBytes){return(await loadFrames([frame],signal,maxBytes)).get(frame)}
- const nativeCompositor=globalThis.matchMedia?.('(any-pointer: coarse)')?.matches||typeof VideoFrame!=='function';
- let nativeEvents=new AbortController(),nativeReady,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor;
+ const nativeCompositor=touchDevice||typeof VideoFrame!=='function';
+ let nativeEvents=new AbortController(),nativeReady,nativeSeek,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor;
  const gestures=new AbortController();
  function primeNative(){
   if(disposed||nativePrimed||nativePlaying||globalThis.document?.hidden)return;
@@ -134,8 +145,14 @@ export async function createFrameSource(video,index,indexURL){
   const time=(frame+.25)/index.fps;
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001){
    const start=performance.now();
-   video.currentTime=time;
-   await waitForVideo(video,{readyState:2,signal:nativeEvents.signal}).catch(error=>{nativeReady=undefined;throw error});
+   const seek={frame,controller:new AbortController()},events=nativeEvents.signal;
+   const abort=()=>seek.controller.abort();
+   nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
+   try{
+    video.currentTime=time;
+    await waitForVideo(video,{readyState:2,signal:seek.controller.signal});
+   }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
+   finally{events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
@@ -172,7 +189,13 @@ export async function createFrameSource(video,index,indexURL){
   mode='video';pending?.image?.close();pending?.reject(abortError());pending=null;
   if(decoder?.state!=='closed')decoder?.close();decoder=null;return true;
  }
- return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,get mode(){return mode},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin}},
+ return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
+  retarget(frame,presented){
+   // Finish useful progress, but cancel a seek that would overshoot the new
+   // target after a reversal instead of making the finger wait for it.
+   if(nativeSeek&&(nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
+  },
+  get mode(){return mode},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin}},
   suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

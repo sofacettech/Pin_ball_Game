@@ -6,9 +6,11 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const require=createRequire(import.meta.url);
-const {webkit,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
+const engine=process.env.SOFACET_BROWSER||'webkit';
+assert.ok(['webkit','chromium'].includes(engine),'Use a supported mobile browser');
+const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
-const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map();
+const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map(),swipeMeasurements=new Map();
 if(baseline){
  assert.match(baseline,/^[a-f0-9]{40}$/,'Use an exact baseline commit');
  for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js']){
@@ -16,6 +18,33 @@ if(baseline){
  }
 }
 let server,browser,data;
+async function measureScroll(page,speed,duration){
+ await page.evaluate(()=>window.scrollTo(0,1600));
+ await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
+ await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
+ return page.evaluate(async({speed,duration})=>{
+  const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[];
+  let presented=sequence.displayedFrame;
+  try{
+   const start=performance.now();
+   await new Promise(resolve=>{
+    function step(now){
+     if(sequence.displayedFrame!==presented){times.push(now);steps.push(Math.abs(sequence.displayedFrame-presented));presented=sequence.displayedFrame}
+     lags.push(Math.abs(Math.round(window.scrollY/8)-sequence.displayedFrame));
+     const elapsed=now-start;
+     window.scrollTo(0,1600+(elapsed<duration/2?elapsed:Math.max(0,duration-elapsed))*speed);
+     if(elapsed<duration)requestAnimationFrame(step);else resolve();
+    }
+    requestAnimationFrame(step);
+   });
+   const gaps=times.slice(1).map((time,i)=>time-times[i]);
+   const percentile=values=>values.sort((a,b)=>a-b)[Math.floor(values.length*.95)]||0;
+   return{updates:times.length,updatesPerSecond:times.length/(duration/1000),
+    p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),
+    p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats};
+  }finally{window.scrollTo(0,1600)}
+ },{speed,duration});
+}
 try{
  if(!process.env.SOFACET_VIDEO_URL){
   data=await mkdtemp(join(tmpdir(),'sofacet-browser-'));
@@ -27,12 +56,15 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- browser=await webkit.launch();
- const cases=[false,true,'legacy'].flatMap(native=>baseline&&native!=='legacy'
+ const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline&&native!=='legacy'
   ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
  for(const {native,previous} of cases){
-  const context=await browser.newContext({...devices['iPhone 13']});
+  // Release decoder/GPU resources between cases so the last renderer is not
+  // measured under memory pressure left by earlier 249 MB video instances.
+  browser=await browserType.launch();
+  const context=await browser.newContext({...devices[engine==='webkit'?'iPhone 13':'Pixel 7']});
   const page=await context.newPage(),errors=[];
+  if(engine==='chromium'&&process.env.SOFACET_CPU_THROTTLE)await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate',{rate:Number(process.env.SOFACET_CPU_THROTTLE)});
   page.on('pageerror',error=>errors.push(error.message));
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
   if(native==='legacy')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
@@ -75,33 +107,10 @@ try{
    assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
    // Measure sustained scrolling as well as jumps: arriving eventually does not
    // prove that intermediate frames are being presented evenly.
-   await page.evaluate(()=>window.scrollTo(0,1600));
-   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
-   await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
-   const motion=await page.evaluate(async()=>{
-    const sequence=window.sofacetPreview.sequence,times=[];
-    let presented=sequence.displayedFrame;
-    try{
-     const start=performance.now();
-     await new Promise(resolve=>{
-      function step(now){
-       // Count positions visible at animation frames, including the native
-       // compositor. Multiple canvas writes between paints count only once.
-       if(sequence.displayedFrame!==presented){times.push(now);presented=sequence.displayedFrame}
-       const elapsed=now-start;
-       window.scrollTo(0,1600+(elapsed<3000?elapsed:6000-elapsed)*.48);
-       if(elapsed<6000)requestAnimationFrame(step);else resolve();
-      }
-      requestAnimationFrame(step);
-     });
-     const gaps=times.slice(1).map((time,i)=>time-times[i]).sort((a,b)=>a-b);
-     return{updates:times.length,updatesPerSecond:times.length/6,
-      p95GapMs:gaps[Math.floor(gaps.length*.95)]||0,maxGapMs:gaps.at(-1)||0,stats:sequence.stats};
-    }finally{window.scrollTo(0,1600)}
-   });
+   const motion=await measureScroll(page,.48,6000);
    console.log('Continuous scroll',JSON.stringify({native,previous,...motion}));
    assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
-   assert.ok(motion.maxGapMs<500,'Continuous scrolling must not stall for half a second');
+   if(!previous)assert.ok(motion.maxGapMs<500,'Continuous scrolling must not stall for half a second');
    assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
    if(previous)measurements.set(String(native),motion);
    else if(baseline){
@@ -110,6 +119,18 @@ try{
     console.log('Same-runner comparison',JSON.stringify(comparison));
     assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
     assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+   }
+   const swipe=await measureScroll(page,2.4,4000);
+   console.log('Fast swipe and reversal',JSON.stringify({engine,native,previous,...swipe}));
+   if(previous)swipeMeasurements.set(String(native),swipe);
+   else{
+    if(native)assert.equal(swipe.stats.renderer,'native-video','Native touch playback must avoid full-size canvas copies');
+    assert.ok(swipe.p95FrameLag<=24,'Fast scrolling must stay within 80 ms of the gesture at 300 source frames per second');
+    assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
+    if(baseline){
+     const before=swipeMeasurements.get(String(native==='legacy'?true:native));
+     assert.ok(swipe.p95FrameLag<=Math.max(3,before.p95FrameLag*.8),'Scroll response must improve over the deployed renderer');
+    }
    }
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
    // The historical mutable-video renderer is a pacing reference, not the
@@ -125,7 +146,9 @@ try{
     reference.style.cssText='position:fixed;width:192px;height:108px;bottom:0;right:0;z-index:2147483647;pointer-events:none';
     document.body.append(reference);
     try{
-     reference.src=document.querySelector('#journey').currentSrc;reference.preload='auto';reference.load();
+     // WebCodecs never sets the hidden video's src; compare that path with the
+     // same original asset served by the test server.
+     reference.src=document.querySelector('#journey').currentSrc||new URL('./assets/sofacet-experience.mp4',location.href).href;reference.preload='auto';reference.load();
      await reference.play();reference.pause();await waitForVideo(reference,{readyState:2});
      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
      const context=canvas.getContext('2d',{alpha:false});
@@ -174,9 +197,9 @@ try{
     videos:[...document.querySelectorAll('video')].map(v=>({id:v.id,time:v.currentTime,ready:v.readyState,seeking:v.seeking,paused:v.paused,error:v.error?.message}))
    })));
    throw error;
-  }finally{await context.close()}
+  }finally{await context.close();await browser.close();browser=undefined}
  }
- console.log('WebKit mobile opening, forward/reverse scroll and original Full HD checks passed.');
+ console.log(engine+' mobile opening, fast/reverse scroll and original Full HD checks passed.');
 }finally{
  await browser?.close();
  if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}
