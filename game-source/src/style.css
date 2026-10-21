@@ -396,8 +396,10 @@ body.handheld:not(.inspect-mode) #stage:not(.has-scorecard){padding-top:var(--si
 #game-header :is(.site-brand,.site-nav){position:absolute}
 body.handheld .side-panel .card-face[aria-hidden="true"]{visibility:hidden}
 
-#viewport #loading{inset:0;width:auto;max-width:none;padding:0;display:grid;place-items:center;z-index:2;pointer-events:none}
-#loading img{display:block;width:32px;height:auto;animation:table-logo-reveal 2.8s ease-in-out both;animation-play-state:var(--loading-play-state,running)}
+#stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
+#stage > #loading{inset:0;width:auto;max-width:none;padding:0;display:grid;place-items:center;z-index:2;pointer-events:none}
+#loading img{display:block;width:min(9.85vw,16.64dvh);height:auto;animation:table-logo-reveal 2.8s ease-in-out both;animation-play-state:var(--loading-play-state,running)}
 #loading .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes table-logo-reveal{from{filter:brightness(0);opacity:.15}to{filter:brightness(1);opacity:1}}
+@media(max-width:700px){#loading img{width:min(max(9.85vw,93.58px),16.64dvh)}}
 @media(prefers-reduced-motion:reduce){#loading img{animation:none}}

@@ -40,9 +40,9 @@
    </div>
   </nav>
  </header>
- <main id="stage" class="showing-play"><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span>
- <div id="loading" role="status"><img src="/assets/sofacet-loading-outline.svg" width="32" height="26" alt="" aria-hidden="true"><span class="loading-copy">Preparing your table. <span id="loading-detail">Loading the Blender artwork…</span></span></div>
+ <main id="stage" class="showing-play" data-ready="false" aria-busy="true"><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span>
  </div>
+ <div id="loading" role="status"><img src="/assets/sofacet-loading-outline.svg" width="32" height="26" alt="" aria-hidden="true"><span class="loading-copy">Preparing your table. <span id="loading-detail">Loading the Blender artwork…</span></span></div>
  <aside class="side-panel" id="scorecard-panel" aria-label="How to play and scoreboard" hidden>
     <button class="flip-card" id="flip-card" type="button" aria-label="Show scoreboard" aria-pressed="false" aria-describedby="flip-hint">
       <span class="card-inner">

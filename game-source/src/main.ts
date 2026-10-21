@@ -148,8 +148,8 @@ async function start(){try{
  const fetchAsset=async(name:string)=>{const response=await fetch('/assets/'+name+'?v='+(view.manifest.asset_checksums[name]||view.manifest.asset_revision));if(!response.ok)throw new Error('Missing physics asset: '+name);return response};
  const [vertices,indices,obstacles]=await Promise.all([fetchAsset('collision-vertices.bin').then(r=>r.arrayBuffer()),fetchAsset('collision-indices.bin').then(r=>r.arrayBuffer()),fetchAsset('collider-entities.json').then(r=>r.json())]);
  physicsAssets={vertices:new Float32Array(vertices),indices:new Uint32Array(indices),obstacles};physics=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,obstacles);bindFeedback();
- loaded=true;view.needsRender=true;$('loading').hidden=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();requestGameFrame();
- }catch(error){$('loading').hidden=true;$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
+ loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();$('loading').hidden=true;stage.dataset.ready='true';stage.setAttribute('aria-busy','false');requestGameFrame();
+ }catch(error){stage.setAttribute('aria-busy','false');$('loading').hidden=true;$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
 function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!physics.paused)accumulator+=delta;else accumulator=0;
  while(accumulator>=DT){const controls=input(),launches=physics.launches;
   if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
