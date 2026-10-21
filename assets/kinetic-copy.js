@@ -17,11 +17,13 @@ export async function createLandingCopy() {
   }));
   const timelines = new Map();
   const media = gsap.matchMedia();
-  let frame = 0, reduced = false;
+  const welcome = headlines[0].element;
+  let frame = 0, reduced = false, scrollStarted = false, welcomeTween;
 
   function paint() {
+    const welcomeVisible = !scrollStarted || Number(gsap.getProperty(welcome, 'opacity')) > 0;
     for (const { element, from, until } of headlines) {
-      const active = frame >= from && frame < until;
+      const active = frame >= from && (element === welcome ? welcomeVisible : frame < until);
       element.setAttribute('aria-hidden', String(!active));
       element.style.visibility = active ? 'visible' : 'hidden';
     }
@@ -30,6 +32,7 @@ export async function createLandingCopy() {
 
   media.add({ all: 'all', reduce: '(prefers-reduced-motion: reduce)' }, context => {
     reduced = context.conditions.reduce;
+    gsap.set(welcome, { opacity: scrollStarted ? 0 : 1, y: 0 });
     if (!reduced) {
       for (const { element: section, heading, detail, from, until } of headlines) {
         const opening = section === headlines[0].element;
@@ -61,7 +64,7 @@ export async function createLandingCopy() {
               timeline.fromTo(pieces, { yPercent: 115, opacity: .35 }, {
                 yPercent: 0, opacity: 1, duration: (supporting ? .52 : ENTER) / revealRate, stagger,
               }, from / FPS + handoffDelay + (supporting ? .14 / revealRate : 0));
-              if (Number.isFinite(until)) {
+              if (Number.isFinite(until) && !opening) {
                 const end = until / FPS - EXIT - STAGGER;
                 timeline.to(pieces, { yPercent: -115, opacity: .2, duration: EXIT, stagger: { amount: supporting ? .08 : STAGGER } }, end);
               }
@@ -74,10 +77,21 @@ export async function createLandingCopy() {
       }
     }
     paint();
-    return () => timelines.clear();
+    return () => { welcomeTween?.kill(); timelines.clear(); };
   }, root);
 
   const update = nextFrame => { frame = nextFrame; paint(); };
+  update.setScrolled = scrolled => {
+    if (scrollStarted === scrolled) return;
+    scrollStarted = scrolled;
+    welcomeTween?.kill();
+    if (reduced) gsap.set(welcome, { opacity: scrolled ? 0 : 1, y: 0 });
+    else welcomeTween = gsap.to(welcome, {
+      opacity: scrolled ? 0 : 1, y: scrolled ? -12 : 0,
+      duration: 1, ease: 'power3.inOut', onComplete: paint,
+    });
+    paint();
+  };
   const onPageHide = event => { if (!event.persisted) update.destroy(); };
   update.destroy = () => { media.revert(); window.removeEventListener('pagehide', onPageHide); };
   window.addEventListener('pagehide', onPageHide);

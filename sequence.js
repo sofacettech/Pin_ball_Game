@@ -1,6 +1,6 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
-import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-7b1133b75300';
+import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-dd3843870e0b';
 import { createFrameSource } from './assets/frame-source.js?v=frames-d5845d94c65a';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-7b7b97c18ea4';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
@@ -131,6 +131,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }, {signal: events.signal});
   window.addEventListener('scroll', () => {
     if (phase === 'opening') return;
+    updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
     requestFrame();
   }, { passive: true, signal: events.signal });

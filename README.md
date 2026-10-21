@@ -45,7 +45,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 
 ## Experience and gameplay
 
-- The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges; the welcome copy clears before frame 240.
+- The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges. The welcome copy stays visible until scrolling starts, fades out over one second and returns when the player scrolls back to the starting position. Reduced-motion mode switches immediately.
 - The queen impact at source frame 2164 hands directly into the game. Play now bypasses the journey.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
