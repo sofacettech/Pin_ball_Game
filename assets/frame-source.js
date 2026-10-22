@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-b1954aae3e53';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-b89693b0be56';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -100,6 +100,9 @@ export async function createFrameSource(video,index,indexURL){
  async function load(frame,signal,maxBytes){return(await loadFrames([frame],signal,maxBytes)).get(frame)}
  const nativeCompositor=touchDevice||typeof VideoFrame!=='function';
  let nativeEvents=new AbortController(),nativeReady,nativeSeek,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor;
+ // Version-one indexes are emitted only after every sample is verified as IDR.
+ // Check the returned frame as well: fastSeek may choose an earlier sync sample.
+ let nativeFastSeek=index.version===1&&index.frameCount>0&&index.frames?.length===index.frameCount&&typeof video.fastSeek==='function';
  const gestures=new AbortController();
  function primeNative(){
   if(disposed||nativePrimed||nativePlaying||globalThis.document?.hidden)return;
@@ -149,8 +152,15 @@ export async function createFrameSource(video,index,indexURL){
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
-    video.currentTime=time;
-    await waitForVideo(video,{readyState:2,signal:seek.controller.signal});
+    if(nativeFastSeek){
+     try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
+    }else video.currentTime=time;
+    await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true});
+    if(nativeFastSeek&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
+     nativeFastSeek=false;
+     video.currentTime=time;
+     await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true});
+    }
    }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
    finally{events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;

@@ -43,6 +43,21 @@ test('video readiness waits are bounded, cancellable and reject media errors',as
  const controller=new AbortController(),wait=waitForVideo(video,{signal:controller.signal});controller.abort();await assert.rejects(wait,{name:'AbortError'});
  video.error={code:2};await assert.rejects(waitForVideo(video),/could not load/);
 });
+test('native readiness can complete on a paint before the queued seeked event',async t=>{
+ const oldRequest=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame,callbacks=new Map();let id=0;
+ globalThis.requestAnimationFrame=fn=>{callbacks.set(++id,fn);return id};
+ globalThis.cancelAnimationFrame=id=>callbacks.delete(id);
+ t.after(()=>{globalThis.requestAnimationFrame=oldRequest;globalThis.cancelAnimationFrame=oldCancel});
+ const paint=()=>{const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback()};
+ const video=new Video();video.readyState=2;video.seeking=true;let done=false;
+ const pending=waitForVideo(video,{readyState:2,pollOnPaint:true}).then(()=>done=true);
+ paint();await turn();assert.equal(done,false);assert.equal(callbacks.size,1);
+ video.seeking=false;video.readyState=1;paint();await turn();assert.equal(done,false,'The seek must also have decoded data');
+ video.readyState=2;paint();await pending;assert.equal(done,true);assert.equal(callbacks.size,0);
+ video.dispatchEvent(new Event('seeked'));assert.equal(callbacks.size,0);
+ video.seeking=true;const controller=new AbortController(),cancelled=waitForVideo(video,{signal:controller.signal,pollOnPaint:true});
+ assert.equal(callbacks.size,1);controller.abort();await assert.rejects(cancelled,{name:'AbortError'});assert.equal(callbacks.size,0);
+});
 test('denied autoplay shows a working gesture button without automatic retries',async t=>{
  const e=environment(t);e.video.reject=true;e.player.start();await turn();assert.equal(e.button.hidden,false);assert.equal(e.video.calls,1);
  e.video.dispatchEvent(new Event('canplay'));await turn();assert.equal(e.video.calls,1);
@@ -134,6 +149,55 @@ test('a browser without native VideoFrame support uses the original native video
  source.suspend();await source.decode(4);
  assert.equal(video.loads,1,'Returning to an already decoded frame must keep its native buffer');
  assert.equal(video.currentTime,4.25/60);
+});
+test('an indexed all-IDR native seek accepts the requested sync frame without a second seek',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;let fastCalls=0;
+ video.fastSeek=time=>{fastCalls++;video.time=Math.floor(time*60)/60;video.seeking=true};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(20);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,20/60);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));
+ const image=await pending;assert.equal(image.time,20/60);assert.equal(video.seeking,false);image.close();
+});
+test('an approximate native seek corrects the frame and disables further approximate seeks',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;let fastCalls=0,done=false;
+ video.fastSeek=()=>{fastCalls++;video.time=10/60;video.seeking=true};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(20).then(image=>{done=true;return image});await turn();
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
+ assert.equal(done,false,'An approximate frame must not be presented as the requested frame');
+ assert.equal(video.currentTime,20.25/60);assert.equal(video.seeking,true);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await pending;assert.equal(image.time,20.25/60);image.close();
+ const next=source.decode(21);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,21.25/60);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));(await next).close();
+});
+test('native fast seeking requires the complete verified frame index and a working browser method',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;
+ video.fastSeek=()=>assert.fail('Unindexed media must use precise seeking');
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(20);await turn();assert.equal(video.currentTime,20.25/60);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));(await pending).close();
+ const other=new Video();other.readyState=2;other.fastSeek=()=>{throw new TypeError('Unsupported')};
+ const fallback=await createFrameSource(other,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>fallback.destroy());
+ const precise=fallback.decode(20);await turn();assert.equal(other.currentTime,20.25/60);
+ other.seeking=false;other.dispatchEvent(new Event('seeked'));(await precise).close();
+});
+test('reversing an approximate native seek cancels it before any corrective seek',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;
+ video.fastSeek=time=>{video.time=Math.floor(time*60)/60;video.seeking=true};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(20);await turn();source.retarget(15,10);
+ await assert.rejects(pending,{name:'AbortError'});
+ video.time=18/60;video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();assert.equal(video.currentTime,18/60);
+ const reverse=source.decode(15);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await reverse;assert.equal(image.time,15/60);image.close();
 });
 test('touch devices use the native compositor even when VideoFrame is supported',async t=>{
  snapshotEnvironment(t);const previous=globalThis.matchMedia;
