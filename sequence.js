@@ -133,6 +133,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (phase === 'opening') return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
+    // Once the journey is visible, start its seek in the scroll event instead
+    // of spending another animation frame waiting to forward the gesture.
+    // The first journey frame still waits for the opening/hover handoff in tick.
+    if (phase === 'journey') {
+      desiredFrame = wantedFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
+      cache.request(wantedFrame, desiredFrame, displayedFrame);
+    }
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {

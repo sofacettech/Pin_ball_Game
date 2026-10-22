@@ -57,9 +57,9 @@ try{
   assert.ok(started,'Preview server did not start');
  }
  const refs=process.env.SOFACET_DIAGNOSTIC_REFS.split(',');
- const cases=[...refs,...[...refs].reverse()].map(ref=>({native:false,previous:false,ref}));
+ const cases=[false,true].flatMap(native=>[...refs,...[...refs].reverse()].map(ref=>({native,previous:false,ref})));
  for(const {native,previous,ref} of cases){
-  console.log('DIAGNOSTIC REVISION',ref);
+  console.log('DIAGNOSTIC REVISION',JSON.stringify({native,ref}));
   const revisionAssets=new Map();
   for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js','assets/kinetic-copy.js']) revisionAssets.set('/'+file,execFileSync('git',['show',`${ref}:${file}`]));
   // Release decoder/GPU resources between cases so the last renderer is not

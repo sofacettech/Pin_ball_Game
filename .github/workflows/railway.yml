@@ -23,5 +23,5 @@ jobs:
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
           SOFACET_BROWSER: webkit
-          SOFACET_DIAGNOSTIC_REFS: 15ea92b921564ba73e5274770e133ecbd013ac87,fca70802059d3345e59ffee97d9f26abadc0c732,86851af30faba61db995ccf504ccc95bc5387fa8
+          SOFACET_DIAGNOSTIC_REFS: 86851af30faba61db995ccf504ccc95bc5387fa8,HEAD
         run: node scripts/browser-video-smoke.mjs
