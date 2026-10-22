@@ -1,8 +1,9 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
-import { createFrameSource } from './assets/frame-source.js?v=frames-d5845d94c65a';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-7b7b97c18ea4';
+import { createFrameSource } from './assets/frame-source.js?v=frames-449b0efb5959';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-3b72c5f456c8';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-f98e987c95af';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
 
 const FPS = 60;
@@ -57,6 +58,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let scrollDirty = false;
   let wantedFrame = 0;
   let refreshFrame = false;
+  const pacer = createFramePacer();
   const events = new AbortController();
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
@@ -133,13 +135,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (phase === 'opening') return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
-    // Start the visible journey seek in the scroll event so input does not
-    // wait for another animation frame before reaching the decoder.
-    // The first journey frame still waits for the opening/hover handoff in tick.
-    if (phase === 'journey') {
-      desiredFrame = wantedFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
-      cache.request(wantedFrame, desiredFrame, displayedFrame);
-    }
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {
@@ -202,16 +197,16 @@ export async function createSequence(setInteractive, requestFrame, media) {
       hold.hidden = hoverWeight > .0001;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
-      // Native scrolling already supplies the gesture's motion and inertia.
-      // A second easing loop adds input lag and seeks through obsolete targets.
-      const target = desiredFrame;
+      // Pace from the frame actually on screen, not an unseen scroll target.
+      // Nearby samples remain useful while a slower connection catches up.
+      const target = pacer.next(displayedFrame, desiredFrame, delta);
       wantedFrame = target;
       cache.request(target,desiredFrame,displayedFrame);
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
       else if (desiredFrame === 0 && displayedFrame === 0) allowHover(true);
-      return false; // Scroll events and completed frames schedule the next paint.
+      return displayedFrame !== desiredFrame;
     },
     get phase() { return phase; },
     get desiredFrame() { return desiredFrame; },
