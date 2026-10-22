@@ -16,6 +16,7 @@ export async function createLandingCopy() {
     from: Number(element.dataset.from), until: Number(element.dataset.until ?? Infinity),
   }));
   const timelines = new Map();
+  const visibility = new Map();
   const media = gsap.matchMedia();
   const welcome = headlines[0].element;
   let frame = 0, reduced = false, scrollStarted = false, welcomeTween;
@@ -24,10 +25,17 @@ export async function createLandingCopy() {
     const welcomeVisible = !scrollStarted || Number(gsap.getProperty(welcome, 'opacity')) > 0;
     for (const { element, from, until } of headlines) {
       const active = frame >= from && (element === welcome ? welcomeVisible : frame < until);
-      element.setAttribute('aria-hidden', String(!active));
-      element.style.visibility = active ? 'visible' : 'hidden';
+      if (visibility.get(element) !== active) {
+        element.setAttribute('aria-hidden', String(!active));
+        element.style.visibility = active ? 'visible' : 'hidden';
+        visibility.set(element, active);
+      }
     }
-    for (const timeline of timelines.values()) timeline.time(frame / FPS, true);
+    // Hidden copy does not need per-character animation work on every video frame.
+    // Seek to the current time when its section becomes visible, including on reversal.
+    for (const { timeline, section } of timelines.values()) {
+      if (visibility.get(section)) timeline.time(frame / FPS, true);
+    }
   }
 
   media.add({ all: 'all', reduce: '(prefers-reduced-motion: reduce)' }, context => {
@@ -68,7 +76,7 @@ export async function createLandingCopy() {
                 const end = until / FPS - EXIT - STAGGER;
                 timeline.to(pieces, { yPercent: -115, opacity: .2, duration: EXIT, stagger: { amount: supporting ? .08 : STAGGER } }, end);
               }
-              timelines.set(element, timeline);
+              timelines.set(element, { timeline, section });
               timeline.time(frame / FPS, true);
               return timeline;
             },
@@ -77,7 +85,7 @@ export async function createLandingCopy() {
       }
     }
     paint();
-    return () => { welcomeTween?.kill(); timelines.clear(); };
+    return () => { welcomeTween?.kill(); timelines.clear(); visibility.clear(); };
   }, root);
 
   const update = nextFrame => { frame = nextFrame; paint(); };
