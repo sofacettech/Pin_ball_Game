@@ -34,15 +34,23 @@ jobs:
       - run: npm run smoke
 
   video:
-    name: ${{ matrix.browser }} mobile video
+    name: ${{ matrix.browser }} mobile video (${{ matrix.playback }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - browser: webkit
             os: macos-15
+            playback: auto
+          - browser: webkit
+            os: macos-15
+            playback: native
+          - browser: webkit
+            os: macos-15
+            playback: legacy
           - browser: chromium
             os: ubuntu-latest
+            playback: all
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -62,6 +70,7 @@ jobs:
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
           SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_VIDEO_CASE: ${{ matrix.playback }}
           SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
         run: |
           git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"

@@ -8,6 +8,9 @@ import {join} from 'node:path';
 const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'webkit';
 assert.ok(['webkit','chromium'].includes(engine),'Use a supported mobile browser');
+const playbackCase=process.env.SOFACET_VIDEO_CASE||'all';
+assert.ok(['all','auto','native','legacy'].includes(playbackCase),'Use a supported video case');
+assert.ok(playbackCase!=='legacy'||engine==='webkit','Legacy video is a WebKit case');
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
 const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map(),swipeMeasurements=new Map();
@@ -56,8 +59,12 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline&&native!=='legacy'
-  ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
+ const modes=playbackCase==='all'?(engine==='webkit'?[false,true,'legacy']:[false,true]):[{auto:false,native:true,legacy:'legacy'}[playbackCase]];
+ // Isolated legacy runs need their own forced-native baseline. The combined
+ // run already measured that baseline in the preceding native case.
+ const cases=modes.flatMap(native=>baseline&&(native!=='legacy'||playbackCase!=='all')
+  ?[{native:native==='legacy'?true:native,previous:true},{native,previous:false}]:[{native,previous:false}]);
+ console.log('Mobile video cases',JSON.stringify({engine,playbackCase,cases}));
  for(const {native,previous} of cases){
   // Release decoder/GPU resources between cases so the last renderer is not
   // measured under memory pressure left by earlier 249 MB video instances.
