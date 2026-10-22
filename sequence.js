@@ -16,6 +16,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
   const status = document.querySelector('#status');
+  const main = document.querySelector('main');
   prepareInlineVideo(opening);
   prepareInlineVideo(journey);
   journey.crossOrigin = 'anonymous';
@@ -146,13 +147,14 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const direct = image === journey;
     if (direct) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
-      journey.classList.add('native-renderer');
+      if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else context.drawImage(image, 0, 0, frame.width, frame.height);
     refreshFrame = false;
     displayedFrame = index;
     updateCopy(240 + displayedFrame);
     siteSound.frame(240 + displayedFrame);
-    document.querySelector('main').inert = displayedFrame === frameCount - 1;
+    const atEnd = displayedFrame === frameCount - 1;
+    if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1) {
       siteSound.handoff();
       preloadGame();
@@ -161,17 +163,17 @@ export async function createSequence(setInteractive, requestFrame, media) {
       showGame();
     } else {
       siteSound.setActive(true);
-      status.hidden = true;
-      delete document.body.dataset.game;
+      if (!status.hidden) status.hidden = true;
+      if (document.body.hasAttribute('data-game')) delete document.body.dataset.game;
       setGameVisibility(false);
-      game.inert = true;
-      game.setAttribute('aria-hidden', 'true');
+      if (!game.inert) game.inert = true;
+      if (game.getAttribute('aria-hidden') !== 'true') game.setAttribute('aria-hidden', 'true');
     }
     if (displayedFrame > 0) {
-      frame.hidden = direct;
+      if (frame.hidden !== direct) frame.hidden = direct;
       changePhase('journey');
     } else if (desiredFrame === 0) {
-      frame.hidden = true;
+      if (!frame.hidden) frame.hidden = true;
       changePhase('idle');
       allowHover(true);
     }
@@ -199,7 +201,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
         // Avoid loading the game's large 3D assets while the journey is buffering.
         if (desiredFrame >= frameCount - 180) preloadGame();
       }
-      hold.hidden = hoverWeight > .0001;
+      const hideHold = hoverWeight > .0001;
+      if (hold.hidden !== hideHold) hold.hidden = hideHold;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
       // Native scrolling already supplies the gesture's motion and inertia.
