@@ -220,3 +220,21 @@ test('a failed CDN range retries the identical indexed bytes on Railway without 
  assert.equal(source.mode,'webcodecs');assert.equal(source.stats.deliveryFallbacks,1);
  assert.equal(source.decodedFrameBytes,1280*720*4);
 });
+
+test('a range exposes its first complete frame before the rest of the batch downloads',async t=>{
+ const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder,oldCaches=globalThis.caches;
+ let stream;
+ globalThis.caches=undefined;
+ globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};
+ globalThis.fetch=async()=>new Response(new ReadableStream({start(controller){stream=controller}}),{status:206,headers:{'Content-Range':'bytes 100-105/200'}});
+ t.after(()=>{globalThis.fetch=oldFetch;globalThis.VideoDecoder=oldDecoder;globalThis.caches=oldCaches});
+ const source=await createFrameSource(new Video(),{source:'./journey.mp4',codec:'avc1.64002a',sha256:'d'.repeat(64),bytes:200,frames:[[100,3],[103,3]]},new URL('https://example.test/assets/index.json'));
+ t.after(()=>source.destroy());
+ const ready=[];
+ const loading=source.loadFrames([0,1],new AbortController().signal,6,(frame,bytes)=>ready.push([frame,[...bytes]]));
+ await turn();stream.enqueue(new Uint8Array([1,2]));await turn();assert.deepEqual(ready,[]);
+ stream.enqueue(new Uint8Array([3,4]));await turn();
+ try{assert.deepEqual(ready,[[0,[1,2,3]]],'The camera must not wait for unrelated later frames in the HTTP batch')}
+ finally{stream.enqueue(new Uint8Array([5,6]));stream.close();await loading}
+ assert.deepEqual(ready,[[0,[1,2,3]],[1,[4,5,6]]]);
+});

@@ -200,3 +200,23 @@ test('a moving target retains slow downloads that can still advance the displaye
   assert.equal(cache.closest(10,43),43);
  }finally{cache.destroy()}
 });
+
+test('progressive ranges make the target drawable before the whole batch completes',async()=>{
+ let finish;
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  loadFrames(frames,signal,budget,onFrame){return new Promise(resolve=>{
+   const samples=new Map(frames.map(frame=>[frame,new Uint8Array(100)]));
+   finish=()=>resolve(samples);
+   queueMicrotask(()=>onFrame?.(frames[0],samples.get(frames[0])));
+  })},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:4,source,onReady(){},onError:error=>{throw error},config:{network:1,batch:4,compressedBytes:400,prefetch:4,decoded:2}});
+ try{
+  await until(()=>finish);
+  await until(()=>cache.get(0));
+  assert.equal(cache.stats.network,1,'The remainder of the range is still downloading');
+  assert.equal(cache.stats.compressedBytes+cache.stats.reservedBytes,400);
+  finish();await until(()=>cache.stats.pending===0);
+  assert.equal(cache.get(0).frame,0);
+ }finally{cache.destroy();finish?.()}
+});
