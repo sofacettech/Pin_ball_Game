@@ -26,6 +26,7 @@ async function measureScroll(page,speed,duration){
   const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[];
   const video=document.querySelector('#journey'),events=[],slowest=[],seekDurations=[];
   const timeProperty=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'currentTime');
+  const fastSeek=video.fastSeek;
   let seekStarted=0,lastPaint=performance.now();
   const record=(kind)=>{
    const now=performance.now();
@@ -36,6 +37,7 @@ async function measureScroll(page,speed,duration){
   const seeked=()=>record('seeked');
   if(trace){
    Object.defineProperty(video,'currentTime',{configurable:true,get(){return timeProperty.get.call(this)},set(value){seekStarted=performance.now();timeProperty.set.call(this,value);record('requested')}});
+   if(fastSeek)video.fastSeek=function(value){seekStarted=performance.now();fastSeek.call(this,value);record('fast-requested')};
    video.addEventListener('seeked',seeked);
   }
   let presented=sequence.displayedFrame;
@@ -65,7 +67,7 @@ async function measureScroll(page,speed,duration){
     p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),
     p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats,
     ...(trace?{seekTrace:{p95SeekMs:percentile(seekDurations),maxSeekMs:Math.max(0,...seekDurations),slowest}}:{})};
-  }finally{if(trace){delete video.currentTime;video.removeEventListener('seeked',seeked)}window.scrollTo(0,1600)}
+  }finally{if(trace){delete video.currentTime;if(fastSeek)delete video.fastSeek;video.removeEventListener('seeked',seeked)}window.scrollTo(0,1600)}
  },{speed,duration,trace:process.env.SOFACET_SEEK_TRACE==='1'});
 }
 try{
