@@ -1,0 +1,35 @@
+name: WebKit seek timing diagnostics
+
+on:
+  push:
+    branches: [codex/webkit-native-progress]
+
+permissions:
+  contents: read
+
+jobs:
+  seek-timing:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install --with-deps webkit
+      - name: Trace seeks with all release assertions intact
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+          SOFACET_BROWSER: webkit
+          SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
+          SOFACET_SEEK_TRACE: '1'
+        run: |
+          git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
+          node scripts/browser-video-smoke.mjs

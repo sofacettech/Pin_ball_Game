@@ -22,8 +22,22 @@ async function measureScroll(page,speed,duration){
  await page.evaluate(()=>window.scrollTo(0,1600));
  await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
  await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
- return page.evaluate(async({speed,duration})=>{
+ return page.evaluate(async({speed,duration,trace})=>{
   const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[];
+  const video=document.querySelector('#journey'),events=[],slowest=[],seekDurations=[];
+  const timeProperty=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'currentTime');
+  let seekStarted=0,lastPaint=performance.now();
+  const record=(kind)=>{
+   const now=performance.now();
+   events.push({kind,time:Math.round(now),frame:Math.floor(video.currentTime*60),displayed:sequence.displayedFrame,seeking:video.seeking,ready:video.readyState});
+   if(events.length>12)events.shift();
+   if(kind==='seeked'&&seekStarted)seekDurations.push(now-seekStarted);
+  };
+  const seeked=()=>record('seeked');
+  if(trace){
+   Object.defineProperty(video,'currentTime',{configurable:true,get(){return timeProperty.get.call(this)},set(value){seekStarted=performance.now();timeProperty.set.call(this,value);record('requested')}});
+   video.addEventListener('seeked',seeked);
+  }
   let presented=sequence.displayedFrame;
   try{
    const start=performance.now();
@@ -31,6 +45,14 @@ async function measureScroll(page,speed,duration){
     function step(now){
      if(sequence.displayedFrame!==presented){times.push(now);steps.push(Math.abs(sequence.displayedFrame-presented));presented=sequence.displayedFrame}
      lags.push(Math.abs(Math.round(window.scrollY/8)-sequence.displayedFrame));
+     if(trace){
+      const lag=lags.at(-1);
+      if(slowest.length<6||lag>slowest.at(-1).lag){
+       slowest.push({lag,time:Math.round(now),paintGap:Math.round(now-lastPaint),seekAge:Math.round(performance.now()-seekStarted),scrollFrame:Math.round(window.scrollY/8),displayed:sequence.displayedFrame,desired:sequence.desiredFrame,nativeFrame:Math.floor(video.currentTime*60),seeking:video.seeking,ready:video.readyState,events:[...events]});
+       slowest.sort((a,b)=>b.lag-a.lag);slowest.length=Math.min(slowest.length,6);
+      }
+      lastPaint=now;
+     }
      const elapsed=now-start;
      window.scrollTo(0,1600+(elapsed<duration/2?elapsed:Math.max(0,duration-elapsed))*speed);
      if(elapsed<duration)requestAnimationFrame(step);else resolve();
@@ -41,9 +63,10 @@ async function measureScroll(page,speed,duration){
    const percentile=values=>values.sort((a,b)=>a-b)[Math.floor(values.length*.95)]||0;
    return{updates:times.length,updatesPerSecond:times.length/(duration/1000),
     p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),
-    p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats};
-  }finally{window.scrollTo(0,1600)}
- },{speed,duration});
+    p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats,
+    ...(trace?{seekTrace:{p95SeekMs:percentile(seekDurations),maxSeekMs:Math.max(0,...seekDurations),slowest}}:{})};
+  }finally{if(trace){delete video.currentTime;video.removeEventListener('seeked',seeked)}window.scrollTo(0,1600)}
+ },{speed,duration,trace:process.env.SOFACET_SEEK_TRACE==='1'});
 }
 try{
  if(!process.env.SOFACET_VIDEO_URL){
