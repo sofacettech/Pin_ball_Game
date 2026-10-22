@@ -43,6 +43,21 @@ test('video readiness waits are bounded, cancellable and reject media errors',as
  const controller=new AbortController(),wait=waitForVideo(video,{signal:controller.signal});controller.abort();await assert.rejects(wait,{name:'AbortError'});
  video.error={code:2};await assert.rejects(waitForVideo(video),/could not load/);
 });
+test('native readiness can complete on a paint before the queued seeked event',async t=>{
+ const oldRequest=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame,callbacks=new Map();let id=0;
+ globalThis.requestAnimationFrame=fn=>{callbacks.set(++id,fn);return id};
+ globalThis.cancelAnimationFrame=id=>callbacks.delete(id);
+ t.after(()=>{globalThis.requestAnimationFrame=oldRequest;globalThis.cancelAnimationFrame=oldCancel});
+ const paint=()=>{const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback()};
+ const video=new Video();video.readyState=2;video.seeking=true;let done=false;
+ const pending=waitForVideo(video,{readyState:2,pollOnPaint:true}).then(()=>done=true);
+ paint();await turn();assert.equal(done,false);assert.equal(callbacks.size,1);
+ video.seeking=false;video.readyState=1;paint();await turn();assert.equal(done,false,'The seek must also have decoded data');
+ video.readyState=2;paint();await pending;assert.equal(done,true);assert.equal(callbacks.size,0);
+ video.dispatchEvent(new Event('seeked'));assert.equal(callbacks.size,0);
+ video.seeking=true;const controller=new AbortController(),cancelled=waitForVideo(video,{signal:controller.signal,pollOnPaint:true});
+ assert.equal(callbacks.size,1);controller.abort();await assert.rejects(cancelled,{name:'AbortError'});assert.equal(callbacks.size,0);
+});
 test('denied autoplay shows a working gesture button without automatic retries',async t=>{
  const e=environment(t);e.video.reject=true;e.player.start();await turn();assert.equal(e.button.hidden,false);assert.equal(e.video.calls,1);
  e.video.dispatchEvent(new Event('canplay'));await turn();assert.equal(e.video.calls,1);
