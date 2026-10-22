@@ -145,10 +145,21 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       active.add(job); reserved += size;
       let reservation = size;
       const releaseReservation = () => { reserved -= reservation; reservation = 0; };
+      const received = new Set();
+      const receive = (next, data) => {
+        if (destroyed || suspended || controller.signal.aborted || epoch !== generation || received.has(next)) return;
+        received.add(next);
+        const released = Math.min(reservation, data?.byteLength || 0);
+        reservation -= released; reserved -= released;
+        if (useful(next) && !compressed.has(next)) {
+          compressed.set(next, data); bytes += data?.byteLength || 0; failures.delete(next);
+        }
+        trim(); pump();
+      };
       for (const next of frames) loading.add(next);
       counters.peakNetwork = Math.max(counters.peakNetwork, active.size);
       const load = source.loadFrames
-        ? source.loadFrames(frames, controller.signal, settings.compressedBytes)
+        ? source.loadFrames(frames, controller.signal, settings.compressedBytes, receive)
         : source.load(frame, controller.signal, settings.compressedBytes).then(data => new Map([[frame, data]]));
       load.then(samples => {
         // Completed bytes replace their reservation before another completion

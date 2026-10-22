@@ -36,14 +36,14 @@ export async function createFrameSource(video,index,indexURL){
  }
  const storage=mode==='webcodecs'?Promise.resolve().then(async()=>{if(!globalThis.caches)return null;cache=await caches.open('sofacet-frames-'+index.sha256.slice(0,16));stored=await cache.keys();storedKeys=new Set(stored.map(request=>request.url));return cache}).catch(()=>null):Promise.resolve(null);
  const key=frame=>cacheURL+(cacheURL.includes('?')?'&':'?')+'frame='+frame;
- async function loadFrames(frames,signal,maxBytes=8*1024*1024){
+ async function loadFrames(frames,signal,maxBytes=8*1024*1024,onFrame){
   if(signal.aborted||disposed)throw abortError();
   if(mode==='video')return new Map(frames.map(frame=>[frame,null]));
   const requested=[...new Set(frames)].sort((a,b)=>a-b),result=new Map(),missing=[];
   if(requested.reduce((total,frame)=>total+index.frames[frame][1],0)>maxBytes)throw Error('Frame samples exceed the cache budget');
   await storage;
   await Promise.all(requested.map(async frame=>{
-   try{const saved=storedKeys.has(key(frame))?await cache?.match(key(frame)):null;if(saved){const bytes=await saved.arrayBuffer();if(bytes.byteLength===index.frames[frame][1]){stats.diskHits++;result.set(frame,new Uint8Array(bytes));return}await cache.delete(key(frame));storedKeys.delete(key(frame))}}catch{}
+   try{const saved=storedKeys.has(key(frame))?await cache?.match(key(frame)):null;if(saved){const bytes=await saved.arrayBuffer();if(bytes.byteLength===index.frames[frame][1]){stats.diskHits++;const sample=new Uint8Array(bytes);result.set(frame,sample);onFrame?.(frame,sample);return}await cache.delete(key(frame));storedKeys.delete(key(frame))}}catch{}
    missing.push(frame);
   }));
   missing.sort((a,b)=>a-b);
@@ -53,13 +53,18 @@ export async function createFrameSource(video,index,indexURL){
    const group=[missing[at++]],offset=index.frames[group[0]][0];
    let size=index.frames[group[0]][1];
    while(at<missing.length&&index.frames[missing[at]][0]===offset+size){const frame=missing[at++];group.push(frame);size+=index.frames[frame][1]}
-   const bytes=await download(offset,size,signal);
-   for(const frame of group){
-    const [start,length]=index.frames[frame];
-    // Own the sample's buffer so evicting one frame releases its bytes.
-    const sample=new Uint8Array(bytes.slice(start-offset,start-offset+length));
-    result.set(frame,sample);downloaded.push(frame);
-   }
+   const receive=(bytes,received)=>{
+    for(const frame of group){
+     const [start,length]=index.frames[frame];
+     if(result.has(frame)||start-offset+length>received)continue;
+     // Publish each complete IDR sample immediately; a visible frame must not
+     // wait for all 24 future samples in the same HTTP range to arrive.
+     const sample=new Uint8Array(bytes.slice(start-offset,start-offset+length));
+     result.set(frame,sample);downloaded.push(frame);onFrame?.(frame,sample);
+    }
+   };
+   const bytes=await download(offset,size,signal,onFrame?receive:undefined);
+   receive(bytes,size);
    stats.networkBytes+=size;stats.networkFrames+=group.length;
   }
   if(signal.aborted||disposed)throw abortError();
@@ -76,14 +81,14 @@ export async function createFrameSource(video,index,indexURL){
   }
   return result;
  }
- async function download(offset,size,signal){
-  try{return await downloadRange(offset,size,signal)}
+ async function download(offset,size,signal,onProgress){
+  try{return await downloadRange(offset,size,signal,onProgress)}
   catch(error){
    if(signal.aborted||disposed||!useLocal())throw error;
-   return downloadRange(offset,size,signal);
+   return downloadRange(offset,size,signal,onProgress);
   }
  }
- async function downloadRange(offset,size,signal){
+ async function downloadRange(offset,size,signal,onProgress){
   if(signal.aborted||disposed)throw abortError();
   const request=new AbortController(),abort=()=>request.abort(signal.reason);
   const timeout=setTimeout(()=>request.abort(new DOMException('Frame download timed out','TimeoutError')),15000);
@@ -92,7 +97,19 @@ export async function createFrameSource(video,index,indexURL){
    stats.networkRequests++;
    const response=await fetch(url,{headers:{Range:`bytes=${offset}-${offset+size-1}`},signal:request.signal});
    if(response.status!==206||response.headers.get('Content-Range')!==`bytes ${offset}-${offset+size-1}/${index.bytes}`){await response.body?.cancel();throw Error('Frame ranges are unavailable')}
-   bytes=await response.arrayBuffer();if(bytes.byteLength!==size)throw Error('Incomplete frame download');
+   if(onProgress&&response.body){
+    const reader=response.body.getReader(),buffer=new Uint8Array(size);let received=0;
+    try{
+     for(;;){
+      const {done,value}=await reader.read();if(done)break;
+      if(request.signal.aborted)throw request.signal.reason;
+      if(received+value.byteLength>size)throw Error('Oversized frame download');
+      buffer.set(value,received);received+=value.byteLength;onProgress(buffer.buffer,received);
+     }
+     if(received!==size)throw Error('Incomplete frame download');
+     bytes=buffer.buffer;
+    }catch(error){await reader.cancel().catch(()=>{});throw error}finally{reader.releaseLock()}
+   }else{bytes=await response.arrayBuffer();if(bytes.byteLength!==size)throw Error('Incomplete frame download')}
   }finally{clearTimeout(timeout);signal.removeEventListener('abort',abort)}
   if(signal.aborted||disposed)throw abortError();
   return bytes;
