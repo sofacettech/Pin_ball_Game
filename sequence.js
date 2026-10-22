@@ -145,6 +145,9 @@ export async function createSequence(setInteractive, requestFrame, media) {
     } else context.drawImage(image, 0, 0, frame.width, frame.height);
     refreshFrame = false;
     displayedFrame = index;
+    // Wait until playback approaches the handoff before competing with the
+    // journey for bandwidth, even if a fast swipe has already reached the end.
+    if (displayedFrame >= frameCount - 180) preloadGame();
     updateCopy(240 + displayedFrame);
     siteSound.frame(240 + displayedFrame);
     document.querySelector('main').inert = displayedFrame === frameCount - 1;
@@ -191,8 +194,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
         scrollDirty = false;
         desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
         if (desiredFrame > 0) allowHover(false);
-        // Avoid loading the game's large 3D assets while the journey is buffering.
-        if (desiredFrame >= frameCount - 180) preloadGame();
       }
       hold.hidden = hoverWeight > .0001;
       // Let lifted plates settle before the rendered ball starts travelling.
