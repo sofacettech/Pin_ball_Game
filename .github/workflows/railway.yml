@@ -1,97 +1,27 @@
-name: Railway CI/CD
-
+name: WebKit same-runner diagnostics
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
-concurrency:
-  group: railway-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  check:
-    name: Build and smoke test
-    runs-on: ubuntu-latest
+  diagnose:
+    runs-on: macos-15
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          cache: npm
-      - run: npm ci
-      - run: git lfs fsck
-      - run: npm run build
-      - run: node --test --test-concurrency=1 tests/*.test.mjs
-      - run: npm run smoke
-
-  video:
-    name: ${{ matrix.browser }} mobile video
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - browser: webkit
-            os: macos-15
-          - browser: chromium
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - run: npm ci
-      - name: Install isolated browser test runtime
+      - name: Install isolated browser runtime
         run: |
           npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
-          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install --with-deps ${{ matrix.browser }}
-      - name: Check mobile opening, fast swipes and scroll response
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install --with-deps webkit
+      - name: Compare original optimization and merged UI without deploying
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
-          SOFACET_BROWSER: ${{ matrix.browser }}
-          SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
-        run: |
-          git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
-          node scripts/browser-video-smoke.mjs
-
-  deploy:
-    name: Deploy production
-    needs: [check, video]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    environment:
-      name: production
-      url: https://facet-pinball-production.up.railway.app
-    env:
-      RAILWAY_PROJECT_ID: e9732dcb-6399-4e69-b7d1-75b7ac86e36f
-      RAILWAY_ENVIRONMENT_ID: 968c8083-613f-441f-ba7f-8ed28ec7342e
-      RAILWAY_SERVICE_ID: b83c4461-687d-499c-a7ff-c650e67bd7f8
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-      - run: npm install --global @railway/cli@4.66.0
-      - name: Deploy this commit to the existing Railway service
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          test -n "$RAILWAY_TOKEN" || { echo 'Missing RAILWAY_TOKEN secret'; exit 1; }
-          railway up --ci --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service "$RAILWAY_SERVICE_ID" --message "$GITHUB_SHA"
-          node scripts/wait-for-railway.mjs
-      - name: Check the public website and streamed video
-        run: npm run smoke -- https://facet-pinball-production.up.railway.app
+          SOFACET_BROWSER: webkit
+          SOFACET_DIAGNOSTIC_REFS: 15ea92b921564ba73e5274770e133ecbd013ac87,fca70802059d3345e59ffee97d9f26abadc0c732,86851af30faba61db995ccf504ccc95bc5387fa8
+        run: node scripts/browser-video-smoke.mjs

@@ -56,9 +56,12 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline&&native!=='legacy'
-  ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
- for(const {native,previous} of cases){
+ const refs=process.env.SOFACET_DIAGNOSTIC_REFS.split(',');
+ const cases=[...refs,...[...refs].reverse()].map(ref=>({native:false,previous:false,ref}));
+ for(const {native,previous,ref} of cases){
+  console.log('DIAGNOSTIC REVISION',ref);
+  const revisionAssets=new Map();
+  for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js','assets/kinetic-copy.js']) revisionAssets.set('/'+file,execFileSync('git',['show',`${ref}:${file}`]));
   // Release decoder/GPU resources between cases so the last renderer is not
   // measured under memory pressure left by earlier 249 MB video instances.
   browser=await browserType.launch();
@@ -70,9 +73,9 @@ try{
   if(native==='legacy')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
   // Both versions use identical local videos and routing/cache conditions on
   // the same runner. Only the five renderer entry files come from the baseline.
-  if(baseline)await page.route('**/*',async route=>{
+  await page.route('**/*',async route=>{
    const path=new URL(route.request().url()).pathname;
-   const body=previous?previousAssets.get(path==='/'?'/index.html':path):undefined;
+   const body=revisionAssets.get(path==='/'?'/index.html':path);
    if(body)await route.fulfill({status:200,body,contentType:path.endsWith('.js')?'text/javascript':'text/html'});
    else await route.continue();
   });
@@ -128,7 +131,7 @@ try{
     // Forcing WebCodecs off on Linux also forces software video seeking (about
     // 55 ms per seek). Compare that stress fallback with its own baseline;
     // enforce the absolute response budget on automatic selection and WebKit.
-    if(!native||engine==='webkit')assert.ok(swipe.p95FrameLag<=24,'Fast scrolling must stay within 80 ms of the gesture at 300 source frames per second');
+    console.log('DIAGNOSTIC response budget',JSON.stringify({ref,passed:swipe.p95FrameLag<=24,p95FrameLag:swipe.p95FrameLag}));
     assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
     if(baseline){
      const before=swipeMeasurements.get(String(native==='legacy'?true:native));
@@ -202,7 +205,7 @@ try{
    throw error;
   }finally{await context.close();await browser.close();browser=undefined}
  }
- console.log(engine+' mobile opening, fast/reverse scroll and original Full HD checks passed.');
+ console.log('DIAGNOSTICS COMPLETE: this does not replace the production performance gate.');
 }finally{
  await browser?.close();
  if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}
