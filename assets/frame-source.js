@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-18da4d3718da';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-4ce11e426dc9';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -169,15 +169,22 @@ export async function createFrameSource(video,index,indexURL){
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
+    // Subscribe before seeking: readyState/currentTime can advance before
+    // WebKit replaces the compositor's pixels, even after seeked fires.
+    const wait=()=>waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4,presentedFrame:nativeDirect});
+    const watchesPixels=nativeDirect&&typeof video.requestVideoFrameCallback==='function';
+    let presented=watchesPixels?wait():undefined;
     if(nativeFastSeek){
      try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
     }else video.currentTime=time;
-    await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4});
-    if(nativeFastSeek&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
+    let presentedTime=await(presented??wait());
+    if(nativeFastSeek&&Math.floor((presentedTime??video.currentTime)*index.fps+1e-6)!==frame){
      nativeFastSeek=false;
+     presented=watchesPixels?wait():undefined;
      video.currentTime=time;
-     await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4});
+     presentedTime=await(presented??wait());
     }
+    if(presentedTime!==undefined&&Math.round(presentedTime*index.fps)!==frame)throw Error('The video did not present the requested frame');
    }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
    finally{events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;

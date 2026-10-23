@@ -7,19 +7,21 @@ export function prepareInlineVideo(video) {
   video.setAttribute('webkit-playsinline', '');
 }
 
-export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0} = {}) {
+export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0, presentedFrame = false} = {}) {
   return new Promise((resolve, reject) => {
     const events = new AbortController();
-    let timer, animation, readinessTimer, settled = false;
+    const waitForFrame = presentedFrame && typeof video.requestVideoFrameCallback === 'function';
+    let timer, animation, readinessTimer, frameCallback, presentedTime, settled = false;
     function done(error) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
       clearTimeout(readinessTimer);
       if (animation !== undefined) cancelAnimationFrame(animation);
+      if (frameCallback !== undefined) video.cancelVideoFrameCallback(frameCallback);
       events.abort();
       signal?.removeEventListener('abort', abort);
-      error ? reject(error) : resolve();
+      error ? reject(error) : resolve(presentedTime);
     }
     const abort = () => done(new DOMException('Video loading cancelled', 'AbortError'));
     function check() {
@@ -28,7 +30,13 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
         error.name = video.error.code === 4 ? 'NotSupportedError' : video.error.code === 3 ? 'EncodingError' : 'NetworkError';
         done(error);
       }
-      else if (video.readyState >= readyState && !video.seeking) done();
+      else if (video.readyState >= readyState && !video.seeking && (!waitForFrame || Number.isFinite(presentedTime))) done();
+    }
+    function checkFrame(_now, metadata) {
+      frameCallback = undefined;
+      if (!video.seeking && video.readyState >= readyState) presentedTime = metadata.mediaTime;
+      check();
+      if (!settled) frameCallback = video.requestVideoFrameCallback(checkFrame);
     }
     function checkPaint() {
       animation = undefined;
@@ -46,6 +54,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
       video.addEventListener(event, check, {signal: events.signal});
     }
     timer = setTimeout(() => done(new Error('The video is still loading')), timeout);
+    if (waitForFrame) frameCallback = video.requestVideoFrameCallback(checkFrame);
     check();
     // WebKit can finish a seek before dispatching its queued media event.
     // Keep the same readiness requirements, but release the next seek promptly.

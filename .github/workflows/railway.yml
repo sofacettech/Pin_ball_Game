@@ -44,7 +44,8 @@ jobs:
           - browser: chromium
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    # Ubuntu package-mirror downloads can exceed ten minutes before tests start.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
