@@ -162,6 +162,15 @@ try{
    if(!previous)assert.ok(recovery.maxGapMs<500,'Post-jump scrolling must not stall for half a second');
    assert.ok(recovery.stats.decoded<=recovery.stats.settings.decoded,'Post-jump decoded memory must stay bounded');
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
+   if(native&&!previous){
+    const surface=await page.evaluate(()=>{
+     const video=document.querySelector('#journey'),canvas=document.querySelector('#journey-frame');
+     return{width:video.getBoundingClientRect().width,canvasWidth:canvas.getBoundingClientRect().width,
+      videoLayer:Number(getComputedStyle(video).zIndex),canvasLayer:Number(getComputedStyle(canvas).zIndex),canvasVisible:!canvas.hidden};
+    });
+    assert.ok(surface.canvasVisible&&surface.width===surface.canvasWidth,'Settled native video must keep its full-size compositor behind the captured frame');
+    assert.ok(surface.videoLayer<surface.canvasLayer,'The captured frame must cover the paused native video');
+   }
    // The historical mutable-video renderer is a pacing reference, not the
    // implementation under test for the new immutable-frame pixel guarantee.
    if(previous){assert.deepEqual(errors,[]);continue}

@@ -189,7 +189,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else {
       if (image !== frame) context.drawImage(image, 0, 0, frame.width, frame.height);
-      journey.classList.remove('native-renderer');
+      // Keep the native compositor surface sized behind the captured canvas.
+      // Shrinking it after every stop forces WebKit to rebuild it on resume.
     }
     refreshFrame = false;
     displayedFrame = index;

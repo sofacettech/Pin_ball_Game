@@ -31,7 +31,7 @@ body:not([data-phase="idle"]) #ball-canvas{pointer-events:none}
 #journey-frame{z-index:2;pointer-events:none}
 /* Keep the native decoder in layout so Safari can produce frames for the canvas. */
 #journey{position:fixed;left:0;top:0;width:1px;height:1px;opacity:.001;pointer-events:none}
-#scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:2;object-fit:fill}
+#scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:1;object-fit:fill}
 body[data-phase="journey"] #journey.native-renderer{opacity:1}
 #opening{z-index:3;object-fit:contain;pointer-events:none}
 #scroll-cue{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;fill:#fff;font-family:Acumin,Arial,sans-serif;font-size:28px;font-weight:500;letter-spacing:2.2px;text-shadow:0 1px 5px #000b;opacity:0;transition:opacity .16s linear}
