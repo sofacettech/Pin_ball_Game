@@ -40,7 +40,7 @@ jobs:
       matrix:
         include:
           - browser: webkit
-            os: macos-15-intel # Avoid ARM runner capacity cancellations; keep native macOS WebKit.
+            os: macos-26 # Native Apple GPU for WebGL; avoid the constrained macOS 15 pool.
           - browser: chromium
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
