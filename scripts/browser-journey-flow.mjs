@@ -23,6 +23,13 @@ try{
  browser=await browserType.launch();
  const context=await browser.newContext(profile==='desktop'?{viewport:{width:1280,height:720}}:devices[engine==='webkit'?'iPhone 13':'Pixel 7']);
  const page=await context.newPage(),errors=[],requests=[];
+ // Hosted runners expose few cores even with a desktop viewport. Exercise
+ // the normal desktop cache as well as the separate constrained mobile path.
+ if(profile==='desktop')await page.addInitScript(()=>{
+  Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});
+  Object.defineProperty(navigator,'deviceMemory',{get:()=>8});
+ });
+ if(process.env.SOFACET_FORCE_NATIVE==='1')await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
  page.on('pageerror',error=>errors.push(error.message));
  page.on('response',response=>{
   if(response.url().includes('/videos/'))requests.push({url:response.url(),status:response.status()});
@@ -65,7 +72,8 @@ try{
   return{elapsedMs:performance.now()-start,displayed:sequence.displayedFrame,end,maxJump,earlyGame,limitExceeded,
    bins:bins.map(({gaps,lags,...bin})=>({...bin,p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),p95LagFrames:percentile(lags),maxLagFrames:Math.max(0,...lags)})),stats:sequence.stats};
  });
- console.log('Uninterrupted R2 journey',JSON.stringify({engine,profile,...result}));
+ console.log('Uninterrupted R2 journey',JSON.stringify({engine,profile,forceNative:process.env.SOFACET_FORCE_NATIVE==='1',...result}));
+ assert.equal(result.stats.settings.decoded,profile==='desktop'?8:4,'The intended desktop/mobile buffer profile must be exercised');
  assert.equal(result.displayed,result.end,'The uninterrupted journey must reach the ending');
  assert.equal(result.earlyGame,false,'Game startup must not compete with any part of the journey');
  assert.equal(result.limitExceeded,false,'Memory limits must hold throughout the journey');

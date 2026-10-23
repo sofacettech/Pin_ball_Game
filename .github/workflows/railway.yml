@@ -71,7 +71,7 @@ jobs:
           node scripts/browser-video-smoke.mjs
 
   journey:
-    name: ${{ matrix.browser }} ${{ matrix.device }} full R2 journey
+    name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'auto' }} full R2 journey
     strategy:
       fail-fast: false
       matrix:
@@ -81,6 +81,10 @@ jobs:
             os: ubuntu-24.04
           - browser: chromium
             device: mobile
+            os: ubuntu-24.04
+          - browser: chromium
+            device: mobile
+            native: true
             os: ubuntu-24.04
           - browser: webkit
             device: mobile
@@ -105,6 +109,7 @@ jobs:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
           SOFACET_BROWSER: ${{ matrix.browser }}
           SOFACET_DEVICE: ${{ matrix.device }}
+          SOFACET_FORCE_NATIVE: ${{ matrix.native && '1' || '0' }}
           MEDIA_CDN_BASE_URL: https://media.sofacet.com
         run: node scripts/browser-journey-flow.mjs
 

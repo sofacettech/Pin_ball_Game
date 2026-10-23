@@ -86,9 +86,10 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
     if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
-      // Native playback can start its next useful seek as soon as this one
-      // completes, without paying another animation-frame scheduling delay.
-      if (!scrollDirty && phase === 'journey' && displayedFrame !== desiredFrame) requestNextFrame();
+      // Schedule the next seek on the next paint. Starting it here spends the
+      // remainder of the previous paint's four-frame budget on a tiny step.
+      // With 30-40 ms native seeks that locks playback below the scroll rate,
+      // so lag accumulates throughout a long journey even with buffered video.
     }
     requestFrame();
   },
