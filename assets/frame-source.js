@@ -175,6 +175,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame)
    nativePresentedFrame=null;
    const start=performance.now();
    const seek={frame,confirm:watchesPixels,controller:new AbortController()},events=nativeEvents.signal;
+   const playbackRate=video.playbackRate;
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
@@ -202,7 +203,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame)
     if(presentedTime!==undefined&&Math.round(presentedTime*index.fps)!==frame)throw Error(`The video presented frame ${Math.round(presentedTime*index.fps)} instead of ${frame}`);
     if(settled)nativePresentedFrame=frame;
    }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
-   finally{if(watchesPixels&&!video.paused)video.pause();events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
+   finally{if(watchesPixels){if(!video.paused)video.pause();video.playbackRate=playbackRate}events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();

@@ -5,7 +5,7 @@ import {createFrameSource} from '../assets/frame-source.js';
 
 class Video extends EventTarget {
  videoWidth=1920;videoHeight=1080;
- readyState=0;seeking=false;paused=true;ended=false;error=null;attrs=new Map();calls=0;loads=0;time=0;
+ readyState=0;seeking=false;paused=true;ended=false;error=null;attrs=new Map();calls=0;loads=0;time=0;playbackRate=1;
  setAttribute(name,value){this.attrs.set(name,value)}
  removeAttribute(name){this.attrs.delete(name)}
  get currentTime(){return this.time}
@@ -222,13 +222,14 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  t.after(()=>source.destroy());
  const pending=source.decode(20).then(image=>{done=true;return image});await turn();
  assert.equal(video.currentTime,19.25/60,'Seek before the target so that playback can present it after subscription');
+ assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
  video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
  present(10);await turn();assert.equal(done,false,'Ignore queued old callbacks during the precise seek');
  present(19);await turn();assert.equal(done,false,'Wait until playback actually presents the destination');
  present(20);assert.equal(video.paused,true,'Pause inside the matching callback, before promise continuations');
  assert.equal(await pending,video);assert.equal(callbacks.size,0);
  assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
- assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
+ assert.equal(video.playbackRate,1,'Exact-frame confirmation must restore normal decoder timing before scrolling resumes');
  const next=source.decode(21);await turn();assert.equal(fastCalls,0,'Settled destinations require precise seeking');
  source.suspend();await assert.rejects(next,{name:'AbortError'});assert.equal(callbacks.size,0);
 });
@@ -385,6 +386,7 @@ test('resuming scroll cancels a settled confirmation even while its paced frame 
  video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();assert.equal(video.paused,false);assert.equal(callbacks.size,1);
  source.retarget(20,20,21);await turn();assert.equal(cancelled,true,'The new scroll destination must release the decoder immediately');await pending;
  assert.equal(callbacks.size,0);assert.equal(video.paused,true);assert.equal(source.presentedFrame,null);
+ assert.equal(video.playbackRate,1,'Cancelling confirmation must restore normal decoder timing as well');
  const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
  assert.equal(callbacks.size,0,'Intermediate motion must not start another exact-frame confirmation');
 });
