@@ -58,6 +58,33 @@ test('native readiness can complete on a paint before the queued seeked event',a
  video.seeking=true;const controller=new AbortController(),cancelled=waitForVideo(video,{signal:controller.signal,pollOnPaint:true});
  assert.equal(callbacks.size,1);controller.abort();await assert.rejects(cancelled,{name:'AbortError'});assert.equal(callbacks.size,0);
 });
+test('native readiness polling completes between paints only after decoded data is ready',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const video=new Video();video.readyState=2;video.seeking=true;let done=false;
+ const pending=waitForVideo(video,{readyState:2,pollInterval:4}).then(()=>done=true);
+ t.mock.timers.tick(4);await Promise.resolve();assert.equal(done,false);
+ video.seeking=false;video.readyState=1;t.mock.timers.tick(4);await Promise.resolve();assert.equal(done,false,'A completed seek without decoded data is not ready');
+ video.readyState=2;t.mock.timers.tick(4);await pending;assert.equal(done,true);
+ video.error={code:2};t.mock.timers.tick(15000);video.dispatchEvent(new Event('seeked'));
+ assert.equal(done,true,'Late media events and deadlines must not change a completed wait');
+});
+test('native readiness polling stops on cancellation, media errors and timeout',async t=>{
+ const originalSet=globalThis.setTimeout,originalClear=globalThis.clearTimeout,timers=new Map();let id=0;
+ globalThis.setTimeout=(fn,delay)=>{timers.set(++id,{fn,delay});return id};
+ globalThis.clearTimeout=id=>timers.delete(id);
+ t.after(()=>{globalThis.setTimeout=originalSet;globalThis.clearTimeout=originalClear});
+ const video=new Video();video.readyState=2;video.seeking=true;
+ const controller=new AbortController(),cancelled=waitForVideo(video,{pollInterval:4,signal:controller.signal});
+ assert.equal(timers.size,2);controller.abort();await assert.rejects(cancelled,{name:'AbortError'});assert.equal(timers.size,0);
+ const failed=waitForVideo(video,{pollInterval:4});video.error={code:3};video.dispatchEvent(new Event('error'));
+ await assert.rejects(failed,{name:'EncodingError'});assert.equal(timers.size,0);
+ video.error=null;const expired=waitForVideo(video,{pollInterval:4,timeout:20});
+ [...timers.values()].find(timer=>timer.delay===20).fn();await assert.rejects(expired,/still loading/);assert.equal(timers.size,0);
+ const completed=waitForVideo(video,{pollInterval:4});video.seeking=false;video.dispatchEvent(new Event('seeked'));
+ await completed;assert.equal(timers.size,0);
+ video.seeking=true;const ordinary=waitForVideo(video);assert.equal(timers.size,1,'Other video waits must remain event-driven');
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));await ordinary;assert.equal(timers.size,0);
+});
 test('denied autoplay shows a working gesture button without automatic retries',async t=>{
  const e=environment(t);e.video.reject=true;e.player.start();await turn();assert.equal(e.button.hidden,false);assert.equal(e.video.calls,1);
  e.video.dispatchEvent(new Event('canplay'));await turn();assert.equal(e.video.calls,1);

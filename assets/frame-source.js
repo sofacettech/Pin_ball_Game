@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-b89693b0be56';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-33c1cf4d96bb';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -155,11 +155,11 @@ export async function createFrameSource(video,index,indexURL){
     if(nativeFastSeek){
      try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
     }else video.currentTime=time;
-    await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true});
+    await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4});
     if(nativeFastSeek&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
      nativeFastSeek=false;
      video.currentTime=time;
-     await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true});
+     await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4});
     }
    }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
    finally{events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
