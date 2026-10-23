@@ -56,3 +56,18 @@ test('a slower decoder retains elapsed presentation time without building a jump
   }
   assert.ok(displayed >= 115 && displayed <= 120, 'A 30 Hz decoder should use small four-frame steps rather than slowing to half speed');
 });
+
+test('native completions can advance between paints without exceeding the paint jump budget', () => {
+  const pacer = createFramePacer();
+  let displayed = 0;
+  const first = pacer.next(displayed, 1000, 1 / 60, 0);
+  assert.equal(first, 3);
+  displayed = first;
+  const ready = pacer.next(displayed, 1000, .008, 0);
+  assert.ok(ready > displayed, 'A ready native decoder should not wait for another paint');
+  displayed = ready;
+  for (let i = 0; i < 4; i++) displayed = pacer.next(displayed, 1000, .008, 0);
+  assert.equal(displayed, 4, 'Several completions within one paint must share the four-frame budget');
+  const nextPaint = pacer.next(displayed, 1000, 1 / 60, displayed);
+  assert.ok(nextPaint > displayed && nextPaint <= displayed + 4);
+});

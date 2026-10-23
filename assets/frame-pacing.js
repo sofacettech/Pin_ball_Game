@@ -1,7 +1,7 @@
 export function createFramePacer() {
   let position = 0, pending = 0, direction = 0, elapsed = 0;
   return {
-    next(displayed, desired, delta) {
+    next(displayed, desired, delta, painted = displayed) {
       const travel = Math.sign(desired - displayed);
       elapsed = Math.min(1 / 30, elapsed + Math.max(delta, 0));
       if (!travel) {
@@ -23,6 +23,9 @@ export function createFramePacer() {
       elapsed = 0;
       position += travel * Math.min(Math.abs(desired - position), step);
       position = Math.max(displayed - 4, Math.min(displayed + 4, position));
+      // Native seeks may complete between paints. They share one paint's jump
+      // budget even when the decoder is ready for another small step already.
+      position = Math.max(painted - 4, Math.min(painted + 4, position));
       pending = Math.round(position);
       return pending;
     },

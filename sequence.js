@@ -3,7 +3,7 @@ import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
 import { createFrameSource } from './assets/frame-source.js?v=frames-ff0bb55e4c5b';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-3b72c5f456c8';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-f98e987c95af';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
 
 const FPS = 60;
@@ -60,6 +60,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let wantedFrame = 0;
   let refreshFrame = false;
   const pacer = createFramePacer();
+  let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
@@ -67,7 +68,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
   // itself through its compositor; only its completed position is reported here.
   const cache = createFrameCache({count: frameCount, source, onReady(available, image) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
-    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) display(image,available);
+    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) {
+      display(image,available);
+      // Native playback can start its next useful seek as soon as this one
+      // completes, without paying another animation-frame scheduling delay.
+      if (!scrollDirty && phase === 'journey' && displayedFrame !== desiredFrame) requestNextFrame();
+    }
     requestFrame();
   },
     config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
@@ -79,6 +85,15 @@ export async function createSequence(setInteractive, requestFrame, media) {
       } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
     },
   });
+
+  function requestNextFrame() {
+    const now = performance.now();
+    const target = pacer.next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, paintedFrame);
+    pacedAt = now;
+    wantedFrame = target;
+    cache.request(target, desiredFrame, displayedFrame);
+    return target;
+  }
 
   function preloadGame() {
     if (!game.getAttribute('src')) game.src = './play.html';
@@ -188,6 +203,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   return {
     tick(delta, hoverWeight) {
+      paintedFrame = displayedFrame;
       if (phase === 'opening') {
         updateCopy(opening.currentTime * FPS);
         return !opening.paused && !opening.ended;
@@ -203,9 +219,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (hoverWeight > .001 && !interactive) return false;
       // Pace from the frame actually on screen, not an unseen scroll target.
       // Nearby samples remain useful while a slower connection catches up.
-      const target = pacer.next(displayedFrame, desiredFrame, delta);
-      wantedFrame = target;
-      cache.request(target,desiredFrame,displayedFrame);
+      const target = requestNextFrame();
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
