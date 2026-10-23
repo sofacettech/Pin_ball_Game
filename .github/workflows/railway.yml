@@ -68,31 +68,5 @@ jobs:
           git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
           node scripts/browser-video-smoke.mjs
 
-  deploy:
-    name: Deploy production
-    needs: [check, video]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    environment:
-      name: production
-      url: https://facet-pinball-production.up.railway.app
-    env:
-      RAILWAY_PROJECT_ID: e9732dcb-6399-4e69-b7d1-75b7ac86e36f
-      RAILWAY_ENVIRONMENT_ID: 968c8083-613f-441f-ba7f-8ed28ec7342e
-      RAILWAY_SERVICE_ID: b83c4461-687d-499c-a7ff-c650e67bd7f8
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-      - run: npm install --global @railway/cli@4.66.0
-      - name: Deploy this commit to the existing Railway service
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          test -n "$RAILWAY_TOKEN" || { echo 'Missing RAILWAY_TOKEN secret'; exit 1; }
-          railway up --ci --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service "$RAILWAY_SERVICE_ID" --message "$GITHUB_SHA"
-          node scripts/wait-for-railway.mjs
-      - name: Check the public website and streamed video
-        run: npm run smoke -- https://facet-pinball-production.up.railway.app
+# Railway deploys main through its GitHub repository integration.
+# Keep this workflow limited to validation so Wait for CI can complete.
