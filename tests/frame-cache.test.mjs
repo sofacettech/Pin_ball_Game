@@ -41,6 +41,18 @@ test('native preparation requires decoded pixels and a contiguous playable openi
   cache.suspend();assert.equal(cache.preparation.ready,false);
  }finally{cache.destroy()}
 });
+test('Safari can release preparation when it reports enough data but limits paused prefetch',async()=>{
+ let enough=false,finish;
+ const source={mode:'video',transient:true,get stats(){return{bufferedSeconds:.767,canPlayThrough:enough}},
+  decode:()=>new Promise(resolve=>{finish=resolve}),fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError(){}});
+ try{
+  enough=true;assert.equal(cache.preparation.ready,false,'Native readiness alone must not replace decoded pixels');
+  finish({transient:true,close(){}});await until(()=>cache.get(0));
+  assert.equal(cache.preparation.ready,true);
+  enough=false;assert.equal(cache.preparation.ready,false,'A merely partial buffer must still wait');
+ }finally{cache.destroy()}
+});
 test('cache reverses, bounds resources, and only makes the latest target ready',async()=>{
  const f=fixture(),ready=[],cache=createFrameCache({count:2000,source:f.source,onReady:()=>ready.push(cache.stats.target),onError:error=>{throw error},config:{decoded:4,network:2,compressedBytes:1200,prefetch:12,ahead:7,behind:4,idleMs:5}});
  try{

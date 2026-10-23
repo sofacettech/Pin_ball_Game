@@ -237,7 +237,10 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     // Keep room for the decoder and for requests already in flight.
     get preparation() {
       if (source.mode === 'video') {
-        const progress = Math.min(1, (source.stats.bufferedSeconds || 0) / 3);
+        // Safari may stop prefetching a paused video before three seconds even
+        // after reporting HAVE_ENOUGH_DATA. Respect that native readiness signal
+        // instead of leaving a playable journey behind an endless loader.
+        const progress = source.stats.canPlayThrough ? 1 : Math.min(1, (source.stats.bufferedSeconds || 0) / 3);
         return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
       }
       let required = 0, available = 0, size = 0;
