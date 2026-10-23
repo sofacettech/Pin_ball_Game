@@ -223,7 +223,7 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  assert.equal(video.seeking,true,'An approximate presented frame needs a precise seek');
  present(20);assert.equal(await pending,video);assert.equal(callbacks.size,0);
  assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
- assert.equal(video.playbackRate,.25,'Slow presentation must stay inside the requested source frame');
+ assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
  const next=source.decode(21);await turn();assert.equal(fastCalls,1,'Disable approximate seeking after a presented-frame mismatch');
  source.suspend();await assert.rejects(next,{name:'AbortError'});assert.equal(callbacks.size,0);
 });

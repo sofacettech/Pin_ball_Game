@@ -122,6 +122,19 @@ test('a byte-limited prefetch window settles instead of refetching its evictions
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error},config:{compressedBytes:600000,idleMs:5}});
  try{await wait(50);const settled=loads;await wait(50);assert.equal(loads,settled);assert.ok(cache.stats.compressedBytes<=600000)}finally{cache.destroy()}
 });
+
+test('native motion confirms pixels only at the destination and rechecks an unconfirmed cached frame',async()=>{
+ const calls=[];
+ const source={mode:'video',transient:true,presentedFrame:null,stats:{},async decode(frame,_bytes,settled){calls.push([frame,settled]);this.presentedFrame=settled?frame:null;return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error}});
+ try{
+  await until(()=>cache.get(0));
+  cache.request(20,40,0);await until(()=>cache.get(20));assert.deepEqual(calls.at(-1),[20,false]);
+  cache.request(20,20,20);await until(()=>source.presentedFrame===20);assert.deepEqual(calls.at(-1),[20,true]);
+  await until(()=>cache.stats.pending===0);const count=calls.length;
+  cache.request(20,20,20);await wait(20);assert.equal(calls.length,count,'A confirmed stationary frame must not loop');
+ }finally{cache.destroy()}
+});
 test('a transient download retries even after the last scroll replaces its timer',async()=>{
  let online=false;
  const source={mode:'webcodecs',stats:{},load:async()=>{if(!online)throw new TypeError('Offline');return new Uint8Array(1)},decode:async()=>({close(){}}),fallback(){assert.fail('Network failure discarded the decoder')},destroy(){}};

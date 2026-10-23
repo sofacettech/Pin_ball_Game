@@ -197,7 +197,9 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
     decoding = true;
     const epoch = generation;
-    source.decode(next, compressed.get(next)).then(image => {
+    // Keep motion responsive; confirm compositor pixels at the final scroll
+    // destination instead of starting/stopping native playback for every step.
+    source.decode(next, compressed.get(next), next === lead).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
       if (image.transient) {
         for (const retained of decoded.values()) retained.close();
@@ -217,6 +219,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
+    if (source.transient && frame === next && 'presentedFrame' in source && source.presentedFrame !== frame) decoded.delete(frame);
     source.retarget?.(target,presented);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
