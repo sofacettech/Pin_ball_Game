@@ -92,7 +92,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:144,behind:12,prefetch:160,compressedBytes:16*1024*1024} : {},
+    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {
