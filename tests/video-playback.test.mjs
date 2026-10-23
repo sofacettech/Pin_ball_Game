@@ -374,3 +374,17 @@ test('a range exposes its first complete frame before the rest of the batch down
  finally{stream.enqueue(new Uint8Array([5,6]));stream.close();await loading}
  assert.deepEqual(ready,[[0,[1,2,3]],[1,[4,5,6]]]);
 });
+
+test('resuming scroll cancels a settled confirmation even while its paced frame stays useful',async t=>{
+ snapshotEnvironment(t);const previous=globalThis.matchMedia;globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previous});
+ const video=new Video(),callbacks=new Map();let id=0,cancelled=false;video.readyState=2;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};
+ video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));t.after(()=>source.destroy());
+ const pending=source.decode(20).catch(error=>{assert.equal(error.name,'AbortError');cancelled=true});await turn();
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();assert.equal(video.paused,false);assert.equal(callbacks.size,1);
+ source.retarget(20,20,21);await turn();assert.equal(cancelled,true,'The new scroll destination must release the decoder immediately');await pending;
+ assert.equal(callbacks.size,0);assert.equal(video.paused,true);assert.equal(source.presentedFrame,null);
+ const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
+ assert.equal(callbacks.size,0,'Intermediate motion must not start another exact-frame confirmation');
+});

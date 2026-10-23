@@ -227,7 +227,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
-    source.retarget?.(target,presented);
+    source.retarget?.(target,presented,lead);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
       if (!useful(index)) { bytes -= data?.byteLength || 0; compressed.delete(index); }

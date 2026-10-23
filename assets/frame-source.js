@@ -171,7 +171,7 @@ export async function createFrameSource(video,index,indexURL){
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001||confirm){
    nativePresentedFrame=null;
    const start=performance.now();
-   const seek={frame,controller:new AbortController()},events=nativeEvents.signal;
+   const seek={frame,confirm:watchesPixels,controller:new AbortController()},events=nativeEvents.signal;
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
@@ -243,10 +243,13 @@ export async function createFrameSource(video,index,indexURL){
   return 0;
  }
  return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
-  retarget(frame,presented){
+  retarget(frame,presented,desired=frame){
    // Finish useful progress, but cancel a seek that would overshoot the new
    // target after a reversal instead of making the finger wait for it.
-   if(nativeSeek&&(nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
+   // Pixel confirmation belongs only to a stationary destination. A resumed
+   // scroll must not wait for its slow controlled playback, even if the pacer
+   // is still requesting that useful intermediate frame.
+   if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
   get mode(){return mode},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},

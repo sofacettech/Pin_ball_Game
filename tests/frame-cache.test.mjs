@@ -124,13 +124,13 @@ test('a byte-limited prefetch window settles instead of refetching its evictions
 });
 
 test('native motion confirms pixels only at the destination and rechecks an unconfirmed cached frame',async()=>{
- const calls=[];
- const source={mode:'video',transient:true,presentedFrame:null,stats:{},async decode(frame,_bytes,settled){calls.push([frame,settled]);this.presentedFrame=settled?frame:null;return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
+ const calls=[],destinations=[];
+ const source={mode:'video',transient:true,presentedFrame:null,stats:{},retarget(...args){destinations.push(args)},async decode(frame,_bytes,settled){calls.push([frame,settled]);this.presentedFrame=settled?frame:null;return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error}});
  try{
   await until(()=>cache.get(0));assert.deepEqual(calls.at(-1),[0,false],'The hidden preparation video must not wait for a compositor callback');
   cache.request(0,0,0);await wait(20);assert.equal(calls.length,1,'Keep the decoded preparation frame without a confirmation loop');
-  cache.request(20,40,0);await until(()=>cache.get(20));assert.deepEqual(calls.at(-1),[20,false]);
+  cache.request(20,40,0);assert.deepEqual(destinations.at(-1),[20,0,40],'Forward the true scroll destination while the pacer catches up');await until(()=>cache.get(20));assert.deepEqual(calls.at(-1),[20,false]);
   cache.request(20,20,20);assert.equal(cache.settled,false);
   await until(()=>source.presentedFrame===20);assert.deepEqual(calls.at(-1),[20,true]);assert.equal(cache.settled,true);
   await until(()=>cache.stats.pending===0);const count=calls.length;
