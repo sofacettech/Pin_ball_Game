@@ -18,7 +18,7 @@ npm start
 
 Open `http://127.0.0.1:8766/`. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
-For ZIP downloads containing the full video, skip the two `git lfs` commands above.
+For ZIP downloads, skip the two `git lfs` commands above. If the archive contains a Git LFS pointer instead of the full video, `npm run build` downloads the approved video and verifies its size and SHA-256 before using it. Internet access to the public media mirror is required for that first build; an already materialized video is reused.
 
 ```sh
 node --test --test-concurrency=1 tests/*.test.mjs
@@ -144,7 +144,9 @@ The repository's GitHub Actions workflow runs build, unit and smoke checks plus 
 
 The configured service URL is `https://facet-pinball-production.up.railway.app`; `shopsofacet.com` still requires the corresponding DNS configuration. `/health` is a read-only readiness endpoint. After deployment, `npm run smoke -- https://facet-pinball-production.up.railway.app` verifies the public site and streamed media.
 
-Railway's build materializes the experience video from GitHub LFS and verifies its committed SHA-256 and size. Local builds with LFS already available reuse that file. A private repository would require an authenticated media download path.
+I've kept the video download tied to an exact revision of our public `sofacettech/Pin_ball_Game` media mirror. It does not use the deployment repository's `RAILWAY_GIT_COMMIT_SHA`, so builds from a separate repository or ZIP export can retrieve the same approved video. The download replaces the LFS pointer only after the committed SHA-256 and size match. If we replace the video, please update the pinned mirror revision in `scripts/materialize-video.mjs` together with the LFS object, frame index and media manifest. A private mirror would require an authenticated server-side download path.
+
+The mobile video CI job also fetches its fixed comparison baseline from `sofacettech/Pin_ball_Game`, independently of the checkout's `origin`. Keep that baseline available in the public mirror when moving the application to another repository. Hosting credentials belong in the service environment; neither download path needs a password in source control.
 
 Keep the service at **one replica** with persistent `DATA_DIR` storage. The current atomic file store is designed for one process. Move player, score and reward state to shared transactional storage before running multiple replicas.
 
@@ -173,7 +175,7 @@ Uploads verify local hashes before writing immutable `videos/<sha256>/<filename>
 
 ## Verification and release checks
 
-Automated tests cover score verification, scoring and target placement, membership validation, reward retry/idempotency rules, frontend state/copy, member-only leaderboard access, frame-cache bounds and video fallback behavior. Browser checks have covered desktop, phone and tablet layouts in Chromium and WebKit.
+Automated tests cover score verification, scoring and target placement, membership validation, reward retry/idempotency rules, frontend state/copy, member-only leaderboard access, frame-cache bounds, video fallback behavior and verified video materialization from a separate deployment repository. Browser checks have covered desktop, phone and tablet layouts in Chromium and WebKit.
 
 Before collecting memberships publicly, finish SMS and approved policies, test the live rewards connection, and verify the complete flow on physical Safari/iPhone devices. Automated WebKit checks do not replace real-device video, audio and touch testing.
 

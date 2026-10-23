@@ -67,7 +67,7 @@ jobs:
           SOFACET_BROWSER: ${{ matrix.browser }}
           SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
         run: |
-          git fetch --depth 1 origin "$SOFACET_VIDEO_BASELINE"
+          git fetch --depth 1 https://github.com/sofacettech/Pin_ball_Game.git "$SOFACET_VIDEO_BASELINE"
           node scripts/browser-video-smoke.mjs
 
 # Railway deploys main through its GitHub repository integration.
