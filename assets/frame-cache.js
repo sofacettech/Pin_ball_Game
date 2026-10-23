@@ -3,7 +3,7 @@ export const FRAME_CACHE_DEFAULTS = {
   decoded: 8, compressedBytes: 24 * 1024 * 1024, idleMs: 100,
 };
 
-export function createFrameCache({count, source, onReady, onError, config = {}}) {
+export function createFrameCache({count, source, onReady, onError, canConfirm, config = {}}) {
   const settings = {...FRAME_CACHE_DEFAULTS, ...config};
   const compressed = new Map(), decoded = new Map(), active = new Set(), loading = new Set(), failures = new Map();
   for (const name of Object.keys(FRAME_CACHE_DEFAULTS)) {
@@ -12,7 +12,6 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
   }
   let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
-  let leadChangedAt = performance.now();
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
@@ -99,7 +98,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
 
   function pump() {
     if (destroyed || suspended) return;
-    const scrollSettled = performance.now() - leadChangedAt >= 50;
+    const scrollSettled = performance.now() - requestedAt >= settings.idleMs && (canConfirm?.(lead) ?? true);
     if (scrollSettled && needsNativeConfirmation()) decoded.delete(target);
     const video = source.mode === 'video';
     // Native seeking has no compressed-sample download. Make the target ready
@@ -194,6 +193,9 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (decoding) return;
     const next = warmFrames().find(frame => !decoded.has(frame) && compressed.has(frame) && (failures.get(frame) || 0) <= Date.now());
     if (next === undefined) {
+      // A pending scroll event or an early idle timer can defer confirmation.
+      // Keep the existing idle pump alive until the destination is current.
+      if (needsNativeConfirmation()) { arm(); return; }
       if (!active.size) {
         const retry = Math.min(...downloads.map(frame => failures.get(frame) || Infinity).filter(time => time > Date.now()));
         if (Number.isFinite(retry)) { clearTimeout(timer); timer = setTimeout(pump, Math.max(1, retry - Date.now())); }
@@ -223,7 +225,6 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   function request(frame, next = frame, visible = frame) {
     if (![frame, next, visible].every(value => Number.isInteger(value) && valid(value))) throw RangeError('Frame is outside the source sequence');
     if (order.length && target === frame && lead === next && presented === visible) return;
-    if (lead !== next) leadChangedAt = performance.now();
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();

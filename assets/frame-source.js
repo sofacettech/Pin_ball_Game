@@ -23,7 +23,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame)
  }
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
  if(preferNative)fallbackReason='native-touch';
- const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,deliveryFallbacks:0};
+ const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,nativeCaptures:0,deliveryFallbacks:0};
  function useLocal(){
   if(!fallbackURL||url.href===fallbackURL.href)return false;
   url=fallbackURL;stats.deliveryFallbacks++;return true;
@@ -183,7 +183,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame)
      if(!watchesPixels)return undefined;
      // Register after the seek, as WebKit can discard callbacks from the old
      // decoder surface. Brief playback supplies a fresh, timestamped frame.
-     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,pauseOnFrame:true,onPresentedFrame:()=>{snapshot=captureNativeFrame?.()},frame,fps:index.fps});
+     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,pauseOnFrame:true,onPresentedFrame:()=>{const start=performance.now();snapshot=captureNativeFrame?.(frame);if(snapshot){stats.nativeCaptures++;stats.nativeRetainMs+=performance.now()-start}},frame,fps:index.fps});
      // A synchronous pause inside the callback can reject a pending play()
      // with AbortError. The presented frame is the readiness signal.
      void video.play().catch(error=>{if(error.name!=='AbortError')seek.controller.abort(error)});

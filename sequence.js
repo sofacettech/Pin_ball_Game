@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-710635587aa7';
-import { createFrameSource } from './assets/frame-source.js?v=frames-6166ade5ae3c';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-1ea4c01f420c';
+import { createFrameSource } from './assets/frame-source.js?v=frames-00549037eaa3';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-8c3af1f04340';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-e7228993ba3e';
 
@@ -70,17 +70,19 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const pacer = createFramePacer();
   let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
+  const scrollFrame = () => Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
   // Freeze only settled destinations inside their video-frame callback. Safari
   // can replace its paused compositor surface after that callback has returned.
   frame.transient = true; frame.close = () => {};
-  const source = await createFrameSource(journey,index,indexURL,() => {
+  const source = await createFrameSource(journey,index,indexURL,index => {
+    if (scrollDirty || index !== scrollFrame()) throw new DOMException('Scroll resumed','AbortError');
     context.drawImage(journey,0,0,frame.width,frame.height);
     return frame;
   });
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video
   // itself through its compositor; only its completed position is reported here.
-  const cache = createFrameCache({count: frameCount, source, onReady(available, image) {
+  const cache = createFrameCache({count: frameCount, source, canConfirm: index => !scrollDirty && index === scrollFrame(), onReady(available, image) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
     if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
@@ -269,7 +271,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       }
       if (scrollDirty) {
         scrollDirty = false;
-        desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
+        desiredFrame = scrollFrame();
         if (desiredFrame > 0) allowHover(false);
       }
       const hideHold = hoverWeight > .0001;
