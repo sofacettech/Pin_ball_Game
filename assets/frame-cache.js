@@ -37,8 +37,16 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     for (let i = 1; i <= settings.ahead; i++) add(target + i * direction);
     for (let i = 1; i <= settings.behind; i++) add(target - i * direction);
     for (let i = settings.ahead + 1; result.size < Math.min(settings.prefetch, count) && valid(target + i * direction); i++) add(target + i * direction);
-    for (let i = settings.behind + 1; result.size < Math.min(settings.prefetch, count) && valid(target - i * direction); i++) add(target - i * direction);
-    order = [...result];
+    // Near the end, let the window shrink. Filling spare slots with older
+    // history re-downloads discarded frames while the final scene needs data.
+    // Give the next few ranges priority over a distant wheel/swipe destination:
+    // the pacer must display these intervening frames before it can get there.
+    const immediate = [target];
+    for (let i = 1; i <= Math.min(settings.ahead, settings.batch * settings.network); i++) {
+      const frame = target + i * direction;
+      if (result.has(frame)) immediate.push(frame);
+    }
+    order = [...new Set([...immediate, ...result])];
     ranks = new Map(order.map((frame, priority) => [frame, priority]));
   }
 
@@ -135,8 +143,11 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       // HTTP ranges arrive in ascending file order. A reverse miss would put
       // the visible target at the end of a full batch; fetch that frame first.
       const batch = !video && source.loadFrames && !(direction < 0 && frame === target) ? settings.batch : 1;
+      // Fill history away from the target too. Using the travel direction
+      // there runs straight into cached frames and fragments it into singles.
+      const batchDirection = Math.sign(frame - target) || direction;
       for (let i = 0; i < batch; i++) {
-        const next = frame + i * direction;
+        const next = frame + i * batchDirection;
         if (!ranks.has(next) || unavailable(next)) break;
         const length = estimate(next);
         if (length > budget && (next !== target || source.frameBytes)) break;
@@ -149,7 +160,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       // request for every new frame entering the window during a slow scroll.
       if (source.loadFrames && !video && performance.now() - requestedAt < settings.idleMs &&
         frames.length < settings.batch && Math.abs(frame - target) > settings.decoded &&
-        frame !== lead && valid(frames.at(-1) + direction)) break;
+        frame !== lead && valid(frames.at(-1) + batchDirection)) break;
       const controller = new AbortController(), job = {controller, frames, size}, epoch = generation;
       active.add(job); reserved += size;
       let reservation = size;
