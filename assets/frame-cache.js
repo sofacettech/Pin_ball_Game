@@ -1,6 +1,8 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 16, ahead: 192, prefetch: 224, network: 3, batch: 32,
-  decoded: 8, compressedBytes: 24 * 1024 * 1024, idleMs: 100,
+  // Retain compressed history for reversals; only the tiny decoded window
+  // occupies full-resolution image memory. Prepare six seconds at 60 FPS.
+  behind: 224, ahead: 256, prefetch: 512, preparationFrames: 360, network: 3, batch: 32,
+  decoded: 8, compressedBytes: 48 * 1024 * 1024, idleMs: 100,
 };
 
 export function createFrameCache({count, source, onReady, onError, canConfirm, config = {}}) {
@@ -11,13 +13,13 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       throw RangeError('Invalid frame cache setting: ' + name);
     }
   }
-  let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
+  let target = 0, lead = 0, presented = 0, direction = 1, order = [], ranks = new Map(), timer, decoding = false;
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
   const advances = frame => frame > Math.min(presented, target) && frame < Math.max(presented, target);
-  const useful = frame => order.includes(frame) || advances(frame);
+  const useful = frame => ranks.has(frame) || advances(frame);
   const needsNativeConfirmation = () => source.transient && target > 0 && target === lead && 'presentedFrame' in source && source.presentedFrame !== target;
   function progressFrame() {
     let best;
@@ -37,6 +39,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     for (let i = settings.ahead + 1; result.size < Math.min(settings.prefetch, count) && valid(target + i * direction); i++) add(target + i * direction);
     for (let i = settings.behind + 1; result.size < Math.min(settings.prefetch, count) && valid(target - i * direction); i++) add(target - i * direction);
     order = [...result];
+    ranks = new Map(order.map((frame, priority) => [frame, priority]));
   }
 
   function warmFrames() {
@@ -59,7 +62,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   function trim() {
     const progress = progressFrame();
     for (const [frame, data] of compressed) {
-      if (!order.includes(frame) && frame !== progress) {
+      if (!ranks.has(frame) && frame !== progress) {
         bytes -= data?.byteLength || 0; compressed.delete(frame);
       }
     }
@@ -112,9 +115,9 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       if (unavailable(frame)) continue;
       // Include in-flight bytes so prefetch cannot churn through its own evictions.
       const required = Math.min(estimate(frame), settings.compressedBytes);
-      const priority = order.indexOf(frame);
+      const priority = ranks.get(frame);
       if (settings.compressedBytes - bytes - reserved < required) {
-        const rank = key => order.includes(key) ? order.indexOf(key) : 1;
+        const rank = key => ranks.get(key) ?? 1;
         const candidates = [...compressed.keys()].filter(key => rank(key) > priority)
           .sort((a, b) => rank(b) - rank(a));
         const reclaimable = candidates.reduce((total, key) => total + (compressed.get(key)?.byteLength || 0), 0);
@@ -129,10 +132,12 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       let budget = Math.max(0, settings.compressedBytes - bytes - reserved);
       const frames = [];
       let size = 0;
-      const batch = !video && source.loadFrames ? settings.batch : 1;
+      // HTTP ranges arrive in ascending file order. A reverse miss would put
+      // the visible target at the end of a full batch; fetch that frame first.
+      const batch = !video && source.loadFrames && !(direction < 0 && frame === target) ? settings.batch : 1;
       for (let i = 0; i < batch; i++) {
         const next = frame + i * direction;
-        if (!order.includes(next) || unavailable(next)) break;
+        if (!ranks.has(next) || unavailable(next)) break;
         const length = estimate(next);
         if (length > budget && (next !== target || source.frameBytes)) break;
         frames.push(next); size += Math.min(length, budget); budget = Math.max(0, budget - length);
@@ -256,7 +261,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
         return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
       }
       let required = 0, available = 0, size = 0;
-      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 180);
+      const limit = Math.min(count, settings.prefetch, settings.preparationFrames);
       for (let frame = 0; frame < limit; frame++) {
         const length = estimate(frame);
         if (size + length > settings.compressedBytes * .75 && required) break;

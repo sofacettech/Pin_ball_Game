@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
-import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-710635587aa7';
-import { createFrameSource } from './assets/frame-source.js?v=frames-00549037eaa3';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-8c3af1f04340';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-e7228993ba3e';
+import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
+import { createFrameSource } from './assets/frame-source.js?v=frames-870c699ecb13';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-356bab3084e6';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
 const FPS = 60;
 
@@ -92,7 +92,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
+    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {

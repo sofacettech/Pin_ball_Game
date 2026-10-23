@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
-import { createPlateHover } from './plate-hover.js?v=frames-588377377c5a';
-import { matchRenderedAppearance } from './reference-appearance.js?v=frames-9643121c928e';
-import { createSequence } from './sequence.js?v=frames-5b4e98911a06';
+import { createPlateHover } from './plate-hover.js?v=frames-46f0ceb7b395';
+import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
+import { createSequence } from './sequence.js?v=frames-3173152a9c28';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
-import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-4124c9d1bc96';
+import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-75503048eed8';
 
-import { prepareMedia } from './assets/media-delivery.js?v=frames-fa45e60c1ff2';
+import { prepareMedia } from './assets/media-delivery.js?v=frames-dc4a9c95ed77';
 
 const canvas = document.querySelector('#ball-canvas');
 const status = document.querySelector('#status');
