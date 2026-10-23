@@ -7,7 +7,20 @@ html{overscroll-behavior:none;scrollbar-width:none}
 html::-webkit-scrollbar{display:none}
 body{margin:0}
 body[data-phase]{font-family:Acumin,Arial,sans-serif}
-body[data-phase="opening"]{overflow:hidden}
+body:is([data-phase="opening"],[data-phase="buffering"],[data-phase="settling"]){overflow:hidden}
+body:is([data-phase="buffering"],[data-phase="settling"]) :is(#story-copy,#scroll-cue,#status){visibility:hidden}
+body:is([data-phase="buffering"],[data-phase="settling"]) #story-copy{opacity:0}
+#journey-preparation{position:absolute;z-index:4;left:6.5%;top:38%;width:min(30vw,440px);color:#f6f2ff;text-shadow:0 2px 24px #0009}
+#journey-preparation[hidden]{display:none}
+#journey-preparation h2{font-size:clamp(28px,3vw,52px);font-weight:600;line-height:1.08;letter-spacing:-.025em;margin:0 0 24px;text-wrap:balance;min-height:2.16em}
+#journey-preparation p{font-size:14px;line-height:1.5;max-width:30ch;margin:0 0 16px}
+#preparation-progress{display:block;width:160px;height:3px;border:0;appearance:none;background:#ffffff30;color:#e8fd00}
+#preparation-progress::-webkit-progress-bar{background:#ffffff30}
+#preparation-progress::-webkit-progress-value{background:#e8fd00}
+#preparation-progress::-moz-progress-bar{background:#e8fd00}
+#preparation-retry{margin-top:24px;padding:10px 0;background:transparent;border:0;border-bottom:1px solid #f6f2ff;color:inherit;font:inherit;cursor:pointer}
+#preparation-retry:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+@media(max-width:1024px),(any-pointer:coarse){#journey-preparation{left:24px;right:24px;top:auto;bottom:max(14%,80px);width:auto;text-align:center}#journey-preparation h2{font-size:clamp(26px,7vw,38px);min-height:0;margin-bottom:16px}#journey-preparation p{margin-inline:auto}#preparation-progress{margin-inline:auto}}
 main{position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
 #scene-frame{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;isolation:isolate}
 #scene-frame img,#scene-frame canvas,#opening{position:absolute;inset:0;display:block;width:100%;height:100%}

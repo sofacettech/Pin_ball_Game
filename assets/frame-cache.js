@@ -233,6 +233,24 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   request(0);
   return {
     request,
+    // Readiness describes a bounded opening window, never the whole movie.
+    // Keep room for the decoder and for requests already in flight.
+    get preparation() {
+      if (source.mode === 'video') {
+        const progress = Math.min(1, (source.stats.bufferedSeconds || 0) / 1.25);
+        return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
+      }
+      let required = 0, available = 0, size = 0;
+      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 75);
+      for (let frame = 0; frame < limit; frame++) {
+        const length = estimate(frame);
+        if (size + length > settings.compressedBytes * .75 && required) break;
+        size += length; required++;
+        if (compressed.has(frame) || decoded.has(frame)) available++;
+      }
+      const progress = required ? available / required : 0;
+      return {progress: decoded.has(0) ? progress : Math.min(progress, .99), ready: decoded.has(0) && progress === 1};
+    },
     get: frame => decoded.get(frame),
     closest(frame, previous) {
       let best;
