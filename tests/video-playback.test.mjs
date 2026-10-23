@@ -221,6 +221,7 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  assert.equal(video.currentTime,20.25/60);
  present(10);await turn();assert.equal(done,false,'The reported currentTime must not hide stale compositor pixels');
  assert.equal(video.seeking,true,'An approximate presented frame needs a precise seek');
+ present(10);await turn();assert.equal(done,false,'Ignore queued old callbacks during the precise seek');
  present(20);assert.equal(await pending,video);assert.equal(callbacks.size,0);
  assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
  assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');

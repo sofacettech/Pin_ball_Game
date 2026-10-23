@@ -7,7 +7,7 @@ export function prepareInlineVideo(video) {
   video.setAttribute('webkit-playsinline', '');
 }
 
-export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0, presentedFrame = false} = {}) {
+export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0, presentedFrame = false, frame, fps = 60} = {}) {
   return new Promise((resolve, reject) => {
     const events = new AbortController();
     const waitForFrame = presentedFrame && typeof video.requestVideoFrameCallback === 'function';
@@ -34,7 +34,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
     }
     function checkFrame(_now, metadata) {
       frameCallback = undefined;
-      if (!video.seeking && video.readyState >= readyState) presentedTime = metadata.mediaTime;
+      if (!video.seeking && video.readyState >= readyState && (frame === undefined || Math.round(metadata.mediaTime * fps) === frame)) presentedTime = metadata.mediaTime;
       check();
       if (!settled) frameCallback = video.requestVideoFrameCallback(checkFrame);
     }

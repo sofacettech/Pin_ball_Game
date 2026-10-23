@@ -128,7 +128,8 @@ test('native motion confirms pixels only at the destination and rechecks an unco
  const source={mode:'video',transient:true,presentedFrame:null,stats:{},async decode(frame,_bytes,settled){calls.push([frame,settled]);this.presentedFrame=settled?frame:null;return{frame,transient:true,close(){}}},fallback:()=>false,destroy(){}};
  const cache=createFrameCache({count:100,source,onReady(){},onError:error=>{throw error}});
  try{
-  await until(()=>cache.get(0));
+  await until(()=>cache.get(0));assert.deepEqual(calls.at(-1),[0,false],'The hidden preparation video must not wait for a compositor callback');
+  cache.request(0,0,0);await wait(20);assert.equal(calls.length,1,'Keep the decoded preparation frame without a confirmation loop');
   cache.request(20,40,0);await until(()=>cache.get(20));assert.deepEqual(calls.at(-1),[20,false]);
   cache.request(20,20,20);await until(()=>source.presentedFrame===20);assert.deepEqual(calls.at(-1),[20,true]);
   await until(()=>cache.stats.pending===0);const count=calls.length;

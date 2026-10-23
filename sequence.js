@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-a4de83d217c2';
-import { createFrameSource } from './assets/frame-source.js?v=frames-f12b38fb118f';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-462c76059898';
+import { createFrameSource } from './assets/frame-source.js?v=frames-002b3171e39e';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-1791dfaf0aab';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-4ce11e426dc9';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-bb6b5d3883b3';
 
 const FPS = 60;
 

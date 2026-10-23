@@ -12,7 +12,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
   }
   let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
-  let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0;
+  let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
@@ -82,6 +82,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
 
   function fail(error, frame, transient = false) {
     if (destroyed || suspended || error.name === 'AbortError') return;
+    lastError = {frame, name: error.name, message: error.message};
     if (!transient && source.fallback()) {
       generation++;
       for (const job of active) job.controller.abort();
@@ -199,7 +200,9 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     const epoch = generation;
     // Keep motion responsive; confirm compositor pixels at the final scroll
     // destination instead of starting/stopping native playback for every step.
-    source.decode(next, compressed.get(next), next === lead).then(image => {
+    // Frame zero displays the authored still while the native video warms out
+    // of view; hidden video surfaces need not produce compositor callbacks.
+    source.decode(next, compressed.get(next), next === lead && next !== 0).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
       if (image.transient) {
         for (const retained of decoded.values()) retained.close();
@@ -208,7 +211,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       }
       decoded.set(next, image); trim(); counters.decodedTotal++;
       counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
-      if (next === target) counters.latencyMs = performance.now() - requestedAt;
+      if (next === target) { counters.latencyMs = performance.now() - requestedAt; lastError = null; }
       onReady(next, image);
     }).catch(error => { if (epoch === generation) fail(error, next); }).finally(() => { decoding = false; pump(); });
   }
@@ -219,7 +222,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
-    if (source.transient && frame === next && 'presentedFrame' in source && source.presentedFrame !== frame) decoded.delete(frame);
+    if (source.transient && frame > 0 && frame === next && 'presentedFrame' in source && source.presentedFrame !== frame) decoded.delete(frame);
     source.retarget?.(target,presented);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
@@ -268,7 +271,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     },
     get stats() {
       return {
-        ...counters, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
+        ...counters, lastError, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
         compressed: compressed.size, compressedBytes: bytes, reservedBytes: reserved,
         pending: active.size + (decoding ? 1 : 0), network: active.size,
         queued: (source.mode === 'video' ? warmFrames() : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,

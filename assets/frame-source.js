@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-4ce11e426dc9';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-bb6b5d3883b3';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -174,7 +174,7 @@ export async function createFrameSource(video,index,indexURL){
    try{
     // Subscribe before seeking: readyState/currentTime can advance before
     // WebKit replaces the compositor's pixels, even after seeked fires.
-    const wait=()=>waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4,presentedFrame:settled&&nativeDirect});
+    const wait=()=>waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4,presentedFrame:settled&&nativeDirect,frame:nativeFastSeek?undefined:frame,fps:index.fps});
     const watchesPixels=settled&&nativeDirect&&typeof video.requestVideoFrameCallback==='function';
     const settle=async presented=>{
      // WebKit may suppress frame callbacks for paused seeks. Brief muted
@@ -189,7 +189,7 @@ export async function createFrameSource(video,index,indexURL){
      try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
     }else video.currentTime=time;
     let presentedTime=await settle(presented);
-    if(nativeFastSeek&&Math.floor((presentedTime??video.currentTime)*index.fps+1e-6)!==frame){
+    if(nativeFastSeek&&(presentedTime===undefined?Math.floor(video.currentTime*index.fps+1e-6):Math.round(presentedTime*index.fps))!==frame){
      nativeFastSeek=false;
      presented=watchesPixels?wait():undefined;
      video.currentTime=time;
