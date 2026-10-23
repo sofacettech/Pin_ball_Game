@@ -36,10 +36,11 @@ export async function createPlateHover(model, clip) {
 
   const raycaster = new THREE.Raycaster();
   const intersections = [];
-  let activePlate = null;
+  let activePlate = null, waving = false;
 
   function select(object) {
-    if (object === activePlate) return;
+    if (object === activePlate && !waving) return;
+    waving = false;
     activePlate = object;
     const active = object ? plates.get(object.userData.source_name) : null;
     for (const [name, state] of plates) {
@@ -79,6 +80,16 @@ export async function createPlateHover(model, clip) {
     select(null);
     for (const state of plates.values()) state.weight = 0;
   }
-  return { plates, restoreBase, pick, update, reset, clear: () => select(null),
+  function wave(seconds) {
+    waving = true;
+    activePlate = null;
+    // The authored peaks already describe how each plate opens. A travelling
+    // phase reuses those exact transforms without accumulating new positions.
+    for (const [name, state] of plates) {
+      const phase = spec.plates[name].peakFrame / spec.fps * Math.PI;
+      state.target = .34 + .28 * Math.sin(seconds * 1.7 - phase);
+    }
+  }
+  return { plates, restoreBase, pick, update, reset, wave, clear: () => select(null),
     get activePlate() { return activePlate; }, neighbourLift: spec.neighbourLift };
 }

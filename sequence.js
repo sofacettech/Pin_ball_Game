@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
-import { createFrameSource } from './assets/frame-source.js?v=frames-ff0bb55e4c5b';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-3b72c5f456c8';
+import { createFrameSource } from './assets/frame-source.js?v=frames-ec94b7ea1178';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-1bc1d30c7ffc';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
 
@@ -17,6 +17,11 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
   const status = document.querySelector('#status');
+  const preparation = document.querySelector('#journey-preparation');
+  const preparationTitle = document.querySelector('#preparation-title');
+  const preparationStatus = document.querySelector('#preparation-status');
+  const preparationProgress = document.querySelector('#preparation-progress');
+  const preparationRetry = document.querySelector('#preparation-retry');
   const main = document.querySelector('main');
   prepareInlineVideo(opening);
   prepareInlineVideo(journey);
@@ -59,6 +64,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let scrollDirty = false;
   let wantedFrame = 0;
   let refreshFrame = false;
+  let preparationStarted = 0, preparationPhrase = -1, preparationPercent = -1;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pacer = createFramePacer();
   let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
@@ -76,7 +83,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
+    config: constrained ? {network:2,batch:24,decoded:4,ahead:144,behind:12,prefetch:160,compressedBytes:16*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {
@@ -128,14 +135,25 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (phase === value) return;
     phase = value;
     document.body.dataset.phase = value;
+    document.querySelector('#story-copy').setAttribute('aria-hidden', String(value === 'buffering' || value === 'settling'));
   }
   const openingPlayback = connectOpeningVideo(opening, enter, () => {
     updateCopy(240);
     opening.hidden = true;
-    changePhase('idle');
-    allowHover(true);
+    if (cache.preparation.ready) { changePhase('idle'); allowHover(true); }
+    else {
+      preparationStarted = performance.now();
+      preparation.hidden = false;
+      hold.hidden = true;
+      changePhase('buffering');
+    }
     requestFrame();
   }, requestFrame);
+  preparationRetry.addEventListener('click', () => {
+    cache.suspend(); cache.resume();
+    preparationStarted = performance.now(); preparationPhrase = -1;
+    preparationRetry.hidden = true; status.hidden = true; requestFrame();
+  }, {signal: events.signal});
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       setGameVisibility(false);
@@ -148,7 +166,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
   }, {signal: events.signal});
   window.addEventListener('scroll', () => {
-    if (phase === 'opening') return;
+    if (['opening','buffering','settling'].includes(phase)) return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
     requestFrame();
@@ -199,7 +217,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   await finishLoading();
   updateCopy(0);
   siteSound.setActive(true);
-  openingPlayback.start(matchMedia('(prefers-reduced-motion: reduce)').matches);
+  openingPlayback.start(reducedMotion);
 
   return {
     tick(delta, hoverWeight) {
@@ -207,6 +225,33 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (phase === 'opening') {
         updateCopy(opening.currentTime * FPS);
         return !opening.paused && !opening.ended;
+      }
+      if (phase === 'buffering') {
+        const readiness = cache.preparation;
+        const elapsed = (performance.now() - preparationStarted) / 1000;
+        const phrases = ['A world taking shape.', 'Every facet has a story.', 'Yours is about to begin.'];
+        const phrase = Math.floor(elapsed / 4.5) % phrases.length;
+        if (phrase !== preparationPhrase) {
+          preparationTitle.textContent = phrases[phrase]; preparationPhrase = phrase;
+        }
+        const percent = Math.floor(readiness.progress * 100);
+        if (percent !== preparationPercent) {
+          preparationProgress.value = percent; preparationPercent = percent;
+        }
+        const message = elapsed > 20 ? 'Taking a little longer. You can retry or skip to the game.' : 'Preparing your journey';
+        if (preparationStatus.textContent !== message) preparationStatus.textContent = message;
+        preparationRetry.hidden = elapsed < 20;
+        if (readiness.ready) {
+          preparationStatus.textContent = 'Ready to explore';
+          changePhase('settling');
+        }
+        return true;
+      }
+      if (phase === 'settling') {
+        if (hoverWeight > .001) return true;
+        preparation.hidden = true; status.hidden = true; hold.hidden = false;
+        changePhase('idle'); allowHover(true);
+        return false;
       }
       if (scrollDirty) {
         scrollDirty = false;
@@ -231,7 +276,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     get displayedFrame() { return displayedFrame; },
     get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
-    get stats() { return {...cache.stats,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    get stats() { return {...cache.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,
     frameCount, travel,
   };

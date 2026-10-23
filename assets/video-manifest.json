@@ -5,13 +5,13 @@
       "journey": {
         "file": "sofacet-experience.mp4",
         "index": "journey-index.json",
-        "sha256": "c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2",
-        "bytes": 248630827,
+        "sha256": "b68fb0f2edd851e63ea4cb66708af840316cc7e91ea56beb15e790b4db3e4ff2",
+        "bytes": 171078178,
         "width": 1920,
         "height": 1080,
         "fps": 60,
         "frameCount": 1990,
-        "key": "videos/c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2/sofacet-experience.mp4"
+        "key": "videos/b68fb0f2edd851e63ea4cb66708af840316cc7e91ea56beb15e790b4db3e4ff2/sofacet-experience.mp4"
       },
       "opening": {
         "file": "sofacet-opening.mp4",
@@ -24,13 +24,13 @@
       "journey": {
         "file": "sofacet-experience.mp4",
         "index": "journey-index.json",
-        "sha256": "c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2",
-        "bytes": 248630827,
+        "sha256": "b68fb0f2edd851e63ea4cb66708af840316cc7e91ea56beb15e790b4db3e4ff2",
+        "bytes": 171078178,
         "width": 1920,
         "height": 1080,
         "fps": 60,
         "frameCount": 1990,
-        "key": "videos/c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2/sofacet-experience.mp4"
+        "key": "videos/b68fb0f2edd851e63ea4cb66708af840316cc7e91ea56beb15e790b4db3e4ff2/sofacet-experience.mp4"
       },
       "opening": {
         "file": "sofacet-opening.mp4",

@@ -12,6 +12,47 @@ function fixture(){
   async decode(frame){await wait(2);alive++;return{frame,close(){alive--;closed.push(frame)}}}};
  return{source,loads,closed,get alive(){return alive},get peak(){return peak}};
 }
+test('preparation waits for a contiguous byte-bounded opening buffer and a decoded first frame',async()=>{
+ const pending=new Map();let resolveDecode;
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  load:frame=>new Promise(resolve=>pending.set(frame,resolve)),
+  decode:()=>new Promise(resolve=>{resolveDecode=resolve}),fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError(){},config:{network:8,compressedBytes:800,prefetch:8,ahead:7,decoded:2}});
+ try{
+  for(let frame=0;frame<6;frame++)pending.get(frame)(new Uint8Array(100));
+  await until(()=>resolveDecode);
+  assert.equal(cache.preparation.ready,false,'Downloaded bytes alone are insufficient');
+  resolveDecode({close(){}});
+  await until(()=>cache.preparation.ready);
+  assert.equal(cache.preparation.progress,1);
+  assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=800);
+ }finally{cache.destroy()}
+});
+test('native preparation requires decoded pixels and a contiguous playable opening buffer',async()=>{
+ let bufferedSeconds=0;
+ const source={mode:'video',transient:true,get stats(){return{bufferedSeconds}},
+  async decode(){return{transient:true,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError(){}});
+ try{
+  await until(()=>cache.get(0));
+  assert.equal(cache.preparation.ready,false);
+  bufferedSeconds=1.5;assert.equal(cache.preparation.progress,.5);
+  bufferedSeconds=3;assert.equal(cache.preparation.ready,true);
+  cache.suspend();assert.equal(cache.preparation.ready,false);
+ }finally{cache.destroy()}
+});
+test('Safari can release preparation when it reports enough data but limits paused prefetch',async()=>{
+ let enough=false,finish;
+ const source={mode:'video',transient:true,get stats(){return{bufferedSeconds:.767,canPlayThrough:enough}},
+  decode:()=>new Promise(resolve=>{finish=resolve}),fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError(){}});
+ try{
+  enough=true;assert.equal(cache.preparation.ready,false,'Native readiness alone must not replace decoded pixels');
+  finish({transient:true,close(){}});await until(()=>cache.get(0));
+  assert.equal(cache.preparation.ready,true);
+  enough=false;assert.equal(cache.preparation.ready,false,'A merely partial buffer must still wait');
+ }finally{cache.destroy()}
+});
 test('cache reverses, bounds resources, and only makes the latest target ready',async()=>{
  const f=fixture(),ready=[],cache=createFrameCache({count:2000,source:f.source,onReady:()=>ready.push(cache.stats.target),onError:error=>{throw error},config:{decoded:4,network:2,compressedBytes:1200,prefetch:12,ahead:7,behind:4,idleMs:5}});
  try{

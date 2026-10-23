@@ -216,13 +216,18 @@ export async function createFrameSource(video,index,indexURL){
   mode='video';pending?.image?.close();pending?.reject(abortError());pending=null;
   if(decoder?.state!=='closed')decoder?.close();decoder=null;return true;
  }
+ function bufferedSeconds(){
+  const ranges=video.buffered;
+  for(let i=0;i<(ranges?.length||0);i++)if(ranges.start(i)<=.05&&ranges.end(i)>0)return ranges.end(i);
+  return 0;
+ }
  return{load,loadFrames,frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
   retarget(frame,presented){
    // Finish useful progress, but cancel a seek that would overshoot the new
    // target after a reversal instead of making the finger wait for it.
    if(nativeSeek&&(nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin}},
+  get mode(){return mode},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

@@ -83,14 +83,14 @@ for(const [variant,suffix,width,height] of [['desktop','',1920,1080]]){
  };
  console.log(`Indexed ${variant}: ${index.frameCount} independent ${width}×${height} frames at ${index.fps} FPS (${index.bytes} bytes).`);
 }
-// Mobile keeps the exact original compressed samples: no resize or second lossy encode.
+// Mobile and desktop share the approved Full HD encode and identical frame timing.
 manifest.variants.mobile=structuredClone(manifest.variants.desktop);
 await writeFile(new URL('assets/video-manifest.json',root),JSON.stringify(manifest,null,2)+'\n');
 // Content versions keep cached helper code consistent when performance settings change.
 for(const [parent,dependencies] of [
  ['assets/frame-source.js',['./video-playback.js']],
  ['sequence.js',['./assets/frame-cache.js','./assets/frame-pacing.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
- ['viewer.js',['./sequence.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
+ ['viewer.js',['./sequence.js','./plate-hover.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
  ['index.html',['./viewer.js','./style.css']],
 ]){
  const file=new URL(parent,root);let source=await readFile(file,'utf8');

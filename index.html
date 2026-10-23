@@ -7,7 +7,7 @@
   <title>SOFACET — Enter the world</title>
   <script>if (location.hash === '#experience') document.documentElement.setAttribute('data-skip-intro', '');</script>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./style.css?v=frames-cbfcdd9f57e7">
+  <link rel="stylesheet" href="./style.css?v=frames-7e8b804cc9e3">
   <link rel="preload" href="./assets/fonts/AcuminVariableConcept.otf" as="font" type="font/otf" crossorigin>
   <link rel="stylesheet" href="./assets/loading/intro.css?v=return-c0b7a332">
   <link rel="preload" as="image" href="./assets/opening-poster.webp">
@@ -166,6 +166,12 @@
           <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
     </header>
+    <section id="journey-preparation" aria-label="Preparing your journey" hidden>
+      <h2 id="preparation-title">A world taking shape.</h2>
+      <p id="preparation-status" role="status">Preparing your journey</p>
+      <progress id="preparation-progress" max="100" value="0" aria-label="Opening buffer ready"></progress>
+      <button id="preparation-retry" type="button" hidden>Retry preparation</button>
+    </section>
     <p id="status" role="status">Loading experience…</p>
     <button id="enter" hidden>Enter SOFACET <span aria-hidden="true">↗</span></button>
     <div id="progress" aria-hidden="true"></div>
@@ -175,7 +181,7 @@
   <video id="journey" data-src="./assets/sofacet-experience.mp4" muted playsinline webkit-playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
   <noscript><style>#site-loader{display:none}</style>This experience needs JavaScript to play the opening and explore the ball.</noscript>
   <script type="module" src="./assets/loading/intro.js?v=return-24daee91"></script>
-  <script type="module" src="./viewer.js?v=frames-604370e6ae6d"></script>
+  <script type="module" src="./viewer.js?v=frames-b08dbef01a2d"></script>
   <script type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
 </body>
 </html>

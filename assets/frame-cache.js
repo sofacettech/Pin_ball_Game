@@ -1,6 +1,6 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 12, ahead: 72, prefetch: 96, network: 3, batch: 24,
-  decoded: 8, compressedBytes: 12 * 1024 * 1024, idleMs: 100,
+  behind: 16, ahead: 192, prefetch: 224, network: 3, batch: 32,
+  decoded: 8, compressedBytes: 24 * 1024 * 1024, idleMs: 100,
 };
 
 export function createFrameCache({count, source, onReady, onError, config = {}}) {
@@ -140,7 +140,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       // request for every new frame entering the window during a slow scroll.
       if (source.loadFrames && !video && performance.now() - requestedAt < settings.idleMs &&
         frames.length < settings.batch && Math.abs(frame - target) > settings.decoded &&
-        frame !== lead && valid(frames.at(-1) + direction)) continue;
+        frame !== lead && valid(frames.at(-1) + direction)) break;
       const controller = new AbortController(), job = {controller, frames, size}, epoch = generation;
       active.add(job); reserved += size;
       let reservation = size;
@@ -233,6 +233,27 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   request(0);
   return {
     request,
+    // Readiness describes a bounded opening window, never the whole movie.
+    // Keep room for the decoder and for requests already in flight.
+    get preparation() {
+      if (source.mode === 'video') {
+        // Safari may stop prefetching a paused video before three seconds even
+        // after reporting HAVE_ENOUGH_DATA. Respect that native readiness signal
+        // instead of leaving a playable journey behind an endless loader.
+        const progress = source.stats.canPlayThrough ? 1 : Math.min(1, (source.stats.bufferedSeconds || 0) / 3);
+        return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
+      }
+      let required = 0, available = 0, size = 0;
+      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 180);
+      for (let frame = 0; frame < limit; frame++) {
+        const length = estimate(frame);
+        if (size + length > settings.compressedBytes * .75 && required) break;
+        size += length; required++;
+        if (compressed.has(frame) || decoded.has(frame)) available++;
+      }
+      const progress = required ? available / required : 0;
+      return {progress: decoded.has(0) ? progress : Math.min(progress, .99), ready: decoded.has(0) && progress === 1};
+    },
     get: frame => decoded.get(frame),
     closest(frame, previous) {
       let best;

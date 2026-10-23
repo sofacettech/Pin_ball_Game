@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
-import { createPlateHover } from './plate-hover.js';
+import { createPlateHover } from './plate-hover.js?v=frames-46f0ceb7b395';
 import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
-import { createSequence } from './sequence.js?v=frames-224f2d027293';
+import { createSequence } from './sequence.js?v=frames-a3c95b70b3f3';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
@@ -64,6 +64,8 @@ async function main() {
   let frameRequest = 0;
   let previous = 0;
   let drawDirty = true;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let waveTime = 0, wasPreparing = false;
   const coverViewport = matchMedia('(max-width: 1024px), (any-pointer: coarse)');
   let viewportWidth = 0;
   let viewportHeight = 0;
@@ -103,7 +105,7 @@ async function main() {
     requestFrame();
   }, {signal: events.signal});
   function placeStage() {
-    const sourceFrame = sequence?.phase === 'journey' ? 240 + sequence.displayedFrame : sequence?.phase === 'idle' ? 240 : Math.min(240, opening.currentTime * 60);
+    const sourceFrame = sequence?.phase === 'journey' ? 240 + sequence.displayedFrame : sequence && sequence.phase !== 'opening' ? 240 : Math.min(240, opening.currentTime * 60);
     const index = Math.floor(sourceFrame);
     const next = framing.points[Math.min(index + 1, 2229)];
     const point = framing.points[index].map((v, i) => v + (next[i] - v) * (sourceFrame - index));
@@ -168,13 +170,20 @@ async function main() {
     frameRequest = 0;
     const delta = previous ? Math.min((now - previous) / 1000, .1) : 1 / 60;
     previous = now;
+    const preparing = sequence.phase === 'buffering';
+    if (preparing) {
+      waveTime += delta;
+      if (!reducedMotion.matches) hover.wave(waveTime);
+      else hover.clear();
+    } else if (wasPreparing) hover.clear();
+    wasPreparing = preparing;
     let moving = false;
     for (const plate of hover.plates.values()) moving ||= plate.weight !== plate.target;
-    if (pickDirty || moving) {
+    if (pickDirty || moving || preparing) {
       hover.restoreBase();
       // Pick against the underlying pose so a lifting plate cannot un-hover itself.
-      if (mouseInside && pickDirty) hover.pick(mouse, camera);
-      else if (!mouseInside) hover.clear();
+      if (!preparing && mouseInside && pickDirty) hover.pick(mouse, camera);
+      else if (!preparing && !mouseInside) hover.clear();
       pickDirty = false;
       hover.update(delta);
       drawDirty = true;
@@ -188,7 +197,7 @@ async function main() {
     const seeking = sequence.tick(delta, hoverWeight);
     placeStage();
     updatePerformance(now);
-    if (drawDirty && sequence.phase === 'idle' && !contextLost) {
+    if (drawDirty && ['idle','buffering','settling'].includes(sequence.phase) && !contextLost) {
       renderer.setScissorTest(coverViewport.matches);
       if (coverViewport.matches) renderer.setScissor(-placement.x - 1, placement.height + placement.y - viewportHeight - 1, viewportWidth + 2, viewportHeight + 2);
       renderer.render(scene, camera);
