@@ -23,12 +23,13 @@ async function measureScroll(page,speed,duration){
  await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
  await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
  return page.evaluate(async({speed,duration})=>{
-  const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[];
+  const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[],paints=[];
   let presented=sequence.displayedFrame;
   try{
    const start=performance.now();
    await new Promise(resolve=>{
     function step(now){
+     paints.push(now);
      if(sequence.displayedFrame!==presented){times.push(now);steps.push(Math.abs(sequence.displayedFrame-presented));presented=sequence.displayedFrame}
      lags.push(Math.abs(Math.round(window.scrollY/8)-sequence.displayedFrame));
      const elapsed=now-start;
@@ -41,6 +42,7 @@ async function measureScroll(page,speed,duration){
    const percentile=values=>values.sort((a,b)=>a-b)[Math.floor(values.length*.95)]||0;
    return{updates:times.length,updatesPerSecond:times.length/(duration/1000),
     p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),
+    maxPaintGapMs:Math.max(0,...paints.slice(1).map((time,i)=>time-paints[i])),
     p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats};
   }finally{window.scrollTo(0,1600)}
  },{speed,duration});
@@ -114,6 +116,8 @@ try{
    const samples=[];
    for(let sample=0;sample<(baseline?3:1);sample++){
     const value=await measureScroll(page,.48,6000);
+    // Keep timing evidence even when an absolute gate rejects this sample.
+    console.log('Continuous scroll sample',JSON.stringify({native,previous,sample,updates:value.updates,p95GapMs:value.p95GapMs,maxGapMs:value.maxGapMs,maxPaintGapMs:value.maxPaintGapMs}));
     assert.ok(value.updates>30,'Continuous scrolling must keep producing frames');
     if(!previous)assert.ok(value.maxGapMs<500,'Continuous scrolling must not stall for half a second');
     assert.ok(value.stats.decoded<=value.stats.settings.decoded,'Decoded frame memory must stay bounded');
