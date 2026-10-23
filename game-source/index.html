@@ -1,6 +1,69 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>FACET — Pinball</title></head>
-<body>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>FACET — Pinball</title><!-- game-loader-head --><style id="game-loader-critical">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* Shared viewport anchors: page content and menu length cannot move the navbar. */
+:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
+:root .site-brand{position:fixed;z-index:4;top:calc(var(--site-brand-top) + env(safe-area-inset-top,0px));left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));display:block;width:var(--site-brand-width);height:auto;margin:0;padding:0;line-height:0;flex:none;color:#fff;text-decoration:none}
+:root .site-brand img{display:block;width:100%;height:auto}
+:root .site-nav{position:fixed;z-index:40;top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));right:calc(var(--site-nav-right) + env(safe-area-inset-right,0px));left:auto;display:flex;align-items:center;justify-content:flex-end;width:auto;height:44px;min-height:0;margin:0;padding:0;border:0;background:transparent;font-family:Acumin,Arial,sans-serif;font-style:normal;font-variation-settings:"slnt" 0}
+@media(max-width:600px){:root{--site-brand-left:20px;--site-brand-top:21px;--site-brand-width:118px;--site-nav-top:7px;--site-nav-right:12px}}
+body[data-menu-open]{overflow:hidden}
+.menu-toggle{position:relative;z-index:3;display:grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.menu-toggle:hover,.menu-toggle[aria-expanded="true"]{background:transparent;color:#fff}
+.hamburger-lines{display:grid;gap:5px;width:24px;transition:transform .65s cubic-bezier(.22,1,.36,1)}
+.hamburger-lines span{display:block;width:24px;height:1px;background:currentColor;transition:transform .65s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+.menu-toggle[aria-expanded="true"] .hamburger-lines{transform:rotate(90deg)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(2){opacity:0;transform:scaleX(0)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.menu-panel{position:fixed;inset:0 0 0 auto;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(420px,100vw);height:100vh;height:100dvh;max-height:none;margin:0;padding:calc(112px + env(safe-area-inset-top,0px)) max(36px,env(safe-area-inset-right,0px)) calc(36px + env(safe-area-inset-bottom,0px)) 36px;border:0;border-left:1px solid #ffffff18;border-radius:0;background:#0b0e18;color:#fff;box-shadow:none;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;visibility:hidden;pointer-events:none;transform:translateX(100%);transition:transform .7s cubic-bezier(.22,1,.36,1),visibility 0s .7s;text-align:left}
+.menu-panel[data-open]{visibility:visible;pointer-events:auto;transform:translateX(0);transition-delay:0s}
+.menu-panel .menu-item{opacity:0;transform:translateX(40px);transition:transform .8s cubic-bezier(.16,1,.3,1),opacity .6s ease;transition-delay:0s}
+.menu-panel[data-open] .menu-item{opacity:1;transform:translateX(0);transition-delay:calc(.12s + var(--menu-order,0)*.07s)}
+.menu-panel a{display:block;margin:0;padding:14px 0;border:0;border-radius:0;color:#fff;background:transparent;font-size:var(--site-menu-size);font-weight:400;line-height:1.2;letter-spacing:-.02em;text-decoration:none}
+.menu-panel a:hover{color:#fff;opacity:.7}
+.menu-panel[data-open] a[aria-current="page"]{opacity:.45;cursor:default}
+.menu-backdrop{position:fixed;inset:0;z-index:1;background:#0007;opacity:0;visibility:hidden;pointer-events:none;touch-action:none;transition:opacity .5s ease,visibility 0s .7s}
+body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
+.menu-toggle:focus-visible,.menu-panel :is(a,button):focus-visible{outline:1px solid #fff;outline-offset:5px}
+@media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:28px}}
+@media(max-height:500px) and (orientation:landscape){.menu-panel{padding-top:76px;padding-bottom:20px;gap:0}}
+@media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
+@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
+.brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
+.game-loading-screen[hidden]{display:none!important}
+.game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
+.game-loading-screen canvas{display:block;width:100%;height:100%;background:radial-gradient(circle at 62% 60%,#fff 0 8px,#ffffff38 10px,transparent 23px)}
+.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-loading-error{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:#08060c;color:#f6f2ff;font:16px/1.5 Arial,sans-serif;text-align:center}
+.game-loading-error[hidden]{display:none!important}
+.game-loading-error p{max-width:32em;margin:0}
+.game-loading-error button{min-height:44px;padding:10px 24px;border:1px solid #bfff00;border-radius:6px;background:#bfff00;color:#121700;font:600 16px/1.4 Arial,sans-serif;cursor:pointer}
+.game-loading-error button:focus-visible{outline:2px solid #fff;outline-offset:5px}
+body[data-game-loading]{margin:0;background:#08060c;overflow:hidden;--nav-height:90px;--nav-gap:var(--nav-height)}
+body[data-game-loading] #stage{pointer-events:none}
+#stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
+body[data-game-loading] #game-header{position:fixed;inset:0 0 auto;height:0;z-index:40}
+body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);background:#07060d;transform:none!important}
+body[data-game-loading] .nav-trim{position:absolute;bottom:-2px;left:0;width:100%;height:27px;overflow:visible;pointer-events:none}
+body[data-game-loading] .nav-trim path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+body[data-game-loading] .trim-shadow{stroke:#9905ef;stroke-width:7;opacity:.22;filter:blur(4px)}
+body[data-game-loading] .trim-violet{stroke:#aa0cff;stroke-width:2}
+body[data-game-loading] .trim-green{stroke:#afff39;stroke-width:3;filter:drop-shadow(0 0 4px #80e426)}
+body[data-game-loading] .site-brand{position:absolute;z-index:4;top:calc(25px + env(safe-area-inset-top,0px));left:calc(32px + env(safe-area-inset-left,0px));width:160px;line-height:0}
+body[data-game-loading] .site-brand img{display:block;width:100%;height:auto}
+body[data-game-loading] .site-nav{position:absolute;z-index:40;top:calc(14px + env(safe-area-inset-top,0px));right:calc(24px + env(safe-area-inset-right,0px));height:44px}
+body[data-game-loading] .menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}
+body[data-game-loading] .hamburger-lines{display:grid;gap:5px;width:24px}
+body[data-game-loading] .hamburger-lines span{display:block;width:24px;height:1px;background:currentColor}
+body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-events:none}
+@media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
+@media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
+@media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
+</style><link rel="preload" href="/assets/game-loader.js?v=044101e7c68a" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=044101e7c68a" defer data-game-entry="" onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
+<body data-game-loading>
  <header id="game-header">
   <div class="navbar-backdrop" aria-hidden="true"><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></div>
   <a class="site-brand" href="/" target="_top" aria-label="So/Facet pinball home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
@@ -34,15 +97,15 @@
       </form>
      </section>
     </div>
+    <a class="menu-item" href="./account.html" target="_top" data-account-link>My Account</a>
     <a class="menu-item" href="./about.html" target="_top">About</a>
     <a class="menu-item" href="./faq.html" target="_top">FAQs</a>
     <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
    </div>
   </nav>
  </header>
- <main id="stage" class="showing-play" data-ready="false" aria-busy="true"><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span>
+ <main id="stage" class="showing-play" data-ready="false" aria-busy="true" inert><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span>
  </div>
- <div id="loading" role="status"><img src="/assets/sofacet-loading-outline.svg" width="32" height="26" alt="" aria-hidden="true"><span class="loading-copy">Preparing your table. <span id="loading-detail">Loading the Blender artwork…</span></span></div>
  <aside class="side-panel" id="scorecard-panel" aria-label="How to play and scoreboard" hidden>
     <button class="flip-card" id="flip-card" type="button" aria-label="Show scoreboard" aria-pressed="false" aria-describedby="flip-hint">
       <span class="card-inner">
@@ -176,7 +239,7 @@
  <section id="inspection" aria-label="Reference comparison" hidden><label>View <select id="view"><option value="0">Gameplay area</option><option value="1">Launcher</option><option value="2">Rail</option><option value="3">Scoreboard</option></select></label><label>Blender overlay <input id="overlay" type="range" min="0" max="100" value="0"></label><output id="metrics">Measuring frames…</output></section>
 
  <script type="module" src="/src/main.ts"></script>
- <script type="module" src="../navigation.js"></script>
-</body></html>
+ <script defer src="../navigation.js"></script>
+<!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen"><canvas aria-hidden="true"></canvas><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body></html>
 
 

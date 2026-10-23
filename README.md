@@ -18,6 +18,8 @@ npm start
 
 Open `http://127.0.0.1:8766/`. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
+For ZIP downloads containing the full video, skip the two `git lfs` commands above.
+
 ```sh
 node --test --test-concurrency=1 tests/*.test.mjs
 npm run smoke
@@ -34,22 +36,25 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 | `navigation.js`, `assets/navigation.css` | Shared brand placement, hamburger and navigation drawer |
 | `game-source/` | Three.js table, Rapier physics, controls, scorecard, leaderboard and rewards screen |
 | `membership-source/` | React registration, phone verification, validation and save/leave flows |
-| `faq-source/`, `about-source/` | React informational pages |
+| `faq-source/`, `about-source/` | React informational pages, including the Explore collection gallery |
+| `account-source/`, `shared/` | React account flow and shared brand text |
 | `server.mjs`, `verify-game.mjs`, `replay-worker.mjs` | Same-origin API, player sessions and score verification |
 | `membership-api.mjs`, `membership-otp.mjs`, `rewards.mjs` | Membership, SMS integration boundary and external rewards adapter |
 | `scripts/`, `tests/` | Builds, deployment checks and automated tests |
 | `assets/`, `sounds/`, `vendor/`, `leaderboard/`, `references/` | Runtime media, exported table data and bundled dependencies |
 | `licenses/` | Third-party license and audio attribution notices |
 
-`npm run build` checks TypeScript and rebuilds the frame index, game and all React pages. Generated `play.html`, `membership.html`, `faq.html`, `about.html` and their browser bundles are included. Edit the corresponding source directory and rebuild instead of editing generated pages.
+`npm run build` checks TypeScript and rebuilds the frame index, game and all React pages. Generated `play.html`, `membership.html`, `faq.html`, `about.html`, `account.html` and their browser bundles are included. Edit the corresponding source directory and rebuild instead of editing generated pages.
 
 ## Experience and gameplay
 
 - The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges. The welcome copy stays visible until scrolling starts, fades out over one second and returns when the player scrolls back to the starting position. Reduced-motion mode switches immediately.
-- The queen impact at source frame 2164 hands directly into the game. Play now bypasses the journey.
+- The queen impact at source frame 2164 hands directly into the game. Skip to Game bypasses the journey.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
-- Phone and tablet layouts use touch controls and a compact scorecard. Desktop retains the keyboard instructions and flip card. Sound controls respect browser activation requirements.
+- Phone and tablet layouts flip between Hold to launch and the live scorecard as the ball launches and returns. Desktop retains the keyboard instructions and flip card, with a Hold button below the card. Only one paddle accepts input at a time; the held paddle keeps priority until released. Sound controls respect browser activation requirements.
+- Membership Back returns to the landing experience without replaying the intro loader. Registration steps still move back within the form.
+- The About page uses the approved Explore layout with scroll reveals and a keyboard-accessible collection gallery. The shared navbar and current-page menu behavior apply there as well.
 - Game rewards display `pts`; the conversion remains **10 points = ₹1**.
 
 | Table interaction | Score |
@@ -145,13 +150,15 @@ Keep the service at **one replica** with persistent `DATA_DIR` storage. The curr
 
 ### R2 video delivery
 
-The app, APIs, frame index and fallback media remain on Railway. When configured, the two original public MP4 files are served through an R2 custom domain. Use a dedicated bucket; `ops/r2-cors.json` permits public GET/HEAD requests and exposes the byte-range headers required by the frame decoder. The production delivery URL must be a custom domain, because `r2.dev` does not provide CDN caching.
+The app, APIs, frame index and fallback media remain on Railway. When configured, the two public MP4 files are served through an R2 custom domain. Use a dedicated bucket; `ops/r2-cors.json` permits public GET/HEAD requests and exposes the byte-range headers required by the frame decoder. The production delivery URL must be a custom domain, because `r2.dev` does not provide CDN caching.
 
-Desktop and mobile both use the exact original 1920×1080 media at 60 FPS, preserving all 1,990 journey frames and the same camera, copy, sound and game handoff timing. There is no resize or additional lossy encoding. Mobile optimizations bound download concurrency and decoded-frame memory; grouped byte-range requests, directional prefetching and animation-frame presentation improve scrolling without changing image quality. No HLS/Stream transcoding is used: every scroll frame must remain independently decodable and match its byte index.
+Desktop and mobile share a high-quality 1920×1080 H.264 encode at 60 FPS, retaining all 1,990 journey frames and the same camera, copy, sound and game handoff timing. The all-IDR encode uses x264 slow / CRF 16, Rec.709, YUV420p and faststart. It is visually close to the original, not mathematically lossless: 171,078,178 bytes versus 248,630,827 bytes (31.2% smaller), with full-sequence SSIM 0.995112 against the original after timestamp normalization. No resizing or frame-rate reduction is applied. Mobile optimizations bound download concurrency and decoded-frame memory; grouped byte-range requests and directional prefetching reduce stalls. No HLS/Stream transcoding is used: every scroll frame must remain independently decodable and match its byte index.
 
-On desktop, Safari's native decoder can retain immutable full-resolution `VideoFrame` surfaces. The mobile cache retains at most four frames (about 32 MiB as RGBA), plus one in-flight decode, prioritizes frames in the scroll direction, and releases frames when the page is hidden. Buffered frames are presented in the animation loop alongside scene placement and copy. Touch devices and older browsers without `VideoFrame` use the native video compositor and only seek the requested position, avoiding extra full-size canvas copies. The WebKit release check compares rendered pixels with the original native video and measures continuous forward/reverse scrolling against the previous renderer on the same runner; source FPS is not a guarantee of rendered FPS on a physical phone.
+On desktop, Safari's native decoder can retain immutable full-resolution `VideoFrame` surfaces. The mobile cache retains at most four frames (about 32 MiB as RGBA), plus one in-flight decode, prioritizes frames in the scroll direction, and releases frames when the page is hidden. Buffered frames are presented in the animation loop alongside scene placement and copy. Touch devices and older browsers without `VideoFrame` use the native video compositor and only seek the requested position, avoiding extra full-size canvas copies. The WebKit release check compares rendered pixels with the selected native video and measures continuous forward/reverse scrolling against the previous renderer on the same runner; source FPS is not a guarantee of rendered FPS on a physical phone.
 
-Run `npm run build:frames` after changing source media. It checks Full HD dimensions, 60 FPS, colour metadata and an IDR in every frame, then generates the matching manifest and content hashes. The manifest intentionally maps both device profiles to the same original files.
+After the opening, the live 43-plate ball loops its authored split poses in a wave while a bounded opening buffer warms. The gate requires a decoded first frame and three seconds of native buffering (or the native HAVE_ENOUGH_DATA signal, because Safari caps paused prefetch), or up to three seconds of contiguous compressed samples within 75% of a 16 MiB mobile / 24 MiB desktop budget. It never downloads the entire movie into JavaScript memory or retains all decoded frames. Changing copy, real buffer progress, retry and Skip to Game remain available; reduced motion disables the wave. This initial buffer cannot guarantee stall-free playback on every network or device.
+
+Run `npm run build:frames` after changing source media. It checks Full HD dimensions, 60 FPS, colour metadata and an IDR in every frame, then generates the matching manifest and content hashes. The manifest intentionally maps both device profiles to the same Full HD files.
 
 After creating the bucket and connecting its custom domain:
 

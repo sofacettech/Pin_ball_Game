@@ -32,7 +32,9 @@ export async function prepareGeometry(root:THREE.Object3D){
  const details:{mesh:THREE.Mesh;original:THREE.BufferAttribute;optimized:THREE.BufferAttribute}[]=[];
  let originalTriangles=0,optimizedTriangles=0,maxErrorMetres=0;
  if(MeshoptSimplifier.supported)await MeshoptSimplifier.ready;
+ let yieldedAt=performance.now();
  for(const mesh of meshes){
+  if(performance.now()-yieldedAt>8){await new Promise<void>(resolve=>setTimeout(resolve,0));yieldedAt=performance.now()}
   const geometry=mesh.geometry,index=geometry.index,position=geometry.getAttribute('position'),normal=geometry.getAttribute('normal'),uv=geometry.getAttribute('uv');
   const originalCount=index?index.count:position.count;originalTriangles+=originalCount/3;
   const group=mesh.userData.game_render_group||'',mat=mesh.material as THREE.MeshStandardMaterial;

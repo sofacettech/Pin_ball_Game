@@ -1,6 +1,6 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 12, ahead: 72, prefetch: 96, network: 3, batch: 24,
-  decoded: 8, compressedBytes: 12 * 1024 * 1024, idleMs: 100,
+  behind: 16, ahead: 192, prefetch: 224, network: 3, batch: 32,
+  decoded: 8, compressedBytes: 24 * 1024 * 1024, idleMs: 100,
 };
 
 export function createFrameCache({count, source, onReady, onError, config = {}}) {
@@ -12,7 +12,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
   }
   let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
-  let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0;
+  let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
@@ -82,6 +82,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
 
   function fail(error, frame, transient = false) {
     if (destroyed || suspended || error.name === 'AbortError') return;
+    lastError = {frame, name: error.name, message: error.message};
     if (!transient && source.fallback()) {
       generation++;
       for (const job of active) job.controller.abort();
@@ -140,15 +141,26 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       // request for every new frame entering the window during a slow scroll.
       if (source.loadFrames && !video && performance.now() - requestedAt < settings.idleMs &&
         frames.length < settings.batch && Math.abs(frame - target) > settings.decoded &&
-        frame !== lead && valid(frames.at(-1) + direction)) continue;
+        frame !== lead && valid(frames.at(-1) + direction)) break;
       const controller = new AbortController(), job = {controller, frames, size}, epoch = generation;
       active.add(job); reserved += size;
       let reservation = size;
       const releaseReservation = () => { reserved -= reservation; reservation = 0; };
+      const received = new Set();
+      const receive = (next, data) => {
+        if (destroyed || suspended || controller.signal.aborted || epoch !== generation || received.has(next)) return;
+        received.add(next);
+        const released = Math.min(reservation, data?.byteLength || 0);
+        reservation -= released; reserved -= released;
+        if (useful(next) && !compressed.has(next)) {
+          compressed.set(next, data); bytes += data?.byteLength || 0; failures.delete(next);
+        }
+        trim(); pump();
+      };
       for (const next of frames) loading.add(next);
       counters.peakNetwork = Math.max(counters.peakNetwork, active.size);
       const load = source.loadFrames
-        ? source.loadFrames(frames, controller.signal, settings.compressedBytes)
+        ? source.loadFrames(frames, controller.signal, settings.compressedBytes, receive)
         : source.load(frame, controller.signal, settings.compressedBytes).then(data => new Map([[frame, data]]));
       load.then(samples => {
         // Completed bytes replace their reservation before another completion
@@ -186,7 +198,11 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
     decoding = true;
     const epoch = generation;
-    source.decode(next, compressed.get(next)).then(image => {
+    // Keep motion responsive; confirm compositor pixels at the final scroll
+    // destination instead of starting/stopping native playback for every step.
+    // Frame zero displays the authored still while the native video warms out
+    // of view; hidden video surfaces need not produce compositor callbacks.
+    source.decode(next, compressed.get(next), next === lead && next !== 0).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
       if (image.transient) {
         for (const retained of decoded.values()) retained.close();
@@ -195,7 +211,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       }
       decoded.set(next, image); trim(); counters.decodedTotal++;
       counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
-      if (next === target) counters.latencyMs = performance.now() - requestedAt;
+      if (next === target) { counters.latencyMs = performance.now() - requestedAt; lastError = null; }
       onReady(next, image);
     }).catch(error => { if (epoch === generation) fail(error, next); }).finally(() => { decoding = false; pump(); });
   }
@@ -206,6 +222,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
+    if (source.transient && frame > 0 && frame === next && 'presentedFrame' in source && source.presentedFrame !== frame) decoded.delete(frame);
     source.retarget?.(target,presented);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
@@ -222,6 +239,27 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   request(0);
   return {
     request,
+    // Readiness describes a bounded opening window, never the whole movie.
+    // Keep room for the decoder and for requests already in flight.
+    get preparation() {
+      if (source.mode === 'video') {
+        // Safari may stop prefetching a paused video before three seconds even
+        // after reporting HAVE_ENOUGH_DATA. Respect that native readiness signal
+        // instead of leaving a playable journey behind an endless loader.
+        const progress = source.stats.canPlayThrough ? 1 : Math.min(1, (source.stats.bufferedSeconds || 0) / 3);
+        return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
+      }
+      let required = 0, available = 0, size = 0;
+      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 180);
+      for (let frame = 0; frame < limit; frame++) {
+        const length = estimate(frame);
+        if (size + length > settings.compressedBytes * .75 && required) break;
+        size += length; required++;
+        if (compressed.has(frame) || decoded.has(frame)) available++;
+      }
+      const progress = required ? available / required : 0;
+      return {progress: decoded.has(0) ? progress : Math.min(progress, .99), ready: decoded.has(0) && progress === 1};
+    },
     get: frame => decoded.get(frame),
     closest(frame, previous) {
       let best;
@@ -233,7 +271,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     },
     get stats() {
       return {
-        ...counters, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
+        ...counters, lastError, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
         compressed: compressed.size, compressedBytes: bytes, reservedBytes: reserved,
         pending: active.size + (decoding ? 1 : 0), network: active.size,
         queued: (source.mode === 'video' ? warmFrames() : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,

@@ -65,6 +65,7 @@ export class TableView {
   progress(8,'Loading the original geometry…');
   const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const gltf=await loader.loadAsync(asset(manifest.model),e=>progress(8+Math.min(65,e.loaded/(e.total||manifest.model_bytes||20e6)*65),'Loading the original geometry…'));
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   this.scene.add(gltf.scene);gltf.scene.updateMatrixWorld(true);
   const bedBounds=this.manifest.static_collision_objects.find(o=>o.source_name==='Playfield | dark purple metal bed')!.world_bounds;
   const tableBounds=new THREE.Box3().setFromPoints(bedBounds.map(p=>this.convert(p))),tableSize=tableBounds.getSize(new THREE.Vector3()),padding=manifest.ball_diameter*2;
@@ -97,6 +98,7 @@ export class TableView {
   const shadowMaterial=new THREE.MeshBasicMaterial({map:haloTexture,color:0x000000,transparent:true,opacity:.32,depthWrite:false});
   this.ballShadow=new THREE.Mesh(haloGeometry,shadowMaterial);this.ballShadow.rotation.x=-Math.PI/2;this.ballShadow.scale.setScalar(manifest.ball_diameter*1.5);this.ballShadow.userData.floorHeight=floorTop;this.scene.add(this.ballShadow);
   progress(74,'Preparing detailed lighting and smooth edges…');
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   this.geometryQuality=await prepareGeometry(gltf.scene);
   const lighting:SourceLighting=await json('/assets/table-lighting.json');
   if(lighting.source_sha256!==manifest.source_sha256||!Number.isFinite(lighting.exposure))throw new Error('The lighting does not match the current table.');
@@ -190,6 +192,7 @@ export class TableView {
   gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0){const full=obj.material;
    full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
    const fast=full.clone();fast.name=full.name;fast.transmission=.94;fast.clearcoat=.6;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   this.overviewBatch=batchOverview(this.scene);this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
  }
  setReference(index:number){

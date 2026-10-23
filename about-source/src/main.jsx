@@ -1,5 +1,6 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
+import {BrandText} from '../../assets/brand-text.jsx';
 import './style.css';
 
 const collectionPictures = [
@@ -36,7 +37,7 @@ const collectionPictures = [
 ];
 
 function Wordmark() {
-  return <span className="wordmark">SO<span className="wordmark-slash">/</span>FACET</span>;
+  return <span className="wordmark"><BrandText>SO/FACET</BrandText></span>;
 }
 
 function Picture(props) {

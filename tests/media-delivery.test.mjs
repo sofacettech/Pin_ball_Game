@@ -37,8 +37,8 @@ test('each published variant matches its own byte index and preserves the full t
   }
  }
  assert.equal(indexes[0].frameCount,indexes[1].frameCount);
- // Quality must never silently drop on phones: both profiles use the original bytes.
+ // Quality must never silently drop on phones: both profiles use the same approved encode.
  assert.deepEqual(manifest.variants.mobile,manifest.variants.desktop);
  assert.deepEqual([indexes[1].width,indexes[1].height],[1920,1080]);
- assert.equal(indexes[1].sha256,'c6f93f947bb308601957cc78c2153620359b994f38c1d4e06c9bf3728c6052b2');
+ assert.equal(indexes[1].sha256,'b68fb0f2edd851e63ea4cb66708af840316cc7e91ea56beb15e790b4db3e4ff2');
 });

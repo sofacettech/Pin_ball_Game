@@ -90,6 +90,24 @@ test('denied autoplay shows a working gesture button without automatic retries',
  e.video.dispatchEvent(new Event('canplay'));await turn();assert.equal(e.video.calls,1);
  e.video.reject=false;e.button.dispatchEvent(new Event('click'));await turn();assert.equal(e.video.calls,2);assert.equal(e.button.hidden,true);assert.ok(e.frames);
 });
+
+test('native compositor readiness waits for presented pixels and cancels frame callbacks',async()=>{
+ const video=new Video(),callbacks=new Map();let id=0;
+ video.readyState=2;video.seeking=true;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};
+ video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ const present=mediaTime=>{const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback(0,{mediaTime})};
+ let done=false;
+ const pending=waitForVideo(video,{readyState:2,presentedFrame:true}).then(time=>{done=true;return time});
+ present(3);await turn();assert.equal(done,false,'A frame from an unfinished seek is not usable');
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
+ assert.equal(done,false,'seeked and HAVE_CURRENT_DATA do not prove that pixels were presented');
+ present(200/60);assert.equal(await pending,200/60);assert.equal(callbacks.size,0);
+ const controller=new AbortController(),cancelled=waitForVideo(video,{presentedFrame:true,signal:controller.signal});
+ controller.abort();await assert.rejects(cancelled,{name:'AbortError'});assert.equal(callbacks.size,0);
+ await assert.rejects(waitForVideo(video,{presentedFrame:true,timeout:5}),/still loading/);assert.equal(callbacks.size,0);
+ video.error={code:3};await assert.rejects(waitForVideo(video,{presentedFrame:true}),{name:'EncodingError'});assert.equal(callbacks.size,0);
+});
 test('unexpected pause prompts; visibility and bfcache resume once without restarting',async t=>{
  const e=environment(t);e.player.start();await turn();e.video.time=1.5;
  document.hidden=true;document.dispatchEvent(new Event('visibilitychange'));assert.ok(e.video.paused);assert.equal(e.button.hidden,true);
@@ -186,6 +204,29 @@ test('an indexed all-IDR native seek accepts the requested sync frame without a 
  const pending=source.decode(20);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,20/60);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));
  const image=await pending;assert.equal(image.time,20/60);assert.equal(video.seeking,false);image.close();
+});
+
+test('native seeking verifies compositor timestamps instead of trusting the requested currentTime',async t=>{
+ snapshotEnvironment(t);const previousMedia=globalThis.matchMedia;
+ globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previousMedia});
+ const video=new Video(),callbacks=new Map();let id=0,fastCalls=0,done=false;
+ video.readyState=2;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};
+ video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ video.fastSeek=time=>{fastCalls++;video.time=time;video.seeking=true};
+ const present=frame=>{video.seeking=false;video.dispatchEvent(new Event('seeked'));const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback(0,{mediaTime:frame/60})};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const pending=source.decode(20).then(image=>{done=true;return image});await turn();
+ assert.equal(video.currentTime,20.25/60);
+ present(10);await turn();assert.equal(done,false,'The reported currentTime must not hide stale compositor pixels');
+ assert.equal(video.seeking,true,'An approximate presented frame needs a precise seek');
+ present(10);await turn();assert.equal(done,false,'Ignore queued old callbacks during the precise seek');
+ present(20);assert.equal(await pending,video);assert.equal(callbacks.size,0);
+ assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
+ assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
+ const next=source.decode(21);await turn();assert.equal(fastCalls,1,'Disable approximate seeking after a presented-frame mismatch');
+ source.suspend();await assert.rejects(next,{name:'AbortError'});assert.equal(callbacks.size,0);
 });
 test('an approximate native seek corrects the frame and disables further approximate seeks',async t=>{
  snapshotEnvironment(t);
@@ -310,4 +351,22 @@ test('a failed CDN range retries the identical indexed bytes on Railway without 
  assert.deepEqual(requests,[['https://media.example','bytes=100-102'],['https://app.example','bytes=100-102'],['https://app.example','bytes=100-102']]);
  assert.equal(source.mode,'webcodecs');assert.equal(source.stats.deliveryFallbacks,1);
  assert.equal(source.decodedFrameBytes,1280*720*4);
+});
+
+test('a range exposes its first complete frame before the rest of the batch downloads',async t=>{
+ const oldFetch=globalThis.fetch,oldDecoder=globalThis.VideoDecoder,oldCaches=globalThis.caches;
+ let stream;
+ globalThis.caches=undefined;
+ globalThis.VideoDecoder=class{static async isConfigSupported(){return{supported:true}}state='configured';configure(){}close(){this.state='closed'}};
+ globalThis.fetch=async()=>new Response(new ReadableStream({start(controller){stream=controller}}),{status:206,headers:{'Content-Range':'bytes 100-105/200'}});
+ t.after(()=>{globalThis.fetch=oldFetch;globalThis.VideoDecoder=oldDecoder;globalThis.caches=oldCaches});
+ const source=await createFrameSource(new Video(),{source:'./journey.mp4',codec:'avc1.64002a',sha256:'d'.repeat(64),bytes:200,frames:[[100,3],[103,3]]},new URL('https://example.test/assets/index.json'));
+ t.after(()=>source.destroy());
+ const ready=[];
+ const loading=source.loadFrames([0,1],new AbortController().signal,6,(frame,bytes)=>ready.push([frame,[...bytes]]));
+ await turn();stream.enqueue(new Uint8Array([1,2]));await turn();assert.deepEqual(ready,[]);
+ stream.enqueue(new Uint8Array([3,4]));await turn();
+ try{assert.deepEqual(ready,[[0,[1,2,3]]],'The camera must not wait for unrelated later frames in the HTTP batch')}
+ finally{stream.enqueue(new Uint8Array([5,6]));stream.close();await loading}
+ assert.deepEqual(ready,[[0,[1,2,3]],[1,[4,5,6]]]);
 });

@@ -1,6 +1,37 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#160d23"><meta name="description" content="Become a SO/FACET member and save your pinball points."><title>SO/FACET · Save your win</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/assets/navigation.css?v=current-8d2faf6d2270"></head><body>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#160d23"><meta name="description" content="Become a SO/FACET member and save your pinball points."><title>SO/FACET · Save your win</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/assets/navigation.css?v=current-8d2faf6d2270"><!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
+.game-loading-screen[hidden]{display:none!important}
+.game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
+.game-loading-screen canvas{display:block;width:100%;height:100%;background:radial-gradient(circle at 62% 60%,#fff 0 8px,#ffffff38 10px,transparent 23px)}
+.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-loading-error{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:#08060c;color:#f6f2ff;font:16px/1.5 Arial,sans-serif;text-align:center}
+.game-loading-error[hidden]{display:none!important}
+.game-loading-error p{max-width:32em;margin:0}
+.game-loading-error button{min-height:44px;padding:10px 24px;border:1px solid #bfff00;border-radius:6px;background:#bfff00;color:#121700;font:600 16px/1.4 Arial,sans-serif;cursor:pointer}
+.game-loading-error button:focus-visible{outline:2px solid #fff;outline-offset:5px}
+body[data-game-loading]{margin:0;background:#08060c;overflow:hidden;--nav-height:90px;--nav-gap:var(--nav-height)}
+body[data-game-loading] #stage{pointer-events:none}
+#stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
+body[data-game-loading] #game-header{position:fixed;inset:0 0 auto;height:0;z-index:40}
+body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);background:#07060d;transform:none!important}
+body[data-game-loading] .nav-trim{position:absolute;bottom:-2px;left:0;width:100%;height:27px;overflow:visible;pointer-events:none}
+body[data-game-loading] .nav-trim path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+body[data-game-loading] .trim-shadow{stroke:#9905ef;stroke-width:7;opacity:.22;filter:blur(4px)}
+body[data-game-loading] .trim-violet{stroke:#aa0cff;stroke-width:2}
+body[data-game-loading] .trim-green{stroke:#afff39;stroke-width:3;filter:drop-shadow(0 0 4px #80e426)}
+body[data-game-loading] .site-brand{position:absolute;z-index:4;top:calc(25px + env(safe-area-inset-top,0px));left:calc(32px + env(safe-area-inset-left,0px));width:160px;line-height:0}
+body[data-game-loading] .site-brand img{display:block;width:100%;height:auto}
+body[data-game-loading] .site-nav{position:absolute;z-index:40;top:calc(14px + env(safe-area-inset-top,0px));right:calc(24px + env(safe-area-inset-right,0px));height:44px}
+body[data-game-loading] .menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}
+body[data-game-loading] .hamburger-lines{display:grid;gap:5px;width:24px}
+body[data-game-loading] .hamburger-lines span{display:block;width:24px;height:1px;background:currentColor}
+body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-events:none}
+@media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
+@media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
+@media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
+</style><link rel="preload" href="/assets/game-loader.js?v=044101e7c68a" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=044101e7c68a" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head><body>
 <div class="standalone-navigation site-nav" data-standalone-navigation hidden><button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button><nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
+          <a class="menu-item" href="./account.html" target="_top" data-account-link>My Account</a>
           <a class="menu-item" href="./about.html" target="_top">About</a>
           <a class="menu-item" href="./faq.html" target="_top">FAQs</a>
           <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
@@ -9,4 +40,4 @@
 <a class="site-brand" href="/" target="_top" aria-label="SOFACET home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
 <div id="membership-root"></div><noscript>Enable JavaScript to become a member and save your points.</noscript>
 <script type="module" src="/src/main.jsx"></script><script type="module" src="../navigation.js"></script>
-</body></html>
+<!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body></html>

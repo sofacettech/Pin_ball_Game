@@ -61,8 +61,9 @@ export async function createLandingCopy() {
             continue;
           }
           const readable = element.textContent.replace(/\s+/g, ' ').trim();
+          const wordmark = element.classList.contains('opening-brand');
           SplitText.create(element, {
-            type: supporting ? 'lines' : 'lines,chars', mask: 'lines', linesClass: 'kinetic-line', charsClass: 'kinetic-char',
+            type: supporting || wordmark ? 'lines' : 'lines,chars', ignore: '.inline-brand', mask: 'lines', linesClass: 'kinetic-line', charsClass: 'kinetic-char',
             autoSplit: true, aria: supporting ? 'none' : element === heading ? 'auto' : 'hidden',
             onRevert() { element.classList.remove('kinetic-ready'); },
             onSplit(split) {
@@ -74,7 +75,7 @@ export async function createLandingCopy() {
                 accessible.textContent = readable;
                 element.append(accessible);
               }
-              const pieces = supporting ? split.lines : split.chars;
+              const pieces = supporting || wordmark ? split.lines : split.chars;
               const stagger = { amount: (supporting ? .08 : STAGGER) / revealRate };
               const timeline = gsap.timeline({ paused: true, defaults: { ease: 'power3.inOut' } });
               timeline.fromTo(pieces, { yPercent: 115, opacity: .35 }, {
