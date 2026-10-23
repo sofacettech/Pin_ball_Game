@@ -162,6 +162,8 @@ After the opening, the live 43-plate ball loops its authored split poses in a wa
 
 Run `npm run build:frames` after changing source media. It checks Full HD dimensions, 60 FPS, colour metadata and an IDR in every frame, then generates the matching manifest and content hashes. The manifest intentionally maps both device profiles to the same Full HD files.
 
+Touch devices keep the scene at a stable large viewport height while browser bars resize the controls. Native video uses `object-fit: contain` inside the 16:9 stage so viewport changes cannot stretch the ball. The WebGL backing buffer is capped at Full HD, and the journey canvas is allocated on its first draw and released on exit. With a local server running, `SOFACET_VIDEO_URL=http://127.0.0.1:8768 node scripts/browser-mobile-geometry.mjs` checks portrait, landscape and simulated browser-bar changes with automatic and forced native playback.
+
 After creating the bucket and connecting its custom domain:
 
 ```sh
