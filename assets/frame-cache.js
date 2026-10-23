@@ -140,7 +140,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       // request for every new frame entering the window during a slow scroll.
       if (source.loadFrames && !video && performance.now() - requestedAt < settings.idleMs &&
         frames.length < settings.batch && Math.abs(frame - target) > settings.decoded &&
-        frame !== lead && valid(frames.at(-1) + direction)) continue;
+        frame !== lead && valid(frames.at(-1) + direction)) break;
       const controller = new AbortController(), job = {controller, frames, size}, epoch = generation;
       active.add(job); reserved += size;
       let reservation = size;
