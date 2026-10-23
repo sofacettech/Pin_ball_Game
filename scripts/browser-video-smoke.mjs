@@ -86,29 +86,8 @@ try{
    if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
    await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
    await page.touchscreen.tap(195,422);
-   const frames=[];
-   for(const y of [160,1600,8000,800,0]){
-    await page.evaluate(y=>window.scrollTo(0,y),y);
-    await page.waitForFunction(frame=>{
-     const sequence=window.sofacetPreview.sequence;
-     const stats=sequence.stats;
-     return sequence.desiredFrame===frame&&sequence.displayedFrame===frame&&
-      (frame===0||stats.renderer!=='native-video'||stats.presentedFrame===undefined||stats.presentedFrame===frame);
-    },y/8,{timeout:30000});
-    const state=await page.evaluate(()=>{
-     const sequence=window.sofacetPreview.sequence;
-     const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
-     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
-     if(sequence.displayedFrame)canvas.getContext('2d',{alpha:false}).drawImage(active,0,0);
-     return{frame:sequence.displayedFrame,phase:sequence.phase,stats:sequence.stats,
-      image:sequence.displayedFrame?canvas.toDataURL():null};
-    });
-    assert.equal(state.stats.sourceWidth,1920);assert.equal(state.stats.sourceHeight,1080);
-    if(native)assert.equal(state.stats.mode,'video');
-    if(state.image)frames.push(state.image);
-    console.log(JSON.stringify({native,frame:state.frame,phase:state.phase,mode:state.stats.mode,fallback:state.stats.fallbackReason}));
-   }
-   assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
+   // Compare steady scrolling before large jumps: the old renderer skips those
+   // frames while the paced renderer decodes their full intervening journey.
    // Measure sustained scrolling as well as jumps: arriving eventually does not
    // prove that intermediate frames are being presented evenly.
    // Shared runners vary between adjacent six-second windows. Compare medians
@@ -152,6 +131,36 @@ try{
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }
+   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
+   const frames=[];
+   for(const y of [160,1600,8000,800,0]){
+    await page.evaluate(y=>window.scrollTo(0,y),y);
+    await page.waitForFunction(frame=>{
+     const sequence=window.sofacetPreview.sequence;
+     const stats=sequence.stats;
+     return sequence.desiredFrame===frame&&sequence.displayedFrame===frame&&
+      (frame===0||stats.renderer!=='native-video'||stats.presentedFrame===undefined||stats.presentedFrame===frame);
+    },y/8,{timeout:30000});
+    const state=await page.evaluate(()=>{
+     const sequence=window.sofacetPreview.sequence;
+     const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
+     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
+     if(sequence.displayedFrame)canvas.getContext('2d',{alpha:false}).drawImage(active,0,0);
+     return{frame:sequence.displayedFrame,phase:sequence.phase,stats:sequence.stats,
+      image:sequence.displayedFrame?canvas.toDataURL():null};
+    });
+    assert.equal(state.stats.sourceWidth,1920);assert.equal(state.stats.sourceHeight,1080);
+    if(native)assert.equal(state.stats.mode,'video');
+    if(state.image)frames.push(state.image);
+    console.log(JSON.stringify({native,frame:state.frame,phase:state.phase,mode:state.stats.mode,fallback:state.stats.fallbackReason}));
+   }
+   assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
+   // Large-jump recovery still has its own absolute continuity/memory gates.
+   const recovery=await measureScroll(page,.48,6000);
+   console.log('Post-jump scroll recovery',JSON.stringify({native,previous,updates:recovery.updates,p95GapMs:recovery.p95GapMs,maxGapMs:recovery.maxGapMs,maxPaintGapMs:recovery.maxPaintGapMs}));
+   assert.ok(recovery.updates>30,'Scrolling must recover after large forward/reverse jumps');
+   if(!previous)assert.ok(recovery.maxGapMs<500,'Post-jump scrolling must not stall for half a second');
+   assert.ok(recovery.stats.decoded<=recovery.stats.settings.decoded,'Post-jump decoded memory must stay bounded');
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
    // The historical mutable-video renderer is a pacing reference, not the
    // implementation under test for the new immutable-frame pixel guarantee.
