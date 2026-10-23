@@ -23,9 +23,9 @@ function snapshotEnvironment(t){
 function environment(t){
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
  globalThis.document=Object.assign(new EventTarget(),{hidden:false});globalThis.window=new EventTarget();
- t.after(()=>{globalThis.document=oldDocument;globalThis.window=oldWindow});
+
  const video=new Video(),button=Object.assign(new EventTarget(),{innerHTML:'Enter SOFACET',hidden:true});let ended=0,frames=0;
- const player=connectOpeningVideo(video,button,()=>ended++,()=>frames++);t.after(()=>player.destroy());
+ const player=connectOpeningVideo(video,button,()=>ended++,()=>frames++);t.after(()=>{player.destroy();globalThis.document=oldDocument;globalThis.window=oldWindow});
  return{video,button,player,get ended(){return ended},get frames(){return frames}};
 }
 

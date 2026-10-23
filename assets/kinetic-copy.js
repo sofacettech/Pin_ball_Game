@@ -52,6 +52,14 @@ export async function createLandingCopy() {
         context.add(() => () => label === null ? heading.removeAttribute('aria-label') : heading.setAttribute('aria-label', label));
         const targets = [...parts.map(element => ({ element, supporting: false })), ...(detail ? [{ element: detail, supporting: true }] : [])];
         for (const { element, supporting } of targets) {
+          if (element.matches('.opening-brand')) {
+            const timeline = gsap.timeline({ paused: true }).fromTo(element.querySelector('.opening-wordmark'),
+              { yPercent: 115, opacity: .35 },
+              { yPercent: 0, opacity: 1, duration: (ENTER + STAGGER) / revealRate, ease: 'power3.inOut' }, from / FPS);
+            timelines.set(element, { timeline, section });
+            timeline.time(frame / FPS, true);
+            continue;
+          }
           const readable = element.textContent.replace(/\s+/g, ' ').trim();
           SplitText.create(element, {
             type: supporting ? 'lines' : 'lines,chars', mask: 'lines', linesClass: 'kinetic-line', charsClass: 'kinetic-char',

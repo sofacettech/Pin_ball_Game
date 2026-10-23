@@ -1,3 +1,4 @@
+import {setBrandText} from '../../shared/brand-text.ts';
 import './post-game-rewards.css';
 import {formatPoints,rewardMoney,resultHeadline,leaveCopy} from './player-copy';
 
@@ -52,7 +53,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult)=>
    $('rewards-value').textContent=rewardMoney(result.points);
    $('rewards-value-line').hidden=low;
    let lowCopy=$('rewards-low-copy');
-   if(!lowCopy){lowCopy=document.createElement('p');lowCopy.id='rewards-low-copy';lowCopy.className='rewards-value-line';lowCopy.textContent='Play again. Every 10 points is ₹1 off your So/Facet purchases.';$('rewards-value-line').after(lowCopy)}
+   if(!lowCopy){lowCopy=document.createElement('p');lowCopy.id='rewards-low-copy';lowCopy.className='rewards-value-line';setBrandText(lowCopy,'Play again. Every 10 points is ₹1 off your So/Facet purchases.');$('rewards-value-line').after(lowCopy)}
    lowCopy.hidden=!low;
    $('rewards-expiry').hidden=low;$('rewards-register').hidden=low;$('rewards-retry').classList.toggle('flow-primary',low);
    $('rewards-retry').querySelector('span')!.textContent=low?'Play again':'RETRY';

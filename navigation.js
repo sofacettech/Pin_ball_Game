@@ -3,6 +3,16 @@ if (standalone) standalone.hidden = false;
 
 const toggle = document.querySelector('[data-menu-toggle]');
 const panel = document.querySelector('[data-menu-panel]');
+let accountLink = panel.querySelector('[data-account-link]');
+if (!accountLink) {
+  accountLink = document.createElement('a');
+  accountLink.className = 'menu-item';
+  accountLink.href = './account.html';
+  accountLink.target = '_top';
+  accountLink.setAttribute('data-account-link', '');
+  panel.prepend(accountLink);
+}
+accountLink.textContent = 'My Account';
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {
   const target = new URL(item.href, location.href);

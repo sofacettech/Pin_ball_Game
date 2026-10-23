@@ -169,3 +169,19 @@ Uploads verify local hashes before writing immutable `videos/<sha256>/<filename>
 Automated tests cover score verification, scoring and target placement, membership validation, reward retry/idempotency rules, frontend state/copy, member-only leaderboard access, frame-cache bounds and video fallback behavior. Browser checks have covered desktop, phone and tablet layouts in Chromium and WebKit.
 
 Before collecting memberships publicly, finish SMS and approved policies, test the live rewards connection, and verify the complete flow on physical Safari/iPhone devices. Automated WebKit checks do not replace real-device video, audio and touch testing.
+
+## My Account
+
+`account-source/` is the React sign-in and points page. The shared navigation links **My Account** to `account.html`; registration remains a separate flow for saving a new player's score. The existing brand artwork and navbar anchors are reused. Written brand names use the supplied wordmark font without changing surrounding typography.
+
+An existing member session can read `GET /api/account`: `{name, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
+
+The backend account service still needs to connect these same-origin routes. They currently return 503 without sending messages or changing records:
+
+- `POST /api/account/otp/request {phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}`.
+- `POST /api/account/otp/verify {phoneNumber, otp, challengeId}` → `{verified: true}` plus an authenticated HttpOnly session cookie. Verify account ownership on the server; the frontend confirms the session before showing points.
+- `POST /api/account/details {name, phoneNumber}` → `{success: true}` only after persistence and any required phone re-verification.
+- `POST /api/account/preferences {marketingConsent}` → `{success: true}` after saving the choice.
+- `POST /api/account/delete {confirm: true}` → `{success: true}` only after the deletion policy is applied and the session is invalidated.
+
+The frontend refreshes account data after changes and does not claim success on unconfirmed writes. OTP codes, account details and tokens are not persisted in browser storage. Score sharing uses the session's verified score. No preview OTP, sample balance or fabricated account state is included.

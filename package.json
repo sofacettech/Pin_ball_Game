@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs",
+    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs",
     "build:membership": "node scripts/build-membership.mjs",
     "test:membership": "node --test tests/membership.test.mjs",
     "test:frontend": "node --test tests/frontend.test.mjs",
@@ -15,7 +15,8 @@
     "upload:videos": "node scripts/upload-r2-videos.mjs",
     "test:frames": "node --test tests/frame-cache.test.mjs",
     "build:about": "node scripts/build-about.mjs",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "build:account": "node scripts/build-account.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

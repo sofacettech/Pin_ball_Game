@@ -403,3 +403,14 @@ body.handheld .side-panel .card-face[aria-hidden="true"]{visibility:hidden}
 @keyframes table-logo-reveal{from{filter:brightness(0);opacity:.15}to{filter:brightness(1);opacity:1}}
 @media(max-width:700px){#loading img{width:min(max(9.85vw,93.58px),16.64dvh)}}
 @media(prefers-reduced-motion:reduce){#loading img{animation:none}}
+
+/* The same launch control works below the desktop card and as the phone card's front. */
+body #stage #scorecard-panel #touch-launch{display:block;position:relative;left:auto;bottom:auto;transform:none;width:calc(100% - 28px);min-height:48px;margin:16px 14px 0;background:var(--card-lime);border:1px solid var(--card-lime);border-radius:6px;color:#111600;font-weight:650;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+body #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#eeff6a;box-shadow:inset 0 0 0 2px #16100b}
+body.handheld #stage:not(.showing-play) .side-panel{--card-height:156px;--card-footer:0px;perspective:1300px}
+body.handheld .side-panel .card-inner{transition:transform .78s cubic-bezier(.22,.7,.22,1)}
+body.handheld #stage #scorecard-panel #touch-launch{position:absolute;inset:0 0 auto;width:100%;height:var(--card-height);margin:0;background:#08070b;color:var(--card-lime);border-color:transparent;transform:rotateY(0deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;opacity:1;transition:transform .78s cubic-bezier(.22,.7,.22,1),opacity .35s ease}
+body.handheld #stage #scorecard-panel[data-score-visible="true"] #touch-launch{transform:rotateY(180deg);opacity:0;pointer-events:none}
+body.handheld #stage.has-scorecard{padding-top:var(--site-header-clearance)}
+@media(prefers-reduced-motion:reduce){body.handheld .side-panel .card-inner,body.handheld #stage #scorecard-panel #touch-launch{transition:none}}
+body.handheld #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#171022;box-shadow:inset 0 0 0 1px var(--card-lime)}

@@ -1,3 +1,4 @@
+import {brandText} from '../../shared/brand-react.jsx';
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request, pendingResult} from './api.js';
@@ -153,7 +154,7 @@ function App() {
       else{setIdentity(current=>({...current,name:details.name}));setStage('identity')}
       return;
     }
-    requestExit(embedded?()=>post({type:'contest-registration:close'}):()=>{if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1)history.back();else location.assign('/index.html#experience')});
+    requestExit('/index.html#experience');
   }
   function policy(kind) {
     const url=config?.policies?.[kind];
@@ -168,7 +169,7 @@ function App() {
   const maximumDate=new Date();
   const maxBirth=[maximumDate.getFullYear(),String(maximumDate.getMonth()+1).padStart(2,'0'),String(maximumDate.getDate()).padStart(2,'0')].join('-');
   const summary=<aside className="score-section" aria-label="About your points"><h2>Keep them before<br/> they disappear.</h2><p className="score-copy">Unsaved points disappear when you leave this page.<br/>10 points = ₹1, and eligible points can be used toward up to 10% of the diamond value plus making charges on an order. <span className="best-score">Only your best score counts.</span></p></aside>;
-  return <>
+  return brandText(<>
     <div className="scene" aria-hidden="true"/>
     <a className="membership-close" href="/index.html#experience" target="_top" aria-label="Return to landing page">×</a>
     <main className="membership-page">{exit?<section className="membership-exit" aria-labelledby="exit-title"><p className="eyebrow">{exit==='confirm'?'BEFORE YOU GO':exitCopy.label}</p><h1 id="exit-title" tabIndex={-1}>{exit==='confirm'?leaveCopy(pending.points).title:exitCopy.title}</h1><p className="step-copy">{exit==='confirm'?leaveCopy(pending.points).support:exitCopy.support}</p><div className="exit-actions">{exit==='confirm'?<><CrystalButton type="button" arrow onClick={restoreDraft}>Save my points</CrystalButton><button className="secondary-button" type="button" onClick={()=>{pendingRef.current=null;setPending(null);post({type:'sofacet:reward-discarded'});setExit('left')}}>Leave anyway</button></>:<><CrystalButton type="button" onClick={replay}>Play again</CrystalButton><button className="secondary-button" type="button" onClick={()=>window.top.location.assign(exitDestination.current)}>Back to the world</button></>}</div>{exit==='left'&&<p className="sign-off">{exitCopy.signoff}</p>}</section>:memberCheck!=='guest'?<div className="membership-layout"><p className="step-copy" role="status">{memberCheck==='error'?'We couldn’t check your membership.':memberCheck==='member'?'Opening the leaderboard…':'Checking your membership…'}{memberCheck==='error'&&<button className="secondary-button" type="button" onClick={()=>void checkMembership()}>Try again</button>}</p></div>:<div className="membership-layout">
@@ -223,6 +224,6 @@ function App() {
       {!compact&&summary}
     </div>}</main>
     <dialog ref={policyDialog} aria-labelledby="dialog-title" onClose={()=>setDialog(null)}><h2 id="dialog-title">{dialog?.title}</h2><p>{dialog?.copy}</p>{dialog?.text&&<textarea readOnly aria-label="Score message to copy" value={dialog.text} onFocus={event=>event.target.select()}/>}<div className="dialog-actions"><button type="button" onClick={()=>policyDialog.current.close()}>Close</button></div></dialog>
-  </>;
+  </>);
 }
 createRoot(document.getElementById('membership-root')).render(<App/>);

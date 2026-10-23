@@ -1,3 +1,4 @@
+import {setBrandText} from '../../shared/brand-text.ts';
 import type {Player} from './leaderboard';
 import type {CompletedGameResult} from './post-game-rewards';
 import {validPublicName} from './player-copy';
@@ -22,7 +23,7 @@ export function connectMembership(options:Options){
   profile.setAttribute('aria-label',registered?'Profile for '+player!.display_name:'Profile');
   profile.title='Profile';
   $('profile-name').textContent=registered?player!.display_name:'Your profile';
-  $('profile-status').textContent=checking?'Checking your membership…':registered?'Your So/Facet membership is active.':guest?'Become a So/Facet member and keep playing.':'We couldn’t load your membership. Please try again.';
+  setBrandText($('profile-status'),checking?'Checking your membership…':registered?'Your So/Facet membership is active.':guest?'Become a So/Facet member and keep playing.':'We couldn’t load your membership. Please try again.');
   profileMember.hidden=!guest;profileRetry.hidden=checking||player!==null;
   edit.hidden=!registered;
   if(!registered){editing=false;editForm.hidden=true}

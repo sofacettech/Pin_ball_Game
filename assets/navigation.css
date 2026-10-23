@@ -1,7 +1,7 @@
 @font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
-:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:clamp(25px,2.4vw,34px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
+:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
 :root .site-brand{position:fixed;z-index:4;top:calc(var(--site-brand-top) + env(safe-area-inset-top,0px));left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));display:block;width:var(--site-brand-width);height:auto;margin:0;padding:0;line-height:0;flex:none;color:#fff;text-decoration:none}
 :root .site-brand img{display:block;width:100%;height:auto}
 :root .site-nav{position:fixed;z-index:40;top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));right:calc(var(--site-nav-right) + env(safe-area-inset-right,0px));left:auto;display:flex;align-items:center;justify-content:flex-end;width:auto;height:44px;min-height:0;margin:0;padding:0;border:0;background:transparent;font-family:Acumin,Arial,sans-serif;font-style:normal;font-variation-settings:"slnt" 0}
@@ -28,3 +28,6 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:28px}}
 @media(max-height:500px) and (orientation:landscape){.menu-panel{padding-top:76px;padding-bottom:20px;gap:0}}
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
+@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
+.brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}

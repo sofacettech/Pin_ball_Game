@@ -5,7 +5,8 @@ import {PinballPhysics,DT} from './physics';
 import type {Obstacle} from './physics';
 import type {XYZ} from './types';
 import {connectLeaderboard} from './leaderboard';
-import {connectTouchControls} from './touch-controls';
+import {connectTouchControls,selectPaddle} from './touch-controls';
+import type {PaddleSide} from './touch-controls';
 import {completeViewOnly,phoneDevice} from './device-view';
 import {connectFlipScorecard} from './flip-scorecard';
 import {createGameSound} from './game-sound';
@@ -60,18 +61,19 @@ function showResult(){
 }
 const launchButton=$<HTMLButtonElement>('touch-launch');
 const releasedPaddles={left:false,right:false},previousTouch={left:false,right:false},paddleSoundHeld={left:false,right:false};
-let caveEjecting=false;
+let caveEjecting=false,activePaddle:PaddleSide|null=null;
 const playPaddleSound=(side:'left'|'right')=>{void sound.unlock().then(()=>sound.play('flap',side==='left'?-.4:.4))};
 const keyboardPaddle=(side:'left'|'right')=>side==='left'?keys.has('KeyA')||keys.has('ArrowLeft'):keys.has('KeyD')||keys.has('ArrowRight');
 const touchInput=matchMedia('(any-pointer: coarse)');
 const primaryTouch=matchMedia('(pointer: coarse)');let phone=false;
 const mobileView=()=>completeViewOnly(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches)||matchMedia('(max-width:1024px)').matches;
-function applyScoreboardLayout(){const mobile=mobileView(),finished=loaded&&physics.state==='finished';scorecard.setPhoneStage(mobile);const visible=!inspecting&&(!mobile||!loaded||!physics.active||finished);if(scorecardPanel.hidden===!visible)return;scorecardPanel.hidden=!visible;stage.classList.toggle('has-scorecard',visible);view.resize()}
+function applyScoreboardLayout(){const mobile=mobileView();scorecard.setPhoneStage(mobile);if(mobile)scorecard.showScore(!loaded||!physics.active||physics.state==='playing'||physics.state==='finished');const visible=!inspecting;if(scorecardPanel.hidden===!visible)return;scorecardPanel.hidden=!visible;stage.classList.toggle('has-scorecard',visible);view.resize()}
 function applyNavigationLayout(){const compact=phone||loaded&&physics.active&&physics.state!=='finished'&&!inspecting;document.body.classList.toggle('compact-navigation',compact);view.setPhonePlay(phone&&loaded&&physics.active&&physics.state!=='finished'&&!inspecting)}
 function applyDeviceView(){const mobile=mobileView();phone=phoneDevice(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches,Math.min(screen.width,screen.height))||matchMedia('(max-width: 740px) and (orientation: portrait)').matches;document.body.classList.toggle('handheld',mobile);document.body.classList.toggle('phone-layout',phone);scorecardPanel.setAttribute('aria-label',mobile?'Scoreboard':'How to play and scoreboard');view.setHandheld(mobile);applyScoreboardLayout();applyNavigationLayout()}
 applyDeviceView();primaryTouch.addEventListener('change',applyDeviceView);
 const canTouch=(control:'paddle'|'launch')=>loaded&&!starting&&!inspecting&&!physics.paused&&physics.state!=='finished'&&menu.hidden&&!registration.open&&!rewards.dialog.open&&!leaderboard.dialog.open&&(control==='paddle'||physics.active&&(physics.state==='launcher'||physics.state==='charging'));
-function updatePaddleSound(state=touch.state){for(const side of ['left','right'] as const){const held=canTouch('paddle')&&(keyboardPaddle(side)||state[side]);if(held&&!paddleSoundHeld[side])playPaddleSound(side);paddleSoundHeld[side]=held}}
+function paddleInput(state=touch.state){activePaddle=selectPaddle(keyboardPaddle('left')||state.left,keyboardPaddle('right')||state.right,activePaddle);return{left:activePaddle==='left',right:activePaddle==='right'}}
+function updatePaddleSound(state=touch.state){const selected=paddleInput(state);for(const side of ['left','right'] as const){const held=canTouch('paddle')&&selected[side];if(held&&!paddleSoundHeld[side])playPaddleSound(side);paddleSoundHeld[side]=held}}
 const touch=connectTouchControls(canvas,launchButton,canTouch,()=>{holdCharge=false},state=>{for(const side of ['left','right'] as const){if(previousTouch[side]&&!state[side]&&!keyboardPaddle(side))releasedPaddles[side]=true;previousTouch[side]=state[side]}updatePaddleSound(state)});
 const paddleRay=new Raycaster();
 canvas.addEventListener('pointerdown',event=>{
@@ -79,8 +81,8 @@ canvas.addEventListener('pointerdown',event=>{
  const rect=canvas.getBoundingClientRect();paddleRay.setFromCamera(new Vector2((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2),view.activeCamera);
  for(const side of ['left','right'] as const)if(paddleRay.intersectObjects(view.groups.get('flipper_'+side)||[],true).length){playPaddleSound(side);break}
 });
-const input=()=>{const controls={left:!releasedPaddles.left&&(keyboardPaddle('left')||touch.state.left),right:!releasedPaddles.right&&(keyboardPaddle('right')||touch.state.right),space:keys.has('Space')||touch.state.space,holdCharge};releasedPaddles.left=releasedPaddles.right=false;return controls};
-const clearKeys=()=>{keys.clear();touch.clear();releasedPaddles.left=releasedPaddles.right=true;paddleSoundHeld.left=paddleSoundHeld.right=false};
+const input=()=>{const selected=paddleInput();const controls={left:!releasedPaddles.left&&selected.left,right:!releasedPaddles.right&&selected.right,space:keys.has('Space')||touch.state.space,holdCharge};releasedPaddles.left=releasedPaddles.right=false;return controls};
+const clearKeys=()=>{keys.clear();touch.clear();activePaddle=null;releasedPaddles.left=releasedPaddles.right=true;paddleSoundHeld.left=paddleSoundHeld.right=false};
 const applyInspectionLayout=()=>{if(!inspecting){viewport.style.width='';viewport.style.height=''}else{
  const ref=view.references[view.referenceIndex];const ratio=ref.resolution[0]/ref.resolution[1];const w=Math.min(stage.clientWidth,stage.clientHeight*ratio);viewport.style.width=w+'px';viewport.style.height=w/ratio+'px'}view.resize()};
 let completedRunRecorded=false;
@@ -98,11 +100,17 @@ function sync(){
  scorecard.update(p.score,highScore);applyScoreboardLayout();
  $('charge-fill').style.transform='scaleX('+p.charge+')';document.querySelector('.charge')!.setAttribute('aria-valuenow',String(Math.round(p.charge*100)));
  $('pause').textContent=p.paused?'Resume':'Pause';$<HTMLButtonElement>('pause').disabled=!physics.active||p.state==='finished'||inspecting;
- const launchReady=canTouch('launch');launchButton.hidden=!launchReady;launchButton.disabled=!launchReady;stage.classList.toggle('launch-ready',launchReady);
+ const launchReady=canTouch('launch'),mobile=mobileView(),showHold=mobile&&physics.active&&p.state!=='finished';
+ if(!launchReady&&p.state==='playing'&&document.activeElement===launchButton)canvas.focus({preventScroll:true});
+ launchButton.hidden=!(showHold||launchReady);launchButton.disabled=!launchReady;launchButton.inert=!launchReady;
+ launchButton.setAttribute('aria-hidden',String(!launchReady));
+ const scoreVisible=String(!mobile||p.state==='playing'||!physics.active||p.state==='finished');
+ if(scorecardPanel.dataset.scoreVisible!==scoreVisible)scorecardPanel.dataset.scoreVisible=scoreVisible;
+ stage.classList.toggle('launch-ready',launchReady);
  $<HTMLButtonElement>('restart').disabled=starting||inspecting||!physics.active||p.state==='finished';
  $('start').hidden=physics.active&&p.state!=='finished';$<HTMLButtonElement>('start').disabled=starting;$('start-label').textContent=starting?'Preparing…':physics.active?'Play again':'Play';
- $('action').hidden=!menu.hidden||phone&&physics.active&&p.state!=='finished'||physics.active&&(p.state==='playing'||p.state==='draining'||p.state==='spring_return')&&!p.paused;
- $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table, ready to play.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Game paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Press Space to continue charging.':'Keep holding Space to launch.':'Hold Space to charge the spring.';
+ $('action').hidden=!menu.hidden||mobile&&physics.active&&p.state!=='finished'||physics.active&&(p.state==='playing'||p.state==='draining'||p.state==='spring_return')&&!p.paused;
+ $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table, ready to play.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Game paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Hold the launch button or Space to continue charging.':'Release the launch button or Space to launch.':'Hold the launch button or Space to charge.';
 }
 function toggleInspection(){if(!loaded)return;inspecting=!inspecting;clearKeys();if(physics.active&&physics.state!=='finished')physics.setPaused(true);
  document.body.classList.toggle('inspect-mode',inspecting);$('inspection').hidden=!inspecting;view.setInspect(inspecting);applyScoreboardLayout();applyInspectionLayout();updateOverlay();sync();if(!inspecting&&physics.state==='finished')showResult()}

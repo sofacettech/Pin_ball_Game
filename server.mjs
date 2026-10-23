@@ -47,6 +47,21 @@ async function api(request,response,path){
  if(request.method==='POST')sameOrigin(request);
  const [id,p]=player(request,response);
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
+ if(path==='/api/account'&&request.method==='GET'){
+  if(!p.profile)fail(401,'Please sign in to view your account.');
+  const ledger=store.rewardAccounts?.[p.profile.customerId];
+  return json(response,200,{name:p.profile.name||p.profile.firstName||p.name,phoneNumber:p.profile.phone,savedPoints:(ledger?.creditedUnits||0)*10,bestPoints:Math.max(ledger?.bestScore||0,p.bestVerified?p.best:0),rank:gameBoard(id).me?.rank??null,marketingConsent:p.profile.marketingConsent===true});
+ }
+ if(path==='/api/account/signout'&&request.method==='POST'){
+  response.setHeader('Set-Cookie',`sofacet_pinball_player=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`);
+  return json(response,200,{success:true});
+ }
+ // SMS sign-in and account mutations require the backend's verified account service.
+ if(['/api/account/otp/request','/api/account/otp/verify','/api/account/details','/api/account/preferences','/api/account/delete'].includes(path)&&request.method==='POST'){
+  if(!path.includes('/otp/')&&!p.profile)fail(401,'Please sign in to manage your account.');
+  fail(503,path.includes('/otp/')?'Account sign-in by SMS is not connected yet. Please try again later.':'Account changes are not connected yet. Your details and points have not changed.');
+ }
+
  if(path==='/api/membership/config'&&request.method==='GET')return json(response,200,await membershipApi(path,{},id));
  if(['/api/membership','/api/membership/otp/request','/api/membership/otp/verify','/api/membership/rewards'].includes(path)&&request.method==='POST')return json(response,200,await membershipApi(path,await body(request),id));
  if(path==='/api/member'&&request.method==='POST'){
@@ -92,7 +107,7 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','faq.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{

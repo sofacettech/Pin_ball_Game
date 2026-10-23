@@ -1,3 +1,4 @@
+import {brandText} from '../../shared/brand-react.jsx';
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
@@ -40,7 +41,7 @@ function App() {
       const next=new Set(previous);if(open)next.add(id);else next.delete(id);return next;
     });
   }
-  return <>
+  return brandText(<>
     <a className="skip-link" href="#faq-content">Skip to questions</a>
     <div className="page enhanced">
       <header className="masthead"><a className="faq-brand site-brand" href="/" aria-label="SOFACET home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"/></a><div className="breadcrumb">How points work / FAQ</div></header>
@@ -60,7 +61,7 @@ function App() {
       </main>
       <footer><p>Still have a question?</p><a className="contact" href="mailto:hello@sofacet.com">hello@sofacet.com<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 13 13 3M3 3h10v10" stroke="currentColor" strokeWidth="1.3"/></svg></a></footer>
     </div>
-  </>;
+  </>);
 }
 
 createRoot(document.getElementById('faq-root')).render(<App/>);

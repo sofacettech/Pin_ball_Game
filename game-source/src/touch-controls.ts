@@ -1,3 +1,8 @@
+export type PaddleSide='left'|'right';
+export function selectPaddle(left:boolean,right:boolean,previous:PaddleSide|null):PaddleSide|null{
+ return previous&&(previous==='left'?left:right)?previous:left?'left':right?'right':null;
+}
+
 export function connectTouchControls(canvas:HTMLElement,launch:HTMLButtonElement,enabled:(control:'paddle'|'launch')=>boolean,onLaunch:()=>void,onChange:(state:{left:boolean;right:boolean;space:boolean})=>void){
  const state={left:false,right:false,space:false};
  const held=new Map<number,{control:keyof typeof state;element:HTMLElement}>();
