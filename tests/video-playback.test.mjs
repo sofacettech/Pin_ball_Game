@@ -218,14 +218,14 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());
  const pending=source.decode(20).then(image=>{done=true;return image});await turn();
- assert.equal(video.currentTime,20.25/60);
- present(10);await turn();assert.equal(done,false,'The reported currentTime must not hide stale compositor pixels');
- assert.equal(video.seeking,true,'An approximate presented frame needs a precise seek');
+ assert.equal(video.currentTime,19.25/60,'Seek before the target so that playback can present it after subscription');
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
  present(10);await turn();assert.equal(done,false,'Ignore queued old callbacks during the precise seek');
+ present(19);await turn();assert.equal(done,false,'Wait until playback actually presents the destination');
  present(20);assert.equal(await pending,video);assert.equal(callbacks.size,0);
  assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
- assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
- const next=source.decode(21);await turn();assert.equal(fastCalls,1,'Disable approximate seeking after a presented-frame mismatch');
+ assert.equal(video.playbackRate,.25,'Slow presentation must stay inside the requested source frame');
+ const next=source.decode(21);await turn();assert.equal(fastCalls,0,'Settled destinations require precise seeking');
  source.suspend();await assert.rejects(next,{name:'AbortError'});assert.equal(callbacks.size,0);
 });
 test('an approximate native seek corrects the frame and disables further approximate seeks',async t=>{

@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-bb6b5d3883b3';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-33fa5be3fea7';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -162,9 +162,12 @@ export async function createFrameSource(video,index,indexURL){
  async function nativeDecode(frame,settled){
   const generation=nativeGeneration;
   await ready();if(disposed)throw abortError();
+  const watchesPixels=settled&&nativeDirect&&typeof video.requestVideoFrameCallback==='function';
   let time=(frame+.25)/index.fps;
-  const confirm=settled&&nativeDirect&&typeof video.requestVideoFrameCallback==='function'&&nativePresentedFrame!==frame;
-  if(confirm&&Math.abs(video.currentTime-time)<.001)time=(frame+.5)/index.fps;
+  const confirm=watchesPixels&&nativePresentedFrame!==frame;
+  // Approach a settled destination from its preceding frame, matching the
+  // reference capture. The target must still be ahead when callbacks start.
+  if(confirm&&frame>0)time=(frame-.75)/index.fps;
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001||confirm){
    nativePresentedFrame=null;
    const start=performance.now();
@@ -172,28 +175,25 @@ export async function createFrameSource(video,index,indexURL){
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
-    // Subscribe before seeking: readyState/currentTime can advance before
-    // WebKit replaces the compositor's pixels, even after seeked fires.
-    const wait=()=>waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4,presentedFrame:settled&&nativeDirect,frame:nativeFastSeek?undefined:frame,fps:index.fps});
-    const watchesPixels=settled&&nativeDirect&&typeof video.requestVideoFrameCallback==='function';
-    const settle=async presented=>{
-     // WebKit may suppress frame callbacks for paused seeks. Brief muted
-     // playback produces a real compositor frame; pause before advancing again.
-     const [mediaTime]=await Promise.all([presented??wait(),watchesPixels?video.play():undefined]);
-     if(watchesPixels)video.pause();
+    const settle=async()=>{
+     await waitForVideo(video,{readyState:2,signal:seek.controller.signal,pollOnPaint:true,pollInterval:4});
+     if(!watchesPixels)return undefined;
+     // Register after the seek, as WebKit can discard callbacks from the old
+     // decoder surface. Brief playback supplies a fresh, timestamped frame.
+     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,frame,fps:index.fps});
+     const [mediaTime]=await Promise.all([presented,video.play()]);
+     video.pause();
      return mediaTime;
     };
-    if(watchesPixels)video.playbackRate=.0625;
-    let presented=watchesPixels?wait():undefined;
-    if(nativeFastSeek){
+    if(watchesPixels)video.playbackRate=.25;
+    if(nativeFastSeek&&!watchesPixels){
      try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
     }else video.currentTime=time;
-    let presentedTime=await settle(presented);
-    if(nativeFastSeek&&(presentedTime===undefined?Math.floor(video.currentTime*index.fps+1e-6):Math.round(presentedTime*index.fps))!==frame){
+    let presentedTime=await settle();
+    if(nativeFastSeek&&!watchesPixels&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
      nativeFastSeek=false;
-     presented=watchesPixels?wait():undefined;
      video.currentTime=time;
-     presentedTime=await settle(presented);
+     presentedTime=await settle();
     }
     if(presentedTime!==undefined&&Math.round(presentedTime*index.fps)!==frame)throw Error(`The video presented frame ${Math.round(presentedTime*index.fps)} instead of ${frame}`);
     if(settled)nativePresentedFrame=frame;

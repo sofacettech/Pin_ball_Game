@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-a4de83d217c2';
-import { createFrameSource } from './assets/frame-source.js?v=frames-002b3171e39e';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-1791dfaf0aab';
+import { createFrameSource } from './assets/frame-source.js?v=frames-ddf88a251c00';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-8349e271bb0f';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-bb6b5d3883b3';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33fa5be3fea7';
 
 const FPS = 60;
 
@@ -76,7 +76,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   // itself through its compositor; only its completed position is reported here.
   const cache = createFrameCache({count: frameCount, source, onReady(available, image) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
-    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) {
+    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
       // Native playback can start its next useful seek as soon as this one
       // completes, without paying another animation-frame scheduling delay.
@@ -113,7 +113,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }
 
   function showGame() {
-    if (!gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1) return;
+    if (!gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1 || !cache.settled) return;
     status.hidden = true;
     waitingForGameDocument = false;
     window.sofacetGameLoader?.cancel();
@@ -186,10 +186,10 @@ export async function createSequence(setInteractive, requestFrame, media) {
     // journey for bandwidth, even if a fast swipe has already reached the end.
     if (displayedFrame >= frameCount - 180) preloadGame();
     updateCopy(240 + displayedFrame);
-    siteSound.frame(240 + displayedFrame);
+    if (displayedFrame !== frameCount - 1 || cache.settled) siteSound.frame(240 + displayedFrame);
     const atEnd = displayedFrame === frameCount - 1;
     if (main.inert !== atEnd) main.inert = atEnd;
-    if (displayedFrame === frameCount - 1) {
+    if (displayedFrame === frameCount - 1 && cache.settled) {
       siteSound.handoff();
       if (!gameLoaded) { waitingForGameDocument = true; window.sofacetGameLoader?.show(); }
       preloadGame();

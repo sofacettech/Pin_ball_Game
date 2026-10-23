@@ -12,12 +12,14 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     }
   }
   let target = 0, lead = 0, presented = 0, direction = 1, order = [], timer, decoding = false;
+  let leadChangedAt = performance.now();
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
   const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
   const advances = frame => frame > Math.min(presented, target) && frame < Math.max(presented, target);
   const useful = frame => order.includes(frame) || advances(frame);
+  const needsNativeConfirmation = () => source.transient && target > 0 && target === lead && 'presentedFrame' in source && source.presentedFrame !== target;
   function progressFrame() {
     let best;
     for (const frame of compressed.keys()) {
@@ -97,6 +99,8 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
 
   function pump() {
     if (destroyed || suspended) return;
+    const scrollSettled = performance.now() - leadChangedAt >= 50;
+    if (scrollSettled && needsNativeConfirmation()) decoded.delete(target);
     const video = source.mode === 'video';
     // Native seeking has no compressed-sample download. Make the target ready
     // synchronously; an artificial download promise otherwise lets old
@@ -202,7 +206,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     // destination instead of starting/stopping native playback for every step.
     // Frame zero displays the authored still while the native video warms out
     // of view; hidden video surfaces need not produce compositor callbacks.
-    source.decode(next, compressed.get(next), next === lead && next !== 0).then(image => {
+    source.decode(next, compressed.get(next), next === lead && next !== 0 && scrollSettled).then(image => {
       if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
       if (image.transient) {
         for (const retained of decoded.values()) retained.close();
@@ -219,10 +223,10 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   function request(frame, next = frame, visible = frame) {
     if (![frame, next, visible].every(value => Number.isInteger(value) && valid(value))) throw RangeError('Frame is outside the source sequence');
     if (order.length && target === frame && lead === next && presented === visible) return;
+    if (lead !== next) leadChangedAt = performance.now();
     if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
-    if (source.transient && frame > 0 && frame === next && 'presentedFrame' in source && source.presentedFrame !== frame) decoded.delete(frame);
     source.retarget?.(target,presented);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
@@ -239,6 +243,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
   request(0);
   return {
     request,
+    get settled() { return !needsNativeConfirmation(); },
     // Readiness describes a bounded opening window, never the whole movie.
     // Keep room for the decoder and for requests already in flight.
     get preparation() {
@@ -273,7 +278,7 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
       return {
         ...counters, lastError, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
         compressed: compressed.size, compressedBytes: bytes, reservedBytes: reserved,
-        pending: active.size + (decoding ? 1 : 0), network: active.size,
+        pending: active.size + (decoding ? 1 : 0) + (needsNativeConfirmation() ? 1 : 0), network: active.size,
         queued: (source.mode === 'video' ? warmFrames() : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,
         settings, ...source.stats,
       };

@@ -11,6 +11,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
   return new Promise((resolve, reject) => {
     const events = new AbortController();
     const waitForFrame = presentedFrame && typeof video.requestVideoFrameCallback === 'function';
+    const observed = [];
     let timer, animation, readinessTimer, frameCallback, presentedTime, settled = false;
     function done(error) {
       if (settled) return;
@@ -34,6 +35,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
     }
     function checkFrame(_now, metadata) {
       frameCallback = undefined;
+      observed.push(metadata.mediaTime);if (observed.length > 5) observed.shift();
       if (!video.seeking && video.readyState >= readyState && (frame === undefined || Math.round(metadata.mediaTime * fps) === frame)) presentedTime = metadata.mediaTime;
       check();
       if (!settled) frameCallback = video.requestVideoFrameCallback(checkFrame);
@@ -53,7 +55,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
     for (const event of ['loadedmetadata', 'loadeddata', 'canplay', 'seeked', 'progress', 'error']) {
       video.addEventListener(event, check, {signal: events.signal});
     }
-    timer = setTimeout(() => done(new Error('The video is still loading')), timeout);
+    timer = setTimeout(() => done(new Error('The video is still loading' + (waitForFrame ? ` (frame ${frame ?? 'next'}, observed ${JSON.stringify(observed)}, currentTime ${video.currentTime})` : ''))), timeout);
     if (waitForFrame) frameCallback = video.requestVideoFrameCallback(checkFrame);
     check();
     // WebKit can finish a seek before dispatching its queued media event.

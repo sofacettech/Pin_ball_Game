@@ -89,7 +89,9 @@ try{
     await page.evaluate(y=>window.scrollTo(0,y),y);
     await page.waitForFunction(frame=>{
      const sequence=window.sofacetPreview.sequence;
-     return sequence.desiredFrame===frame&&sequence.displayedFrame===frame;
+     const stats=sequence.stats;
+     return sequence.desiredFrame===frame&&sequence.displayedFrame===frame&&
+      (frame===0||stats.renderer!=='native-video'||stats.presentedFrame===undefined||stats.presentedFrame===frame);
     },y/8,{timeout:30000});
     const state=await page.evaluate(()=>{
      const sequence=window.sofacetPreview.sequence;
@@ -137,7 +139,7 @@ try{
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }
-   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200,{},{timeout:5000});
+   await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
    // The historical mutable-video renderer is a pacing reference, not the
    // implementation under test for the new immutable-frame pixel guarantee.
    if(previous){assert.deepEqual(errors,[]);continue}
