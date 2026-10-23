@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-21022f2cc71a';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-2fb6d3273697';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
@@ -180,12 +180,13 @@ export async function createFrameSource(video,index,indexURL){
      if(!watchesPixels)return undefined;
      // Register after the seek, as WebKit can discard callbacks from the old
      // decoder surface. Brief playback supplies a fresh, timestamped frame.
-     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,frame,fps:index.fps});
-     const [mediaTime]=await Promise.all([presented,video.play()]);
-     video.pause();
-     return mediaTime;
+     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,pauseOnFrame:true,frame,fps:index.fps});
+     // A synchronous pause inside the callback can reject a pending play()
+     // with AbortError. The presented frame is the readiness signal.
+     void video.play().catch(error=>{if(error.name!=='AbortError')seek.controller.abort(error)});
+     return await presented;
     };
-    if(watchesPixels)video.playbackRate=.25;
+    if(watchesPixels)video.playbackRate=.0625;
     if(nativeFastSeek&&!watchesPixels){
      try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
     }else video.currentTime=time;

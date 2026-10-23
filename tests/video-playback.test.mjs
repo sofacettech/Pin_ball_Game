@@ -211,6 +211,9 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previousMedia});
  const video=new Video(),callbacks=new Map();let id=0,fastCalls=0,done=false;
  video.readyState=2;
+ let rejectPlay;const pause=video.pause.bind(video);
+ video.play=()=>{video.paused=false;return new Promise((_resolve,reject)=>{rejectPlay=reject})};
+ video.pause=()=>{pause();rejectPlay?.(new DOMException('Paused before play resolved','AbortError'));rejectPlay=undefined};
  video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};
  video.cancelVideoFrameCallback=key=>callbacks.delete(key);
  video.fastSeek=time=>{fastCalls++;video.time=time;video.seeking=true};
@@ -222,9 +225,10 @@ test('native seeking verifies compositor timestamps instead of trusting the requ
  video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
  present(10);await turn();assert.equal(done,false,'Ignore queued old callbacks during the precise seek');
  present(19);await turn();assert.equal(done,false,'Wait until playback actually presents the destination');
- present(20);assert.equal(await pending,video);assert.equal(callbacks.size,0);
+ present(20);assert.equal(video.paused,true,'Pause inside the matching callback, before promise continuations');
+ assert.equal(await pending,video);assert.equal(callbacks.size,0);
  assert.equal(video.paused,true,'Controlled playback must stop as soon as the frame is presented');
- assert.equal(video.playbackRate,.25,'Slow presentation must stay inside the requested source frame');
+ assert.equal(video.playbackRate,.0625,'Slow presentation must stay inside the requested source frame');
  const next=source.decode(21);await turn();assert.equal(fastCalls,0,'Settled destinations require precise seeking');
  source.suspend();await assert.rejects(next,{name:'AbortError'});assert.equal(callbacks.size,0);
 });

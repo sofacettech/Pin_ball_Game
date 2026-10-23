@@ -7,7 +7,7 @@ export function prepareInlineVideo(video) {
   video.setAttribute('webkit-playsinline', '');
 }
 
-export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0, presentedFrame = false, frame, fps = 60} = {}) {
+export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0, presentedFrame = false, pauseOnFrame = false, frame, fps = 60} = {}) {
   return new Promise((resolve, reject) => {
     const events = new AbortController();
     const waitForFrame = presentedFrame && typeof video.requestVideoFrameCallback === 'function';
@@ -24,7 +24,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
       signal?.removeEventListener('abort', abort);
       error ? reject(error) : resolve(presentedTime);
     }
-    const abort = () => done(new DOMException('Video loading cancelled', 'AbortError'));
+    const abort = () => done(signal?.reason instanceof Error || signal?.reason instanceof DOMException ? signal.reason : new DOMException('Video loading cancelled', 'AbortError'));
     function check() {
       if (video.error) {
         const error = new Error('The video could not load');
@@ -36,7 +36,10 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
     function checkFrame(_now, metadata) {
       frameCallback = undefined;
       observed.push(metadata.mediaTime);if (observed.length > 5) observed.shift();
-      if (!video.seeking && video.readyState >= readyState && (frame === undefined || Math.round(metadata.mediaTime * fps) === frame)) presentedTime = metadata.mediaTime;
+      if (!video.seeking && video.readyState >= readyState && (frame === undefined || Math.round(metadata.mediaTime * fps) === frame)) {
+        presentedTime = metadata.mediaTime;
+        if (pauseOnFrame) video.pause();
+      }
       check();
       if (!settled) frameCallback = video.requestVideoFrameCallback(checkFrame);
     }
