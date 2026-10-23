@@ -1,8 +1,8 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-2fb6d3273697';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-e7228993ba3e';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
-export async function createFrameSource(video,index,indexURL){
+export async function createFrameSource(video,index,indexURL,captureNativeFrame){
  prepareInlineVideo(video);
  video.crossOrigin='anonymous';
  let url=new URL(index.source,indexURL);
@@ -119,6 +119,7 @@ export async function createFrameSource(video,index,indexURL){
  let nativeEvents=new AbortController(),nativeReady,nativeSeek,nativePrimed=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor,nativePresentedFrame=null;
  // Version-one indexes are emitted only after every sample is verified as IDR.
  // Check the returned frame as well: fastSeek may choose an earlier sync sample.
+ let nativeSnapshot;
  let nativeFastSeek=index.version===1&&index.frameCount>0&&index.frames?.length===index.frameCount&&typeof video.fastSeek==='function';
  const gestures=new AbortController();
  function primeNative(){
@@ -160,7 +161,9 @@ export async function createFrameSource(video,index,indexURL){
  }
  for(const event of ['touchend','click','keydown'])globalThis.document?.addEventListener(event,activateNative,{passive:true,signal:gestures.signal});
  async function nativeDecode(frame,settled){
-  const generation=nativeGeneration;
+  if(disposed)throw abortError();
+  if(settled&&nativeSnapshot?.frame===frame)return nativeSnapshot.image;
+  const generation=nativeGeneration;let snapshot;
   await ready();if(disposed)throw abortError();
   const watchesPixels=settled&&nativeDirect&&typeof video.requestVideoFrameCallback==='function';
   let time=(frame+.25)/index.fps;
@@ -180,7 +183,7 @@ export async function createFrameSource(video,index,indexURL){
      if(!watchesPixels)return undefined;
      // Register after the seek, as WebKit can discard callbacks from the old
      // decoder surface. Brief playback supplies a fresh, timestamped frame.
-     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,pauseOnFrame:true,frame,fps:index.fps});
+     const presented=waitForVideo(video,{readyState:2,signal:seek.controller.signal,presentedFrame:true,pauseOnFrame:true,onPresentedFrame:()=>{snapshot=captureNativeFrame?.()},frame,fps:index.fps});
      // A synchronous pause inside the callback can reject a pending play()
      // with AbortError. The presented frame is the readiness signal.
      void video.play().catch(error=>{if(error.name!=='AbortError')seek.controller.abort(error)});
@@ -206,6 +209,8 @@ export async function createFrameSource(video,index,indexURL){
   if(settled&&typeof video.requestVideoFrameCallback!=='function')nativePresentedFrame=frame;
   // Retain the native decoder's surface before the next seek. On older Safari,
   // use the native video compositor rather than making two full-size RGB copies.
+  nativeSnapshot=snapshot?{frame,image:snapshot}:undefined;
+  if(snapshot)return snapshot;
   const retainStart=performance.now();let image;
   if(!nativeDirect){
    try{image=new VideoFrame(video,{timestamp:Math.round(frame*1e6/index.fps)})}catch{nativeDirect=true}
@@ -251,7 +256,7 @@ export async function createFrameSource(video,index,indexURL){
    // is still requesting that useful intermediate frame.
    if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
+  get mode(){return mode},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativePrimed=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
-  destroy(){disposed=true;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
+  destroy(){disposed=true;nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

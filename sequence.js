@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-710635587aa7';
-import { createFrameSource } from './assets/frame-source.js?v=frames-7ff237f9f5b7';
+import { createFrameSource } from './assets/frame-source.js?v=frames-6166ade5ae3c';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-1ea4c01f420c';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-2fb6d3273697';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-e7228993ba3e';
 
 const FPS = 60;
 
@@ -70,7 +70,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const pacer = createFramePacer();
   let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
-  const source = await createFrameSource(journey,index,indexURL);
+  // Freeze only settled destinations inside their video-frame callback. Safari
+  // can replace its paused compositor surface after that callback has returned.
+  frame.transient = true; frame.close = () => {};
+  const source = await createFrameSource(journey,index,indexURL,() => {
+    context.drawImage(journey,0,0,frame.width,frame.height);
+    return frame;
+  });
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video
   // itself through its compositor; only its completed position is reported here.
@@ -179,7 +185,10 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (direct) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
       if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
-    } else context.drawImage(image, 0, 0, frame.width, frame.height);
+    } else {
+      if (image !== frame) context.drawImage(image, 0, 0, frame.width, frame.height);
+      journey.classList.remove('native-renderer');
+    }
     refreshFrame = false;
     displayedFrame = index;
     // Wait until playback approaches the handoff before competing with the

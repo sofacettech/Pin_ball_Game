@@ -388,3 +388,18 @@ test('resuming scroll cancels a settled confirmation even while its paced frame 
  const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
  assert.equal(callbacks.size,0,'Intermediate motion must not start another exact-frame confirmation');
 });
+
+test('settled native pixels are captured inside the matching callback before the paused surface changes',async t=>{
+ snapshotEnvironment(t);const previous=globalThis.matchMedia;globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previous});
+ const video=new Video(),callbacks=new Map();let id=0,captures=0;video.readyState=2;video.pixel=19;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ const still={transient:true,close(){}};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'),()=>{captures++;still.pixel=video.pixel;return still});t.after(()=>source.destroy());
+ const pending=source.decode(20);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
+ video.pixel=20;const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback(0,{mediaTime:20/60});
+ assert.equal(still.pixel,20,'Capture synchronously inside the timestamped callback');video.pixel=21;
+ assert.equal(await pending,still);assert.equal(still.pixel,20);assert.equal(source.stats.renderer,'native-frame');assert.equal(source.presentedFrame,20);
+ source.suspend();assert.equal(await source.decode(20),still);assert.equal(captures,1,'Resume from the captured still without waiting on a hidden video compositor');
+ const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
+ assert.equal(captures,1,'Continuous scrolling must keep using native video without full-size copies');assert.equal(source.stats.renderer,'native-video');
+});
