@@ -84,6 +84,42 @@ test('preparation waits for a contiguous byte-bounded opening buffer and a decod
   assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=800);
  }finally{cache.destroy()}
 });
+test('the final scene does not refill unused lookahead slots with discarded history',async()=>{
+ const batches=[];
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  async loadFrames(frames){batches.push([...frames]);return new Map(frames.map(frame=>[frame,new Uint8Array(100)]))},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:1925,source,onReady(){},onError:error=>{throw error},config:{idleMs:1}});
+ try{
+  await until(()=>cache.stats.pending===0);
+  batches.length=0;cache.request(1800);
+  await until(()=>cache.get(1800)&&cache.stats.pending===0&&cache.stats.queued===0);
+  assert.ok(batches.flat().every(frame=>frame>=1800-224),'Spare slots must not pull old frames back across the network');
+  assert.ok(batches.length<=14,`History must use grouped ranges, not ${batches.length} tiny requests`);
+  assert.ok(cache.stats.compressed<=349);
+  batches.length=0;cache.request(1924);
+  await until(()=>cache.get(1924)&&cache.stats.pending===0);
+  assert.equal(batches.length,0,'The already-buffered ending must not trigger history backfill');
+  assert.ok(cache.stats.compressed<=225);
+ }finally{cache.destroy()}
+});
+test('a distant swipe destination waits behind the immediate playback ranges',async()=>{
+ const batches=[],jobs=[];
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  loadFrames(frames,signal){batches.push([...frames]);return new Promise((resolve,reject)=>{
+   jobs.push(()=>resolve(new Map(frames.map(frame=>[frame,new Uint8Array(100)]))));
+   signal.addEventListener('abort',()=>reject(new DOMException('cancelled','AbortError')),{once:true});
+  })},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:1925,source,onReady(){},onError:error=>{throw error}});
+ try{
+  cache.request(1000,1800,1000);
+  await until(()=>batches.some(frames=>frames.includes(1000)));
+  const afterJump=batches.filter(frames=>frames[0]>=1000);
+  assert.deepEqual(afterJump.slice(0,3).map(frames=>frames[0]),[1000,1032,1064]);
+  assert.ok(!afterJump.flat().includes(1800),'A distant destination must not occupy a slot needed for the next visible frames');
+ }finally{cache.destroy();jobs.forEach(resolve=>resolve())}
+});
 test('native preparation requires decoded pixels and a contiguous playable opening buffer',async()=>{
  let bufferedSeconds=0;
  const source={mode:'video',transient:true,get stats(){return{bufferedSeconds}},

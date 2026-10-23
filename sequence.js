@@ -2,7 +2,7 @@ import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
 import { createFrameSource } from './assets/frame-source.js?v=frames-640fabab1617';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-356bab3084e6';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-29c68baef5bc';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
@@ -86,9 +86,10 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
     if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
-      // Native playback can start its next useful seek as soon as this one
-      // completes, without paying another animation-frame scheduling delay.
-      if (!scrollDirty && phase === 'journey' && displayedFrame !== desiredFrame) requestNextFrame();
+      // Schedule the next seek on the next paint. Starting it here spends the
+      // remainder of the previous paint's four-frame budget on a tiny step.
+      // With 30-40 ms native seeks that locks playback below the scroll rate,
+      // so lag accumulates throughout a long journey even with buffered video.
     }
     requestFrame();
   },
@@ -194,9 +195,9 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     refreshFrame = false;
     displayedFrame = index;
-    // Wait until playback approaches the handoff before competing with the
-    // journey for bandwidth, even if a fast swipe has already reached the end.
-    if (displayedFrame >= frameCount - 180) preloadGame();
+    // Start the game only at the settled handoff below. Loading its iframe
+    // creates another WebGL scene and compiles physics while the final video
+    // frames are still being decoded, even when the iframe is hidden.
     updateCopy(240 + displayedFrame);
     if (displayedFrame !== frameCount - 1 || cache.settled) siteSound.frame(240 + displayedFrame);
     const atEnd = displayedFrame === frameCount - 1;
