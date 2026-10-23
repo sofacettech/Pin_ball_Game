@@ -56,7 +56,7 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline&&native!=='legacy'
+ const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline
   ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
  for(const {native,previous} of cases){
   // Release decoder/GPU resources between cases so the last renderer is not
@@ -114,7 +114,9 @@ try{
    assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
    if(previous)measurements.set(String(native),motion);
    else if(baseline){
-    const before=measurements.get(String(native==='legacy'?true:native));
+    // Compare identical capabilities: disabling VideoFrame adds a different
+    // presentation path and must also be disabled in its historical baseline.
+    const before=measurements.get(String(native));
     const comparison={native,updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs};
     console.log('Same-runner comparison',JSON.stringify(comparison));
     assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
@@ -131,7 +133,7 @@ try{
     assert.ok(swipe.maxFrameJump<=4,'Fast swipes must not jump over more than four source frames per paint');
     assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
     if(baseline){
-     const before=swipeMeasurements.get(String(native==='legacy'?true:native));
+     const before=swipeMeasurements.get(String(native));
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }

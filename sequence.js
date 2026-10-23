@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
-import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
-import { createFrameSource } from './assets/frame-source.js?v=frames-ec94b7ea1178';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-1bc1d30c7ffc';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
+import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-a4de83d217c2';
+import { createFrameSource } from './assets/frame-source.js?v=frames-099aad408a52';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-a4c0b00d6c7f';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-9ac56988ee3c';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-18da4d3718da';
 
 const FPS = 60;
 
@@ -60,6 +60,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let displayedFrame = 0;
   let interactive = false;
   let gameLoaded = false;
+  let waitingForGameDocument = false;
   let gameVisible = false;
   let scrollDirty = false;
   let wantedFrame = 0;
@@ -88,7 +89,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {
         cache.suspend();
-        status.textContent = 'This browser cannot play the journey. Use Play now to enter the game.';
+        status.textContent = 'This browser cannot play the journey. Use Skip to Game to enter the game.';
       } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
     },
   });
@@ -114,6 +115,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   function showGame() {
     if (!gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1) return;
     status.hidden = true;
+    waitingForGameDocument = false;
+    window.sofacetGameLoader?.cancel();
     document.body.dataset.game = 'visible';
     setGameVisibility(true);
     game.inert = false;
@@ -188,11 +191,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1) {
       siteSound.handoff();
+      if (!gameLoaded) { waitingForGameDocument = true; window.sofacetGameLoader?.show(); }
       preloadGame();
       status.hidden = gameLoaded;
       status.textContent = 'Loading game…';
       showGame();
     } else {
+      if (waitingForGameDocument) { waitingForGameDocument = false; window.sofacetGameLoader?.cancel(); }
       siteSound.setActive(true);
       if (!status.hidden) status.hidden = true;
       if (document.body.hasAttribute('data-game')) delete document.body.dataset.game;

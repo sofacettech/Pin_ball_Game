@@ -1,5 +1,6 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
+import {BrandText} from '../../assets/brand-text.jsx';
 import './style.css';
 
 function App() {
@@ -27,9 +28,9 @@ function App() {
       <section className="scene hero" data-scene aria-labelledby="hero-title">
         <div className="hero-shade" aria-hidden="true"/>
         <div className="hero-copy scene-copy">
-          <p className="eyebrow" data-reveal>About SO/FACET</p>
+          <p className="eyebrow" data-reveal><BrandText>About SO/FACET</BrandText></p>
           <h1 id="hero-title" data-reveal>Diamonds,<br/><span>made for who you are.</span></h1>
-          <p className="hero-description" data-reveal>So/Facet is a lab-grown diamond jewellery house<br className="desktop-break"/> from India. Real diamonds, grown instead of mined.</p>
+          <p className="hero-description" data-reveal><BrandText>So/Facet is a lab-grown diamond jewellery house</BrandText><br className="desktop-break"/> from India. Real diamonds, grown instead of mined.</p>
           <span className="accent-line" data-reveal aria-hidden="true"/>
         </div>
       </section>
@@ -54,7 +55,7 @@ function App() {
         <div className="closing-shade" aria-hidden="true"/>
         <div className="closing-copy scene-copy">
           <h2 id="closing-title" data-reveal>Until then, this world is our first hello. <br/>Explore it, play around, and keep what you win.</h2>
-          <div className="closing-signoff" data-reveal><p>The doors open soon.</p><p className="signature">So/Facet. <span>What’s yours?</span></p></div>
+          <div className="closing-signoff" data-reveal><p>The doors open soon.</p><p className="signature"><BrandText>So/Facet.</BrandText> <span>What’s yours?</span></p></div>
           <div className="actions" data-reveal>
             <a className="button button-outline" href="/index.html#experience" target="_top">Back to the world</a>
             <a className="button button-primary" href="/play.html" target="_top">Play the game <svg aria-hidden="true" fill="none" width="17" height="13" viewBox="0 0 24 16"><path d="M1 8h20M15 2l6 6-6 6" stroke="currentColor" strokeWidth="1.4"/></svg></a>

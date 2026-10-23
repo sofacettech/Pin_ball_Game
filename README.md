@@ -18,6 +18,8 @@ npm start
 
 Open `http://127.0.0.1:8766/`. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
+For ZIP downloads containing the full video, skip the two `git lfs` commands above.
+
 ```sh
 node --test --test-concurrency=1 tests/*.test.mjs
 npm run smoke
@@ -46,7 +48,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 ## Experience and gameplay
 
 - The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges. The welcome copy stays visible until scrolling starts, fades out over one second and returns when the player scrolls back to the starting position. Reduced-motion mode switches immediately.
-- The queen impact at source frame 2164 hands directly into the game. Play now bypasses the journey.
+- The queen impact at source frame 2164 hands directly into the game. Skip to Game bypasses the journey.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
 - Phone and tablet layouts use touch controls and a compact scorecard. Desktop retains the keyboard instructions and flip card. Sound controls respect browser activation requirements.

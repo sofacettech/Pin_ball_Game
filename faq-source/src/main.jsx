@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import {sections} from './questions';
+import {BrandText} from '../../assets/brand-text.jsx';
 import './style.css';
 
 const hashIndex = () => Math.max(0,sections.findIndex(section=>'#'+section.id===location.hash));
@@ -45,7 +46,7 @@ function App() {
     <div className="page enhanced">
       <header className="masthead"><a className="faq-brand site-brand" href="/" aria-label="SOFACET home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"/></a><div className="breadcrumb">How points work / FAQ</div></header>
       <main>
-        <section className="hero" aria-labelledby="page-title"><h1 id="page-title">Good questions.<em>Clear answers.</em></h1><p className="intro">A little more about the game, your points and everything SO/FACET.</p></section>
+        <section className="hero" aria-labelledby="page-title"><h1 id="page-title">Good questions.<em>Clear answers.</em></h1><p className="intro"><BrandText>A little more about the game, your points and everything SO/FACET.</BrandText></p></section>
         <div className="faq-layout" id="faq-content" tabIndex={-1}>
           <nav className="section-nav" aria-label="FAQ sections" role="tablist" aria-orientation={narrow?'horizontal':'vertical'}>
             {sections.map((section,index)=><a key={section.id} ref={element=>{tabs.current[index]=element}} id={section.tabId} href={'#'+section.id} role="tab" aria-controls={section.id} aria-selected={selected===index} tabIndex={selected===index?0:-1} onClick={event=>{event.preventDefault();select(index)}} onKeyDown={event=>tabKey(event,index)}><span aria-hidden="true">0{index+1} /</span><span className="nav-title">{section.navTitle}</span></a>)}
@@ -53,7 +54,7 @@ function App() {
           <div className="panels">
             {sections.map((section,index)=><section key={section.id} className="faq-panel" id={section.id} aria-labelledby={section.tabId} role="tabpanel" tabIndex={0} hidden={selected!==index&&!printing}>
               <h2 className="panel-title">{section.title}</h2>
-              {section.questions.map((question,i)=>{const id=section.id+'-'+i;return <details key={id} open={printing||openQuestions.has(id)} onToggle={event=>toggle(id,event.currentTarget.open)}><summary>{question.question}</summary><div className="answer"><p>{question.answer.map((part,j)=>typeof part==='string'?<React.Fragment key={j}>{part}</React.Fragment>:<a key={j} href={part.href}>{part.text}</a>)}</p></div></details>})}
+              {section.questions.map((question,i)=>{const id=section.id+'-'+i;return <details key={id} open={printing||openQuestions.has(id)} onToggle={event=>toggle(id,event.currentTarget.open)}><summary><span><BrandText>{question.question}</BrandText></span></summary><div className="answer"><p>{question.answer.map((part,j)=>typeof part==='string'?<BrandText key={j}>{part}</BrandText>:<a key={j} href={part.href}>{part.text}</a>)}</p></div></details>})}
             </section>)}
           </div>
         </div>

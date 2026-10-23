@@ -20,8 +20,8 @@ scorecard.update(0,null);
 const view=new TableView(canvas,viewport);let inspecting=false,loaded=false,physics:PinballPhysics;
 let physicsAssets:{vertices:Float32Array;indices:Uint32Array;obstacles:Obstacle[]},starting=false,highScore:number|null=null;
 const keys=new Set<string>(),sound=createGameSound();void sound.load();let accumulator=0,lastFrame=0,holdCharge=false;
-let animationFrame=0,parentVisible=window.parent===window;
-function syncLoadingAnimation(){$('loading').style.setProperty('--loading-play-state',parentVisible&&!document.hidden?'running':'paused')}
+let animationFrame=0,parentVisible=window.sofacetGameLoader?.isActive()??window.parent===window;
+function syncLoadingAnimation(){window.sofacetGameLoader?.setActive(parentVisible&&!document.hidden)}
 syncLoadingAnimation();
 function requestGameFrame(){if(!animationFrame&&parentVisible&&!document.hidden)animationFrame=requestAnimationFrame(frame)}
 window.addEventListener('message',event=>{
@@ -143,13 +143,15 @@ addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilityc
 window.addEventListener('resize',()=>{clearKeys();applyDeviceView();applyInspectionLayout()});
 function bindFeedback(){caveEjecting=false;physics.onHit=(id)=>{view.hit(id);sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>sound.play('collect');physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
 async function start(){try{
+ await window.sofacetGameLoader?.stylesReady;
  await view.load((_value,label)=>{$('loading-detail').textContent=label});
  $('loading-detail').textContent='Preparing ball and paddle movement…';
  const fetchAsset=async(name:string)=>{const response=await fetch('/assets/'+name+'?v='+(view.manifest.asset_checksums[name]||view.manifest.asset_revision));if(!response.ok)throw new Error('Missing physics asset: '+name);return response};
  const [vertices,indices,obstacles]=await Promise.all([fetchAsset('collision-vertices.bin').then(r=>r.arrayBuffer()),fetchAsset('collision-indices.bin').then(r=>r.arrayBuffer()),fetchAsset('collider-entities.json').then(r=>r.json())]);
+ await new Promise<void>(resolve=>setTimeout(resolve,0));
  physicsAssets={vertices:new Float32Array(vertices),indices:new Uint32Array(indices),obstacles};physics=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,obstacles);bindFeedback();
- loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();$('loading').hidden=true;stage.dataset.ready='true';stage.setAttribute('aria-busy','false');requestGameFrame();
- }catch(error){stage.setAttribute('aria-busy','false');$('loading').hidden=true;$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
+ loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();stage.dataset.ready='true';stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.ready();requestGameFrame();
+ }catch(error){stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.fail();$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
 function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!physics.paused)accumulator+=delta;else accumulator=0;
  while(accumulator>=DT){const controls=input(),launches=physics.launches;
   if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
@@ -166,6 +168,6 @@ if(import.meta.env.DEV||(new URLSearchParams(location.search)).has('review')){
  (window as any).__facet={ready:()=>loaded,view,inspect:(index:number)=>{if(!inspecting)toggleInspection();$<HTMLSelectElement>('view').value=String(index);view.setReference(index);applyInspectionLayout();updateOverlay()},metrics:()=>view.metrics(),pose:()=>physics.pose()};
  if(import.meta.env.DEV)Object.defineProperty((window as any).__facet,'physics',{get:()=>physics});
 }
-if(location.hash==='#leaderboard')void leaderboard.ready.then(showLeaderboard);
-start();
+const gameReady=start();
+if(location.hash==='#leaderboard')void Promise.all([leaderboard.ready,gameReady]).then(()=>{if(loaded)showLeaderboard()});
 
