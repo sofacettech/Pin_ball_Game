@@ -109,11 +109,20 @@ try{
    assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
    // Measure sustained scrolling as well as jumps: arriving eventually does not
    // prove that intermediate frames are being presented evenly.
-   const motion=await measureScroll(page,.48,6000);
+   // Shared runners vary between adjacent six-second windows. Compare medians
+   // from three independent runs, retaining every sample's absolute safety gates.
+   const samples=[];
+   for(let sample=0;sample<(baseline?3:1);sample++){
+    const value=await measureScroll(page,.48,6000);
+    assert.ok(value.updates>30,'Continuous scrolling must keep producing frames');
+    if(!previous)assert.ok(value.maxGapMs<500,'Continuous scrolling must not stall for half a second');
+    assert.ok(value.stats.decoded<=value.stats.settings.decoded,'Decoded frame memory must stay bounded');
+    samples.push(value);
+   }
+   const median=key=>samples.map(sample=>sample[key]).sort((a,b)=>a-b)[Math.floor(samples.length/2)];
+   const motion={...samples.at(-1),updates:median('updates'),updatesPerSecond:median('updatesPerSecond'),p95GapMs:median('p95GapMs'),maxGapMs:Math.max(...samples.map(sample=>sample.maxGapMs))};
+   console.log('Continuous scroll samples',JSON.stringify({native,previous,samples:samples.map(sample=>({updates:sample.updates,p95GapMs:sample.p95GapMs,maxGapMs:sample.maxGapMs}))}));
    console.log('Continuous scroll',JSON.stringify({native,previous,...motion}));
-   assert.ok(motion.updates>30,'Continuous scrolling must keep producing frames');
-   if(!previous)assert.ok(motion.maxGapMs<500,'Continuous scrolling must not stall for half a second');
-   assert.ok(motion.stats.decoded<=motion.stats.settings.decoded,'Decoded frame memory must stay bounded');
    if(previous)measurements.set(String(native),motion);
    else if(baseline){
     // Compare identical capabilities: disabling VideoFrame adds a different

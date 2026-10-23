@@ -198,7 +198,7 @@ export async function createFrameSource(video,index,indexURL){
     if(presentedTime!==undefined&&Math.round(presentedTime*index.fps)!==frame)throw Error(`The video presented frame ${Math.round(presentedTime*index.fps)} instead of ${frame}`);
     if(settled)nativePresentedFrame=frame;
    }catch(error){if(error.name!=='AbortError')nativeReady=undefined;throw error}
-   finally{video.pause();events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
+   finally{if(watchesPixels&&!video.paused)video.pause();events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
