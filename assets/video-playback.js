@@ -7,12 +7,16 @@ export function prepareInlineVideo(video) {
   video.setAttribute('webkit-playsinline', '');
 }
 
-export function waitForVideo(video, {readyState = 1, signal, timeout = 15000} = {}) {
+export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, pollOnPaint = false, pollInterval = 0} = {}) {
   return new Promise((resolve, reject) => {
     const events = new AbortController();
-    let timer;
+    let timer, animation, readinessTimer, settled = false;
     function done(error) {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
+      clearTimeout(readinessTimer);
+      if (animation !== undefined) cancelAnimationFrame(animation);
       events.abort();
       signal?.removeEventListener('abort', abort);
       error ? reject(error) : resolve();
@@ -26,6 +30,16 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000} = 
       }
       else if (video.readyState >= readyState && !video.seeking) done();
     }
+    function checkPaint() {
+      animation = undefined;
+      check();
+      if (!settled) animation = requestAnimationFrame(checkPaint);
+    }
+    function checkReadiness() {
+      readinessTimer = undefined;
+      check();
+      if (!settled) readinessTimer = setTimeout(checkReadiness, pollInterval);
+    }
     if (signal?.aborted) { abort(); return; }
     signal?.addEventListener('abort', abort, {once: true});
     for (const event of ['loadedmetadata', 'loadeddata', 'canplay', 'seeked', 'progress', 'error']) {
@@ -33,6 +47,12 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000} = 
     }
     timer = setTimeout(() => done(new Error('The video is still loading')), timeout);
     check();
+    // WebKit can finish a seek before dispatching its queued media event.
+    // Keep the same readiness requirements, but release the next seek promptly.
+    if (!settled && pollOnPaint && typeof requestAnimationFrame === 'function') animation = requestAnimationFrame(checkPaint);
+    // Pending native seeks can become ready between paints as well. Only the
+    // journey opts in; settlement or cancellation stops both readiness watches.
+    if (!settled && pollInterval > 0) readinessTimer = setTimeout(checkReadiness, pollInterval);
   });
 }
 

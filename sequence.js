@@ -1,10 +1,10 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
-import { createFrameSource } from './assets/frame-source.js?v=frames-449b0efb5959';
+import { createFrameSource } from './assets/frame-source.js?v=frames-ff0bb55e4c5b';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-3b72c5f456c8';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-f98e987c95af';
-import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-b1954aae3e53';
+import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
 
 const FPS = 60;
 
@@ -17,6 +17,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
   const status = document.querySelector('#status');
+  const main = document.querySelector('main');
   prepareInlineVideo(opening);
   prepareInlineVideo(journey);
   journey.crossOrigin = 'anonymous';
@@ -141,7 +142,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const direct = image === journey;
     if (direct) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
-      journey.classList.add('native-renderer');
+      if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else context.drawImage(image, 0, 0, frame.width, frame.height);
     refreshFrame = false;
     displayedFrame = index;
@@ -150,7 +151,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (displayedFrame >= frameCount - 180) preloadGame();
     updateCopy(240 + displayedFrame);
     siteSound.frame(240 + displayedFrame);
-    document.querySelector('main').inert = displayedFrame === frameCount - 1;
+    const atEnd = displayedFrame === frameCount - 1;
+    if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1) {
       siteSound.handoff();
       preloadGame();
@@ -159,17 +161,17 @@ export async function createSequence(setInteractive, requestFrame, media) {
       showGame();
     } else {
       siteSound.setActive(true);
-      status.hidden = true;
-      delete document.body.dataset.game;
+      if (!status.hidden) status.hidden = true;
+      if (document.body.hasAttribute('data-game')) delete document.body.dataset.game;
       setGameVisibility(false);
-      game.inert = true;
-      game.setAttribute('aria-hidden', 'true');
+      if (!game.inert) game.inert = true;
+      if (game.getAttribute('aria-hidden') !== 'true') game.setAttribute('aria-hidden', 'true');
     }
     if (displayedFrame > 0) {
-      frame.hidden = direct;
+      if (frame.hidden !== direct) frame.hidden = direct;
       changePhase('journey');
     } else if (desiredFrame === 0) {
-      frame.hidden = true;
+      if (!frame.hidden) frame.hidden = true;
       changePhase('idle');
       allowHover(true);
     }
@@ -195,7 +197,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
         desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
         if (desiredFrame > 0) allowHover(false);
       }
-      hold.hidden = hoverWeight > .0001;
+      const hideHold = hoverWeight > .0001;
+      if (hold.hidden !== hideHold) hold.hidden = hideHold;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
       // Pace from the frame actually on screen, not an unseen scroll target.
