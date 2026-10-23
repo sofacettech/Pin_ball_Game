@@ -1,6 +1,6 @@
 export const FRAME_CACHE_DEFAULTS = {
-  behind: 12, ahead: 72, prefetch: 96, network: 3, batch: 24,
-  decoded: 8, compressedBytes: 12 * 1024 * 1024, idleMs: 100,
+  behind: 16, ahead: 192, prefetch: 224, network: 3, batch: 32,
+  decoded: 8, compressedBytes: 24 * 1024 * 1024, idleMs: 100,
 };
 
 export function createFrameCache({count, source, onReady, onError, config = {}}) {
@@ -237,11 +237,11 @@ export function createFrameCache({count, source, onReady, onError, config = {}})
     // Keep room for the decoder and for requests already in flight.
     get preparation() {
       if (source.mode === 'video') {
-        const progress = Math.min(1, (source.stats.bufferedSeconds || 0) / 1.25);
+        const progress = Math.min(1, (source.stats.bufferedSeconds || 0) / 3);
         return {progress: decoded.has(0) ? progress : 0, ready: decoded.has(0) && progress === 1};
       }
       let required = 0, available = 0, size = 0;
-      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 75);
+      const limit = Math.min(count, settings.ahead + 1, settings.prefetch, 180);
       for (let frame = 0; frame < limit; frame++) {
         const length = estimate(frame);
         if (size + length > settings.compressedBytes * .75 && required) break;

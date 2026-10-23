@@ -2,7 +2,7 @@ import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
 import { createFrameSource } from './assets/frame-source.js?v=frames-82695821284d';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-3a9ffd4a433b';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-ef7c832a24ae';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
 
@@ -83,7 +83,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
+    config: constrained ? {network:2,batch:24,decoded:4,ahead:144,behind:12,prefetch:160,compressedBytes:16*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (['NotSupportedError','EncodingError'].includes(error.name)) {

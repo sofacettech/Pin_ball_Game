@@ -36,8 +36,8 @@ test('native preparation requires decoded pixels and a contiguous playable openi
  try{
   await until(()=>cache.get(0));
   assert.equal(cache.preparation.ready,false);
-  bufferedSeconds=.625;assert.equal(cache.preparation.progress,.5);
-  bufferedSeconds=1.25;assert.equal(cache.preparation.ready,true);
+  bufferedSeconds=1.5;assert.equal(cache.preparation.progress,.5);
+  bufferedSeconds=3;assert.equal(cache.preparation.ready,true);
   cache.suspend();assert.equal(cache.preparation.ready,false);
  }finally{cache.destroy()}
 });
