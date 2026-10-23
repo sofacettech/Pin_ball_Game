@@ -1,8 +1,9 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-d8b6fed88221';
-import { createFrameSource } from './assets/frame-source.js?v=frames-f0f12198a05e';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-7b7b97c18ea4';
+import { createFrameSource } from './assets/frame-source.js?v=frames-ff0bb55e4c5b';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-3b72c5f456c8';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-33c1cf4d96bb';
 
 const FPS = 60;
@@ -58,6 +59,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let scrollDirty = false;
   let wantedFrame = 0;
   let refreshFrame = false;
+  const pacer = createFramePacer();
+  let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
   const source = await createFrameSource(journey,index,indexURL);
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
@@ -65,7 +68,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
   // itself through its compositor; only its completed position is reported here.
   const cache = createFrameCache({count: frameCount, source, onReady(available, image) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
-    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) display(image,available);
+    if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey')) {
+      display(image,available);
+      // Native playback can start its next useful seek as soon as this one
+      // completes, without paying another animation-frame scheduling delay.
+      if (!scrollDirty && phase === 'journey' && displayedFrame !== desiredFrame) requestNextFrame();
+    }
     requestFrame();
   },
     config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,compressedBytes:10*1024*1024} : {},
@@ -77,6 +85,15 @@ export async function createSequence(setInteractive, requestFrame, media) {
       } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
     },
   });
+
+  function requestNextFrame() {
+    const now = performance.now();
+    const target = pacer.next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, paintedFrame);
+    pacedAt = now;
+    wantedFrame = target;
+    cache.request(target, desiredFrame, displayedFrame);
+    return target;
+  }
 
   function preloadGame() {
     if (!game.getAttribute('src')) game.src = './play.html';
@@ -134,13 +151,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (phase === 'opening') return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
-    // Start the visible journey seek in the scroll event so input does not
-    // wait for another animation frame before reaching the decoder.
-    // The first journey frame still waits for the opening/hover handoff in tick.
-    if (phase === 'journey') {
-      desiredFrame = wantedFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
-      cache.request(wantedFrame, desiredFrame, displayedFrame);
-    }
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {
@@ -151,6 +161,9 @@ export async function createSequence(setInteractive, requestFrame, media) {
     } else context.drawImage(image, 0, 0, frame.width, frame.height);
     refreshFrame = false;
     displayedFrame = index;
+    // Wait until playback approaches the handoff before competing with the
+    // journey for bandwidth, even if a fast swipe has already reached the end.
+    if (displayedFrame >= frameCount - 180) preloadGame();
     updateCopy(240 + displayedFrame);
     siteSound.frame(240 + displayedFrame);
     const atEnd = displayedFrame === frameCount - 1;
@@ -190,6 +203,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   return {
     tick(delta, hoverWeight) {
+      paintedFrame = displayedFrame;
       if (phase === 'opening') {
         updateCopy(opening.currentTime * FPS);
         return !opening.paused && !opening.ended;
@@ -198,23 +212,19 @@ export async function createSequence(setInteractive, requestFrame, media) {
         scrollDirty = false;
         desiredFrame = Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
         if (desiredFrame > 0) allowHover(false);
-        // Avoid loading the game's large 3D assets while the journey is buffering.
-        if (desiredFrame >= frameCount - 180) preloadGame();
       }
       const hideHold = hoverWeight > .0001;
       if (hold.hidden !== hideHold) hold.hidden = hideHold;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
-      // Native scrolling already supplies the gesture's motion and inertia.
-      // A second easing loop adds input lag and seeks through obsolete targets.
-      const target = desiredFrame;
-      wantedFrame = target;
-      cache.request(target,desiredFrame,displayedFrame);
+      // Pace from the frame actually on screen, not an unseen scroll target.
+      // Nearby samples remain useful while a slower connection catches up.
+      const target = requestNextFrame();
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
       else if (desiredFrame === 0 && displayedFrame === 0) allowHover(true);
-      return false; // Scroll events and completed frames schedule the next paint.
+      return displayedFrame !== desiredFrame;
     },
     get phase() { return phase; },
     get desiredFrame() { return desiredFrame; },

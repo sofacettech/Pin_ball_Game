@@ -89,7 +89,7 @@ await writeFile(new URL('assets/video-manifest.json',root),JSON.stringify(manife
 // Content versions keep cached helper code consistent when performance settings change.
 for(const [parent,dependencies] of [
  ['assets/frame-source.js',['./video-playback.js']],
- ['sequence.js',['./assets/frame-cache.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
+ ['sequence.js',['./assets/frame-cache.js','./assets/frame-pacing.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
  ['viewer.js',['./sequence.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
  ['index.html',['./viewer.js','./style.css']],
 ]){
