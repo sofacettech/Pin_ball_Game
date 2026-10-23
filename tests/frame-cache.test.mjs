@@ -12,6 +12,62 @@ function fixture(){
   async decode(frame){await wait(2);alive++;return{frame,close(){alive--;closed.push(frame)}}}};
  return{source,loads,closed,get alive(){return alive},get peak(){return peak}};
 }
+test('desktop loader waits for six seconds including the last opening sample',async()=>{
+ let release;
+ const gate=new Promise(resolve=>{release=resolve});
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  async loadFrames(frames,_signal,_budget,onFrame){
+   const samples=new Map();
+   for(const frame of frames){
+    if(frame===359)await gate;
+    const data=new Uint8Array(100);samples.set(frame,data);onFrame(frame,data);
+   }
+   return samples;
+  },
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:2000,source,onReady(){},onError:error=>{throw error}});
+ try{
+  await until(()=>cache.get(0)&&cache.stats.compressed>=480);
+  assert.equal(cache.preparation.ready,false,'A missing sample inside the opening six seconds must keep the loader visible');
+  assert.equal(cache.preparation.progress,359/360);
+  release();await until(()=>cache.preparation.ready&&cache.stats.pending===0);
+  assert.equal(cache.stats.compressed,512);
+  assert.ok(cache.stats.decoded<=8);
+ }finally{release();cache.destroy()}
+});
+test('desktop retains a three-second scroll reversal without reloading its frames',async()=>{
+ const loads=new Map();
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  async loadFrames(frames){return new Map(frames.map(frame=>{loads.set(frame,(loads.get(frame)||0)+1);return[frame,new Uint8Array(100)]}))},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:2000,source,onReady(){},onError:error=>{throw error},config:{idleMs:1}});
+ try{
+  await until(()=>cache.preparation.ready&&cache.stats.pending===0);
+  for(const frame of [200,260,320,380,320,260,200]){
+   cache.request(frame);await until(()=>cache.get(frame)&&cache.stats.pending===0);
+   assert.ok(cache.stats.compressed<=512);
+   assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=48*1024*1024);
+   assert.ok(cache.stats.decoded<=8);
+  }
+  for(let frame=200;frame<=380;frame++)assert.equal(loads.get(frame),1,`Frame ${frame} was downloaded again on reversal`);
+  assert.ok(cache.stats.peakNetwork<=3);
+ }finally{cache.destroy()}
+});
+test('a cold reverse target does not wait for the tail of an ascending byte range',async()=>{
+ const batches=[];
+ const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
+  async loadFrames(frames){batches.push([...frames]);return new Map(frames.map(frame=>[frame,new Uint8Array(100)]))},
+  async decode(frame){return{frame,close(){}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:2000,source,onReady(){},onError:error=>{throw error},config:{idleMs:1}});
+ try{
+  await until(()=>cache.stats.pending===0);
+  cache.request(800);await until(()=>cache.get(800)&&cache.stats.pending===0);
+  batches.length=0;
+  cache.request(100,100,800);await until(()=>cache.get(100));
+  assert.deepEqual(batches[0],[100]);
+  assert.ok(batches.some(frames=>frames.length===32),'Background lookahead should still use efficient ranges');
+ }finally{cache.destroy()}
+});
 test('preparation waits for a contiguous byte-bounded opening buffer and a decoded first frame',async()=>{
  const pending=new Map();let resolveDecode;
  const source={mode:'webcodecs',stats:{},frameBytes:()=>100,
