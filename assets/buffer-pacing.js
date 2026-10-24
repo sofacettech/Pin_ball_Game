@@ -19,7 +19,8 @@ export function createBufferPacingController() {
       // low-water latch must not throttle a fully supplied reverse movement.
       if (travel && previousDirection && travel !== previousDirection) reset();
       if (travel) previousDirection = travel;
-      const low = Math.min(remaining, Math.max(12, speed * .6), capacity * .6);
+      // Smaller phone windows must slow early enough to preserve useful runway.
+      const low = Math.min(remaining, Math.max(12, speed * .6), capacity * .8);
       const recovery = Math.min(remaining, capacity * .9, Math.max(low + 12, speed));
       const critical = Math.min(low * .5, Math.max(1, speed * .15));
       const complete = buffered >= remaining;
@@ -43,4 +44,19 @@ export function createBufferPacingController() {
         lowWatermark: low, recoveryWatermark: recovery, runwayMs: buffered / speed * 1000};
     },
   };
+}
+
+// Restore responsive catch-up only as runway recovers. Keep every pending
+// request inside the retained history, so recentering the cache cannot evict
+// the ready samples between the painted frame and its requested destination.
+export function getBufferPacingLimits(pacing = {}, {bufferedFrames = pacing.bufferedFrames,
+  retainedBehindFrames = 40, baseSpeed = 180, catchupSpeed = 720} = {}) {
+  const scale = Number.isFinite(pacing.scale) ? clamp(pacing.scale, 0, 1) : 1;
+  const base = Number.isFinite(baseSpeed) && baseSpeed > 0 ? baseSpeed : 180;
+  const catchup = Math.max(base, Number.isFinite(catchupSpeed) && catchupSpeed > 0 ? catchupSpeed : 720);
+  // Do not spend a thin or reversed runway on the healthy catch-up boost
+  // while the slower controller scale is still easing down.
+  const recovery = pacing.targetScale === 1 ? clamp((scale - .75) / .25, 0, 1) : 0;
+  return {scale, maxSpeed: base * scale + (catchup - base) * recovery,
+    maxAdvance: Math.min(count(bufferedFrames), count(retainedBehindFrames))};
 }

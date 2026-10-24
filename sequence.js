@@ -4,7 +4,7 @@ import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2e
 import { createFrameSource } from './assets/frame-source.js?v=frames-5e14aac089b1';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-e50d5678e968';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-fcf79e1ee64b';
-import { createBufferPacingController } from './assets/buffer-pacing.js?v=frames-f38413a3e34d';
+import { createBufferPacingController, getBufferPacingLimits } from './assets/buffer-pacing.js?v=frames-22288daf15bd';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
@@ -143,7 +143,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     },
   });
 
-  const bufferCapacity = cache.stats.settings.ahead;
+  const {ahead: bufferCapacity, behind: retainedHistory} = cache.stats.settings;
 
   const nativeScheduler = createNativeFrameScheduler({onFrame() {
     if (!usesNativeScheduler() || !nativeMotionReady || document.hidden || !['idle','journey'].includes(phase)) return {active: false};
@@ -178,11 +178,11 @@ export async function createSequence(setInteractive, requestFrame, media) {
         remainingFrames: coverage.remaining, direction: bufferDirection,
         desiredDistance: Math.abs(desiredFrame - displayedFrame),
         consumptionSpeed: workerTravelSpeed, capacityFrames: bufferCapacity});
+      const limits = getBufferPacingLimits(pacing, {bufferedFrames: coverage.available, retainedBehindFrames: retainedHistory, baseSpeed: workerTravelSpeed});
       bufferMetrics = {bufferAheadFrames: coverage.available, bufferAheadSeconds: coverage.available / FPS,
         bufferRequiredFrames: pacing.recoveryWatermark, bufferPacingScale: pacing.scale,
-        bufferPacingLimited: pacing.limited, bufferPacingSpeed: workerTravelSpeed * pacing.scale};
-      target = workerPacer.next(displayedFrame, desiredFrame, delta, paintedFrame,
-        {scale: pacing.scale, maxSpeed: workerTravelSpeed * pacing.scale, maxAdvance: coverage.available});
+        bufferPacingLimited: pacing.limited, bufferPacingSpeed: limits.maxSpeed};
+      target = workerPacer.next(displayedFrame, desiredFrame, delta, paintedFrame, limits);
     } else {
       if (bufferMetrics) resetBufferPacing();
       target = (source.transient ? nativePacer : pacer).next(displayedFrame, desiredFrame, delta, native ? displayedFrame : paintedFrame);

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBufferPacingController} from '../assets/buffer-pacing.js';
+import {createBufferPacingController, getBufferPacingLimits} from '../assets/buffer-pacing.js';
+import {createFramePacer} from '../assets/frame-pacing.js';
 
 const input = overrides => ({delta:1/60, bufferedFrames:192, remainingFrames:1800,
   direction:1, desiredDistance:300, consumptionSpeed:180, capacityFrames:192, ...overrides});
@@ -46,7 +47,7 @@ test('critical depletion lowers speed without crossing the positive-coverage flo
 test('phone capacity has reachable recovery watermarks at high source-frame speed', () => {
   const controller = createBufferPacingController();
   const low = advance(controller, .5, {bufferedFrames:30, capacityFrames:80, consumptionSpeed:360});
-  assert.equal(low.lowWatermark, 48);assert.equal(low.recoveryWatermark, 72);assert.equal(low.limited, true);
+  assert.equal(low.lowWatermark, 64);assert.equal(low.recoveryWatermark, 72);assert.equal(low.limited, true);
   const recovered = advance(controller, 5, {bufferedFrames:80, capacityFrames:80, consumptionSpeed:360});
   assert.equal(recovered.scale, 1);assert.equal(recovered.limited, false);
 });
@@ -107,4 +108,79 @@ test('invalid timing cannot create non-finite output or a saved catch-up interva
   }
   const result = controller.update(input({bufferedFrames:NaN, consumptionSpeed:NaN}));
   assert.equal(result.scale, 0);assert.equal(result.bufferedFrames, 0);assert.equal(result.runwayMs, 0);
+});
+
+
+test('speed limits restore healthy catch-up without exceeding the retained corridor', () => {
+  assert.deepEqual(getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:192}), {scale:1,maxSpeed:720,maxAdvance:40});
+  assert.deepEqual(getBufferPacingLimits({scale:.75,targetScale:.75,bufferedFrames:80}), {scale:.75,maxSpeed:135,maxAdvance:40});
+  assert.deepEqual(getBufferPacingLimits({scale:.25,targetScale:.25,bufferedFrames:1}), {scale:.25,maxSpeed:45,maxAdvance:1});
+  assert.deepEqual(getBufferPacingLimits({scale:0,targetScale:0,bufferedFrames:0}), {scale:0,maxSpeed:0,maxAdvance:0});
+  assert.equal(getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:192},{retainedBehindFrames:12}).maxAdvance,12);
+  assert.equal(getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:192},{retainedBehindFrames:0}).maxAdvance,0);
+  assert.equal(getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:192},{bufferedFrames:3}).maxAdvance,3);
+});
+
+test('recovery raises the speed ceiling smoothly instead of switching to a catch-up burst', () => {
+  const controller=createBufferPacingController();advance(controller,1,{bufferedFrames:90});
+  let previous=getBufferPacingLimits(controller.update(input({bufferedFrames:90}))).maxSpeed;
+  assert.equal(previous,135);
+  for(let i=0;i<120;i++){
+    const current=getBufferPacingLimits(controller.update(input())).maxSpeed;
+    assert.ok(current>=previous);assert.ok(current-previous<15);
+    previous=current;
+  }
+  assert.ok(previous>680&&previous<720);
+  assert.equal(getBufferPacingLimits(advance(controller,5)).maxSpeed,720);
+  const below=getBufferPacingLimits({scale:.75-1e-8,targetScale:1,bufferedFrames:80}).maxSpeed;
+  const above=getBufferPacingLimits({scale:.75+1e-8,targetScale:1,bufferedFrames:80}).maxSpeed;
+  assert.ok(above-below<.0001,'The mapping is continuous at the pressure threshold');
+});
+
+test('fully supplied large jumps settle within five seconds even at ten presentations per second', () => {
+  for(const hz of [10,30,60,120])for(const direction of [-1,1]){
+    const controller=createBufferPacingController(),pacer=createFramePacer({responsive:true});
+    let displayed=direction>0?100:1500;const desired=direction>0?1500:100;
+    pacer.reset(displayed);let ticks=0;
+    while(displayed!==desired&&ticks<hz*5){
+      const pacing=controller.update(input({delta:1/hz,direction,desiredDistance:Math.abs(desired-displayed)}));
+      const next=pacer.next(displayed,desired,1/hz,displayed,getBufferPacingLimits(pacing));
+      assert.ok(Math.abs(next-displayed)<=40,'Cache recentering must retain the entire pending corridor');
+      assert.ok((next-displayed)*direction>=0);displayed=next;ticks++;
+    }
+    assert.equal(displayed,desired,`${hz} Hz direction ${direction} settles`);
+    assert.ok(ticks/hz<4.5,`${hz} Hz does not inherit the former unconditional180-frame/s delay`);
+  }
+});
+
+test('ready-corridor limits hold at holes and reverse without carrying a stale pending target', () => {
+  const pacer=createFramePacer({responsive:true});let displayed=100;
+  const healthy=getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:192});
+  const pending=pacer.next(displayed,1500,.1,displayed,healthy);
+  assert.equal(pending,140);
+  assert.equal(pacer.next(displayed,1500,.1,displayed,getBufferPacingLimits({scale:0,targetScale:0,bufferedFrames:0})),100);
+  const reverse=pacer.next(displayed,0,1/60,displayed,getBufferPacingLimits({scale:1,targetScale:1,bufferedFrames:2}));
+  assert.equal(reverse,98);
+  displayed=reverse;
+  const resumed=pacer.next(displayed,0,1/60,displayed,healthy);
+  assert.ok(resumed<displayed&&resumed>=displayed-12);
+});
+
+
+test('thin runway and reversal suppress catch-up boost throughout a delivery interruption', () => {
+  for(const direction of [-1,1]){
+    const controller=createBufferPacingController(),pacer=createFramePacer({responsive:true});
+    controller.update(input({direction:-direction}));
+    let displayed=500,buffered=72;
+    for(let tick=0;tick<30;tick++){
+      const pacing=controller.update(input({direction,bufferedFrames:buffered}));
+      const limits=getBufferPacingLimits(pacing);
+      assert.ok(limits.maxSpeed<=180,'Pressure disables the boost even while scale is easing down');
+      const next=pacer.next(displayed,displayed+direction*1000,1/60,displayed,limits);
+      const consumed=Math.abs(next-displayed);
+      assert.ok(consumed<=buffered);buffered-=consumed;displayed=next;
+    }
+    assert.ok(buffered>0,'A half-second outage does not exhaust the initial72-frame runway');
+    assert.ok(Math.abs(displayed-500)>40,'Pressure retains useful movement instead of freezing');
+  }
 });

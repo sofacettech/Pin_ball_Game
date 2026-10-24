@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createFrameCache} from '../assets/frame-cache.js';
 import {createFramePacer} from '../assets/frame-pacing.js';
-import {createBufferPacingController} from '../assets/buffer-pacing.js';
+import {createBufferPacingController,getBufferPacingLimits} from '../assets/buffer-pacing.js';
 
 // Keep the actual encoded sizes around the doorway (frames 840–959 are
 // heavier), but use logical samples/images. This measures scheduling under
@@ -58,7 +58,7 @@ async function simulate(t,profile,managed,latencyPhase=0){
  cache=createFrameCache({count:sizes.length,source,onReady(){},onError:error=>{throw error},config});
  let displayed=0;
  async function travel(destination,reverse=false){
-  const started=now,origin=displayed;let lastDraw=started,maxGap=0,draws=0;
+  const started=now,origin=displayed;let lastDraw=started,maxGap=0,draws=0,firstSecondFrame=origin;
   for(let tick=1;tick<=900;tick++){
    await advance(20);
    const desired=reverse?Math.max(destination,origin-Math.round(tick*.02*200)):Math.min(destination,origin+Math.round(tick*.02*240));
@@ -67,9 +67,12 @@ async function simulate(t,profile,managed,latencyPhase=0){
     desiredDistance:Math.abs(desired-displayed),consumptionSpeed:180,capacityFrames:config.ahead});
    if(state.limited)limited++;if(state.state==='recovering')recovering++;lowestScale=Math.min(lowestScale,state.scale);
    if(coverage.available>0&&state.scale<.9)slowedWithCoverage++;
-   const limits=managed?{scale:state.scale,maxSpeed:180*state.scale,maxAdvance:coverage.available}:undefined;
+   const limits=managed?getBufferPacingLimits(state,{bufferedFrames:coverage.available,retainedBehindFrames:config.behind}):undefined;
    const target=pacer.next(displayed,desired,.02,displayed,limits);
-   if(managed)assert.ok(Math.abs(target-displayed)<=coverage.available,'The next request stays within consecutive ready coverage');
+   if(managed){
+    assert.ok(Math.abs(target-displayed)<=coverage.available,'The next request stays within consecutive ready coverage');
+    assert.ok(Math.abs(target-displayed)<=config.behind,'The pending request cannot evict the ready corridor behind it');
+   }
    cache.request(target,desired,displayed);
    const next=cache.get(target)?target:cache.closest(target,displayed);
    if(next!==undefined&&next!==displayed){
@@ -78,7 +81,8 @@ async function simulate(t,profile,managed,latencyPhase=0){
     displayed=next;maxGap=Math.max(maxGap,now-lastDraw);lastDraw=now;draws++;
    }
    bounds();
-   if(displayed===destination)return{maxGap,draws,elapsed:now-started};
+   if(tick===50)firstSecondFrame=displayed;
+   if(displayed===destination)return{maxGap,draws,elapsed:now-started,firstSecondFrame};
   }
   assert.fail(`The ${profile} ${reverse?'reverse':'forward'} journey did not reach frame ${destination}`);
  }
@@ -98,6 +102,7 @@ async function simulate(t,profile,managed,latencyPhase=0){
 test('bounded buffer pacing crosses the heavier entrance and returns to the exact start',async t=>{
  for(const latencyPhase of [0,2]){
   const baseline=await simulate(t,'desktop',false,latencyPhase),managed=await simulate(t,'desktop',true,latencyPhase);
+  assert.equal(managed.forward.firstSecondFrame,baseline.forward.firstSecondFrame,'Healthy fast travel must preserve the responsive control before delivery slows');
   assert.ok(baseline.forward.maxGap>=100,'The unchanged control must encounter finite-delivery pressure');
   assert.ok(managed.forward.maxGap<baseline.forward.maxGap,'Ready-coverage pacing must reduce the longest forward hold');
   assert.ok(managed.limited>0&&managed.lowestScale<.8,'Constrained delivery must slow source-frame travel');
@@ -108,7 +113,11 @@ test('bounded buffer pacing crosses the heavier entrance and returns to the exac
 });
 
 test('the smaller phone buffer retains coverage and resource bounds through forward and reverse travel',async t=>{
- const managed=await simulate(t,'phone',true);
+ const baseline=await simulate(t,'phone',false),managed=await simulate(t,'phone',true);
+ // The smaller runway can still run dry; require improvement over identical
+ // delivery, not a claim that finite buffering eliminates every interruption.
+ assert.ok(baseline.forward.maxGap>=100);
+ assert.ok(managed.forward.maxGap<baseline.forward.maxGap,'The phone controller must shorten the delivery-induced hold');
  assert.ok(managed.limited>0&&managed.lowestScale<.8);assert.ok(managed.recovering>0);assert.ok(managed.slowedWithCoverage>0);
  assert.ok(managed.peakResources<=4);assert.ok(managed.peakBytes<=profiles.phone.compressedBytes);
 });
