@@ -292,7 +292,11 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   function request(frame, next = frame, visible = frame) {
     if (![frame, next, visible].every(value => Number.isInteger(value) && valid(value))) throw RangeError('Frame is outside the source sequence');
     if (order.length && target === frame && lead === next && presented === visible) return;
-    if (next !== lead) direction = Math.sign(next - lead);
+    // A finger can reverse while the image still needs to catch up forward.
+    // Prefetch toward the required painted-frame travel, or a held worker can
+    // fill its byte budget behind itself and never receive its next frame.
+    if (source.mode === 'worker' && (frame !== visible || next !== visible)) direction = Math.sign(frame - visible) || Math.sign(next - visible);
+    else if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
     // request() starts decoding before the caller asks closest() for pixels.
@@ -339,6 +343,26 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       }
       const progress = required ? available / required : 0;
       return {progress: decoded.has(0) ? progress : Math.min(progress, .99), ready: decoded.has(0) && progress === 1};
+    },
+    // Count consecutive ready samples after the painted frame, never queued
+    // ranges. The remaining distance keeps short endings/reversals distinct
+    // from starvation. A caller can use a small pacing horizon; even an
+    // oversized limit cannot scan beyond this cache's bounded prefetch window.
+    coverage(frame, travel = 1, limit = settings.prefetch) {
+      if (!Number.isInteger(frame) || !valid(frame) || (travel !== -1 && travel !== 0 && travel !== 1) ||
+          !Number.isSafeInteger(limit) || limit < 0) throw RangeError('Invalid frame coverage query');
+      const remaining = travel > 0 ? count - 1 - frame : travel < 0 ? frame : 0;
+      const scan = Math.min(remaining, limit, settings.prefetch);
+      let available = 0;
+      if (!destroyed && !suspended && source.mode !== 'video') {
+        while (available < scan) {
+          const next = frame + (available + 1) * travel;
+          const image = decoded.get(next);
+          if (!(image && !image.transient) && compressed.get(next) == null) break;
+          available++;
+        }
+      }
+      return {available, remaining};
     },
     get: frame => decoded.get(frame),
     closest(frame, previous) {

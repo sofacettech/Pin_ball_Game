@@ -206,6 +206,7 @@ test('direct native video never pre-seeks a future frame or reuses a mutable old
   await until(()=>cache.get(0));await wait(20);assert.deepEqual(frames,[0]);
   cache.request(20);assert.equal(cache.get(0),undefined);await until(()=>cache.get(20));
   await wait(20);assert.deepEqual(frames,[0,20]);
+  assert.deepEqual(cache.coverage(19),{available:0,remaining:80},'Native placeholders and mutable frames are not independent ready samples');
   cache.request(5);assert.equal(cache.get(20),undefined);await until(()=>cache.get(5));
  }finally{cache.destroy()}
 });
@@ -458,4 +459,94 @@ test('desktop worker lookahead bridges a delivery interruption without increasin
  assert.ok(results[1].maxGap<results[0].maxGap/2,'Desktop lookahead must shorten the longest wait for an advancing frame');
  assert.ok(results[1].misses<results[0].misses,'Desktop lookahead must produce fewer unavailable-frame requests');
  assert.ok(results.every(result=>result.peakResources<=4),'Background lookahead must not expand the decoded window');
+});
+
+function coverageFixture({count=10,prefetch=8}={}){
+ const jobs=[];let alive=0,loads=0,decodes=0;
+ const source={mode:'worker',decodeConcurrency:4,stats:{},frameBytes:()=>100,fallback:()=>false,destroy(){},
+  loadFrames(frames,signal,_budget,onFrame){loads++;return new Promise((resolve,reject)=>{
+   const samples=new Map(),job={frames,signal,send(frame){
+    assert.ok(frames.includes(frame));const bytes=new Uint8Array(100);samples.set(frame,bytes);onFrame(frame,bytes);
+    if(samples.size===frames.length){signal.removeEventListener('abort',abort);resolve(samples)}
+   }};
+   const abort=()=>reject(new DOMException('Cancelled','AbortError'));
+   signal.addEventListener('abort',abort,{once:true});jobs.push(job);
+  })},
+  async decode(frame){alive++;decodes++;let closed=false;return{frame,close(){assert.equal(closed,false);closed=true;alive--}}},
+ };
+ const cache=createFrameCache({count,source,onReady(){},onError:error=>{throw error},
+  config:{network:2,batch:4,decoded:4,ahead:prefetch-1,behind:0,prefetch,compressedBytes:prefetch*100}});
+ const send=frame=>{const job=jobs.find(job=>!job.signal.aborted&&job.frames.includes(frame));assert.ok(job,`Frame ${frame} was requested`);job.send(frame)};
+ return{cache,send,get alive(){return alive},get work(){return{loads,decodes}}};
+}
+
+test('coverage stops at holes in progressive downloads and measures the requested direction',async()=>{
+ const f=coverageFixture(),{cache}=f;
+ try{
+  assert.deepEqual(cache.coverage(0),{available:0,remaining:9},'Queued and in-flight ranges are not ready');
+  for(const frame of [0,1,3,4,5,6,7])f.send(frame);
+  await until(()=>cache.get(0)&&cache.stats.decoding===0);
+  assert.ok(cache.stats.compressed>=7,'A large count can still hide a nearby missing sample');
+  assert.deepEqual(cache.coverage(0),{available:1,remaining:9});
+  assert.deepEqual(cache.coverage(5,-1),{available:2,remaining:5},'Reverse coverage stops at the same missing frame 2');
+  assert.deepEqual(cache.coverage(3,1,2),{available:2,remaining:6},'The caller can bound its pacing horizon');
+  assert.deepEqual(cache.coverage(0,1,0),{available:0,remaining:9});
+  assert.deepEqual(cache.coverage(5,0),{available:0,remaining:0});
+  assert.deepEqual(cache.coverage(0,-1),{available:0,remaining:0});
+  assert.deepEqual(cache.coverage(9),{available:0,remaining:0});
+  const work=f.work,resources=cache.stats.decoded+cache.stats.decoding;
+  for(let i=0;i<100;i++)cache.coverage(0,1,Number.MAX_SAFE_INTEGER);
+  assert.deepEqual(f.work,work,'Queries must not download or decode');
+  assert.equal(cache.stats.decoded+cache.stats.decoding,resources);
+  f.send(2);await until(()=>cache.stats.decoding===0);
+  assert.deepEqual(cache.coverage(0),{available:7,remaining:9},'A completed hole joins the already available samples beyond it');
+  assert.deepEqual(cache.coverage(7,-1),{available:7,remaining:7});
+  for(const args of [[-1],[10],[0,2],[0,1,-1],[0,1,Infinity]])assert.throws(()=>cache.coverage(...args),RangeError);
+  assert.ok(cache.stats.decoded+cache.stats.decoding<=4);assert.ok(f.alive<=4);
+ }finally{cache.destroy();await wait(0)}
+ assert.equal(f.alive,0);
+});
+
+test('coverage includes retained decoded frames and handles endings, suspension and disposal',async()=>{
+ const f=coverageFixture({count:12,prefetch:4}),{cache}=f;
+ try{
+  for(const frame of [0,1,2,3])f.send(frame);
+  await until(()=>cache.stats.pending===0&&cache.stats.decoded===4);
+  cache.request(8,8,8);
+  assert.equal(cache.stats.compressed,0,'The old compressed window was trimmed');
+  assert.deepEqual(cache.coverage(0),{available:3,remaining:11},'Retained images are independently ready');
+  assert.deepEqual(cache.coverage(8),{available:0,remaining:3},'A requested ending is not yet covered');
+  for(const frame of [8,9,10,11])f.send(frame);
+  await until(()=>cache.stats.pending===0&&cache.get(8));
+  assert.deepEqual(cache.coverage(8),{available:3,remaining:3});
+  assert.deepEqual(cache.coverage(11,-1),{available:3,remaining:11});
+  assert.deepEqual(cache.coverage(11),{available:0,remaining:0});
+  assert.deepEqual(cache.coverage(0),{available:0,remaining:11},'Evicted images must not inflate coverage');
+  cache.suspend();assert.deepEqual(cache.coverage(8),{available:0,remaining:3});
+  assert.equal(f.alive,0);cache.resume();await until(()=>cache.get(8)&&cache.stats.pending===0);
+  assert.deepEqual(cache.coverage(8),{available:3,remaining:3});
+  assert.ok(cache.stats.decoded+cache.stats.decoding<=4);assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=400);
+ }finally{cache.destroy();await wait(0)}
+ assert.deepEqual(cache.coverage(8),{available:0,remaining:3});assert.equal(f.alive,0);
+});
+
+test('worker coverage follows required travel when a scroll reversal still leaves the destination ahead',async()=>{
+ let alive=0;
+ const source={mode:'worker',decodeConcurrency:4,stats:{},frameBytes:()=>100,
+  async load(){return new Uint8Array(100)},
+  async decode(frame){alive++;return{frame,close(){alive--}}},fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:50,source,onReady(){},onError:error=>{throw error},
+  config:{ahead:8,behind:2,prefetch:12,network:1,batch:1,decoded:4,compressedBytes:800,idleMs:1}});
+ try{
+  cache.request(10,20,10);cache.request(10,15,10);
+  await until(()=>cache.coverage(10,1).available>0&&cache.stats.pending===0);
+  assert.equal(cache.stats.direction,1,'The destination is still ahead of the held image');
+  cache.request(11,15,10);await until(()=>cache.get(11));
+  assert.equal(cache.get(11).frame,11,'The next forward frame must become drawable within the byte budget');
+  cache.request(11,5,11);await until(()=>cache.coverage(11,-1).available>0&&cache.stats.pending===0);
+  assert.equal(cache.stats.direction,-1,'An actual destination behind the image must switch prefetch direction');
+  cache.request(10,5,11);await until(()=>cache.get(10));assert.equal(cache.get(10).frame,10);
+  assert.ok(cache.stats.compressedBytes+cache.stats.reservedBytes<=800);assert.ok(cache.stats.decoded+cache.stats.decoding<=4);assert.ok(alive<=4);
+ }finally{cache.destroy();await wait(0)}
+ assert.equal(alive,0);
 });

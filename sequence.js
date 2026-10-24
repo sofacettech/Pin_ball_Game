@@ -2,8 +2,9 @@ import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
 import { createFrameSource } from './assets/frame-source.js?v=frames-5e14aac089b1';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-55d1317ec806';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-e50d5678e968';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-fcf79e1ee64b';
+import { createBufferPacingController } from './assets/buffer-pacing.js?v=frames-f38413a3e34d';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
@@ -96,6 +97,15 @@ export async function createSequence(setInteractive, requestFrame, media) {
   },{renderer:new URLSearchParams(location.search).get('renderer')||'worker'});
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
+  const workerPacer = createFramePacer({responsive: true});
+  const bufferPacing = createBufferPacingController();
+  let bufferDirection = 1, bufferMetrics = null;
+  const workerTravelSpeed = 180;
+  function resetBufferPacing() {
+    bufferPacing.reset(); workerPacer.reset(displayedFrame);
+    bufferDirection = Math.sign(desiredFrame - displayedFrame) || 1;
+    bufferMetrics = null; pacedAt = performance.now();
+  }
   // Verified keyframe seeking benefits from independent scheduling in WebKit.
   // Precise currentTime seeking retains its existing responsive RAF path;
   // independent scheduling is limited to the verified keyframe capability.
@@ -133,6 +143,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
     },
   });
 
+  const bufferCapacity = cache.stats.settings.ahead;
+
   const nativeScheduler = createNativeFrameScheduler({onFrame() {
     if (!usesNativeScheduler() || !nativeMotionReady || document.hidden || !['idle','journey'].includes(phase)) return {active: false};
     readScrollTarget(true);
@@ -157,7 +169,24 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   function requestNextFrame(native = false) {
     const now = performance.now();
-    const target = (source.transient || source.mode==='worker' ? nativePacer : pacer).next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, native ? displayedFrame : paintedFrame);
+    const delta = (now - pacedAt) / 1000;
+    let target;
+    if (source.mode === 'worker') {
+      bufferDirection = Math.sign(desiredFrame - displayedFrame) || bufferDirection;
+      const coverage = cache.coverage(displayedFrame, bufferDirection, bufferCapacity);
+      const pacing = bufferPacing.update({delta, bufferedFrames: coverage.available,
+        remainingFrames: coverage.remaining, direction: bufferDirection,
+        desiredDistance: Math.abs(desiredFrame - displayedFrame),
+        consumptionSpeed: workerTravelSpeed, capacityFrames: bufferCapacity});
+      bufferMetrics = {bufferAheadFrames: coverage.available, bufferAheadSeconds: coverage.available / FPS,
+        bufferRequiredFrames: pacing.recoveryWatermark, bufferPacingScale: pacing.scale,
+        bufferPacingLimited: pacing.limited, bufferPacingSpeed: workerTravelSpeed * pacing.scale};
+      target = workerPacer.next(displayedFrame, desiredFrame, delta, paintedFrame,
+        {scale: pacing.scale, maxSpeed: workerTravelSpeed * pacing.scale, maxAdvance: coverage.available});
+    } else {
+      if (bufferMetrics) resetBufferPacing();
+      target = (source.transient ? nativePacer : pacer).next(displayedFrame, desiredFrame, delta, native ? displayedFrame : paintedFrame);
+    }
     pacedAt = now;
     wantedFrame = target;
     cache.request(target, desiredFrame, displayedFrame);
@@ -219,6 +248,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     preparationRetry.hidden = true; status.hidden = true; requestFrame();
   }, {signal: events.signal});
   document.addEventListener('visibilitychange', () => {
+    resetBufferPacing();
     if (document.hidden) {
       setGameVisibility(false);
       nativeScheduler.suspend();
@@ -285,8 +315,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
     progress.style.transform = `scaleX(${displayedFrame / (frameCount - 1)})`;
   }
   const destroy = () => { nativeScheduler.destroy(); openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); frame.width = frame.height = 1; };
-  window.addEventListener('pagehide', event => { setGameVisibility(false); nativeScheduler.suspend(); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
-  window.addEventListener('pageshow', event => { if (event.persisted) { refreshFrame = true; nativeScheduler.resume(); cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
+  window.addEventListener('pagehide', event => { resetBufferPacing(); setGameVisibility(false); nativeScheduler.suspend(); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
+  window.addEventListener('pageshow', event => { if (event.persisted) { resetBufferPacing(); refreshFrame = true; nativeScheduler.resume(); cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
   status.hidden = true;
   await finishLoading();
   updateCopy(0);
@@ -349,7 +379,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     get displayedFrame() { return displayedFrame; },
     get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
-    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...bufferMetrics,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,
     frameCount, travel,
   };

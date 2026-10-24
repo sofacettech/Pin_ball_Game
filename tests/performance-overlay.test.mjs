@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPerformanceRecorder, createPerformanceOverlay, playbackQualitySummary, createPagePauseObserver} from '../assets/performance-overlay.js';
+import {createPerformanceRecorder, createPerformanceOverlay, playbackQualitySummary, createPagePauseObserver, bufferPacingSummary} from '../assets/performance-overlay.js';
 
 const state = (overrides = {}) => ({phase:'journey', desiredFrame:100, displayedFrame:0, scrollY:0, native:true, videoCallbacks:true, ...overrides});
 
@@ -316,4 +316,46 @@ test('pipeline snapshots identify a renderer fallback without substituting unava
   const [before, after] = recorder.report().recentSamples.map(row => row.pipeline);
   assert.equal(before.mode, 'worker');assert.equal(after.mode, 'video');assert.equal(after.requestedRenderer, 'worker');
   assert.equal(after.workerTimeouts, 1);assert.equal(after.fallbacks, 1);assert.equal(after.networkBytes, null);
+});
+
+
+test('buffer pacing history retains optional scalars at the existing cadence without hiding real stalls', () => {
+  const recorder = createPerformanceRecorder();
+  const stats = {bufferAheadFrames:12, bufferAheadSeconds:.2, bufferRequiredFrames:72,
+    bufferPacingScale:.75, bufferPacingLimited:true, bufferPacingSpeed:45};
+  let reads = 0;
+  const read = () => { reads++; return stats; };
+  for (let time = 0; time < 500; time += 10) recorder.sample(time, state(), read);
+  assert.equal(reads, 0);
+  recorder.sample(500, state(), read);
+  const limited = recorder.report().current;
+  assert.deepEqual(Object.fromEntries(Object.keys(stats).map(key => [key, limited.pipeline[key]])), stats);
+  assert.equal(limited.stalls, 1, 'Intentional buffer pacing must not erase an actual no-progress gap');
+  Object.assign(stats, {bufferAheadFrames:80, bufferAheadSeconds:80 / 60, bufferPacingScale:1,
+    bufferPacingLimited:false, bufferPacingSpeed:60});
+  recorder.sample(1000, state({displayedFrame:4}), read);
+  const report = recorder.report();
+  assert.equal(reads, 2);
+  assert.equal(report.recentSamples[0].pipeline.bufferPacingLimited, true);
+  assert.equal(report.current.pipeline.bufferPacingLimited, false, 'Full pace is available evidence, not null');
+  assert.equal(report.current.pipeline.bufferPacingSpeed, 60);
+  report.recentSamples[0].pipeline.bufferAheadFrames = 999;
+  report.current.pipeline.bufferPacingScale = 0;
+  assert.equal(recorder.report().recentSamples[0].pipeline.bufferAheadFrames, 12);
+  assert.equal(recorder.report().current.pipeline.bufferPacingScale, 1);
+  recorder.sample(1500, state(), () => ({bufferAheadFrames:Infinity, bufferAheadSeconds:NaN,
+    bufferRequiredFrames:'72', bufferPacingScale:undefined, bufferPacingLimited:0, bufferPacingSpeed:null}));
+  for (const key of Object.keys(stats)) assert.equal(recorder.report().current.pipeline[key], null);
+});
+
+test('compact buffer pacing text distinguishes configured slowdown from actual update rate', () => {
+  assert.equal(bufferPacingSummary({bufferPacingScale:.75, bufferAheadFrames:12, bufferRequiredFrames:72}),
+    'Buffer pace 0.75× · ahead 12/72f');
+  assert.equal(bufferPacingSummary({bufferPacingScale:0, bufferAheadFrames:0, bufferRequiredFrames:72}),
+    'Buffer pace 0.00× · ahead 0/72f');
+  assert.equal(bufferPacingSummary({bufferPacingScale:1, bufferAheadFrames:80, bufferRequiredFrames:72}),
+    'Buffer pace 1.00× · ahead 80/72f');
+  assert.equal(bufferPacingSummary({bufferPacingScale:.5}), 'Buffer pace 0.50× · ahead ?/?f');
+  assert.equal(bufferPacingSummary(), null);
+  assert.equal(bufferPacingSummary({bufferPacingScale:NaN}), null);
 });

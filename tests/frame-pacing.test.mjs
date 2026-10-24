@@ -156,3 +156,37 @@ test('native catch-up completions within one paint share the same jump budget', 
   assert.ok(displayed <= first + 1, 'Sub-paint completions must not multiply a catch-up jump');
   assert.ok(pacer.next(displayed, 1100, 1 / 30, displayed) > displayed);
 });
+
+
+test('buffer pacing slows source travel consistently across refresh rates', () => {
+  const positions = [60, 120].map(hz => {
+    const pacer = createFramePacer({responsive: true});
+    let displayed = 0;
+    for (let i = 0; i < hz; i++) displayed = pacer.next(displayed, 1900, 1 / hz, displayed,
+      {scale: .75, maxSpeed: 135, maxAdvance: 100});
+    return displayed;
+  });
+  assert.ok(positions.every(position => Math.abs(position - 135) <= 1));
+});
+
+test('ready coverage replaces unavailable pending requests without crossing a hole', () => {
+  const pacer = createFramePacer({responsive: true});
+  const limits = {scale: 1, maxSpeed: 180, maxAdvance: 100};
+  assert.equal(pacer.next(100, 1000, 1 / 60, 100, limits), 103);
+  assert.equal(pacer.next(100, 1000, 1 / 60, 100, {...limits, maxAdvance: 1}), 101);
+  for (let i = 0; i < 20; i++) assert.equal(pacer.next(101, 1000, .1, 101, {...limits, maxAdvance: 0}), 101);
+  assert.equal(pacer.next(101, 1000, 1 / 60, 101, limits), 104);
+  const reverse = pacer.next(104, 0, 1 / 60, 104, {...limits, maxAdvance: 2});
+  assert.ok(reverse >= 102 && reverse < 104);
+});
+
+test('worker pacing resets fractional travel and settles exactly after recovery', () => {
+  const pacer = createFramePacer({responsive: true});
+  const limits = {scale: .75, maxSpeed: 135, maxAdvance: 100};
+  pacer.next(0, 1000, .1, 0, limits);
+  pacer.reset(50);
+  let displayed = pacer.next(50, 60, 1 / 60, 50, limits);
+  assert.ok(displayed <= 52);
+  for (let i = 0; i < 100; i++) displayed = pacer.next(displayed, 60, 1 / 60, displayed, {...limits, maxAdvance: 60 - displayed});
+  assert.equal(displayed, 60);
+});

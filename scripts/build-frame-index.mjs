@@ -90,7 +90,7 @@ await writeFile(new URL('assets/video-manifest.json',root),JSON.stringify(manife
 for(const [parent,dependencies] of [
  ['assets/worker-frame-decoder.js',['./frame-decoder-worker.js']],
  ['assets/frame-source.js',['./video-playback.js','./worker-frame-decoder.js']],
- ['sequence.js',['./assets/frame-cache.js','./assets/frame-pacing.js','./assets/native-frame-scheduler.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
+ ['sequence.js',['./assets/frame-cache.js','./assets/frame-pacing.js','./assets/buffer-pacing.js','./assets/native-frame-scheduler.js','./assets/frame-source.js','./assets/video-playback.js','./assets/kinetic-copy.js']],
  ['viewer.js',['./sequence.js','./plate-hover.js','./reference-appearance.js','./assets/performance-overlay.js','./assets/media-delivery.js']],
  ['index.html',['./viewer.js','./style.css']],
 ]){
