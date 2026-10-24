@@ -28,7 +28,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
   journey.crossOrigin = 'anonymous';
   frame.width = media.journey.width;
   frame.height = media.journey.height;
-  const context = frame.getContext('2d', { alpha: false });
+  // Native video does not need this surface until a settled frame is captured.
+  let context;
+  function drawFrame(image) {
+    context ||= frame.getContext('2d', { alpha: false });
+    context.drawImage(image, 0, 0, frame.width, frame.height);
+  }
   const updateCopy = await createLandingCopy();
   const indexURL = media.indexURL;
   const indexRequest = new AbortController();
@@ -76,7 +81,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   frame.transient = true; frame.close = () => {};
   const source = await createFrameSource(journey,index,indexURL,index => {
     if (scrollDirty || index !== scrollFrame()) throw new DOMException('Scroll resumed','AbortError');
-    context.drawImage(journey,0,0,frame.width,frame.height);
+    drawFrame(journey);
     return frame;
   });
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
@@ -189,7 +194,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
       if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else {
-      if (image !== frame) context.drawImage(image, 0, 0, frame.width, frame.height);
+      if (image !== frame) drawFrame(image);
       // Keep the native compositor surface sized behind the captured canvas.
       // Shrinking it after every stop forces WebKit to rebuild it on resume.
     }
@@ -228,7 +233,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     progress.style.transform = `scaleX(${displayedFrame / (frameCount - 1)})`;
   }
-  const destroy = () => { openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); };
+  const destroy = () => { openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); frame.width = frame.height = 1; };
   window.addEventListener('pagehide', event => { setGameVisibility(false); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
   window.addEventListener('pageshow', event => { if (event.persisted) { refreshFrame = true; cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
   status.hidden = true;
