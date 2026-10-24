@@ -12,6 +12,7 @@ const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
 const pacingOnly=process.env.SOFACET_VIDEO_PACING_ONLY==='1';
 const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map(),swipeMeasurements=new Map();
+const comparisonFailures=[];
 if(baseline){
  assert.match(baseline,/^[a-f0-9]{40}$/,'Use an exact baseline commit');
  for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js']){
@@ -129,13 +130,22 @@ try{
      referenceUpdatesPerSecond:referenceRate,referenceP95GapMs:referenceGap,
      targetAdjustedUpdatesRatio:motion.updatesPerSecond/referenceRate,targetAdjustedP95GapRatio:motion.p95GapMs/referenceGap};
     console.log('Same-runner comparison',JSON.stringify(comparison));
+    // Retain comparison failures while running the current build's recovery
+    // and pixel checks; every failed threshold still rejects the final run.
+    const compare=check=>{
+     try{check()}catch(error){
+      if(!(error instanceof assert.AssertionError))throw error;
+      comparisonFailures.push(error);
+      console.error('Same-runner comparison failure',JSON.stringify({native,message:error.message}));
+     }
+    };
     if(capped){
-     assert.ok(motion.updatesPerSecond>=27,'The native 30 fps scheduler must deliver at least 27 updates/second');
-     assert.ok(comparison.targetAdjustedUpdatesRatio>=.9,'Native frame delivery missed its target-adjusted baseline');
-     assert.ok(comparison.targetAdjustedP95GapRatio<=1.5,'Native frame pacing regressed against its target-adjusted baseline');
+     compare(()=>assert.ok(motion.updatesPerSecond>=27,'The native 30 fps scheduler must deliver at least 27 updates/second'));
+     compare(()=>assert.ok(comparison.targetAdjustedUpdatesRatio>=.9,'Native frame delivery missed its target-adjusted baseline'));
+     compare(()=>assert.ok(comparison.targetAdjustedP95GapRatio<=1.5,'Native frame pacing regressed against its target-adjusted baseline'));
     }else{
-     assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
-     assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+     compare(()=>assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner'));
+     compare(()=>assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner'));
     }
    }
    const swipe=await measureScroll(page,2.4,4000);
@@ -276,6 +286,7 @@ try{
    throw error;
   }finally{await context.close();await browser.close();browser=undefined}
  }
+ if(comparisonFailures.length)throw new AggregateError(comparisonFailures,'Same-runner performance comparison failed after completing functional checks');
  console.log(engine+(pacingOnly?' mobile continuous scroll and fast/reverse pacing checks passed.':' mobile opening, fast/reverse scroll and original Full HD checks passed.'));
 }finally{
  await browser?.close();

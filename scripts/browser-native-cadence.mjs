@@ -120,12 +120,14 @@ try{
    const sequence=window.sofacetPreview.sequence,video=document.querySelector('#journey');
    if(typeof video.requestVideoFrameCallback!=='function')throw Error('Native compositor callbacks are required for cadence measurement');
    const duration=12000,half=duration/2,sourceFps=60,velocity=90,startFrame=300;
-   const paints=[],selected=[],native=[],lags=[];
+   const paints=[],selected=[],native=[],rawNative=[],lags=[];
    let lastSelected=sequence.displayedFrame,lastNative,videoCallback;
    const start=performance.now(),before=sequence.stats;
    function presented(now,metadata){
     const frame=Math.round(metadata.mediaTime*sourceFps);
-    if(frame!==lastNative){native.push({at:now-start,observedAt:performance.now()-start,frame,mediaTime:metadata.mediaTime,presentedFrames:metadata.presentedFrames,seeking:video.seeking,readyState:video.readyState,currentTime:video.currentTime,presentationAt:metadata.presentationTime-start,expectedDisplayAt:metadata.expectedDisplayTime-start});lastNative=frame}
+    const callback={at:now-start,observedAt:performance.now()-start,frame,mediaTime:metadata.mediaTime,presentedFrames:metadata.presentedFrames,seeking:video.seeking,readyState:video.readyState,currentTime:video.currentTime,presentationAt:metadata.presentationTime-start,expectedDisplayAt:metadata.expectedDisplayTime-start};
+    rawNative.push(callback);
+    if(frame!==lastNative){native.push(callback);lastNative=frame}
     videoCallback=video.requestVideoFrameCallback(presented);
    }
    videoCallback=video.requestVideoFrameCallback(presented);
@@ -163,14 +165,14 @@ try{
    });
    return{applicationRafGateHz:rafHz,sourceVelocityFramesPerSecond:velocity,durationMs:duration,sourceWidth:before.sourceWidth,sourceHeight:before.sourceHeight,mode:before.mode,halves,
     nativeSeeksCompleted:sequence.stats.nativeSeeks-before.nativeSeeks,nativeSeekMeanMs:(sequence.stats.nativeSeekMs-before.nativeSeekMs)/Math.max(1,sequence.stats.nativeSeeks-before.nativeSeeks),
-    nativeFrameCallbacks:native,selectedPaintUpdates:selected,
+    nativeFrameCallbacks:native,rawNativeFrameCallbacks:rawNative,selectedPaintUpdates:selected,
     preMeasurementSeekRequests:window.cadenceSeekRequests.filter(row=>row.at<start).map(row=>({...row,at:row.at-start,...(row.completedAt===undefined?{}:{completedAt:row.completedAt-start}),...(row.supersededAt===undefined?{}:{supersededAt:row.supersededAt-start})})),
     seekEvents:window.cadenceSeeks.filter(row=>row.at>=start&&row.completedAt<=start+duration).map(row=>({...row,at:row.at-start,completedAt:row.completedAt-start})),lastStats:sequence.stats};
   },{rafHz});
   assert.equal(result.mode,'video','The benchmark must use native video');
   assert.equal(result.sourceWidth,1920);assert.equal(result.sourceHeight,1080);
   results.push(result);
-  const {nativeFrameCallbacks,selectedPaintUpdates,preMeasurementSeekRequests,seekEvents,lastStats,...summary}=result;
+  const {nativeFrameCallbacks,rawNativeFrameCallbacks,selectedPaintUpdates,preMeasurementSeekRequests,seekEvents,lastStats,...summary}=result;
   console.log('Native cadence',JSON.stringify({engine,ref:ref||'working-tree',...summary}));
  }
  assert.deepEqual(errors,[]);

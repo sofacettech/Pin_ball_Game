@@ -1,7 +1,7 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
-import { createFrameSource } from './assets/frame-source.js?v=frames-826a2fc0f067';
+import { createFrameSource } from './assets/frame-source.js?v=frames-cfe74f351622';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
@@ -93,8 +93,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
   // Verified keyframe seeking benefits from independent scheduling in WebKit.
-  // Precise currentTime seeking stays aligned with RAF: timer-driven seeks
-  // increased decoder latency on that path in the same-browser comparison.
+  // Precise currentTime seeking retains its existing responsive RAF path;
+  // independent scheduling is limited to the verified keyframe capability.
   const usesNativeScheduler = () => source.transient && source.nativeFastSeek;
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video

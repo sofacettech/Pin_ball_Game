@@ -24,7 +24,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
  if(preferNative)fallbackReason='native-touch';
  const nativeSeekTiming=Object.fromEntries(['forward','backward','confirmation'].map(direction=>[direction,{count:0,totalMs:0,maxMs:0,overBudget:0}]));
- const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,nativeCaptures:0,nativePlayAttempts:0,nativePlayRejections:0,deliveryFallbacks:0};
+ const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,nativeCaptures:0,nativePlayAttempts:0,nativePlayRejections:0,nativePresentationWaits:0,nativePresentationWaitMs:0,nativePresentationTimeouts:0,nativePresentationTimeoutStreak:0,deliveryFallbacks:0};
  function useLocal(){
   if(!fallbackURL||url.href===fallbackURL.href)return false;
   url=fallbackURL;stats.deliveryFallbacks++;return true;
@@ -120,7 +120,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  let nativeEvents=new AbortController(),nativeReady,nativeSeek,nativeActivated=false,nativeBlocked=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor,nativePresentedFrame=null;
  // Version-one indexes are emitted only after every sample is verified as IDR.
  // Check the returned frame as well: fastSeek may choose an earlier sync sample.
- let nativeSnapshot,nativeFastSeekFailure=null;
+ let nativeSnapshot,nativeFastSeekFailure=null,nativePresentationFailure=null;
  let nativeFastSeek=index.version===1&&index.frameCount>0&&index.frames?.length===index.frameCount&&typeof video.fastSeek==='function';
  const gestures=new AbortController();
  function playbackFailure(error){
@@ -168,6 +168,53 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   primeNative();
  }
  for(const event of ['touchend','click','keydown'])globalThis.document?.addEventListener(event,activateNative,{passive:true,signal:gestures.signal});
+ function watchNativePresentation(frame,signal){
+  let callback,timer,finished=false,resolve,reject;
+  const presented=new Promise((yes,no)=>{resolve=yes;reject=no});
+  // Cancellation can arrive while decoded-data readiness is still pending.
+  presented.catch(()=>{});
+  function finish(error,time){
+   if(finished)return;
+   finished=true;clearTimeout(timer);
+   if(callback!==undefined)video.cancelVideoFrameCallback(callback);
+   callback=undefined;signal.removeEventListener('abort',abort);video.removeEventListener('error',failed);
+   error?reject(error):resolve(time);
+  }
+  const abort=()=>finish(signal.reason instanceof Error||signal.reason instanceof DOMException?signal.reason:abortError());
+  const failed=()=>{
+   const error=new Error('The video could not load');
+   error.name=video.error?.code===4?'NotSupportedError':video.error?.code===3?'EncodingError':'NetworkError';
+   finish(error);
+  };
+  function onFrame(_now,metadata){
+   if(finished)return;
+   callback=undefined;
+   // The compositor may acknowledge pixels before seeked is dispatched. Keep
+   // that acknowledgment; decoded-data readiness is checked independently.
+   if(Math.round(metadata.mediaTime*index.fps)===frame){stats.nativePresentationTimeoutStreak=0;finish(undefined,metadata.mediaTime)}
+   else if(!finished)callback=video.requestVideoFrameCallback(onFrame);
+  }
+  signal.addEventListener('abort',abort,{once:true});video.addEventListener('error',failed);
+  if(signal.aborted)abort();
+  else if(video.error)failed();
+  else callback=video.requestVideoFrameCallback(onFrame);
+  return{
+   async wait(){
+    const start=performance.now();stats.nativePresentationWaits++;
+    // Paused WebKit can omit a callback. Bound only the extra presentation
+    // wait, after seeking/data readiness, so it cannot stall the journey.
+    if(!finished)timer=setTimeout(()=>{
+     stats.nativePresentationTimeouts++;stats.nativePresentationTimeoutStreak++;
+     // Some paused-video implementations never acknowledge motion frames.
+     // Preserve their original seek cadence after three consecutive misses.
+     if(stats.nativePresentationTimeoutStreak>=3)nativePresentationFailure='consecutive-timeouts';
+     finish();
+    },1000/30);
+    try{return await presented}finally{stats.nativePresentationWaitMs+=performance.now()-start}
+   },
+   cancel(){finish()}
+  };
+ }
  async function nativeDecode(frame,settled){
   if(disposed)throw abortError();
   if(settled&&nativeSnapshot?.frame===frame)return nativeSnapshot.image;
@@ -185,7 +232,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    const start=performance.now();
    const timing=nativeSeekTiming[settled?'confirmation':time>=video.currentTime?'forward':'backward'];
    const seek={frame,confirm:watchesPixels,controller:new AbortController()},events=nativeEvents.signal;
-   const playbackRate=video.playbackRate;
+   const playbackRate=video.playbackRate;let presentation;
    const abort=()=>seek.controller.abort();
    nativeSeek=seek;events.addEventListener('abort',abort,{once:true});
    try{
@@ -210,18 +257,20 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
     // an inaccurate fastSeek and permanently disable keyframe motion seeking.
     let usedFastSeek=false;
     if(nativeFastSeek&&!watchesPixels&&frame>0&&!nativePlaying&&video.paused){
-     try{video.fastSeek(time);usedFastSeek=true}catch(error){nativeFastSeek=false;nativeFastSeekFailure={reason:error.name||'error',frame};video.currentTime=time}
+     if(!settled&&nativeDirect&&!nativePresentationFailure&&typeof video.requestVideoFrameCallback==='function')presentation=watchNativePresentation(frame,seek.controller.signal);
+     try{video.fastSeek(time);usedFastSeek=true}catch(error){presentation?.cancel();nativeFastSeek=false;nativeFastSeekFailure={reason:error.name||'error',frame};video.currentTime=time}
     }else video.currentTime=time;
     let presentedTime=await settle();
     if(usedFastSeek&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
+     presentation?.cancel();
      nativeFastSeek=false;nativeFastSeekFailure={reason:'frame-mismatch',frame,actualFrame:Math.floor(video.currentTime*index.fps+1e-6)};
      video.currentTime=time;
      presentedTime=await settle();
-    }
+    }else if(usedFastSeek)await presentation?.wait();
     if(presentedTime!==undefined&&Math.round(presentedTime*index.fps)!==frame)throw Error(`The video presented frame ${Math.round(presentedTime*index.fps)} instead of ${frame}`);
     if(settled)nativePresentedFrame=frame;
    }catch(error){if(!['AbortError','NotAllowedError'].includes(error.name))nativeReady=undefined;throw error}
-   finally{if(watchesPixels){if(!video.paused)video.pause();video.playbackRate=playbackRate}events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
+   finally{presentation?.cancel();if(watchesPixels){if(!video.paused)video.pause();video.playbackRate=playbackRate}events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
    const elapsed=performance.now()-start;
    stats.nativeSeeks++;stats.nativeSeekMs+=elapsed;
    timing.count++;timing.totalMs+=elapsed;timing.maxMs=Math.max(timing.maxMs,elapsed);if(elapsed>1000/30)timing.overBudget++;
@@ -282,7 +331,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    // is still requesting that useful intermediate frame.
    if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeFastSeekFailure:nativeFastSeekFailure?{...nativeFastSeekFailure}:null,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
+  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativePresentationGuardEnabled:mode==='video'&&nativeDirect&&nativeFastSeek&&!nativePresentationFailure&&typeof video.requestVideoFrameCallback==='function',nativePresentationFailure,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeFastSeekFailure:nativeFastSeekFailure?{...nativeFastSeekFailure}:null,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativeActivated=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

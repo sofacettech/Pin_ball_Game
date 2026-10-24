@@ -92,10 +92,15 @@ export function createPerformanceRecorder() {
   let windowAt, pageTicks = 0, updates = 0, activeMs = 0, nativeUpdates = 0;
   let worstPageGapMs = 0, worstJourneyGapMs = 0, worstLagFrames = 0, stalls = 0, totalUpdates = 0;
   let nativeMediaTime = null, nativeFrameIdentity;
+  let callbackSupported = null, callbackCount = 0, compositionCounterSeen = false;
+  let compositionAdvances = 0, unobservedCompositionFrames = 0, worstCallbackGapMs = 0;
+  let lastCallbackAt, lastCompositionCount;
+  const recentCallbacks = [];
   const pageGaps = [], journeyGaps = [], history = [], recentPagePauses = [];
   let current = {pageFps: null, journeyUpdatesPerSecond: null, nativeUpdatesPerSecond: null};
   return {
     sample(now, state) {
+      if (typeof state.videoCallbacks === 'boolean') callbackSupported = state.videoCallbacks;
       windowAt ??= now;
       const elapsed = previous ? now - previous.now : 0;
       if (previous && state.scrollY !== previous.scrollY) lastScroll = now;
@@ -141,7 +146,22 @@ export function createPerformanceRecorder() {
       windowAt = now; pageTicks = updates = activeMs = nativeUpdates = 0;
       return current;
     },
-    presented(mediaTime) {
+    presented(mediaTime, now, metadata = {}) {
+      callbackSupported = true; callbackCount++;
+      const atMs = Number.isFinite(now) ? now : null;
+      const gapMs = atMs !== null && lastCallbackAt !== undefined ? Math.max(0, atMs - lastCallbackAt) : null;
+      const compositionCount = Number.isSafeInteger(metadata.presentedFrames) && metadata.presentedFrames >= 0 ? metadata.presentedFrames : null;
+      const compositionDelta = compositionCount !== null && lastCompositionCount !== undefined && compositionCount >= lastCompositionCount
+        ? compositionCount - lastCompositionCount : null;
+      if (compositionCount !== null) compositionCounterSeen = true;
+      if (compositionDelta !== null) {
+        compositionAdvances += compositionDelta;
+        unobservedCompositionFrames += Math.max(0, compositionDelta - 1);
+      }
+      if (gapMs !== null) worstCallbackGapMs = Math.max(worstCallbackGapMs, gapMs);
+      boundedPush(recentCallbacks, {atMs: atMs === null ? null : round(atMs), mediaTime: Number.isFinite(mediaTime) ? mediaTime : null,
+        presentedFrames: compositionCount, compositionDelta, gapMs: gapMs === null ? null : round(gapMs), active}, 20);
+      lastCallbackAt = atMs ?? undefined; lastCompositionCount = compositionCount ?? undefined;
       if (!Number.isFinite(mediaTime)) return;
       const identity = previous?.fps > 0 ? Math.round(mediaTime * previous.fps) : mediaTime;
       if (active && identity !== nativeFrameIdentity) nativeUpdates++;
@@ -150,8 +170,19 @@ export function createPerformanceRecorder() {
     suspend() {
       previous = undefined; windowAt = undefined; lastScroll = -Infinity; active = false;
       pageTicks = updates = activeMs = nativeUpdates = 0;
+      lastCallbackAt = lastCompositionCount = undefined;
     },
-    report() { return {current: {...current}, recentSamples: history.map(sample => ({...sample})), recentPagePauses: recentPagePauses.map(pause => ({...pause}))}; },
+    report() { return {
+      current: {...current}, recentSamples: history.map(sample => ({...sample})), recentPagePauses: recentPagePauses.map(pause => ({...pause})),
+      nativeCallbacks: {supported: callbackSupported, callbackCount: callbackSupported === true ? callbackCount : null,
+        compositionCounterStatus: compositionCounterSeen ? 'available' : callbackCount ? 'unavailable' : 'not-observed',
+        observedCompositionAdvances: compositionCounterSeen ? compositionAdvances : null,
+        unobservedCompositionFrames: compositionCounterSeen ? unobservedCompositionFrames : null,
+        worstCallbackGapMs: callbackCount ? round(worstCallbackGapMs) : null,
+        recentCallbacks: recentCallbacks.map(callback => ({...callback})),
+        notes: 'Raw callbacks and composition-submission advances are separate from distinct native FPS. A presentedFrames delta above one indicates submissions without an individual observed callback, not proof of unique visible frames. Counts persist until Reset; first callbacks after Pause or hidden time establish fresh timestamp/counter baselines. Callback gaps can include visible idle time; active marks journey motion at callback delivery.',
+      },
+    }; },
   };
 }
 
@@ -271,7 +302,7 @@ export function createPerformanceOverlay(sequence, renderer) {
   }
   function presented(now, metadata) {
     if (destroyed || paused || document.hidden) return;
-    recorder.presented(metadata.mediaTime);
+    recorder.presented(metadata.mediaTime, now, metadata);
     videoRequest = video.requestVideoFrameCallback(presented);
   }
   function stop() {

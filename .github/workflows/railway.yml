@@ -110,6 +110,7 @@ jobs:
       - name: Fetch the deployed cadence baseline
         run: git fetch --depth 1 origin b31a17714f07fdcbac28e2f157b5f1e23446bbc8
       - name: Measure deployed native cadence
+        shell: bash
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
           SOFACET_CADENCE_REF: b31a17714f07fdcbac28e2f157b5f1e23446bbc8
@@ -117,6 +118,7 @@ jobs:
         run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-baseline.log"
       - name: Measure current native cadence
         if: ${{ !cancelled() }}
+        shell: bash
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
           SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-current.json

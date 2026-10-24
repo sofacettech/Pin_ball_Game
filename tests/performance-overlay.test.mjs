@@ -67,6 +67,53 @@ test('repeated native callbacks for one source frame do not inflate displayed fr
   assert.equal(recorder.report().current.nativeMediaTime, 20 / 60);
 });
 
+test('raw compositor evidence retains coalesced submissions without inflating distinct native FPS', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state({fps:60}));
+  recorder.presented(1, 10, {presentedFrames:100});
+  recorder.presented(1, 30, {presentedFrames:103});
+  recorder.presented(1, 40, {presentedFrames:104});
+  recorder.sample(500, state({fps:60}));
+  const report = recorder.report(), callbacks = report.nativeCallbacks;
+  assert.equal(report.current.nativeUpdatesPerSecond, 2, 'Three raw callbacks for the same frame count as one distinct update');
+  assert.equal(callbacks.callbackCount, 3);
+  assert.equal(callbacks.observedCompositionAdvances, 4);
+  assert.equal(callbacks.unobservedCompositionFrames, 2);
+  assert.equal(callbacks.worstCallbackGapMs, 20);
+  assert.deepEqual(callbacks.recentCallbacks.map(row => [row.presentedFrames, row.compositionDelta, row.gapMs]), [[100,null,null],[103,3,20],[104,1,10]]);
+  callbacks.recentCallbacks[0].presentedFrames = -1;
+  assert.equal(recorder.report().nativeCallbacks.recentCallbacks[0].presentedFrames, 100);
+  for (let i = 0; i < 30; i++) recorder.presented(2, 600 + i * 10, {presentedFrames:105 + i});
+  assert.equal(recorder.report().nativeCallbacks.recentCallbacks.length, 20);
+});
+
+test('callback counters exclude hidden advances, handle counter resets and retain unavailable metadata', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state({fps:60}));
+  recorder.presented(1, 10, {presentedFrames:100});
+  recorder.presented(2, 30, {presentedFrames:101});
+  recorder.suspend(); recorder.sample(100000, state({fps:60}));
+  recorder.presented(2, 100010, {presentedFrames:500});
+  recorder.presented(3, 100030, {presentedFrames:501});
+  recorder.presented(3, 100040, {presentedFrames:0});
+  recorder.presented(4, 100050, {presentedFrames:1});
+  const callbacks = recorder.report().nativeCallbacks;
+  assert.equal(callbacks.observedCompositionAdvances, 3);
+  assert.equal(callbacks.unobservedCompositionFrames, 0);
+  assert.equal(callbacks.worstCallbackGapMs, 20);
+  assert.equal(callbacks.recentCallbacks[2].compositionDelta, null);
+  assert.equal(callbacks.recentCallbacks[2].gapMs, null);
+  assert.equal(callbacks.recentCallbacks[4].compositionDelta, null);
+  const unavailable = createPerformanceRecorder();
+  unavailable.sample(0, state({videoCallbacks:false}));
+  assert.equal(unavailable.report().nativeCallbacks.callbackCount, null);
+  unavailable.presented(1, 10);
+  assert.equal(unavailable.report().nativeCallbacks.callbackCount, 1);
+  assert.equal(unavailable.report().nativeCallbacks.compositionCounterStatus, 'unavailable');
+  assert.equal(unavailable.report().nativeCallbacks.observedCompositionAdvances, null);
+  assert.equal(createPerformanceRecorder().report().nativeCallbacks.observedCompositionAdvances, null);
+});
+
 test('history stays bounded and report copies are independent', () => {
   const recorder = createPerformanceRecorder();
   for (let time = 0; time <= 120000; time += 500) recorder.sample(time, state());
