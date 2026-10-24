@@ -405,3 +405,51 @@ test('settled native pixels are captured inside the matching callback before the
  const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
  assert.equal(captures,1,'Continuous scrolling must keep using native video without full-size copies');assert.equal(source.stats.renderer,'native-video');
 });
+
+test('decoded native data does not suppress a gesture after autoplay was denied', async t => {
+ snapshotEnvironment(t);
+ const previousDocument=globalThis.document,previousMedia=globalThis.matchMedia;
+ globalThis.document=Object.assign(new EventTarget(),{hidden:false});globalThis.matchMedia=()=>({matches:true});
+ t.after(()=>{globalThis.document=previousDocument;globalThis.matchMedia=previousMedia});
+ const video=new Video();video.readyState=2;video.reject=true;let activated=0;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'),undefined,()=>activated++);
+ t.after(()=>source.destroy());
+ const moving=source.decode(4,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await moving;
+ assert.equal(source.stats.nativePlaybackBlocked,true);
+ assert.equal(source.stats.nativePlaybackActivated,false);
+ assert.equal(video.readyState,2,'Decoded data alone must not count as playback permission');
+ const calls=video.calls;
+ video.reject=false;document.dispatchEvent(new Event('touchend'));
+ assert.equal(video.calls,calls+1,'Retry play synchronously inside the real gesture');
+ await turn();assert.equal(source.stats.nativePlaybackActivated,true);assert.equal(source.playbackBlocked,false);assert.equal(activated,1);
+ assert.equal(video.paused,true);assert.equal(video.loads,1,'Permission recovery retains the loaded media');
+ document.dispatchEvent(new Event('click'));assert.equal(video.calls,calls+1,'Do not restart an already activated video');
+});
+
+test('denied settled playback is promptable and recovers without reloading or leaking callbacks', async t => {
+ snapshotEnvironment(t);
+ const previousMedia=globalThis.matchMedia;globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previousMedia});
+ const video=new Video(),callbacks=new Map();let id=0;video.readyState=2;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));t.after(()=>source.destroy());
+ const moving=source.decode(4,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await moving;
+ video.reject=true;
+ const denied=source.decode(20);const rejection=assert.rejects(denied,{name:'NotAllowedError'});
+ await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await rejection;
+ assert.equal(source.playbackBlocked,true);assert.equal(callbacks.size,0);assert.equal(video.playbackRate,1);
+ const calls=video.calls;
+ await assert.rejects(source.decode(20),{name:'NotAllowedError'});assert.equal(video.calls,calls,'No automatic denied-play loop');
+ video.reject=false;source.activate();assert.equal(video.calls,calls+1);await turn();
+ const recovered=source.decode(20);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
+ const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback(0,{mediaTime:20/60});
+ assert.equal(await recovered,video);assert.equal(source.presentedFrame,20);assert.equal(callbacks.size,0);assert.equal(video.loads,1);
+ assert.equal(source.stats.nativePlayRejections,1);
+});
+
+test('native buffering reports data ahead of the playhead separately from opening coverage', async t => {
+ snapshotEnvironment(t);const video=new Video();video.time=12;
+ video.buffered={length:2,start:i=>[0,10][i],end:i=>[3,16][i]};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));t.after(()=>source.destroy());
+ assert.equal(source.stats.bufferedSeconds,3);assert.equal(source.stats.bufferedAheadSeconds,4);
+ video.time=8;assert.equal(source.stats.bufferedAheadSeconds,0);
+});

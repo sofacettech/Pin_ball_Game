@@ -1,9 +1,9 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
-import { createFrameSource } from './assets/frame-source.js?v=frames-640fabab1617';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-29c68baef5bc';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
+import { createFrameSource } from './assets/frame-source.js?v=frames-6647aa73eb6c';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-9d32afdae5ec';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
 const FPS = 60;
@@ -17,6 +17,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
   const status = document.querySelector('#status');
+  const resumeJourney = document.querySelector('#journey-resume');
   const preparation = document.querySelector('#journey-preparation');
   const preparationTitle = document.querySelector('#preparation-title');
   const preparationStatus = document.querySelector('#preparation-status');
@@ -72,7 +73,6 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let refreshFrame = false;
   let preparationStarted = 0, preparationPhrase = -1, preparationPercent = -1;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const pacer = createFramePacer();
   let pacedAt = performance.now(), paintedFrame = 0;
   const events = new AbortController();
   const scrollFrame = () => Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
@@ -83,7 +83,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (scrollDirty || index !== scrollFrame()) throw new DOMException('Scroll resumed','AbortError');
     drawFrame(journey);
     return frame;
+  }, () => {
+    resumeJourney.hidden = true;
+    cache.retry();
+    requestFrame();
   });
+  const pacer = createFramePacer({responsive: source.transient});
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video
   // itself through its compositor; only its completed position is reported here.
@@ -101,12 +106,21 @@ export async function createSequence(setInteractive, requestFrame, media) {
     config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
-      if (['NotSupportedError','EncodingError'].includes(error.name)) {
+      if (error.name === 'NotAllowedError') {
+        status.hidden = true;
+        resumeJourney.hidden = false;
+      } else if (['NotSupportedError','EncodingError'].includes(error.name)) {
         cache.suspend();
         status.textContent = 'This browser cannot play the journey. Use Skip to Game to enter the game.';
-      } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
+      } else {
+        // Preserve the scene during transient loading; details remain in Debug.
+        status.hidden = true;
+        status.textContent = '';
+      }
     },
   });
+
+  resumeJourney.addEventListener('click', () => { source.activate(); }, {signal: events.signal});
 
   function requestNextFrame() {
     const now = performance.now();
@@ -199,13 +213,14 @@ export async function createSequence(setInteractive, requestFrame, media) {
       // Shrinking it after every stop forces WebKit to rebuild it on resume.
     }
     refreshFrame = false;
+    if (!source.playbackBlocked) resumeJourney.hidden = true;
     displayedFrame = index;
     // Start the game only at the settled handoff below. Loading its iframe
     // creates another WebGL scene and compiles physics while the final video
     // frames are still being decoded, even when the iframe is hidden.
     updateCopy(240 + displayedFrame);
     if (displayedFrame !== frameCount - 1 || cache.settled) siteSound.frame(240 + displayedFrame);
-    const atEnd = displayedFrame === frameCount - 1;
+    const atEnd = displayedFrame === frameCount - 1 && cache.settled;
     if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1 && cache.settled) {
       siteSound.handoff();

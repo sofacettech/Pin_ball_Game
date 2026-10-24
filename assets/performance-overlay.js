@@ -1,7 +1,18 @@
-const VERSION = 'scroll-debug-2';
+const VERSION = 'scroll-debug-3';
 const boundedPush = (values, value, limit) => { values.push(value); if (values.length > limit) values.shift(); };
 const round = value => Math.round(value * 10) / 10;
 const p95 = values => [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * .95) - 1)] || 0;
+
+// Some phone browsers expose this API but never populate either counter.
+export function playbackQualitySummary(quality, baseline) {
+  const supported = Number.isFinite(quality?.totalVideoFrames) && Number.isFinite(quality?.droppedVideoFrames);
+  const total = supported ? Math.max(0, quality.totalVideoFrames - (baseline?.totalVideoFrames || 0)) : null;
+  return {
+    browserCounterStatus: !supported ? 'unavailable' : total > 0 ? 'available' : 'no-frames',
+    browserDroppedFrames: supported ? Math.max(0, quality.droppedVideoFrames - (baseline?.droppedVideoFrames || 0)) : null,
+    browserTotalFrames: total,
+  };
+}
 
 // A four-frame jump is one update. Idle and hidden time are not stalls.
 export function createPerformanceRecorder() {
@@ -45,7 +56,10 @@ export function createPerformanceRecorder() {
         active, ...state, nativeMediaTime,
         pageP95GapMs: round(p95(pageGaps)), journeyP95GapMs: round(p95(journeyGaps)),
         worstPageGapMs: round(worstPageGapMs), worstJourneyGapMs: round(worstJourneyGapMs),
-        worstLagFrames, lagFrames: Math.abs(state.desiredFrame - state.displayedFrame), stalls, totalUpdates,
+        worstLagFrames, lagFrames: Math.abs(state.desiredFrame - state.displayedFrame),
+        lagSeconds: state.fps > 0 ? round(Math.abs(state.desiredFrame - state.displayedFrame) / state.fps) : null,
+        worstLagSeconds: state.fps > 0 ? round(worstLagFrames / state.fps) : null,
+        stalls, totalUpdates, sampledAtMs: round(now),
       };
       boundedPush(history, {atMs: round(now), ...current}, 120);
       windowAt = now; pageTicks = updates = activeMs = nativeUpdates = 0;
@@ -89,24 +103,32 @@ export function createPerformanceOverlay(sequence, renderer) {
   content.append(title, output, controls, message); panel.append(content, toggle); document.body.append(panel);
   const events = new AbortController(), video = document.querySelector('#journey'), frame = document.querySelector('#journey-frame');
   let recorder = createPerformanceRecorder(), request = 0, videoRequest = 0, paused = false, destroyed = false;
-  let started = new Date().toISOString(), lastStats = {}, lastState = {}, latestReport;
+  let started = new Date().toISOString(), latestReport;
+  const sourceFps = sequence.stats.fps;
   toggle.addEventListener('click', () => setExpanded(!expanded), {signal: events.signal});
   updateToggle();
   let baselineQuality = video?.getVideoPlaybackQuality?.();
   const build = new URL(import.meta.url).searchParams.get('v') || VERSION;
+  function readState() {
+    return {phase: sequence.phase, desiredFrame: sequence.desiredFrame, displayedFrame: sequence.displayedFrame,
+      fps: sourceFps, scrollY, game: document.body.dataset.game === 'visible',
+      native: video?.classList.contains('native-renderer') === true && frame?.hidden === true,
+      videoCallbacks: typeof video?.requestVideoFrameCallback === 'function'};
+  }
   function report() {
     const quality = video?.getVideoPlaybackQuality?.();
+    const stats = sequence.stats, state = readState();
     return {
       version: VERSION, build, started, capturedAt: new Date().toISOString(), paused,
       device: {userAgent: navigator.userAgent, viewport: [innerWidth, innerHeight], dpr: devicePixelRatio,
         cores: navigator.hardwareConcurrency ?? null, memoryGiB: navigator.deviceMemory ?? null,
         connection: navigator.connection ? {type: navigator.connection.effectiveType, downlinkMbps: navigator.connection.downlink, saveData: navigator.connection.saveData} : null},
-      ...recorder.report(), sequence: {frameCount: sequence.frameCount, ...lastState, stats: lastStats},
+      ...recorder.report(), sequence: {frameCount: sequence.frameCount, ...state, stats},
       nativeVideo: {readyState: video?.readyState, seeking: video?.seeking, currentTime: video?.currentTime,
-        browserDroppedFrames: quality ? Math.max(0, quality.droppedVideoFrames - (baselineQuality?.droppedVideoFrames || 0)) : null,
-        browserTotalFrames: quality ? Math.max(0, quality.totalVideoFrames - (baselineQuality?.totalVideoFrames || 0)) : null},
+        averageSeekMs: stats.nativeSeeks > 0 ? round(stats.nativeSeekMs / stats.nativeSeeks) : null,
+        ...playbackQualitySummary(quality, baselineQuality)},
       graphics: {buffer: [renderer.domElement.width, renderer.domElement.height], draws: renderer.info.render.frame},
-      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Native callbacks report frames sent to the compositor when supported. Browser drop counters may omit seek stalls. P95 covers the latest 600 gaps; worst values persist until Reset. Samples are bounded to 120. Hidden and paused time is excluded. No report is uploaded automatically.',
+      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Lag seconds is source-video distance from the scroll target, not elapsed catch-up time. Native callbacks report frames sent to the compositor when supported. Browser drop counters may omit seek stalls; no-frames means they have supplied no frame evidence since Reset. Native video downloads are not included in JavaScript network counters. bufferedAheadSeconds measures native data ahead of the playhead; bufferedSeconds measures the range starting at zero. latencyMs is the last completed cache presentation timing, not current scroll lag. Rates are sampled every 500ms; sequence and nativeVideo are refreshed when exported. P95 covers the latest 600 gaps; worst values persist until Reset. Samples are bounded to 120. Hidden and paused time is excluded. No report is uploaded automatically.',
     };
   }
   function button(label, action) {
@@ -150,15 +172,14 @@ export function createPerformanceOverlay(sequence, renderer) {
   button('Close', () => { setExpanded(false); toggle.focus(); });
   function tick(now) {
     if (destroyed || paused || document.hidden) return;
-    const state = {phase: sequence.phase, desiredFrame: sequence.desiredFrame, displayedFrame: sequence.displayedFrame,
-      scrollY, game: document.body.dataset.game === 'visible',
-      native: video?.classList.contains('native-renderer') === true && frame?.hidden === true,
-      videoCallbacks: typeof video?.requestVideoFrameCallback === 'function'};
+    const state = readState();
     const sample = recorder.sample(now, state);
     if (sample) {
-      lastStats = sequence.stats; lastState = state;
-      const s = lastStats, quality = video?.getVideoPlaybackQuality?.();
-      output.textContent = `Page FPS ${sample.pageFps} · ${state.phase}\nJourney ${sample.journeyUpdatesPerSecond ?? 'idle'} updates/s\nNative ${sample.nativeUpdatesPerSecond ?? 'n/a'} callbacks/s · ${s.renderer}\nFrame ${state.displayedFrame} → ${state.desiredFrame}\nLag ${sample.lagFrames}f · worst ${sample.worstLagFrames}f\nGap p95: page ${sample.pageP95GapMs}ms / journey ${sample.journeyP95GapMs}ms\nWorst: page ${sample.worstPageGapMs}ms / journey ${sample.worstJourneyGapMs}ms\nStalls ≥100ms: ${sample.stalls}\nDecode ${round(s.decodeMs || 0)}ms · pending ${s.pending}\nBuffer ${s.decoded}/${s.settings.decoded} · ${round((s.compressedBytes || 0) / 1048576)}MiB\nBrowser drops ${quality ? Math.max(0, quality.droppedVideoFrames - (baselineQuality?.droppedVideoFrames || 0)) : 'n/a'} · ${s.fallbackReason || s.mode}\n${s.lastError ? s.lastError.name + ': ' + s.lastError.message : 'No frame errors'}\n${VERSION}`;
+      const s = sequence.stats, quality = playbackQualitySummary(video?.getVideoPlaybackQuality?.(), baselineQuality);
+      const drops = quality.browserCounterStatus === 'available' ? `${quality.browserDroppedFrames}/${quality.browserTotalFrames}` : `n/a (${quality.browserCounterStatus})`;
+      const decode = s.mode === 'video' ? `Seek avg ${s.nativeSeeks > 0 ? round(s.nativeSeekMs / s.nativeSeeks) : 'n/a'}ms` : `Decode ${round(s.decodeMs || 0)}ms`;
+      const buffer = s.mode === 'video' ? `Video buffered ahead ${round(s.bufferedAheadSeconds || 0)}s` : `Buffer ${s.decoded}/${s.settings.decoded} · ${round((s.compressedBytes || 0) / 1048576)}MiB`;
+      output.textContent = `Page FPS ${sample.pageFps} · ${state.phase}\nJourney ${sample.journeyUpdatesPerSecond ?? 'idle'} updates/s\nNative ${sample.nativeUpdatesPerSecond ?? 'n/a'} callbacks/s · ${s.renderer}\nFrame ${state.displayedFrame} → ${state.desiredFrame}\nLag ${sample.lagFrames}f (${sample.lagSeconds ?? '?'}s) · worst ${sample.worstLagFrames}f\nGap p95: page ${sample.pageP95GapMs}ms / journey ${sample.journeyP95GapMs}ms\nWorst: page ${sample.worstPageGapMs}ms / journey ${sample.worstJourneyGapMs}ms\nStalls ≥100ms: ${sample.stalls}\n${decode} · pending ${s.pending}\n${buffer}\nBrowser drops ${drops} · ${s.fallbackReason || s.mode}\n${s.nativePlaybackBlocked ? 'Playback blocked: tap the scene to retry' : s.lastError ? s.lastError.name + ': ' + s.lastError.message : 'No frame errors'}\n${VERSION}`;
     }
     request = requestAnimationFrame(tick);
   }

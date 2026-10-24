@@ -110,6 +110,16 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   function pump() {
     if (destroyed || suspended) return;
     const scrollSettled = performance.now() - requestedAt >= settings.idleMs && (canConfirm?.(lead) ?? true);
+    // A denied play() needs a gesture, not repeated seek/play retries. Keep
+    // scrolling available while the exact settled frame waits for activation.
+    if (scrollSettled && needsNativeConfirmation() && source.playbackBlocked) {
+      if (lastError?.name !== 'NotAllowedError' || lastError.frame !== target) {
+        const error = new DOMException('Tap to resume the journey', 'NotAllowedError');
+        lastError = {frame: target, name: error.name, message: error.message};
+        onError(error, target);
+      }
+      return;
+    }
     if (scrollSettled && needsNativeConfirmation()) decoded.delete(target);
     const video = source.mode === 'video';
     // Native seeking has no compressed-sample download. Make the target ready
@@ -260,6 +270,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   request(0);
   return {
     request,
+    retry() { if (!destroyed && !suspended) { failures.clear(); pump(); arm(); } },
     get settled() { return !needsNativeConfirmation(); },
     // Readiness describes a bounded opening window, never the whole movie.
     // Keep room for the decoder and for requests already in flight.

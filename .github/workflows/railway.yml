@@ -66,6 +66,11 @@ jobs:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
           SOFACET_BROWSER: ${{ matrix.browser }}
         run: node scripts/browser-performance-overlay.mjs
+      - name: Check denied native playback and trusted-tap recovery
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+        run: node scripts/browser-native-recovery.mjs
       - name: Check mobile opening, fast swipes and scroll response
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright

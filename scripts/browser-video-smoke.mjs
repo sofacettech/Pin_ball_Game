@@ -10,12 +10,16 @@ const engine=process.env.SOFACET_BROWSER||'webkit';
 assert.ok(['webkit','chromium'].includes(engine),'Use a supported mobile browser');
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
+const pacingOnly=process.env.SOFACET_VIDEO_PACING_ONLY==='1';
 const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map(),swipeMeasurements=new Map();
 if(baseline){
  assert.match(baseline,/^[a-f0-9]{40}$/,'Use an exact baseline commit');
  for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js']){
   previousAssets.set('/'+file,execFileSync('git',['show',`${baseline}:${file}`]));
  }
+ // Older comparisons predate the separate pacer. When present, its own
+ // baseline implementation must be routed along with the entry modules.
+ try{previousAssets.set('/assets/frame-pacing.js',execFileSync('git',['show',`${baseline}:assets/frame-pacing.js`],{stdio:['ignore','pipe','ignore']}))}catch{}
 }
 let server,browser,data;
 async function measureScroll(page,speed,duration,startFrame=200){
@@ -58,7 +62,8 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline
+ const nativeCases=process.env.SOFACET_VIDEO_NATIVE_ONLY==='1'?[true]:(engine==='webkit'?[false,true,'legacy']:[false,true]);
+ const cases=nativeCases.flatMap(native=>baseline
   ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
  for(const {native,previous} of cases){
   // Release decoder/GPU resources between cases so the last renderer is not
@@ -121,19 +126,26 @@ try{
    if(previous)swipeMeasurements.set(String(native),swipe);
    else{
     if(native)assert.equal(swipe.stats.renderer,'native-video','Native touch playback must avoid full-size canvas copies');
-    // A fast swipe may move the destination faster than cinematic playback.
-    // Enforce smooth progress and a bounded settle time, rather than rewarding
-    // a renderer that reaches the finger by skipping large stretches of video.
-    assert.ok(swipe.maxFrameJump<=4,'Fast swipes must not jump over more than four source frames per paint');
+    // Native phone seeks must shed an old destination when the finger moves
+    // faster than decoding. A four-frame ceiling hid the reported 33-second
+    // backlog; bound target lag and recovery instead. WebCodecs keeps its
+    // existing continuity guarantee.
+    if(swipe.stats.mode==='video')assert.ok(swipe.p95FrameLag<120,'Native fast swipes must stay within 120 source frames of the finger');
+    else assert.ok(swipe.maxFrameJump<=4,'WebCodecs swipes must not jump over more than four source frames per paint');
     assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
-    if(baseline){
+    if(baseline&&swipe.stats.mode!=='video'){
      const before=swipeMeasurements.get(String(native));
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }
+   if(previous&&pacingOnly){assert.deepEqual(errors,[]);continue}
+   const swipeStoppedAt=Date.now();
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
+   if(!previous&&swipe.stats.mode==='video')assert.ok(Date.now()-swipeStoppedAt<2000,'Native fast-swipe reversal must settle within two seconds after scrolling stops');
+   if(pacingOnly){assert.deepEqual(errors,[]);continue}
    const frames=[];
    for(const y of [160,1600,8000,12800,14400,800,0]){
+    const jumpStartedAt=Date.now();
     await page.evaluate(y=>window.scrollTo(0,y),y);
     await page.waitForFunction(frame=>{
      const sequence=window.sofacetPreview.sequence;
@@ -141,6 +153,7 @@ try{
      return sequence.desiredFrame===frame&&sequence.displayedFrame===frame&&
       (frame===0||stats.renderer!=='native-video'||stats.presentedFrame===undefined||stats.presentedFrame===frame);
     },y/8,{timeout:30000});
+    if(!previous&&swipe.stats.mode==='video')assert.ok(Date.now()-jumpStartedAt<2500,'Native large forward/reverse jumps must reach their target within 2.5 seconds');
     const state=await page.evaluate(()=>{
      const sequence=window.sofacetPreview.sequence;
      const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');

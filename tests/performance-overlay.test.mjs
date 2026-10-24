@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPerformanceRecorder, createPerformanceOverlay} from '../assets/performance-overlay.js';
+import {createPerformanceRecorder, createPerformanceOverlay, playbackQualitySummary} from '../assets/performance-overlay.js';
 
 const state = (overrides = {}) => ({phase:'journey', desiredFrame:100, displayedFrame:0, scrollY:0, native:true, videoCallbacks:true, ...overrides});
 
@@ -64,4 +64,31 @@ test('ordinary visitors do not create a panel or schedule diagnostics', () => {
     globalThis.location = {search:''};
     assert.equal(typeof createPerformanceOverlay(), 'function');
   } finally { if (previous === undefined) delete globalThis.location; else globalThis.location = previous; }
+});
+
+test('lag seconds describes source-video distance and retains the worst backlog', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state({fps:60, desiredFrame:1110}));
+  recorder.sample(500, state({fps:60, desiredFrame:0, displayedFrame:600}));
+  const current = recorder.report().current;
+  assert.equal(current.lagFrames, 600);
+  assert.equal(current.lagSeconds, 10);
+  assert.equal(current.worstLagSeconds, 18.5);
+  assert.equal(current.sampledAtMs, 500);
+});
+
+test('missing or unpopulated playback counters do not claim zero observed drops', () => {
+  assert.deepEqual(playbackQualitySummary(undefined), {
+    browserCounterStatus:'unavailable', browserDroppedFrames:null, browserTotalFrames:null,
+  });
+  assert.deepEqual(playbackQualitySummary({totalVideoFrames:0, droppedVideoFrames:0}), {
+    browserCounterStatus:'no-frames', browserDroppedFrames:0, browserTotalFrames:0,
+  });
+});
+
+test('playback counters report both drops and denominator since Reset', () => {
+  assert.deepEqual(playbackQualitySummary({totalVideoFrames:250, droppedVideoFrames:5}, {totalVideoFrames:200, droppedVideoFrames:3}), {
+    browserCounterStatus:'available', browserDroppedFrames:2, browserTotalFrames:50,
+  });
+  assert.equal(playbackQualitySummary({totalVideoFrames:250, droppedVideoFrames:5}, {totalVideoFrames:250, droppedVideoFrames:5}).browserCounterStatus, 'no-frames');
 });
