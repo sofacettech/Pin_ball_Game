@@ -169,6 +169,16 @@ jobs:
           SOFACET_BROWSER: ${{ matrix.browser }}
           SOFACET_COLOUR_OUTPUT: ${{ runner.temp }}/worker-cadence-colour.json
         run: node scripts/browser-worker-colour-probe.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence-colour.log"
+      - name: Upload numerical worker colour evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-colour-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/worker-cadence-colour.json
+            ${{ runner.temp }}/worker-cadence-colour.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Compare worker and native motion and verify fallback
         shell: bash
         env:

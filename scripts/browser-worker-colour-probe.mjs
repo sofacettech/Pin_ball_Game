@@ -78,18 +78,22 @@ try{
     referenceRGB:referenceRGB/(count*3),candidateRGB:candidateRGB/(count*3)};
   };
   const indexResponse=await fetch('/assets/journey-index.json');if(!indexResponse.ok)throw Error('Probe index unavailable');
-  const index=await indexResponse.json(),[offset,length]=index.frames[frame],videoURL=new URL(index.source,indexResponse.url);videoURL.searchParams.set('v',index.sha256);
-  const response=await fetch(videoURL,{headers:{Range:'bytes='+offset+'-'+(offset+length-1)}});
-  if(response.status!==206||response.headers.get('Content-Range')!=='bytes '+offset+'-'+(offset+length-1)+'/'+index.bytes)throw Error('Probe exact sample range unavailable');
-  const bytes=await response.arrayBuffer();if(bytes.byteLength!==length)throw Error('Probe sample incomplete');
+  const index=await indexResponse.json(),videoURL=new URL(index.source,indexResponse.url);videoURL.searchParams.set('v',index.sha256);
+  async function readSample(sourceFrame){
+   const [offset,length]=index.frames[sourceFrame],response=await fetch(videoURL,{headers:{Range:'bytes='+offset+'-'+(offset+length-1)}});
+   if(response.status!==206||response.headers.get('Content-Range')!=='bytes '+offset+'-'+(offset+length-1)+'/'+index.bytes)throw Error('Probe exact sample range unavailable');
+   const bytes=await response.arrayBuffer();if(bytes.byteLength!==length)throw Error('Probe sample incomplete');return bytes;
+  }
+  const bytes=await readSample(frame);
   const config={codec:index.codec,codedWidth:index.width,codedHeight:index.height,description:Uint8Array.from(index.description.match(/../g),hex=>parseInt(hex,16)),colorSpace:index.colorSpace};
-  async function decodeSample(decoderConfig){
-   const blobURL=URL.createObjectURL(new Blob(['('+workerSource+')()'],{type:'text/javascript'})),worker=new Worker(blobURL,{type:'module'}),sample=bytes.slice(0);
+  async function decodeSample(decoderConfig,sourceFrame=frame){
+   const sourceBytes=sourceFrame===frame?bytes:await readSample(sourceFrame);
+   const blobURL=URL.createObjectURL(new Blob(['('+workerSource+')()'],{type:'text/javascript'})),worker=new Worker(blobURL,{type:'module'}),sample=sourceBytes.slice(0);
    let timer;
    try{return await new Promise((resolve,reject)=>{
     timer=setTimeout(()=>reject(Error('Raw colour probe timed out')),10000);
     worker.onmessage=({data})=>data.type==='frame'?resolve(data):reject(Object.assign(Error(data.message),{name:data.name}));worker.onerror=event=>reject(Error(event.message));
-    worker.postMessage({config:decoderConfig,bytes:sample,timestamp:Math.round(frame*1e6/index.fps),duration:Math.round(1e6/index.fps)},[sample]);
+    worker.postMessage({config:decoderConfig,bytes:sample,timestamp:Math.round(sourceFrame*1e6/index.fps),duration:Math.round(1e6/index.fps)},[sample]);
    })}finally{clearTimeout(timer);worker.terminate();URL.revokeObjectURL(blobURL)}
   }
   const decoded=await decodeSample(config);
@@ -187,11 +191,55 @@ try{
    if(alternateNormalized){contexts[6+rangeFrames.length].drawImage(alternateImage,0,0);contexts[7+rangeFrames.length].drawImage(alternateNormalized,0,0)}
    const [nativePixels,rawPixels,correctedPixels,reconstructedPixels,nativeVideoFramePixels,pausedVideoPixels,...rangePixels]=contexts.map(context=>context.getImageData(0,0,index.width,index.height).data);
    if(alternateNormalized)alternateConfiguration.pixels={rawVsNative:compare(nativePixels,rangePixels[rangeFrames.length]),normalizedVsNative:compare(nativePixels,rangePixels[rangeFrames.length+1]),normalizedVsNativeVideoFrame:{...compare(nativeVideoFramePixels,rangePixels[rangeFrames.length+1]),sourceFrameAligned:nativeVideoFrameAligned}};
+   const adjacentFrames={reference:'same frozen RVFC-captured native canvas',samples:[]};
+   if(alternateConfiguration.eligible&&alternateNormalized){
+    const description=config.description.slice();description[19]=0x70;
+    for(const sourceFrame of [frame-1,frame,frame+1]){
+     if(sourceFrame===frame){adjacentFrames.samples.push({sourceFrame,metadata:metadata(alternateNormalized),pixels:compare(nativePixels,rangePixels[rangeFrames.length+1])});continue}
+     let adjacentImage,adjacentNormalized;
+     try{
+      const output=await decodeSample({...config,description},sourceFrame);adjacentImage=output.image;
+      const options={rect:{x:0,y:0,width:adjacentImage.codedWidth,height:adjacentImage.codedHeight}},buffer=new Uint8Array(adjacentImage.allocationSize(options));
+      const adjacentLayout=await adjacentImage.copyTo(buffer,options);
+      adjacentNormalized=new VideoFrame(buffer,{format:adjacentImage.format,codedWidth:adjacentImage.codedWidth,codedHeight:adjacentImage.codedHeight,
+       visibleRect:adjacentImage.visibleRect,displayWidth:adjacentImage.displayWidth,displayHeight:adjacentImage.displayHeight,timestamp:adjacentImage.timestamp,layout:adjacentLayout,colorSpace:index.colorSpace});
+      if(Object.entries(index.colorSpace).some(([key,value])=>adjacentNormalized.colorSpace[key]!==value))throw Error('Adjacent sample normalization changed expected metadata');
+      const canvas=document.createElement('canvas');canvas.width=index.width;canvas.height=index.height;const context=canvas.getContext('2d',{alpha:false,colorSpace:'srgb'});
+      context.drawImage(adjacentNormalized,0,0);const candidate=context.getImageData(0,0,index.width,index.height).data;
+      adjacentFrames.samples.push({sourceFrame,metadata:metadata(adjacentNormalized),pixels:compare(nativePixels,candidate)});
+     }finally{adjacentNormalized?.close();adjacentImage?.close()}
+    }
+    adjacentFrames.exactMatches=adjacentFrames.samples.filter(sample=>sample.pixels.maxChannelDifference===0).map(sample=>sample.sourceFrame);
+   }else adjacentFrames.skipped='The exact-source SPS diagnostic is unavailable';
+   // Independent reference: seek while paused, never play, and allow two paints
+   // after seeked before sampling. Keep the earlier nativePixels snapshot fixed.
+   const requestedTime=(frame+.25)/index.fps;
+   video.pause();
+   if(Math.abs(video.currentTime-requestedTime)>.000001||video.seeking)await new Promise((resolve,reject)=>{
+    let timeout;
+    const cleanup=()=>{clearTimeout(timeout);video.removeEventListener('seeked',done);video.removeEventListener('error',failed)};
+    const done=()=>{cleanup();resolve()},failed=()=>{cleanup();reject(Error('Paused reference seek failed'))};
+    video.addEventListener('seeked',done);video.addEventListener('error',failed);timeout=setTimeout(()=>{cleanup();reject(Error('Paused reference seek timed out'))},10000);
+    try{video.currentTime=requestedTime}catch(error){cleanup();reject(error)}
+   });
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   if(!video.paused||video.seeking||video.readyState<2)throw Error('Direct paused reference is not ready');
+   let directFrame;
+   const pausedSeekReference={requestedTime,actualTime:video.currentTime,paused:video.paused,seeking:video.seeking,readyState:video.readyState};
+   try{
+    directFrame=new VideoFrame(video);const frameIndex=Math.round(directFrame.timestamp*index.fps/1e6);
+    Object.assign(pausedSeekReference,{metadata:metadata(directFrame),sourceFrame:frameIndex,sourceFrameAligned:frameIndex===frame});
+    const canvas=document.createElement('canvas');canvas.width=index.width;canvas.height=index.height;const context=canvas.getContext('2d',{alpha:false,colorSpace:'srgb'});
+    context.drawImage(directFrame,0,0);const directPixels=context.getImageData(0,0,index.width,index.height).data;
+    context.drawImage(video,0,0);const directVideoPixels=context.getImageData(0,0,index.width,index.height).data;
+    pausedSeekReference.pixels={vsOriginalCapture:compare(nativePixels,directPixels),videoVsVideoFrame:compare(directPixels,directVideoPixels),
+     correctedWorkerVsPausedSeek:compare(directPixels,correctedPixels),...(alternateNormalized?{normalizedSPSVsPausedSeek:compare(directPixels,rangePixels[rangeFrames.length+1])}:{})};
+   }finally{directFrame?.close()}
    return{frame,expectedColorSpace:index.colorSpace,beforeTransfer:decoded.beforeTransfer,afterTransfer,hardwareAcceleration:decoded.hardwareAcceleration,
     source:{codec:index.codec,width:index.width,height:index.height},nativeMode:nativeStats.mode,nativeReference:{presentedFrame:nativeStats.presentedFrame,canvasPresentedFrame:nativeStats.canvasPresentedFrame,pending:nativeStats.pending},
     nativeVideoFrame:{element:nativeVideoState,metadata:nativeVideoMetadata,sourceFrame:nativeVideoFrameIndex,sourceFrameAligned:nativeVideoFrameAligned,planeComparison:nativePlaneComparison},
     canvasColorSpaces:Object.fromEntries(['native','raw','corrected','reconstructed','nativeVideoFrame','pausedVideo'].map((name,i)=>[name,contexts[i].getContextAttributes?.().colorSpace??null])),
-    alternateConfiguration,
+    alternateConfiguration,adjacentFrames,pausedSeekReference,
     rangeRestoration:{eligible:rangeRestorations.length>0,executionContext:'window',sources:['https://developer.apple.com/documentation/corevideo/kcvpixelformattype_420ypcbcr8biplanarfullrange','https://developer.apple.com/documentation/accelerate/vimage_ypcbcrpixelrange'],variants:rangeRestorations.map((variant,i)=>({...variant,pixels:{vsNative:compare(nativePixels,rangePixels[i]),vsCorrected:compare(correctedPixels,rangePixels[i]),vsNativeVideoFrame:{...compare(nativeVideoFramePixels,rangePixels[i]),sourceFrameAligned:nativeVideoFrameAligned}}}))},
     correction:{kind:'transfer-only',executionContext:'window',bytes:copied.byteLength,layout,copyMs,constructMs,metadata:correctedMetadata},
     reconstructionControl:{constructMs:controlConstructMs,metadata:metadata(reconstructed)},
