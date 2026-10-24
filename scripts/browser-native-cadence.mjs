@@ -39,7 +39,9 @@ try{
  page=await context.newPage();
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
- if(ref)await page.route('**/*',async route=>{
+ // Keep request interception and HTTP cache policy identical in both arms.
+ // Playwright disables HTTP cache whenever routing is enabled.
+ await page.route('**/*',async route=>{
   const path=new URL(route.request().url()).pathname,body=assets.get(path==='/'?'/index.html':path);
   if(body)await route.fulfill({status:200,body,contentType:path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html'});
   else await route.continue();
@@ -73,13 +75,14 @@ try{
   };
   // Capture actual HTMLMediaElement seek requests and dispatched completions.
   // These timings explain cadence; they are never counted as rendered frames.
-  window.cadenceSeeks=[];window.cadenceSuperseded=[];
+  window.cadenceSeeks=[];window.cadenceSuperseded=[];window.cadenceSeekRequests=[];
   let activeSeek;
   function requested(video,time,method){
    if(video.id!=='journey')return;
    const now=performance.now();
-   if(activeSeek)window.cadenceSuperseded.push({...activeSeek,elapsedMs:now-activeSeek.at});
+   if(activeSeek){activeSeek.supersededAt=now;window.cadenceSuperseded.push({...activeSeek,elapsedMs:now-activeSeek.at})}
    activeSeek={at:now,from:video.currentTime,to:time,direction:Math.sign(time-video.currentTime),method,playbackRate:video.playbackRate};
+   window.cadenceSeekRequests.push(activeSeek);
   }
   const currentTime=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'currentTime');
   Object.defineProperty(HTMLMediaElement.prototype,'currentTime',{...currentTime,set(time){requested(this,time,'currentTime');currentTime.set.call(this,time)}});
@@ -91,7 +94,8 @@ try{
    const video=event.target;
    if(video.id!=='journey'||!activeSeek||video.seeking||Math.abs(video.currentTime-activeSeek.to)>1/60)return;
    const completedAt=performance.now();
-   window.cadenceSeeks.push({...activeSeek,completedAt,durationMs:completedAt-activeSeek.at});activeSeek=undefined;
+   Object.assign(activeSeek,{completedAt,durationMs:completedAt-activeSeek.at});
+   window.cadenceSeeks.push({...activeSeek});activeSeek=undefined;
   },true);
  });
  await page.goto(url,{waitUntil:'domcontentloaded'});
@@ -152,12 +156,14 @@ try{
    });
    return{applicationRafGateHz:rafHz,sourceVelocityFramesPerSecond:velocity,durationMs:duration,sourceWidth:before.sourceWidth,sourceHeight:before.sourceHeight,mode:before.mode,halves,
     nativeSeeksCompleted:sequence.stats.nativeSeeks-before.nativeSeeks,nativeSeekMeanMs:(sequence.stats.nativeSeekMs-before.nativeSeekMs)/Math.max(1,sequence.stats.nativeSeeks-before.nativeSeeks),
-    nativeFrameCallbacks:native,selectedPaintUpdates:selected,seekEvents:window.cadenceSeeks.filter(row=>row.at>=start&&row.completedAt<=start+duration).map(row=>({...row,at:row.at-start,completedAt:row.completedAt-start})),lastStats:sequence.stats};
+    nativeFrameCallbacks:native,selectedPaintUpdates:selected,
+    preMeasurementSeekRequests:window.cadenceSeekRequests.filter(row=>row.at<start).map(row=>({...row,at:row.at-start,...(row.completedAt===undefined?{}:{completedAt:row.completedAt-start}),...(row.supersededAt===undefined?{}:{supersededAt:row.supersededAt-start})})),
+    seekEvents:window.cadenceSeeks.filter(row=>row.at>=start&&row.completedAt<=start+duration).map(row=>({...row,at:row.at-start,completedAt:row.completedAt-start})),lastStats:sequence.stats};
   },{rafHz});
   assert.equal(result.mode,'video','The benchmark must use native video');
   assert.equal(result.sourceWidth,1920);assert.equal(result.sourceHeight,1080);
   results.push(result);
-  const {nativeFrameCallbacks,selectedPaintUpdates,seekEvents,lastStats,...summary}=result;
+  const {nativeFrameCallbacks,selectedPaintUpdates,preMeasurementSeekRequests,seekEvents,lastStats,...summary}=result;
   console.log('Native cadence',JSON.stringify({engine,ref:ref||'working-tree',...summary}));
  }
  assert.deepEqual(errors,[]);

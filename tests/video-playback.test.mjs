@@ -478,3 +478,21 @@ test('native seek timing separates both scroll directions from stationary confir
  await assert.rejects(cancelled,{name:'AbortError'});
  assert.equal(source.stats.nativeSeekTiming.forward.count,1,'Cancelled work is not reported as a displayed frame');
 });
+
+
+test('priming frame zero cannot disable verified fast seeking when playback advances',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;let resolvePlay,fastCalls=0;
+ video.play=()=>{video.paused=false;return new Promise(resolve=>{resolvePlay=resolve})};
+ video.fastSeek=time=>{fastCalls++;video.time=Math.floor(time*60)/60;video.seeking=true};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const opening=source.decode(0,undefined,false);await turn();
+ assert.equal(fastCalls,0,'The priming still uses precise positioning while play is pending');
+ video.time=1/60;video.seeking=false;video.dispatchEvent(new Event('seeked'));(await opening).close();
+ assert.equal(source.nativeFastSeek,true);assert.equal(source.stats.nativeFastSeekFailure,null);
+ resolvePlay();await turn();assert.equal(video.paused,true);
+ const motion=source.decode(20,undefined,false);await turn();assert.equal(fastCalls,1);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));(await motion).close();
+ assert.equal(source.nativeFastSeek,true);
+});

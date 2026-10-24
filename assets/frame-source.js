@@ -120,7 +120,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  let nativeEvents=new AbortController(),nativeReady,nativeSeek,nativeActivated=false,nativeBlocked=false,nativePlaying=false,nativeGeneration=0,nativeDirect=nativeCompositor,nativePresentedFrame=null;
  // Version-one indexes are emitted only after every sample is verified as IDR.
  // Check the returned frame as well: fastSeek may choose an earlier sync sample.
- let nativeSnapshot;
+ let nativeSnapshot,nativeFastSeekFailure=null;
  let nativeFastSeek=index.version===1&&index.frameCount>0&&index.frames?.length===index.frameCount&&typeof video.fastSeek==='function';
  const gestures=new AbortController();
  function playbackFailure(error){
@@ -205,12 +205,16 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
      return await presented;
     };
     if(watchesPixels)video.playbackRate=.0625;
-    if(nativeFastSeek&&!watchesPixels){
-     try{video.fastSeek(time)}catch{nativeFastSeek=false;video.currentTime=time}
+    // The opening still hides frame zero while play() primes the decoder.
+    // Playback can advance during that warm-up; it must not be interpreted as
+    // an inaccurate fastSeek and permanently disable keyframe motion seeking.
+    let usedFastSeek=false;
+    if(nativeFastSeek&&!watchesPixels&&frame>0&&!nativePlaying&&video.paused){
+     try{video.fastSeek(time);usedFastSeek=true}catch(error){nativeFastSeek=false;nativeFastSeekFailure={reason:error.name||'error',frame};video.currentTime=time}
     }else video.currentTime=time;
     let presentedTime=await settle();
-    if(nativeFastSeek&&!watchesPixels&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
-     nativeFastSeek=false;
+    if(usedFastSeek&&Math.floor(video.currentTime*index.fps+1e-6)!==frame){
+     nativeFastSeek=false;nativeFastSeekFailure={reason:'frame-mismatch',frame,actualFrame:Math.floor(video.currentTime*index.fps+1e-6)};
      video.currentTime=time;
      presentedTime=await settle();
     }
@@ -278,7 +282,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    // is still requesting that useful intermediate frame.
    if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
+  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeFastSeekFailure:nativeFastSeekFailure?{...nativeFastSeekFailure}:null,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativeActivated=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }
