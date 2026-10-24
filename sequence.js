@@ -111,7 +111,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: source.mode==='worker' ? {network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024} : constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
+    // Fast desktop scrolling needs a longer compressed-data runway through
+    // range-delivery gaps. Keep worker output surfaces bounded to four and
+    // retain the same opening readiness threshold on every device.
+    config: source.mode==='worker'
+      ? constrained ? {network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024} : {decoded:4,preparationFrames:57}
+      : constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (error.name === 'NotAllowedError') {

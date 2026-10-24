@@ -8,6 +8,7 @@ import {join} from 'node:path';
 const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'chromium';
 const profile=process.env.SOFACET_DEVICE||'desktop';
+assert.ok(['desktop','mobile'].includes(profile),'SOFACET_DEVICE must be desktop or mobile');
 const forceNative=process.env.SOFACET_FORCE_NATIVE==='1';
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url='http://127.0.0.1:8769';
@@ -77,8 +78,13 @@ try{
  assert.equal(result.stats.requestedRenderer,forceNative?'native':'worker','The main URL must select the default worker; native cases must select native explicitly');
  if(forceNative)assert.equal(result.stats.mode,'video','The native case must exercise native video');
  else if(engine==='chromium')assert.equal(result.stats.mode,'worker','The default Chromium journey must actually exercise the worker');
- const workerCache=result.stats.mode==='worker'||result.stats.workerRequests>0;
- assert.equal(result.stats.settings.decoded,workerCache?4:profile==='desktop'?8:4,'Worker caches retain four frames; native startup fallback keeps the device profile');
+ const workerCache=result.stats.mode==='worker'||result.stats.workerRequests>0||Number.isFinite(result.stats.workerStartupMs);
+ const desktop=profile==='desktop';
+ const expectedCache={decoded:workerCache?4:desktop?8:4,network:desktop?3:2,batch:desktop?32:24,
+  ahead:desktop?256:workerCache?80:56,behind:desktop?224:workerCache?40:8,
+  prefetch:desktop?512:workerCache?128:80,compressedBytes:(desktop?48:workerCache?16:10)*1024*1024,
+  preparationFrames:workerCache||!desktop?57:360};
+ for(const [key,value] of Object.entries(expectedCache))assert.equal(result.stats.settings[key],value,profile+' '+(workerCache?'worker':'native')+' cache '+key);
  assert.ok(result.stats.peakDecodedAndPending<=result.stats.settings.decoded,'Retained and in-flight frames must share the decoded budget');
  assert.equal(result.displayed,result.end,'The uninterrupted journey must reach the ending');
  assert.equal(result.earlyGame,false,'Game startup must not compete with any part of the journey');

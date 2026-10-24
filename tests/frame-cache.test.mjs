@@ -389,3 +389,72 @@ test('blocked native confirmation waits for activation while scrolling stays ava
   assert.equal(source.presentedFrame,40);assert.equal(cache.stats.lastError,null);
  }finally{cache.destroy()}
 });
+
+test('desktop worker lookahead bridges a delivery interruption without increasing decoded capacity',async t=>{
+ const phone={network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024};
+ const desktop={decoded:4,preparationFrames:57};
+ let now=0;t.mock.method(performance,'now',()=>now);
+ const drain=async()=>{for(let i=0;i<24;i++)await Promise.resolve()};
+ const results=[];
+ // Shared delivery is 25 MiB/s: enough for 200 source frames/s, with varying
+ // request latency and a 500ms interruption. This checks burst protection;
+ // a larger buffer cannot fix sustained delivery below source consumption.
+ for(const config of [phone,desktop]){
+  t.mock.timers.enable({apis:['setTimeout']});now=0;
+  const downloads=new Set();let cache,alive=0,pending=0,peakResources=0,paused=false;
+  const frameBytes=frame=>(80+frame%17)*1024;
+  const source={mode:'worker',decodeConcurrency:4,stats:{},frameBytes,fallback:()=>false,destroy(){},
+   loadFrames(frames,signal,_budget,onFrame){return new Promise((resolve,reject)=>{
+    const job={frames:[...frames].sort((a,b)=>a-b),at:now+30+(frames[0]%3)*20,cursor:0,bytes:0,result:new Map(),onFrame,resolve,signal};
+    job.abort=()=>{downloads.delete(job);reject(new DOMException('Cancelled','AbortError'))};signal.addEventListener('abort',job.abort,{once:true});downloads.add(job);
+   })},
+   decode(frame){pending++;peakResources=Math.max(peakResources,alive+pending);return new Promise(resolve=>setTimeout(()=>{
+    pending--;alive++;let closed=false;resolve({frame,close(){assert.equal(closed,false);closed=true;alive--}});
+   },4))},
+  };
+  const bounds=()=>{
+   const stats=cache.stats;
+   assert.ok(stats.compressedBytes+stats.reservedBytes<=stats.settings.compressedBytes);
+   assert.ok(stats.decoded+stats.decoding<=4);assert.ok(alive+pending<=4);
+   assert.ok(stats.network<=stats.settings.network);
+  };
+  async function advance(ms){
+   for(let elapsed=0;elapsed<ms;elapsed+=5){
+    now+=5;t.mock.timers.tick(5);await drain();let budget=paused?0:128*1024;
+    while(budget>0){
+     const job=[...downloads].filter(job=>job.at<=now).sort((a,b)=>a.at-b.at)[0];if(!job)break;
+     const frame=job.frames[job.cursor],remaining=frameBytes(frame)-job.bytes,amount=Math.min(remaining,budget);job.bytes+=amount;budget-=amount;
+     if(job.bytes===frameBytes(frame)){
+      const sample={byteLength:job.bytes};job.result.set(frame,sample);job.bytes=0;job.cursor++;job.onFrame(frame,sample);
+      if(downloads.has(job)&&job.cursor===job.frames.length){downloads.delete(job);job.signal.removeEventListener('abort',job.abort);job.resolve(job.result)}
+     }
+     await drain();bounds();
+    }
+    await drain();bounds();
+   }
+  }
+  cache=createFrameCache({count:1500,source,onReady(){},onError:error=>{throw error},config});
+  try{
+   for(let elapsed=0;elapsed<5000&&!cache.preparation.ready;elapsed+=5)await advance(5);
+   assert.equal(cache.preparation.ready,true);
+   assert.equal(cache.stats.settings.preparationFrames,57,'Desktop opening keeps the phone readiness requirement');
+   await advance(2000); // Background delivery during the opening, not an additional readiness gate.
+   let displayed=0,lastDraw=0,maxGap=0,misses=0;
+   for(let elapsed=20;elapsed<=2500;elapsed+=20){
+    paused=elapsed>1000&&elapsed<=1500;await advance(15);
+    const desired=elapsed/5;cache.request(desired,desired,displayed);await advance(5);
+    const available=cache.get(desired)?desired:cache.closest(desired,displayed);
+    if(available!==undefined&&available>displayed){displayed=available;maxGap=Math.max(maxGap,elapsed-lastDraw);lastDraw=elapsed}else misses++;
+    bounds();
+   }
+   paused=false;await advance(500);
+   cache.request(500,500,displayed);await advance(100);assert.ok(cache.get(500),'The stationary destination recovers after delivery resumes');
+   results.push({maxGap,misses,peakResources});
+  }finally{cache.destroy();await advance(20);t.mock.timers.reset()}
+  assert.equal(downloads.size,0);assert.equal(alive,0);assert.equal(pending,0);
+ }
+ assert.ok(results[0].maxGap>=100,'The small-window control must encounter the interruption');
+ assert.ok(results[1].maxGap<results[0].maxGap/2,'Desktop lookahead must shorten the longest wait for an advancing frame');
+ assert.ok(results[1].misses<results[0].misses,'Desktop lookahead must produce fewer unavailable-frame requests');
+ assert.ok(results.every(result=>result.peakResources<=4),'Background lookahead must not expand the decoded window');
+});

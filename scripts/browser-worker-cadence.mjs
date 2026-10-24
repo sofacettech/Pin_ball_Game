@@ -6,6 +6,8 @@ import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 const require=createRequire(import.meta.url),engine=process.env.SOFACET_BROWSER||'chromium';
 assert.ok(['chromium','webkit'].includes(engine),'Use Chromium or WebKit');
+const profile=process.env.SOFACET_DEVICE||'mobile';
+assert.ok(['desktop','mobile'].includes(profile),'SOFACET_DEVICE must be desktop or mobile');
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const port=process.env.SOFACET_WORKER_PORT||'8775',url=process.env.SOFACET_WORKER_URL||'http://127.0.0.1:'+port;
 const output=resolve(process.env.SOFACET_WORKER_OUTPUT||join(tmpdir(),'sofacet-worker-cadence-'+Date.now()+'.json')),prefix=output.replace(/\.json$/,'');
@@ -17,6 +19,20 @@ const useDefaultWorker=process.env.SOFACET_WORKER_DEFAULT==='1';
 const results=[],pictures=new Map();
 let browser,server,data,page,completed=false,failure;
 
+async function activateJourney(){
+ if(profile==='desktop')await page.mouse.click(195,422);else await page.touchscreen.tap(195,422);
+}
+function assertCacheProfile(stats){
+ const desktop=profile==='desktop',workerCache=stats.mode==='worker'||stats.workerRequests>0||Number.isFinite(stats.workerStartupMs);
+ const expected={decoded:workerCache?4:desktop?8:4,network:desktop?3:2,batch:desktop?32:24,
+  ahead:desktop?256:workerCache?80:56,behind:desktop?224:workerCache?40:8,
+  prefetch:desktop?512:workerCache?128:80,compressedBytes:(desktop?48:workerCache?16:10)*1024*1024,
+  preparationFrames:workerCache||!desktop?57:360};
+ for(const [key,value] of Object.entries(expected))assert.equal(stats.settings[key],value,profile+' '+(workerCache?'worker':'native')+' cache '+key);
+ assert.ok(stats.decoded+stats.decoding<=stats.settings.decoded,'Retained and in-flight frames must share the configured budget');
+ assert.ok(stats.network<=stats.settings.network,'Network requests must stay within the configured limit');
+ assert.ok(stats.compressedBytes+stats.reservedBytes<=stats.settings.compressedBytes,'Compressed cache and reservations must stay bounded');
+}
 async function settle(target,timeout=30000){
  await page.evaluate(frame=>window.scrollTo(0,frame*8),target);
  await page.waitForFunction(frame=>{
@@ -133,7 +149,7 @@ async function functionalChecks(){
   for(const key of ['hidden','visibilityState']){const descriptor=window.workerBenchmark.visibilityDescriptors[key];if(descriptor)Object.defineProperty(document,key,descriptor);else delete document[key]}
   document.dispatchEvent(new Event('visibilitychange'));
  });
- await page.touchscreen.tap(195,422);await settle(700);
+ await activateJourney();await settle(700);
  assert.equal(await page.locator('#game-page').getAttribute('src'),null,'Game must not load during mid-journey recovery');
  return{jumps,reversalMs,visibility:{kind:'synthetic-document-visibility-event',hiddenDraws:hidden.draws-before.draws,hiddenStats:hidden.stats,resumeFrame:700}};
 }
@@ -148,9 +164,9 @@ async function capture(name){
  assert.equal(image.hidden,false);assert.equal(image.opacity,'1');
  assert.ok(image.bounds.width>=100&&image.bounds.height>=100,'Full HD canvas must occupy the stage');
  assert.ok(Math.abs(image.bounds.width/image.bounds.height-1920/1080)<.002,'Stage must preserve the Full HD aspect ratio and ball geometry');
- const framePath=prefix+'-'+name+'-frame700.png',phonePath=prefix+'-'+name+'-phone.png';
- await writeFile(framePath,Buffer.from(image.dataURL.split(',')[1],'base64'));await page.screenshot({path:phonePath,type:'png',fullPage:false});
- pictures.set(name,image.dataURL);const {dataURL,...geometry}=image;return{...geometry,framePath,phonePath};
+ const framePath=prefix+'-'+name+'-frame700.png',viewportPath=prefix+'-'+name+'-'+(profile==='desktop'?'desktop':'phone')+'.png';
+ await writeFile(framePath,Buffer.from(image.dataURL.split(',')[1],'base64'));await page.screenshot({path:viewportPath,type:'png',fullPage:false});
+ pictures.set(name,image.dataURL);const {dataURL,...geometry}=image;return{...geometry,framePath,viewportPath,...(profile==='desktop'?{desktopPath:viewportPath}:{phonePath:viewportPath})};
 }
 async function comparePixels(reference,actual){
  return page.evaluate(async({reference,actual})=>{
@@ -180,10 +196,16 @@ try{
  }
  for(const spec of allArms.filter(arm=>selectedArms.includes(arm.name))){
   const defaultSelection=useDefaultWorker&&spec.renderer==='worker';
-  const result={name:spec.name,requestedRenderer:spec.renderer,defaultSelection,workerUnavailableInjected:Boolean(spec.disableWorker),completed:false};results.push(result);
+  const result={name:spec.name,profile,requestedRenderer:spec.renderer,defaultSelection,workerUnavailableInjected:Boolean(spec.disableWorker),completed:false};results.push(result);
   // Fresh browser/context per arm releases prior decoder/GPU/cache state.
   // Both arms use the same server and normal HTTP cache with no routing.
-  browser=await browserType.launch();const context=await browser.newContext({...devices[engine==='webkit'?'iPhone 13':'Pixel 7']});page=await context.newPage();
+  browser=await browserType.launch();const context=await browser.newContext(profile==='desktop'?{viewport:{width:1280,height:720},deviceScaleFactor:1}:devices[engine==='webkit'?'iPhone 13':'Pixel 7']);page=await context.newPage();
+  // Exercise desktop cache policy on low-core CI hosts; this does not emulate
+  // desktop decoder performance or change browser scheduling.
+  if(profile==='desktop')await page.addInitScript(()=>{
+   Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});
+   Object.defineProperty(navigator,'deviceMemory',{get:()=>8});
+  });
   const errors=[],networkFailures=[];
   page.on('pageerror',error=>errors.push(error.message));page.on('requestfailed',request=>networkFailures.push({url:request.url(),error:request.failure()?.errorText}));
   await page.addInitScript(installInstrumentation,{disableWorker:Boolean(spec.disableWorker)});
@@ -192,16 +214,16 @@ try{
    if(defaultSelection)pageURL.searchParams.delete('renderer');else pageURL.searchParams.set('renderer',spec.renderer);
    await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
-   if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
-   await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:60000});await page.touchscreen.tap(195,422);
-   result.startStats=await page.evaluate(()=>window.sofacetPreview.sequence.stats);
+   if(await page.locator('#enter').isVisible()){if(profile==='desktop')await page.locator('#enter').click();else await page.locator('#enter').tap()}
+   await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:60000});await activateJourney();
+   result.startStats=await page.evaluate(()=>window.sofacetPreview.sequence.stats);assertCacheProfile(result.startStats);
    assert.equal(result.startStats.requestedRenderer,spec.renderer,'Renderer query or main-URL default must reach the frame source');
    assert.equal(result.startStats.sourceWidth,1920);assert.equal(result.startStats.sourceHeight,1080);
    if(spec.name==='native'||spec.disableWorker)assert.equal(result.startStats.mode,'video','Explicit native and unsupported-worker cases must use native video');
    result.fallbackDetected=spec.renderer==='worker'&&result.startStats.mode!=='worker';
    if(!spec.disableWorker){
     result.motion=await measure();result.fallbackDetected||=spec.renderer==='worker'&&result.motion.finalMode!=='worker';
-    for(const stats of result.motion.statsSamples){assert.ok(stats.decoded<=stats.settings.decoded,'Decoded frame cache must stay bounded');assert.ok(stats.decoded+stats.decoding<=stats.settings.decoded,'Retained and in-flight frames must share the decoded budget');if(stats.mode==='worker')assert.ok(stats.workerPending<=4,'Worker submissions must stay bounded');assert.ok(stats.compressedBytes+stats.reservedBytes<=stats.settings.compressedBytes,'Compressed cache and reservations must stay bounded')}
+    for(const stats of result.motion.statsSamples){assertCacheProfile(stats);assert.ok(stats.decoded<=stats.settings.decoded,'Decoded frame cache must stay bounded');assert.ok(stats.decoded+stats.decoding<=stats.settings.decoded,'Retained and in-flight frames must share the decoded budget');if(stats.mode==='worker')assert.ok(stats.workerPending<=4,'Worker submissions must stay bounded');assert.ok(stats.compressedBytes+stats.reservedBytes<=stats.settings.compressedBytes,'Compressed cache and reservations must stay bounded')}
     if(result.motion.initialMode==='worker'){
      assert.equal(result.motion.finalMode,'worker','Worker errors during scrolling must not silently pass through native fallback');
      assert.equal(result.motion.canvasReadbacksDuringMotion,0,'Worker motion must not perform canvas RGBA readback');
@@ -223,7 +245,7 @@ try{
    }else if(spec.name!=='native'){
     result.quality={skipped:true,reason:'Native arm omitted for focused measurement. Full comparison is required before final validation.'};
    }
-   result.endStats=await page.evaluate(()=>window.sofacetPreview.sequence.stats);
+   result.endStats=await page.evaluate(()=>window.sofacetPreview.sequence.stats);assertCacheProfile(result.endStats);
    if(spec.renderer==='worker'&&result.endStats.mode!=='worker')result.fallbackDetected=true;
    if(spec.disableWorker)assert.equal(result.endStats.mode,'video','Unavailable Worker must keep native fallback operational');
    if(result.motion?.initialMode==='worker')assert.equal(result.endStats.mode,'worker','Worker must remain operational through recovery and pixel checks');
@@ -241,7 +263,7 @@ try{
 finally{
  await browser?.close();if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}if(data)await rm(data,{recursive:true,force:true});
  const worker=results.find(result=>result.name==='worker'),exercised=Boolean(worker?.motion?.initialMode==='worker'&&!worker.fallbackDetected);
- await writeFile(output,JSON.stringify({engine,url,selectedArms,useDefaultWorker,fullComparison,completed,error:failure||null,networkPolicy:'fresh browser/context per arm; no routing; normal HTTP cache',
+ await writeFile(output,JSON.stringify({engine,profile,desktopCapabilityOverride:profile==='desktop'?{hardwareConcurrency:8,deviceMemory:8}:null,url,selectedArms,useDefaultWorker,fullComparison,completed,error:failure||null,networkPolicy:'fresh browser/context per arm; no routing; normal HTTP cache',
   measurementNote:'Worker counts successful canvas drawImage submissions inside native RAF. Native counts distinct real requestVideoFrameCallback frames. These are different presentation boundaries; worker compositor delivery is not proven. No RAF rate gate is applied. Pixel readback and screenshots occur after timing.',
   goal:{experimentExercised:exercised,atLeast45CanvasSubmissionsPerSecondBothDirections:Boolean(completed&&exercised&&worker.motion.halves.every(half=>half.steady.atLeast45UpdatesPerSecond)),atLeast60CanvasSubmissionsPerSecondBothDirections:Boolean(completed&&exercised&&worker.motion.halves.every(half=>half.steady.atLeast60UpdatesPerSecond)),compositorRateProven:false},results},null,2)+'\n');
 }
