@@ -159,9 +159,9 @@ test('cache reverses, bounds resources, and only makes the latest target ready',
  }finally{cache.destroy();await wait(10)}
  assert.equal(f.alive,0);assert.ok(f.closed.length>0);
 });
-test('the development overlay never touches production or normal-page DOM',()=>{
+test('the opt-in overlay never touches normal-page DOM on production or localhost',()=>{
  const old=globalThis.location;
- try{for(const location of [{hostname:'sofacet.example',search:'?perf'},{hostname:'127.0.0.1',search:''}]){globalThis.location=location;assert.equal(typeof createPerformanceOverlay(),'function')}}finally{if(old===undefined)delete globalThis.location;else globalThis.location=old}
+ try{for(const location of [{hostname:'sofacet.example',search:''},{hostname:'127.0.0.1',search:''}]){globalThis.location=location;assert.equal(typeof createPerformanceOverlay(),'function')}}finally{if(old===undefined)delete globalThis.location;else globalThis.location=old}
 });
 test('disposing during decode closes its late resource',async()=>{
  let resolve,closed=0;const source={mode:'webcodecs',stats:{},load:async()=>new Uint8Array(1),decode:()=>new Promise(r=>resolve=r),fallback:()=>false,destroy(){}};
@@ -368,4 +368,24 @@ test('progressive ranges make the target drawable before the whole batch complet
   finish();await until(()=>cache.stats.pending===0);
   assert.equal(cache.get(0).frame,0);
  }finally{cache.destroy();finish?.()}
+});
+
+test('blocked native confirmation waits for activation while scrolling stays available', async () => {
+ const calls=[],errors=[];
+ const image={transient:true,close(){}};
+ const source={mode:'video',transient:true,presentedFrame:null,playbackBlocked:true,stats:{},frameBytes:()=>0,
+  async decode(frame,_bytes,settled){calls.push({frame,settled});if(settled)source.presentedFrame=frame;return image},
+  fallback:()=>false,destroy(){}};
+ const cache=createFrameCache({count:100,source,onReady(){},onError:error=>errors.push(error),config:{idleMs:5}});
+ try{
+  await until(()=>cache.get(0));
+  cache.request(20,20,0);await until(()=>errors.length===1);
+  assert.equal(errors[0].name,'NotAllowedError');assert.equal(cache.settled,false);
+  const attempts=calls.length;await wait(30);assert.equal(calls.length,attempts,'Permission denial must not spin the decoder');
+  cache.request(25,40,20);await until(()=>cache.get(25));
+  assert.equal(calls.at(-1).settled,false,'A blocked final capture must not prevent resumed scrolling');
+  cache.request(40,40,25);await until(()=>errors.length===2);
+  source.playbackBlocked=false;cache.retry();await until(()=>cache.settled&&cache.get(40));
+  assert.equal(source.presentedFrame,40);assert.equal(cache.stats.lastError,null);
+ }finally{cache.destroy()}
 });

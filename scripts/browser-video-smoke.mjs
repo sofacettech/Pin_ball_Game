@@ -10,12 +10,17 @@ const engine=process.env.SOFACET_BROWSER||'webkit';
 assert.ok(['webkit','chromium'].includes(engine),'Use a supported mobile browser');
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url=process.env.SOFACET_VIDEO_URL||'http://127.0.0.1:8768';
+const pacingOnly=process.env.SOFACET_VIDEO_PACING_ONLY==='1';
 const baseline=process.env.SOFACET_VIDEO_BASELINE,previousAssets=new Map(),measurements=new Map(),swipeMeasurements=new Map();
+const comparisonFailures=[];
 if(baseline){
  assert.match(baseline,/^[a-f0-9]{40}$/,'Use an exact baseline commit');
  for(const file of ['index.html','viewer.js','sequence.js','assets/frame-source.js','assets/frame-cache.js']){
   previousAssets.set('/'+file,execFileSync('git',['show',`${baseline}:${file}`]));
  }
+ // Older comparisons predate the separate pacer. When present, its own
+ // baseline implementation must be routed along with the entry modules.
+ try{previousAssets.set('/assets/frame-pacing.js',execFileSync('git',['show',`${baseline}:assets/frame-pacing.js`],{stdio:['ignore','pipe','ignore']}))}catch{}
 }
 let server,browser,data;
 async function measureScroll(page,speed,duration,startFrame=200){
@@ -58,7 +63,8 @@ try{
   }
   assert.ok(started,'Preview server did not start');
  }
- const cases=(engine==='webkit'?[false,true,'legacy']:[false,true]).flatMap(native=>baseline
+ const nativeCases=process.env.SOFACET_VIDEO_NATIVE_ONLY==='1'?[true]:(engine==='webkit'?[false,true,'legacy']:[false,true]);
+ const cases=nativeCases.flatMap(native=>baseline
   ?[{native,previous:true},{native,previous:false}]:[{native,previous:false}]);
  for(const {native,previous} of cases){
   // Release decoder/GPU resources between cases so the last renderer is not
@@ -71,7 +77,7 @@ try{
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
   if(native==='legacy')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
   // Both versions use identical local videos and routing/cache conditions on
-  // the same runner. Only the five renderer entry files come from the baseline.
+  // the same runner. Renderer entry modules and the pacer come from the baseline.
   if(baseline)await page.route('**/*',async route=>{
    const path=new URL(route.request().url()).pathname;
    const body=previous?previousAssets.get(path==='/'?'/index.html':path):undefined;
@@ -79,13 +85,20 @@ try{
    else await route.continue();
   });
   try{
-   await page.goto(url,{waitUntil:'domcontentloaded'});
+   const pageURL=new URL(url);if(native)pageURL.searchParams.set('renderer','native');
+   await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    // Autoplay denial must offer an actionable control, including reduced-power browsers.
    await page.waitForFunction(()=>window.sofacetPreview&&(
     document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
    if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
    await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
    await page.touchscreen.tap(195,422);
+   if(!previous){
+    const selected=await page.evaluate(()=>window.sofacetPreview.sequence.stats);
+    assert.equal(selected.requestedRenderer,native?'native':'worker','Current cases must exercise the main-URL default or explicit native override');
+    if(native)assert.equal(selected.mode,'video');
+    else if(engine==='chromium')assert.equal(selected.mode,'worker','The default Chromium case must actually exercise the worker');
+   }
    // Compare steady scrolling before large jumps: the old renderer skips those
    // frames while the paced renderer decodes their full intervening journey.
    // Measure sustained scrolling as well as jumps: arriving eventually does not
@@ -111,29 +124,65 @@ try{
     // Compare identical capabilities: disabling VideoFrame adds a different
     // presentation path and must also be disabled in its historical baseline.
     const before=measurements.get(String(native));
-    const comparison={native,updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs};
+    // The verified fastSeek scheduler intentionally targets 30 updates/second.
+    // Preserve raw before/after evidence, but do not reject that target merely
+    // because the historical renderer decoded 50 frames/second on this runner.
+    const capped=motion.stats.mode==='video'&&motion.stats.nativeFastSeek===true&&motion.stats.nativeScheduleStarts>0;
+    const referenceRate=capped?Math.min(before.updatesPerSecond,30):before.updatesPerSecond;
+    const referenceGap=capped?Math.max(before.p95GapMs,1000/30):before.p95GapMs;
+    const comparison={native,capped,targetFramesPerSecond:capped?30:null,
+     beforeUpdatesPerSecond:before.updatesPerSecond,updatesPerSecond:motion.updatesPerSecond,
+     beforeP95GapMs:before.p95GapMs,p95GapMs:motion.p95GapMs,
+     updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs,
+     referenceUpdatesPerSecond:referenceRate,referenceP95GapMs:referenceGap,
+     targetAdjustedUpdatesRatio:motion.updatesPerSecond/referenceRate,targetAdjustedP95GapRatio:motion.p95GapMs/referenceGap};
     console.log('Same-runner comparison',JSON.stringify(comparison));
-    assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
-    assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+    // Retain comparison failures while running the current build's recovery
+    // and pixel checks; every failed threshold still rejects the final run.
+    const compare=check=>{
+     try{check()}catch(error){
+      if(!(error instanceof assert.AssertionError))throw error;
+      comparisonFailures.push(error);
+      console.error('Same-runner comparison failure',JSON.stringify({native,message:error.message}));
+     }
+    };
+    if(capped){
+     compare(()=>assert.ok(motion.updatesPerSecond>=27,'The native 30 fps scheduler must deliver at least 27 updates/second'));
+     compare(()=>assert.ok(comparison.targetAdjustedUpdatesRatio>=.9,'Native frame delivery missed its target-adjusted baseline'));
+     compare(()=>assert.ok(comparison.targetAdjustedP95GapRatio<=1.5,'Native frame pacing regressed against its target-adjusted baseline'));
+    }else{
+     compare(()=>assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner'));
+     compare(()=>assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner'));
+    }
    }
    const swipe=await measureScroll(page,2.4,4000);
    console.log('Fast swipe and reversal',JSON.stringify({engine,native,previous,...swipe}));
    if(previous)swipeMeasurements.set(String(native),swipe);
    else{
     if(native)assert.equal(swipe.stats.renderer,'native-video','Native touch playback must avoid full-size canvas copies');
-    // A fast swipe may move the destination faster than cinematic playback.
-    // Enforce smooth progress and a bounded settle time, rather than rewarding
-    // a renderer that reaches the finger by skipping large stretches of video.
-    assert.ok(swipe.maxFrameJump<=4,'Fast swipes must not jump over more than four source frames per paint');
+    // Native phone seeks must shed an old destination when the finger moves
+    // faster than decoding. A four-frame ceiling hid the reported 33-second
+    // backlog; bound target lag and recovery for native and worker pacing.
+    // The legacy main-thread WebCodecs path keeps its continuity guarantee.
+    if(swipe.stats.mode==='webcodecs')assert.ok(swipe.maxFrameJump<=4,'Legacy WebCodecs swipes must not jump over more than four source frames per paint');
+    else assert.ok(swipe.p95FrameLag<120,'Responsive fast swipes must stay within 120 source frames of the finger');
     assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
-    if(baseline){
+    if(baseline&&swipe.stats.mode==='webcodecs'){
      const before=swipeMeasurements.get(String(native));
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }
+   // The historical renderer supplies the steady/fast-scroll pacing reference.
+   // Its known recovery bugs must not prevent the current build's full jump,
+   // late-journey, recovery and exact-pixel checks from running below.
+   if(previous){assert.deepEqual(errors,[]);continue}
+   const swipeStoppedAt=Date.now();
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
+   if(!previous&&swipe.stats.mode==='video')assert.ok(Date.now()-swipeStoppedAt<2000,'Native fast-swipe reversal must settle within two seconds after scrolling stops');
+   if(pacingOnly){assert.deepEqual(errors,[]);continue}
    const frames=[];
    for(const y of [160,1600,8000,12800,14400,800,0]){
+    const jumpStartedAt=Date.now();
     await page.evaluate(y=>window.scrollTo(0,y),y);
     await page.waitForFunction(frame=>{
      const sequence=window.sofacetPreview.sequence;
@@ -141,6 +190,7 @@ try{
      return sequence.desiredFrame===frame&&sequence.displayedFrame===frame&&
       (frame===0||stats.renderer!=='native-video'||stats.presentedFrame===undefined||stats.presentedFrame===frame);
     },y/8,{timeout:30000});
+    if(!previous&&swipe.stats.mode==='video')assert.ok(Date.now()-jumpStartedAt<2500,'Native large forward/reverse jumps must reach their target within 2.5 seconds');
     const state=await page.evaluate(()=>{
      const sequence=window.sofacetPreview.sequence;
      const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
@@ -180,9 +230,6 @@ try{
     assert.ok(surface.canvasVisible&&surface.width===surface.canvasWidth,'Settled native video must keep its full-size compositor behind the captured frame');
     assert.ok(surface.videoLayer<surface.canvasLayer,'The captured frame must cover the paused native video');
    }
-   // The historical mutable-video renderer is a pacing reference, not the
-   // implementation under test for the new immutable-frame pixel guarantee.
-   if(previous){assert.deepEqual(errors,[]);continue}
    const quality=await page.evaluate(async()=>{
     const {waitForVideo}=await import('./assets/video-playback.js');
     const reference=document.createElement('video');
@@ -246,7 +293,8 @@ try{
    throw error;
   }finally{await context.close();await browser.close();browser=undefined}
  }
- console.log(engine+' mobile opening, fast/reverse scroll and original Full HD checks passed.');
+ if(comparisonFailures.length)throw new AggregateError(comparisonFailures,'Same-runner performance comparison failed after completing functional checks');
+ console.log(engine+(pacingOnly?' mobile continuous scroll and fast/reverse pacing checks passed.':' mobile opening, fast/reverse scroll and original Full HD checks passed.'));
 }finally{
  await browser?.close();
  if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}

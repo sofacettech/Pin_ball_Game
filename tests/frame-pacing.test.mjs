@@ -71,3 +71,88 @@ test('native completions can advance between paints without exceeding the paint 
   const nextPaint = pacer.next(displayed, 1000, 1 / 60, displayed);
   assert.ok(nextPaint > displayed && nextPaint <= displayed + 4);
 });
+
+test('responsive native pacing keeps ordinary wheel detents smooth', () => {
+  const pacer = createFramePacer({responsive: true});
+  let displayed = 0, updates = 0;
+  for (let tick = 0; tick < 120; tick++) {
+    const next = pacer.next(displayed, 15, 1 / 60);
+    assert.ok(next >= displayed && next - displayed <= 4);
+    if (next !== displayed) updates++;
+    displayed = next;
+  }
+  assert.equal(displayed, 15);
+  assert.ok(updates >= 5);
+});
+
+test('a 10 Hz native decoder catches the reported iPhone backlog within 1.2 seconds', () => {
+  const pacer = createFramePacer({responsive: true});
+  let displayed = 1100, pending = displayed, finishedAt;
+  // Three 30 Hz paints per native completion models the slow phone report.
+  for (let tick = 0; tick <= 36; tick++) {
+    if (tick && tick % 3 === 0) displayed = pending;
+    if (displayed === 0) { finishedAt = tick / 30; break; }
+    const next = pacer.next(displayed, 0, 1 / 30);
+    assert.ok(next >= 0 && next < displayed);
+    if (tick % 3) assert.equal(next, pending, 'Keep a useful in-flight seek stable');
+    pending = next;
+  }
+  assert.equal(displayed, 0);
+  assert.ok(finishedAt <= 1.2);
+});
+
+test('native pacing stays near an ongoing swipe and settles promptly when it stops', () => {
+  const pacer = createFramePacer({responsive: true});
+  let displayed = 0, pending = 0, worstLag = 0;
+  for (let tick = 0; tick <= 174; tick++) {
+    if (tick && tick % 3 === 0) displayed = pending;
+    // Five seconds at 300 source frames/second, followed by a stationary finger.
+    const desired = Math.min(1500, tick * 10);
+    pending = pacer.next(displayed, desired, 1 / 30);
+    assert.ok(pending >= displayed && pending <= desired);
+    worstLag = Math.max(worstLag, desired - displayed);
+  }
+  assert.ok(worstLag < 90, `The swipe accumulated ${worstLag} frames of lag`);
+  assert.equal(displayed, 1500);
+});
+
+test('a native reversal replaces the obsolete seek and settles across the full journey', () => {
+  const pacer = createFramePacer({responsive: true});
+  const forward = pacer.next(1100, 1924, 1 / 30);
+  assert.ok(forward > 1100);
+  const reverse = pacer.next(1100, 0, 1 / 30);
+  assert.ok(reverse < 1100, 'Reverse immediately instead of completing the old direction');
+  assert.equal(pacer.next(1100, 0, 1 / 30), reverse);
+  let displayed = reverse, pending = reverse;
+  for (let tick = 0; tick <= 60; tick++) {
+    if (tick && tick % 3 === 0) displayed = pending;
+    pending = pacer.next(displayed, 1924, 1 / 30);
+    assert.ok(pending >= displayed && pending <= 1924);
+  }
+  assert.equal(displayed, 1924);
+});
+
+test('a native stall holds one seek and does not accrue an unbounded catch-up jump', () => {
+  const pacer = createFramePacer({responsive: true});
+  const capped = createFramePacer({responsive: true});
+  const pending = pacer.next(0, 1100, 1 / 30);
+  assert.equal(capped.next(0, 1100, 1 / 30), pending);
+  for (let tick = 0; tick < 150; tick++) assert.equal(pacer.next(0, 1100, 1 / 30), pending);
+  const resumed = pacer.next(pending, 1100, 5);
+  assert.ok(resumed > pending);
+  assert.equal(resumed, capped.next(pending, 1100, .1),
+    'A long stall must behave exactly like the capped 100 ms catch-up interval');
+});
+
+test('native catch-up completions within one paint share the same jump budget', () => {
+  const pacer = createFramePacer({responsive: true});
+  const first = pacer.next(0, 1100, 1 / 30, 0);
+  let displayed = first;
+  for (let i = 0; i < 5; i++) {
+    const next = pacer.next(displayed, 1100, .008, 0);
+    assert.ok(next >= displayed, 'A spent paint budget must not move the video backward');
+    displayed = next;
+  }
+  assert.ok(displayed <= first + 1, 'Sub-paint completions must not multiply a catch-up jump');
+  assert.ok(pacer.next(displayed, 1100, 1 / 30, displayed) > displayed);
+});
