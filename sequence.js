@@ -3,7 +3,7 @@ import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
 import { createFrameSource } from './assets/frame-source.js?v=frames-6647aa73eb6c';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-9d32afdae5ec';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
 const FPS = 60;

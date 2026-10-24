@@ -29,7 +29,7 @@ export function createFramePacer({responsive = false} = {}) {
       // queued motion on slow native decoders. Skip obsolete samples while
       // easing the remaining distance; keep the small-step behavior near the
       // finger's destination so ordinary wheel/touch motion still settles.
-      if (responsive) step = Math.max(step, Math.max(0, distance - 16) * -Math.expm1(-elapsed / .15));
+      if (responsive) step = Math.max(step, Math.max(0, distance - 16) * -Math.expm1(-elapsed / .1));
       elapsed = 0;
       paintBudget = Math.max(paintBudget, Math.ceil(step));
       position += travel * Math.min(Math.abs(desired - position), step);

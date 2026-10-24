@@ -76,7 +76,7 @@ try{
   if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
   if(native==='legacy')await page.addInitScript(()=>{globalThis.VideoFrame=undefined});
   // Both versions use identical local videos and routing/cache conditions on
-  // the same runner. Only the five renderer entry files come from the baseline.
+  // the same runner. Renderer entry modules and the pacer come from the baseline.
   if(baseline)await page.route('**/*',async route=>{
    const path=new URL(route.request().url()).pathname;
    const body=previous?previousAssets.get(path==='/'?'/index.html':path):undefined;
@@ -259,7 +259,7 @@ try{
    throw error;
   }finally{await context.close();await browser.close();browser=undefined}
  }
- console.log(engine+' mobile opening, fast/reverse scroll and original Full HD checks passed.');
+ console.log(engine+(pacingOnly?' mobile continuous scroll and fast/reverse pacing checks passed.':' mobile opening, fast/reverse scroll and original Full HD checks passed.'));
 }finally{
  await browser?.close();
  if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}

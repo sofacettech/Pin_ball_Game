@@ -85,11 +85,11 @@ test('responsive native pacing keeps ordinary wheel detents smooth', () => {
   assert.ok(updates >= 5);
 });
 
-test('a 10 Hz native decoder catches the reported iPhone backlog within 1.5 seconds', () => {
+test('a 10 Hz native decoder catches the reported iPhone backlog within 1.2 seconds', () => {
   const pacer = createFramePacer({responsive: true});
   let displayed = 1100, pending = displayed, finishedAt;
   // Three 30 Hz paints per native completion models the slow phone report.
-  for (let tick = 0; tick <= 45; tick++) {
+  for (let tick = 0; tick <= 36; tick++) {
     if (tick && tick % 3 === 0) displayed = pending;
     if (displayed === 0) { finishedAt = tick / 30; break; }
     const next = pacer.next(displayed, 0, 1 / 30);
@@ -98,13 +98,13 @@ test('a 10 Hz native decoder catches the reported iPhone backlog within 1.5 seco
     pending = next;
   }
   assert.equal(displayed, 0);
-  assert.ok(finishedAt <= 1.5);
+  assert.ok(finishedAt <= 1.2);
 });
 
 test('native pacing stays near an ongoing swipe and settles promptly when it stops', () => {
   const pacer = createFramePacer({responsive: true});
   let displayed = 0, pending = 0, worstLag = 0;
-  for (let tick = 0; tick <= 195; tick++) {
+  for (let tick = 0; tick <= 174; tick++) {
     if (tick && tick % 3 === 0) displayed = pending;
     // Five seconds at 300 source frames/second, followed by a stationary finger.
     const desired = Math.min(1500, tick * 10);
@@ -112,7 +112,7 @@ test('native pacing stays near an ongoing swipe and settles promptly when it sto
     assert.ok(pending >= displayed && pending <= desired);
     worstLag = Math.max(worstLag, desired - displayed);
   }
-  assert.ok(worstLag < 120, `The swipe accumulated ${worstLag} frames of lag`);
+  assert.ok(worstLag < 90, `The swipe accumulated ${worstLag} frames of lag`);
   assert.equal(displayed, 1500);
 });
 
@@ -134,12 +134,14 @@ test('a native reversal replaces the obsolete seek and settles across the full j
 
 test('a native stall holds one seek and does not accrue an unbounded catch-up jump', () => {
   const pacer = createFramePacer({responsive: true});
+  const capped = createFramePacer({responsive: true});
   const pending = pacer.next(0, 1100, 1 / 30);
+  assert.equal(capped.next(0, 1100, 1 / 30), pending);
   for (let tick = 0; tick < 150; tick++) assert.equal(pacer.next(0, 1100, 1 / 30), pending);
   const resumed = pacer.next(pending, 1100, 5);
   assert.ok(resumed > pending);
-  assert.ok(resumed - pending < (1100 - pending) / 2,
-    'A long stall must use at most the capped 100 ms catch-up interval');
+  assert.equal(resumed, capped.next(pending, 1100, .1),
+    'A long stall must behave exactly like the capped 100 ms catch-up interval');
 });
 
 test('native catch-up completions within one paint share the same jump budget', () => {
