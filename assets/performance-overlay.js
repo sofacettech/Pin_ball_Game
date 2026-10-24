@@ -1,4 +1,4 @@
-const VERSION = 'scroll-debug-1';
+const VERSION = 'scroll-debug-2';
 const boundedPush = (values, value, limit) => { values.push(value); if (values.length > limit) values.shift(); };
 const round = value => Math.round(value * 10) / 10;
 const p95 = values => [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * .95) - 1)] || 0;
@@ -64,7 +64,20 @@ export function createPerformanceOverlay(sequence, renderer) {
   if (!new URLSearchParams(location.search).has('perf')) return () => {};
   const panel = document.createElement('section');
   panel.id = 'scroll-debug'; panel.setAttribute('aria-label', 'Scroll performance debug');
-  panel.style.cssText = 'position:fixed;left:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:10000;width:min(340px,calc(100vw - 20px));max-height:55svh;overflow:auto;box-sizing:border-box;padding:12px;background:#10131ff2;color:#fff;border:1px solid #b9f73c;border-radius:10px;font:12px/1.5 ui-monospace,monospace;text-align:left;pointer-events:auto;overscroll-behavior:contain';
+  panel.style.cssText = 'position:fixed;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:10000;width:min(340px,calc(100vw - 20px));display:flex;flex-direction:column;align-items:flex-end;gap:8px;font:12px/1.5 ui-monospace,monospace;text-align:left;color:#fff;pointer-events:none';
+  const content = document.createElement('div');
+  content.id = 'scroll-debug-content'; content.hidden = true;
+  content.style.cssText = 'width:100%;max-height:55svh;overflow:auto;box-sizing:border-box;padding:12px;background:#10131ff2;border:1px solid #b9f73c;border-radius:10px;pointer-events:auto;overscroll-behavior:contain';
+  const toggle = document.createElement('button'); toggle.type = 'button';
+  toggle.setAttribute('aria-controls', content.id);
+  toggle.style.cssText = 'min-height:40px;padding:7px 12px;background:#10131ff2;color:#b9f73c;border:1px solid #b9f73c;border-radius:8px;font:inherit;touch-action:manipulation;pointer-events:auto';
+  let expanded = false;
+  function updateToggle() {
+    toggle.textContent = expanded ? 'Close debug' : `Debug · ${paused ? 'paused' : 'recording'}`;
+    toggle.setAttribute('aria-label', expanded ? 'Close debug' : 'Open debug');
+    toggle.setAttribute('aria-expanded', String(expanded));
+  }
+  function setExpanded(value) { expanded = value; content.hidden = !value; updateToggle(); }
   const title = document.createElement('strong'); title.textContent = 'SCROLL DEBUG · LIVE';
   const output = document.createElement('pre');
   output.style.cssText = 'margin:6px 0;white-space:pre-wrap;font:inherit;color:inherit';
@@ -73,10 +86,12 @@ export function createPerformanceOverlay(sequence, renderer) {
   const message = document.createElement('div'); message.setAttribute('role', 'status');
   message.style.cssText = 'margin-top:6px;font-size:11px;color:#ccd1de';
   message.textContent = 'Page FPS ≠ journey updates. Stalls = gaps ≥100ms while moving. Reset after the intro.';
-  panel.append(title, output, controls, message); document.body.append(panel);
+  content.append(title, output, controls, message); panel.append(content, toggle); document.body.append(panel);
   const events = new AbortController(), video = document.querySelector('#journey'), frame = document.querySelector('#journey-frame');
   let recorder = createPerformanceRecorder(), request = 0, videoRequest = 0, paused = false, destroyed = false;
   let started = new Date().toISOString(), lastStats = {}, lastState = {}, latestReport;
+  toggle.addEventListener('click', () => setExpanded(!expanded), {signal: events.signal});
+  updateToggle();
   let baselineQuality = video?.getVideoPlaybackQuality?.();
   const build = new URL(import.meta.url).searchParams.get('v') || VERSION;
   function report() {
@@ -101,7 +116,7 @@ export function createPerformanceOverlay(sequence, renderer) {
   }
   const fallback = document.createElement('textarea');
   fallback.hidden = true; fallback.readOnly = true; fallback.setAttribute('aria-label', 'Performance report to copy');
-  fallback.style.cssText = 'box-sizing:border-box;width:100%;height:100px;margin-top:8px;font:11px monospace'; panel.append(fallback);
+  fallback.style.cssText = 'box-sizing:border-box;width:100%;height:100px;margin-top:8px;font:11px monospace'; content.append(fallback);
   button('Copy report', async () => {
     const text = JSON.stringify(paused && latestReport ? latestReport : report(), null, 2);
     try {
@@ -122,6 +137,7 @@ export function createPerformanceOverlay(sequence, renderer) {
   const pause = button('Pause', () => {
     paused = !paused; title.textContent = `SCROLL DEBUG · ${paused ? 'PAUSED' : 'LIVE'}`;
     pause.textContent = paused ? 'Resume' : 'Pause';
+    updateToggle();
     if (paused) { latestReport = report(); stop(); } else { recorder.suspend(); start(); }
   });
   button('Reset', () => {
@@ -129,9 +145,9 @@ export function createPerformanceOverlay(sequence, renderer) {
     latestReport = undefined; fallback.hidden = true;
     output.textContent = 'Reset. Scroll to capture a stall.';
     message.textContent = 'Worst values cleared. Scroll, then Pause for a screenshot or Copy report.';
-    if (paused) { paused = false; pause.textContent = 'Pause'; title.textContent = 'SCROLL DEBUG · LIVE'; start(); }
+    if (paused) { paused = false; pause.textContent = 'Pause'; title.textContent = 'SCROLL DEBUG · LIVE'; updateToggle(); start(); }
   });
-  button('Hide', destroy);
+  button('Close', () => { setExpanded(false); toggle.focus(); });
   function tick(now) {
     if (destroyed || paused || document.hidden) return;
     const state = {phase: sequence.phase, desiredFrame: sequence.desiredFrame, displayedFrame: sequence.displayedFrame,

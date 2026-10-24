@@ -10,7 +10,7 @@ const origin = 'https://sofacet-pinball.onrender.com';
 const browser = await browserType.launch();
 try {
   const context = await browser.newContext({...devices[engine === 'webkit' ? 'iPhone 13' : 'Pixel 7'], acceptDownloads:true});
-  await context.route(origin + '/**', route => route.fulfill({status:200, contentType:route.request().url().includes('/assets/') ? 'text/javascript' : 'text/html', body:route.request().url().includes('/assets/') ? source : `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#391078;color:white"><h1>Scroll debug test</h1><video id="journey" class="native-renderer"></video><canvas id="journey-frame" hidden></canvas><script type="module">
+  await context.route(origin + '/**', route => route.fulfill({status:200, contentType:route.request().url().includes('/assets/') ? 'text/javascript' : 'text/html', body:route.request().url().includes('/assets/') ? source : `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#391078;color:white;min-height:300vh"><h1>Scroll debug test</h1><video id="journey" class="native-renderer"></video><canvas id="journey-frame" hidden></canvas><script type="module">
     import {createPerformanceOverlay} from '/assets/performance-overlay.js';
     window.sequence={phase:'journey',desiredFrame:1000,displayedFrame:0,frameCount:1990,stats:{mode:'video',renderer:'native-video',decodeMs:120,pending:1,decoded:1,compressedBytes:0,settings:{decoded:4},fallbackReason:'native-touch'}};
     window.overlay=createPerformanceOverlay(sequence,{domElement:{width:1920,height:1080},info:{render:{frame:1}}});
@@ -24,9 +24,30 @@ try {
   await page.waitForFunction(() => window.ready);
   assert.equal(await page.locator('#scroll-debug').count(), 0, 'Normal visits remain uninstrumented');
   await page.goto(origin + '/__debug-test?perf=1');
+  const panel = page.locator('#scroll-debug');
+  const toggle = panel.getByRole('button', {name:'Open debug', exact:true});
+  await toggle.waitFor({state:'visible'});
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(await panel.locator('pre').isVisible(), false, 'The large panel starts closed');
+  assert.ok((await panel.boundingBox()).height <= 48, 'Only a small launcher occupies phone height');
+  const blank = await panel.boundingBox();
+  assert.equal(await page.evaluate(({x,y}) => !!document.elementFromPoint(x,y)?.closest('#scroll-debug'), {x:blank.x+2,y:blank.y+2}), false, 'Transparent space beside the launcher passes through to the scene');
+  await page.mouse.move(page.viewportSize().width / 2, page.viewportSize().height / 2);
+  await page.mouse.wheel(0, 400);
+  await page.waitForFunction(() => scrollY > 0);
   await page.waitForFunction(() => document.querySelector('#scroll-debug pre')?.textContent.includes('Worst:'));
   await page.waitForFunction(() => /Stalls ≥100ms: [1-9]/.test(document.querySelector('#scroll-debug pre').textContent));
-  const panel = page.locator('#scroll-debug');
+  await toggle.tap();
+  await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
+  const beforeClose = JSON.parse(await page.evaluate(() => window.copied));
+  assert.ok(beforeClose.current.totalUpdates > 0, 'Recording starts while collapsed');
+  await panel.getByRole('button', {name:'Close', exact:true}).tap();
+  assert.equal(await panel.locator('pre').isVisible(), false);
+  await page.waitForTimeout(1100);
+  await toggle.tap();
+  await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
+  const afterClose = JSON.parse(await page.evaluate(() => window.copied));
+  assert.ok(afterClose.current.totalUpdates > beforeClose.current.totalUpdates, 'Closing must preserve recording and report history');
   const bounds = await panel.boundingBox();
   assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= page.viewportSize().width, 'The panel fits a phone');
   await panel.getByRole('button', {name:'Pause', exact:true}).tap();
@@ -43,17 +64,18 @@ try {
   await panel.getByRole('button', {name:'Save report', exact:true}).tap();
   const download = await downloadPromise;
   assert.equal(download.suggestedFilename(), 'sofacet-scroll-debug.json');
-  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-1');
+  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-2');
   await page.evaluate(() => { window.rejectCopy = true; });
   await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
   await panel.getByRole('textbox', {name:'Performance report to copy'}).waitFor({state:'visible'});
-  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-1');
+  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-2');
   await panel.getByRole('button', {name:'Reset', exact:true}).tap();
   assert.ok((await panel.locator('strong').textContent()).includes('LIVE'));
   if (process.env.SOFACET_DEBUG_SCREENSHOT) await page.screenshot({path:process.env.SOFACET_DEBUG_SCREENSHOT});
-  await panel.getByRole('button', {name:'Hide', exact:true}).tap();
-  assert.equal(await panel.count(), 0);
+  await panel.getByRole('button', {name:'Close debug', exact:true}).tap();
+  assert.equal(await panel.locator('pre').isVisible(), false);
+  assert.equal(await toggle.isVisible(), true, 'Debug can always be reopened to copy at the end');
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({engine, pageFps:report.current.pageFps, journeyUpdatesPerSecond:report.current.journeyUpdatesPerSecond, stalls:report.current.stalls, result:'Production opt-in, mobile layout, pause, reset, clipboard fallback and JSON download passed'}));
+  console.log(JSON.stringify({engine, pageFps:report.current.pageFps, journeyUpdatesPerSecond:report.current.journeyUpdatesPerSecond, stalls:report.current.stalls, result:'Collapsed mobile launcher, scroll pass-through, continuous recording, reopen/copy, pause, reset, clipboard fallback and JSON download passed'}));
   await context.close();
 } finally { await browser.close(); }
