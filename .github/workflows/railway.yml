@@ -137,6 +137,49 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  worker:
+    name: ${{ matrix.browser }} Full HD worker prototype
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            os: ubuntu-24.04
+          - browser: webkit
+            os: macos-26
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated worker browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/worker-check" playwright@1.63.0
+          "$RUNNER_TEMP/worker-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Compare worker and native motion and verify fallback
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/worker-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_WORKER_OUTPUT: ${{ runner.temp }}/worker-cadence.json
+          SOFACET_WORKER_REQUIRE: '1'
+        run: node scripts/browser-worker-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence.log"
+      - name: Upload worker comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-cadence-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/worker-cadence*
+          if-no-files-found: warn
+          retention-days: 14
+
   journey:
     name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'auto' }} full R2 journey
     strategy:

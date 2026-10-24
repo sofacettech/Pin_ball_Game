@@ -1,8 +1,8 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
-import { createFrameSource } from './assets/frame-source.js?v=frames-cfe74f351622';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
+import { createFrameSource } from './assets/frame-source.js?v=frames-d900d4633cf3';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-55d1317ec806';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
@@ -32,9 +32,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
   frame.height = media.journey.height;
   // Native video does not need this surface until a settled frame is captured.
   let context;
-  function drawFrame(image) {
+  let canvasDrawCount=0,canvasDrawMs=0,canvasDrawMaxMs=0,canvasPresentedFrame=null;
+  function drawFrame(image,index) {
     context ||= frame.getContext('2d', { alpha: false });
+    const started=performance.now();
     context.drawImage(image, 0, 0, frame.width, frame.height);
+    const elapsed=performance.now()-started;
+    canvasDrawCount++;canvasDrawMs+=elapsed;canvasDrawMaxMs=Math.max(canvasDrawMaxMs,elapsed);canvasPresentedFrame=index;
   }
   const updateCopy = await createLandingCopy();
   const indexURL = media.indexURL;
@@ -83,13 +87,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
   frame.transient = true; frame.close = () => {};
   const source = await createFrameSource(journey,index,indexURL,index => {
     if (scrollDirty || index !== scrollFrame()) throw new DOMException('Scroll resumed','AbortError');
-    drawFrame(journey);
+    drawFrame(journey,index);
     return frame;
   }, () => {
     resumeJourney.hidden = true;
     cache.retry();
     requestFrame();
-  });
+  },{renderer:new URLSearchParams(location.search).get('renderer')||'auto'});
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
   // Verified keyframe seeking benefits from independent scheduling in WebKit.
@@ -107,7 +111,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
+    config: source.mode==='worker' ? {network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024} : constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
       if (error.name === 'NotAllowedError') {
@@ -148,7 +152,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   function requestNextFrame(native = false) {
     const now = performance.now();
-    const target = (source.transient ? nativePacer : pacer).next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, native ? displayedFrame : paintedFrame);
+    const target = (source.transient || source.mode==='worker' ? nativePacer : pacer).next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, native ? displayedFrame : paintedFrame);
     pacedAt = now;
     wantedFrame = target;
     cache.request(target, desiredFrame, displayedFrame);
@@ -235,7 +239,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
       if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else {
-      if (image !== frame) drawFrame(image);
+      if (image !== frame) drawFrame(image,index);
       // Keep the native compositor surface sized behind the captured canvas.
       // Shrinking it after every stop forces WebKit to rebuild it on resume.
     }
@@ -340,7 +344,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     get displayedFrame() { return displayedFrame; },
     get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
-    get stats() { return {...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,
     frameCount, travel,
   };

@@ -2,7 +2,7 @@ import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-8
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
-export async function createFrameSource(video,index,indexURL,captureNativeFrame,onPlaybackReady){
+export async function createFrameSource(video,index,indexURL,captureNativeFrame,onPlaybackReady,{renderer='auto'}={}){
  prepareInlineVideo(video);
  video.crossOrigin='anonymous';
  let url=new URL(index.source,indexURL);
@@ -12,8 +12,9 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  if(fallbackURL&&index.sha256)fallbackURL.searchParams.set('v',index.sha256);
  const config={codec:index.codec,codedWidth:index.width,codedHeight:index.height,description,colorSpace:index.colorSpace,optimizeForLatency:true};
  const touchDevice=globalThis.matchMedia?.('(any-pointer: coarse)')?.matches===true;
- let preferNative=touchDevice;
- if(touchDevice&&index.codec&&globalThis.navigator?.mediaCapabilities?.decodingInfo){
+ const requestedRenderer=['worker','native'].includes(renderer)?renderer:'auto';
+ let preferNative=requestedRenderer==='native'||touchDevice;
+ if(requestedRenderer==='auto'&&touchDevice&&index.codec&&globalThis.navigator?.mediaCapabilities?.decodingInfo){
   try{
    const capability=await navigator.mediaCapabilities.decodingInfo({type:'file',video:{contentType:`video/mp4; codecs="${index.codec}"`,width:index.width,height:index.height,bitrate:Math.ceil(index.bytes*8*index.fps/index.frameCount),framerate:index.fps}});
    // Native buffering avoids per-frame round trips on phones. Retain the
@@ -21,6 +22,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    preferNative=capability.supported&&capability.smooth&&capability.powerEfficient;
   }catch{/* Older browsers retain the native mobile compatibility path. */}
  }
+ let workerDecoder,workerFailure=null,workerSnapshot={};
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
  if(preferNative)fallbackReason='native-touch';
  const nativeSeekTiming=Object.fromEntries(['forward','backward','confirmation'].map(direction=>[direction,{count:0,totalMs:0,maxMs:0,overBudget:0}]));
@@ -29,13 +31,21 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   if(!fallbackURL||url.href===fallbackURL.href)return false;
   url=fallbackURL;stats.deliveryFallbacks++;return true;
  }
- if(!preferNative&&index.codec&&typeof VideoDecoder==='function'){
+ if(requestedRenderer==='worker'){
+  try{
+   if(!index.codec)throw new DOMException('A frame index is required','NotSupportedError');
+   const {createWorkerFrameDecoder}=await import('./worker-frame-decoder.js?v=frames-85469b324e87');
+   workerDecoder=await createWorkerFrameDecoder(config,{fps:index.fps,maxPending:4});
+   mode='worker';fallbackReason=null;
+  }catch(error){workerFailure={name:error.name,message:error.message};fallbackReason='worker-unavailable';preferNative=true}
+ }
+ if(requestedRenderer!=='worker'&&!preferNative&&index.codec&&typeof VideoDecoder==='function'){
   try{if((await VideoDecoder.isConfigSupported(config)).supported){
    decoder=new VideoDecoder({output:frame=>{if(pending&&!pending.image){pending.image=frame;pending.resolve(frame)}else frame.close()},error:error=>pending?.reject(error)});
    decoder.configure(config);mode='webcodecs';fallbackReason=null;
   }}catch{/* Native video remains available when the codec or hardware is unsupported. */}
  }
- const storage=mode==='webcodecs'?Promise.resolve().then(async()=>{if(!globalThis.caches)return null;cache=await caches.open('sofacet-frames-'+index.sha256.slice(0,16));stored=await cache.keys();storedKeys=new Set(stored.map(request=>request.url));return cache}).catch(()=>null):Promise.resolve(null);
+ const storage=mode!=='video'?Promise.resolve().then(async()=>{if(!globalThis.caches)return null;cache=await caches.open('sofacet-frames-'+index.sha256.slice(0,16));stored=await cache.keys();storedKeys=new Set(stored.map(request=>request.url));return cache}).catch(()=>null):Promise.resolve(null);
  const key=frame=>cacheURL+(cacheURL.includes('?')?'&':'?')+'frame='+frame;
  async function loadFrames(frames,signal,maxBytes=8*1024*1024,onFrame){
   if(signal.aborted||disposed)throw abortError();
@@ -292,10 +302,14 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   stats.nativeRetainMs+=performance.now()-retainStart;
   return image;
  }
- async function decode(frame,bytes,settled=true){
+ async function decode(frame,bytes,settled=true,signal){
   const start=performance.now();let timeout;
   try{
    if(mode==='video')return await nativeDecode(frame,settled);
+   if(mode==='worker'){
+    try{return await workerDecoder.decode(frame,bytes,signal)}
+    catch(error){if(error.name!=='AbortError')workerFailure={name:error.name,message:error.message};throw error}
+   }
    const output=new Promise((resolve,reject)=>{pending={resolve,reject}});
    output.catch(()=>{});
    decoder.decode(new EncodedVideoChunk({type:'key',timestamp:Math.round(frame*1e6/index.fps),duration:Math.round(1e6/index.fps),data:bytes}));
@@ -309,6 +323,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  }
  function fallback(reason='decode-or-range'){
   if(mode==='video')return false;fallbacks++;fallbackReason=reason;
+  if(workerDecoder){workerSnapshot=workerDecoder.stats;workerDecoder.destroy();workerDecoder=null}
   mode='video';pending?.image?.close();pending?.reject(abortError());pending=null;
   if(decoder?.state!=='closed')decoder?.close();decoder=null;return true;
  }
@@ -322,7 +337,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   for(let i=0;i<(ranges?.length||0);i++)if(ranges.start(i)<=.05&&ranges.end(i)>0)return ranges.end(i);
   return 0;
  }
- return{load,loadFrames,activate:activateNative,get playbackBlocked(){return nativeBlocked},frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
+ return{load,loadFrames,activate:activateNative,get decodeConcurrency(){return mode==='worker'?4:1},get playbackBlocked(){return nativeBlocked},frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
   retarget(frame,presented,desired=frame){
    // Finish useful progress, but cancel a seek that would overshoot the new
    // target after a reversal instead of making the finger wait for it.
@@ -331,7 +346,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    // is still requesting that useful intermediate frame.
    if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativePresentationGuardEnabled:mode==='video'&&nativeDirect&&nativeFastSeek&&!nativePresentationFailure&&typeof video.requestVideoFrameCallback==='function',nativePresentationFailure,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeFastSeekFailure:nativeFastSeekFailure?{...nativeFastSeekFailure}:null,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
-  suspend(){nativeGeneration++;nativePlaying=false;nativeActivated=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
-  destroy(){disposed=true;nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
+  get mode(){return mode},get nativeFastSeek(){return mode==='video'&&nativeFastSeek},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,...(workerDecoder?.stats||workerSnapshot),requestedRenderer,workerFailure,nativePresentationGuardEnabled:mode==='video'&&nativeDirect&&nativeFastSeek&&!nativePresentationFailure&&typeof video.requestVideoFrameCallback==='function',nativePresentationFailure,nativeFastSeek:mode==='video'&&nativeFastSeek,nativeFastSeekFailure:nativeFastSeekFailure?{...nativeFastSeekFailure}:null,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):mode==='worker'?'worker-webcodecs':'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
+  suspend(){workerDecoder?.suspend();nativeGeneration++;nativePlaying=false;nativeActivated=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
+  destroy(){disposed=true;workerDecoder?.destroy();nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }
