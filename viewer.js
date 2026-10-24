@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
 import { createPlateHover } from './plate-hover.js?v=frames-46f0ceb7b395';
 import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
-import { createSequence } from './sequence.js?v=frames-20e26718cfea';
+import { createSequence } from './sequence.js?v=frames-e3e7e0fb07e0';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
@@ -127,6 +127,9 @@ async function main() {
     viewportHeight = available.height;
     placeStage();
     if (drawingWidth !== placement.width || drawingHeight !== placement.height) {
+      // Portrait cover is mostly cropped. Keep its backing buffer within the
+      // source resolution rather than allocating a larger Retina surface.
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2, 1920 / placement.width, 1080 / placement.height));
       renderer.setSize(placement.width, placement.height, false);
       drawingWidth = placement.width; drawingHeight = placement.height;
     }

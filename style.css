@@ -23,16 +23,19 @@ body:is([data-phase="buffering"],[data-phase="settling"]) #story-copy{opacity:0}
 #preparation-retry:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 @media(max-width:1024px),(any-pointer:coarse){#journey-preparation{left:24px;right:24px;top:auto;bottom:max(14%,80px);width:auto;text-align:center}#journey-preparation h2{font-size:clamp(26px,7vw,38px);min-height:0;margin-bottom:16px}#journey-preparation p{margin-inline:auto}#preparation-progress{margin-inline:auto}}
 main{position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#scene-viewport{position:absolute;inset:0;overflow:hidden}
+/* Browser chrome may resize the controls, but must not rescale the video mid-swipe. */
+@media(any-pointer:coarse){#scene-viewport{bottom:auto;height:100vh;height:100lvh}}
 #scene-frame{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;isolation:isolate}
 #scene-frame img,#scene-frame canvas,#opening{position:absolute;inset:0;display:block;width:100%;height:100%}
-#scene-frame img{pointer-events:none;user-select:none}
+#scene-frame img{pointer-events:none;user-select:none;object-fit:contain}
 #ball-canvas{touch-action:pan-y}
 body:not([data-phase="idle"]) #ball-canvas{pointer-events:none}
 #hold-frame{z-index:1}
 #journey-frame{z-index:2;pointer-events:none}
 /* Keep the native decoder in layout so Safari can produce frames for the canvas. */
 #journey{position:fixed;left:0;top:0;width:1px;height:1px;opacity:.001;pointer-events:none}
-#scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:1;object-fit:fill}
+#scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:1;object-fit:contain;aspect-ratio:16/9}
 body[data-phase="journey"] #journey.native-renderer{opacity:1}
 #opening{z-index:3;object-fit:contain;pointer-events:none}
 #scroll-cue{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;fill:#fff;font-family:Acumin,Arial,sans-serif;font-size:28px;font-weight:500;letter-spacing:2.2px;text-shadow:0 1px 5px #000b;opacity:0;transition:opacity .16s linear}
@@ -126,6 +129,7 @@ body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events
 body[data-game="visible"] :is(#story-copy,main>.wordmark,main>.site-navigation,#progress){opacity:0}
 @media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,main>.site-navigation,main>#progress{transition:none}}
 #scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
+@media(any-pointer:coarse){#scroll-space{height:calc(100vh + var(--travel));height:calc(100lvh + var(--travel))}}
 noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 @media(max-width:600px){.site-navigation{gap:6px}.play-now{padding:0 12px;font-size:11px}}
 @media(max-width:360px){.site-navigation{gap:4px}.play-now{padding-inline:10px}}

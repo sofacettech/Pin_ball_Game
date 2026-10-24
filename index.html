@@ -7,7 +7,7 @@
   <title>SOFACET — Enter the world</title>
   <script>if (location.hash === '#experience') document.documentElement.setAttribute('data-skip-intro', '');</script>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./style.css?v=frames-fd686e867269">
+  <link rel="stylesheet" href="./style.css?v=frames-2c997a75b954">
   <link rel="preload" href="./assets/fonts/AcuminVariableConcept.otf" as="font" type="font/otf" crossorigin>
   <link rel="preload" href="./assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
   <link rel="stylesheet" href="./assets/loading/intro.css?v=return-c0b7a332">
@@ -138,6 +138,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   </div>
 
   <main aria-label="SOFACET cinematic experience" inert aria-hidden="true">
+    <div id="scene-viewport">
     <div id="scene-frame">
       <img id="background" src="./assets/idle-background.webp" width="1920" height="1080" alt="Purple SOFACET building and illuminated walkway at night.">
       <canvas id="ball-canvas" aria-label="Interactive SOFACET ball. Hover over a plate to lift it and its neighbours."></canvas>
@@ -158,6 +159,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
           </g>
         </g>
       </svg>
+    </div>
     </div>
     <div id="story-copy" aria-label="The SOFACET story">
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
@@ -212,7 +214,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <video id="journey" data-src="./assets/sofacet-experience.mp4" muted playsinline webkit-playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
   <noscript><style>#site-loader{display:none}</style>This experience needs JavaScript to play the opening and explore the ball.</noscript>
   <script type="module" src="./assets/loading/intro.js?v=return-24daee91"></script>
-  <script type="module" src="./viewer.js?v=frames-b77e89635630"></script>
+  <script type="module" src="./viewer.js?v=frames-3a4bccd15264"></script>
   <script type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
 <!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

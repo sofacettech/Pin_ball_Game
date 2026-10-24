@@ -18,11 +18,11 @@ if(baseline){
  }
 }
 let server,browser,data;
-async function measureScroll(page,speed,duration){
- await page.evaluate(()=>window.scrollTo(0,1600));
- await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200);
+async function measureScroll(page,speed,duration,startFrame=200){
+ await page.evaluate(frame=>window.scrollTo(0,frame*8),startFrame);
+ await page.waitForFunction(frame=>window.sofacetPreview.sequence.displayedFrame===frame,startFrame);
  await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.pending===0);
- return page.evaluate(async({speed,duration})=>{
+ return page.evaluate(async({speed,duration,startFrame})=>{
   const sequence=window.sofacetPreview.sequence,times=[],lags=[],steps=[],paints=[];
   let presented=sequence.displayedFrame;
   try{
@@ -33,7 +33,7 @@ async function measureScroll(page,speed,duration){
      if(sequence.displayedFrame!==presented){times.push(now);steps.push(Math.abs(sequence.displayedFrame-presented));presented=sequence.displayedFrame}
      lags.push(Math.abs(Math.round(window.scrollY/8)-sequence.displayedFrame));
      const elapsed=now-start;
-     window.scrollTo(0,1600+(elapsed<duration/2?elapsed:Math.max(0,duration-elapsed))*speed);
+     window.scrollTo(0,startFrame*8+(elapsed<duration/2?elapsed:Math.max(0,duration-elapsed))*speed);
      if(elapsed<duration)requestAnimationFrame(step);else resolve();
     }
     requestAnimationFrame(step);
@@ -44,8 +44,8 @@ async function measureScroll(page,speed,duration){
     p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),
     maxPaintGapMs:Math.max(0,...paints.slice(1).map((time,i)=>time-paints[i])),
     p95FrameLag:percentile(lags),maxFrameJump:Math.max(0,...steps),stats:sequence.stats};
-  }finally{window.scrollTo(0,1600)}
- },{speed,duration});
+  }finally{window.scrollTo(0,startFrame*8)}
+ },{speed,duration,startFrame});
 }
 try{
  if(!process.env.SOFACET_VIDEO_URL){
@@ -133,7 +133,7 @@ try{
    }
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
    const frames=[];
-   for(const y of [160,1600,8000,800,0]){
+   for(const y of [160,1600,8000,12800,14400,800,0]){
     await page.evaluate(y=>window.scrollTo(0,y),y);
     await page.waitForFunction(frame=>{
      const sequence=window.sofacetPreview.sequence;
@@ -146,15 +146,24 @@ try{
      const active=document.querySelector(sequence.stats.renderer==='native-video'?'#journey':'#journey-frame');
      const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
      if(sequence.displayedFrame)canvas.getContext('2d',{alpha:false}).drawImage(active,0,0);
-     return{frame:sequence.displayedFrame,phase:sequence.phase,stats:sequence.stats,
+     return{frame:sequence.displayedFrame,phase:sequence.phase,stats:sequence.stats,gameSource:document.querySelector('#game-page').getAttribute('src'),
       image:sequence.displayedFrame?canvas.toDataURL():null};
     });
     assert.equal(state.stats.sourceWidth,1920);assert.equal(state.stats.sourceHeight,1080);
+    if(!previous)assert.equal(state.gameSource,null,'The game must not start competing with video before its final frame');
     if(native)assert.equal(state.stats.mode,'video');
     if(state.image)frames.push(state.image);
     console.log(JSON.stringify({native,frame:state.frame,phase:state.phase,mode:state.stats.mode,fallback:state.stats.fallbackReason}));
    }
    assert.equal(new Set(frames).size,frames.length,'Scrolling must change the canvas pixels');
+   if(!previous)for(const startFrame of [1000,1700]){
+    const late=await measureScroll(page,.48,4000,startFrame);
+    console.log('Late journey scroll',JSON.stringify({native,startFrame,...late}));
+    assert.ok(late.updates>30,'The second half and final quarter must keep delivering frames');
+    assert.ok(late.maxGapMs<500,'Late journey scrolling must not stall for half a second');
+    assert.ok(late.stats.compressedBytes+late.stats.reservedBytes<=late.stats.settings.compressedBytes,'Late buffering must retain its memory limit');
+    assert.equal(await page.locator('#game-page').getAttribute('src'),null,'Game initialization must wait until the cinematic handoff');
+   }
    // Large-jump recovery still has its own absolute continuity/memory gates.
    const recovery=await measureScroll(page,.48,6000);
    console.log('Post-jump scroll recovery',JSON.stringify({native,previous,updates:recovery.updates,p95GapMs:recovery.p95GapMs,maxGapMs:recovery.maxGapMs,maxPaintGapMs:recovery.maxPaintGapMs}));
