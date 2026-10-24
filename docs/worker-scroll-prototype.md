@@ -27,3 +27,11 @@ The comparison distinguishes successful canvas draw submissions from native comp
 On each physical phone, compare the worker and native URLs in fresh visits under the same power/network conditions. Scroll forward and backward at similar speeds, include a fast swipe and a reversal, then save Debug reports. Repeat with a warm buffer. Confirm the report actually says `worker-webcodecs`; inspect `workerFailure` and `fallbackReason` otherwise.
 
 The existing video averages roughly 41 Mbps at normal playback speed. A worker does not eliminate cold-network buffering or system power/thermal limits. Do not enable it by default based only on a hosted benchmark. Promotion requires sustained improvement on both phones, accurate settled frames/colours, bounded memory, and no regression in startup or game handoff.
+
+## Prototype results — 24 October 2026
+
+The Full HD worker prototype reached 59.82 canvas draw submissions/second in both directions in a local Chromium run. A hosted Chromium run reached 50.00 forward and 46.73 reverse; its settled frame matched the native reference exactly. These are browser draw-submission measurements, not physical-phone or compositor FPS guarantees.
+
+Hosted WebKit 26.6 reports a different transfer function and range for decoded frames. The strict colour check rejects that output and restores native video. The fallback completed the journey, jumps, reversal, hide/resume, and settled-frame comparison. The worker performance check intentionally fails when fallback is used. Native WebKit cadence and swipe tests also miss their timing targets; the build, unit suite, smoke checks and full-journey checks pass. This is not a verified 45–60 FPS release for both phones.
+
+Numerical probes rule out a one-frame reference offset. Experimental NV12 transfer/range corrections reduce the average colour difference but leave localized differences, so neither correction is included in the runtime. The default renderer remains unchanged. Use the opt-in link to establish whether the actual phones can use the worker path; hosted WebKit and the reported iPhone OS are different versions.

@@ -77,6 +77,33 @@ try{
     signedMeanByChannel:signed.map(value=>value/count),meanAbsoluteByChannel:absolute.map(value=>value/count),
     referenceRGB:referenceRGB/(count*3),candidateRGB:candidateRGB/(count*3)};
   };
+  // Compare only active NV12 pixels, excluding row padding and cropped margins.
+  function compareNV12PlaneBytes(reference,candidate){
+   const a=reference.rect,b=candidate.rect;
+   if([a,b].some(rect=>![rect.x,rect.y,rect.width,rect.height].every(value=>Number.isInteger(value)&&value>=0&&value%2===0))||a.width!==b.width||a.height!==b.height||a.width<=0||a.height<=0)throw Error('NV12 plane comparison requires equal even active crops');
+   return ['Y','Cb','Cr'].map((name,component)=>{
+    const plane=component===0?0:1,rows=component===0?a.height:a.height/2,columns=component===0?a.width:a.width/2,upper=component===0?235:240;
+    const address=(source,row,column)=>source.layout[plane].offset+(source.rect.y/(plane+1)+row)*source.layout[plane].stride+source.rect.x+column*(plane+1)+(component===2?1:0);
+    for(const source of [reference,candidate]){
+     if(!source.layout[plane]||source.layout[plane].stride<source.rect.x+source.rect.width||address(source,0,0)<0||address(source,rows-1,columns-1)>=source.bytes.length)throw Error('NV12 plane layout does not contain the active crop');
+    }
+    const range=()=>({min:255,max:0,belowNominal:0,aboveNominal:0,atZero:0,at255:0}),native=range(),worker=range(),histogram=new Uint32Array(256);
+    let total=0,squared=0,signed=0,changed=0,nativeBelowClampedToNominal=0,nativeAboveClampedToNominal=0;
+    const record=(stats,value)=>{stats.min=Math.min(stats.min,value);stats.max=Math.max(stats.max,value);if(value<16)stats.belowNominal++;if(value>upper)stats.aboveNominal++;if(value===0)stats.atZero++;if(value===255)stats.at255++};
+    for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+     const expected=reference.bytes[address(reference,row,column)],actual=candidate.bytes[address(candidate,row,column)],delta=actual-expected,difference=Math.abs(delta);
+     record(native,expected);record(worker,actual);histogram[difference]++;total+=difference;squared+=delta*delta;signed+=delta;if(difference)changed++;
+     if(expected<16&&actual===16)nativeBelowClampedToNominal++;if(expected>upper&&actual===upper)nativeAboveClampedToNominal++;
+    }
+    const samples=rows*columns,quantile=fraction=>{let cumulative=0;for(let value=0;value<256;value++){cumulative+=histogram[value];if(cumulative>=samples*fraction)return value}return 255};
+    const differenceCounts=Object.fromEntries([[0,0],[1,1],[2,2],[3,8],[9,16],[17,32],[33,255]].map(([low,high])=>{
+     let count=0;for(let value=low;value<=high;value++)count+=histogram[value];return[low===high?String(low):low+'-'+high,count];
+    }));
+    return{name,samples,nominalRange:[16,upper],native,worker,maxDifference:quantile(1),p50Difference:quantile(.5),p95Difference:quantile(.95),p99Difference:quantile(.99),
+     meanDifference:total/samples,meanSquaredError:squared/samples,signedMeanDifference:signed/samples,changedSamples:changed,differenceCounts,
+     potentialNominalClipping:{nativeBelowClampedToNominal,nativeAboveClampedToNominal}};
+   });
+  }
   const indexResponse=await fetch('/assets/journey-index.json');if(!indexResponse.ok)throw Error('Probe index unavailable');
   const index=await indexResponse.json(),videoURL=new URL(index.source,indexResponse.url);videoURL.searchParams.set('v',index.sha256);
   async function readSample(sourceFrame){
@@ -234,6 +261,19 @@ try{
     context.drawImage(video,0,0);const directVideoPixels=context.getImageData(0,0,index.width,index.height).data;
     pausedSeekReference.pixels={vsOriginalCapture:compare(nativePixels,directPixels),videoVsVideoFrame:compare(directPixels,directVideoPixels),
      correctedWorkerVsPausedSeek:compare(directPixels,correctedPixels),...(alternateNormalized?{normalizedSPSVsPausedSeek:compare(directPixels,rangePixels[rangeFrames.length+1])}:{})};
+    const planeComparison={eligible:false,reference:'aligned directly paused native VideoFrame',candidate:'SPS-normalized worker VideoFrame',activePixelsOnly:true};
+    if(frameIndex===frame&&alternateNormalized&&Math.round(alternateNormalized.timestamp*index.fps/1e6)===frame&&directFrame.format==='NV12'&&alternateNormalized.format==='NV12'){
+     const copyPlaneFrame=async(source)=>{
+      const options={rect:{x:0,y:0,width:source.codedWidth,height:source.codedHeight}},bytes=new Uint8Array(source.allocationSize(options)),started=performance.now();
+      const layout=await source.copyTo(bytes,options);
+      return{bytes,layout,rect:metadata(source).visibleRect,copyMs:performance.now()-started};
+     };
+     const nativePlanes=await copyPlaneFrame(directFrame),workerPlanes=await copyPlaneFrame(alternateNormalized),planes=compareNV12PlaneBytes(nativePlanes,workerPlanes);
+     Object.assign(planeComparison,{eligible:true,native:{layout:nativePlanes.layout,rect:nativePlanes.rect,bytes:nativePlanes.bytes.byteLength,copyMs:nativePlanes.copyMs},
+      worker:{layout:workerPlanes.layout,rect:workerPlanes.rect,bytes:workerPlanes.bytes.byteLength,copyMs:workerPlanes.copyMs},planes,
+      identicalActiveBytes:planes.every(plane=>plane.changedSamples===0)});
+    }else planeComparison.reason='Requires both source frames aligned and both pixel formats NV12';
+    pausedSeekReference.planeComparison=planeComparison;
    }finally{directFrame?.close()}
    return{frame,expectedColorSpace:index.colorSpace,beforeTransfer:decoded.beforeTransfer,afterTransfer,hardwareAcceleration:decoded.hardwareAcceleration,
     source:{codec:index.codec,width:index.width,height:index.height},nativeMode:nativeStats.mode,nativeReference:{presentedFrame:nativeStats.presentedFrame,canvasPresentedFrame:nativeStats.canvasPresentedFrame,pending:nativeStats.pending},
