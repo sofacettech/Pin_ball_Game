@@ -8,7 +8,7 @@ const STAGGER = .16;
 
 export async function createLandingCopy() {
   // WebKit can hold fonts.ready until a stalled video finishes the document load.
-  await Promise.all(['700 16px Acumin','400 16px Acumin'].map(font => document.fonts.load(font))).catch(() => {});
+  await document.fonts.load('400 16px Biarty').catch(() => {});
   const root = document.querySelector('#story-copy');
   // The existing copy and frame attributes remain the editable source for this array.
   const headlines = [...root.querySelectorAll('.story-line')].map(element => ({
