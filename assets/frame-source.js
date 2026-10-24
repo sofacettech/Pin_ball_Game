@@ -23,6 +23,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  }
  let decoder,pending,disposed=false,cache,stored=[],storedKeys=new Set(),writing=false,mode='video',fallbacks=0,fallbackReason=index.codec?'decoder-unavailable':'index-unavailable';
  if(preferNative)fallbackReason='native-touch';
+ const nativeSeekTiming=Object.fromEntries(['forward','backward','confirmation'].map(direction=>[direction,{count:0,totalMs:0,maxMs:0,overBudget:0}]));
  const stats={networkBytes:0,networkFrames:0,networkRequests:0,diskHits:0,decodeMs:0,nativeSeeks:0,nativeSeekMs:0,nativeRetainMs:0,nativeCaptures:0,nativePlayAttempts:0,nativePlayRejections:0,deliveryFallbacks:0};
  function useLocal(){
   if(!fallbackURL||url.href===fallbackURL.href)return false;
@@ -182,6 +183,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   if(video.readyState<2||Math.abs(video.currentTime-time)>.001||confirm){
    nativePresentedFrame=null;
    const start=performance.now();
+   const timing=nativeSeekTiming[settled?'confirmation':time>=video.currentTime?'forward':'backward'];
    const seek={frame,confirm:watchesPixels,controller:new AbortController()},events=nativeEvents.signal;
    const playbackRate=video.playbackRate;
    const abort=()=>seek.controller.abort();
@@ -216,7 +218,9 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
     if(settled)nativePresentedFrame=frame;
    }catch(error){if(!['AbortError','NotAllowedError'].includes(error.name))nativeReady=undefined;throw error}
    finally{if(watchesPixels){if(!video.paused)video.pause();video.playbackRate=playbackRate}events.removeEventListener('abort',abort);if(nativeSeek===seek)nativeSeek=undefined}
-   stats.nativeSeeks++;stats.nativeSeekMs+=performance.now()-start;
+   const elapsed=performance.now()-start;
+   stats.nativeSeeks++;stats.nativeSeekMs+=elapsed;
+   timing.count++;timing.totalMs+=elapsed;timing.maxMs=Math.max(timing.maxMs,elapsed);if(elapsed>1000/30)timing.overBudget++;
   }
   if(disposed||generation!==nativeGeneration)throw abortError();
   if(settled&&typeof video.requestVideoFrameCallback!=='function')nativePresentedFrame=frame;
@@ -274,7 +278,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
    // is still requesting that useful intermediate frame.
    if(nativeSeek&&((nativeSeek.confirm&&nativeSeek.frame!==desired)||nativeSeek.frame<Math.min(frame,presented)||nativeSeek.frame>Math.max(frame,presented)))nativeSeek.controller.abort();
   },
-  get mode(){return mode},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
+  get mode(){return mode},get presentedFrame(){return nativePresentedFrame},get transient(){return mode==='video'&&nativeDirect},get stats(){return{...stats,nativeSeekTiming:Object.fromEntries(Object.entries(nativeSeekTiming).map(([key,value])=>[key,{...value}])),nativePlaybackActivated:nativeActivated,nativePlaybackBlocked:nativeBlocked,bufferedAheadSeconds:mode==='video'?bufferedAheadSeconds():0,mode,presentedFrame:nativePresentedFrame,renderer:mode==='video'?(nativeDirect&&!nativeSnapshot?'native-video':'native-frame'):'webcodecs',fallbacks,fallbackReason,mediaOrigin:url.origin,bufferedSeconds:mode==='video'?bufferedSeconds():0,canPlayThrough:mode==='video'&&video.readyState===4&&!video.seeking&&!video.error}},
   suspend(){nativeGeneration++;nativePlaying=false;nativeActivated=false;nativeReady=undefined;video.pause();nativeEvents.abort();nativeEvents=new AbortController()},
   destroy(){disposed=true;nativeSnapshot=undefined;nativeGeneration++;gestures.abort();nativeEvents.abort();pending?.image?.close();pending?.reject(abortError());pending=null;if(decoder?.state!=='closed')decoder?.close();video.pause();video.removeAttribute('src');video.load()}};
 }

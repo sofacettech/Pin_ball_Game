@@ -453,3 +453,25 @@ test('native buffering reports data ahead of the playhead separately from openin
  assert.equal(source.stats.bufferedSeconds,3);assert.equal(source.stats.bufferedAheadSeconds,4);
  video.time=8;assert.equal(source.stats.bufferedAheadSeconds,0);
 });
+
+
+test('native seek timing separates both scroll directions from stationary confirmation',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ for(const [frame,settled] of [[20,false],[10,false],[12,true]]){
+  const decoded=source.decode(frame,undefined,settled);await turn();
+  video.seeking=false;video.dispatchEvent(new Event('seeked'));(await decoded).close();
+ }
+ const timings=source.stats.nativeSeekTiming;
+ assert.equal(source.stats.nativeSeeks,3);
+ for(const value of Object.values(timings)){
+  assert.equal(value.count,1);assert.ok(value.totalMs>=0);assert.equal(value.maxMs,value.totalMs);
+ }
+ assert.equal(Object.values(timings).reduce((sum,value)=>sum+value.totalMs,0),source.stats.nativeSeekMs);
+ timings.forward.count=99;assert.equal(source.stats.nativeSeekTiming.forward.count,1,'Reports cannot mutate live counters');
+ const cancelled=source.decode(30,undefined,false);await turn();source.suspend();
+ await assert.rejects(cancelled,{name:'AbortError'});
+ assert.equal(source.stats.nativeSeekTiming.forward.count,1,'Cancelled work is not reported as a displayed frame');
+});

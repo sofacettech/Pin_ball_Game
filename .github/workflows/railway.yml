@@ -80,6 +80,59 @@ jobs:
           git fetch --depth 1 https://github.com/sofacettech/Pin_ball_Game.git "$SOFACET_VIDEO_BASELINE"
           node scripts/browser-video-smoke.mjs
 
+  cadence:
+    name: ${{ matrix.browser }} native 30fps cadence
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            os: ubuntu-24.04
+          - browser: webkit
+            os: macos-26
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    env:
+      SOFACET_BROWSER: ${{ matrix.browser }}
+      SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated cadence browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/cadence-check" playwright@1.63.0
+          "$RUNNER_TEMP/cadence-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Fetch the deployed cadence baseline
+        run: git fetch --depth 1 origin b31a17714f07fdcbac28e2f157b5f1e23446bbc8
+      - name: Measure deployed native cadence
+        env:
+          SOFACET_CADENCE_REF: b31a17714f07fdcbac28e2f157b5f1e23446bbc8
+          SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-baseline.json
+        run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-baseline.log"
+      - name: Measure current native cadence
+        if: ${{ !cancelled() }}
+        env:
+          SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-current.json
+        run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-current.log"
+      # Keep the measured 30fps goal explicit in JSON while collecting initial
+      # WebKit evidence. Functional errors still fail; no timing gate is relaxed.
+      - name: Upload native cadence measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-cadence-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/cadence-*.json
+            ${{ runner.temp }}/cadence-*.log
+          if-no-files-found: warn
+          retention-days: 14
+
   journey:
     name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'auto' }} full R2 journey
     strategy:

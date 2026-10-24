@@ -69,11 +69,11 @@ try {
   await panel.getByRole('button', {name:'Save report', exact:true}).tap();
   const download = await downloadPromise;
   assert.equal(download.suggestedFilename(), 'sofacet-scroll-debug.json');
-  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-3');
+  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-4');
   await page.evaluate(() => { window.rejectCopy = true; });
   await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
   await panel.getByRole('textbox', {name:'Performance report to copy'}).waitFor({state:'visible'});
-  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-3');
+  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-4');
   await panel.getByRole('button', {name:'Reset', exact:true}).tap();
   assert.ok((await panel.locator('strong').textContent()).includes('LIVE'));
   if (process.env.SOFACET_DEBUG_SCREENSHOT) await page.screenshot({path:process.env.SOFACET_DEBUG_SCREENSHOT});
