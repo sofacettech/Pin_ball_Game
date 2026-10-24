@@ -392,13 +392,14 @@ test('blocked native confirmation waits for activation while scrolling stays ava
 
 test('desktop worker lookahead bridges a delivery interruption without increasing decoded capacity',async t=>{
  const phone={network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024};
- const desktop={decoded:4,preparationFrames:57};
+ const desktop={network:3,batch:24,decoded:4,ahead:192,behind:40,prefetch:256,preparationFrames:57,compressedBytes:24*1024*1024};
  let now=0;t.mock.method(performance,'now',()=>now);
  const drain=async()=>{for(let i=0;i<24;i++)await Promise.resolve()};
  const results=[];
  // Shared delivery is 25 MiB/s: enough for 200 source frames/s, with varying
  // request latency and a 500ms interruption. This checks burst protection;
  // a larger buffer cannot fix sustained delivery below source consumption.
+ // Logical samples and decode timings model cache coverage, not browser FPS.
  for(const config of [phone,desktop]){
   t.mock.timers.enable({apis:['setTimeout']});now=0;
   const downloads=new Set();let cache,alive=0,pending=0,peakResources=0,paused=false;

@@ -24,10 +24,11 @@ async function activateJourney(){
 }
 function assertCacheProfile(stats){
  const desktop=profile==='desktop',workerCache=stats.mode==='worker'||stats.workerRequests>0||Number.isFinite(stats.workerStartupMs);
- const expected={decoded:workerCache?4:desktop?8:4,network:desktop?3:2,batch:desktop?32:24,
-  ahead:desktop?256:workerCache?80:56,behind:desktop?224:workerCache?40:8,
-  prefetch:desktop?512:workerCache?128:80,compressedBytes:(desktop?48:workerCache?16:10)*1024*1024,
-  preparationFrames:workerCache||!desktop?57:360};
+ const expected=workerCache
+  ? {decoded:4,network:desktop?3:2,batch:24,ahead:desktop?192:80,behind:40,
+    prefetch:desktop?256:128,compressedBytes:(desktop?24:16)*1024*1024,preparationFrames:57}
+  : {decoded:desktop?8:4,network:desktop?3:2,batch:desktop?32:24,ahead:desktop?256:56,behind:desktop?224:8,
+    prefetch:desktop?512:80,compressedBytes:(desktop?48:10)*1024*1024,preparationFrames:desktop?360:57};
  for(const [key,value] of Object.entries(expected))assert.equal(stats.settings[key],value,profile+' '+(workerCache?'worker':'native')+' cache '+key);
  assert.ok(stats.decoded+stats.decoding<=stats.settings.decoded,'Retained and in-flight frames must share the configured budget');
  assert.ok(stats.network<=stats.settings.network,'Network requests must stay within the configured limit');
