@@ -13,6 +13,7 @@ const allArms=[{name:'native',renderer:'native'},{name:'worker',renderer:'worker
 const selectedArms=(process.env.SOFACET_WORKER_ARMS||allArms.map(arm=>arm.name).join(',')).split(',').map(name=>name.trim());
 assert.ok(selectedArms.length>0&&new Set(selectedArms).size===selectedArms.length&&selectedArms.every(name=>allArms.some(arm=>arm.name===name)),'SOFACET_WORKER_ARMS must select unique native, worker, or worker-unavailable arms');
 const fullComparison=allArms.every(arm=>selectedArms.includes(arm.name));
+const useDefaultWorker=process.env.SOFACET_WORKER_DEFAULT==='1';
 const results=[],pictures=new Map();
 let browser,server,data,page,completed=false,failure;
 
@@ -178,7 +179,8 @@ try{
   assert.ok(ready&&server.exitCode===null,'Dedicated worker benchmark server must start');
  }
  for(const spec of allArms.filter(arm=>selectedArms.includes(arm.name))){
-  const result={name:spec.name,requestedRenderer:spec.renderer,workerUnavailableInjected:Boolean(spec.disableWorker),completed:false};results.push(result);
+  const defaultSelection=useDefaultWorker&&spec.renderer==='worker';
+  const result={name:spec.name,requestedRenderer:spec.renderer,defaultSelection,workerUnavailableInjected:Boolean(spec.disableWorker),completed:false};results.push(result);
   // Fresh browser/context per arm releases prior decoder/GPU/cache state.
   // Both arms use the same server and normal HTTP cache with no routing.
   browser=await browserType.launch();const context=await browser.newContext({...devices[engine==='webkit'?'iPhone 13':'Pixel 7']});page=await context.newPage();
@@ -186,12 +188,14 @@ try{
   page.on('pageerror',error=>errors.push(error.message));page.on('requestfailed',request=>networkFailures.push({url:request.url(),error:request.failure()?.errorText}));
   await page.addInitScript(installInstrumentation,{disableWorker:Boolean(spec.disableWorker)});
   try{
-   await page.goto(url+'/?renderer='+spec.renderer+'&perf=1',{waitUntil:'domcontentloaded'});
+   const pageURL=new URL(url);pageURL.searchParams.set('perf','1');
+   if(defaultSelection)pageURL.searchParams.delete('renderer');else pageURL.searchParams.set('renderer',spec.renderer);
+   await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
    if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
    await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:60000});await page.touchscreen.tap(195,422);
    result.startStats=await page.evaluate(()=>window.sofacetPreview.sequence.stats);
-   assert.equal(result.startStats.requestedRenderer,spec.renderer,'Renderer query must reach the frame source');
+   assert.equal(result.startStats.requestedRenderer,spec.renderer,'Renderer query or main-URL default must reach the frame source');
    assert.equal(result.startStats.sourceWidth,1920);assert.equal(result.startStats.sourceHeight,1080);
    if(spec.name==='native'||spec.disableWorker)assert.equal(result.startStats.mode,'video','Explicit native and unsupported-worker cases must use native video');
    result.fallbackDetected=spec.renderer==='worker'&&result.startStats.mode!=='worker';
@@ -237,7 +241,7 @@ try{
 finally{
  await browser?.close();if(server){server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve))}if(data)await rm(data,{recursive:true,force:true});
  const worker=results.find(result=>result.name==='worker'),exercised=Boolean(worker?.motion?.initialMode==='worker'&&!worker.fallbackDetected);
- await writeFile(output,JSON.stringify({engine,url,selectedArms,fullComparison,completed,error:failure||null,networkPolicy:'fresh browser/context per arm; no routing; normal HTTP cache',
+ await writeFile(output,JSON.stringify({engine,url,selectedArms,useDefaultWorker,fullComparison,completed,error:failure||null,networkPolicy:'fresh browser/context per arm; no routing; normal HTTP cache',
   measurementNote:'Worker counts successful canvas drawImage submissions inside native RAF. Native counts distinct real requestVideoFrameCallback frames. These are different presentation boundaries; worker compositor delivery is not proven. No RAF rate gate is applied. Pixel readback and screenshots occur after timing.',
   goal:{experimentExercised:exercised,atLeast45CanvasSubmissionsPerSecondBothDirections:Boolean(completed&&exercised&&worker.motion.halves.every(half=>half.steady.atLeast45UpdatesPerSecond)),atLeast60CanvasSubmissionsPerSecondBothDirections:Boolean(completed&&exercised&&worker.motion.halves.every(half=>half.steady.atLeast60UpdatesPerSecond)),compositorRateProven:false},results},null,2)+'\n');
 }

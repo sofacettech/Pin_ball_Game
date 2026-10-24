@@ -93,7 +93,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     resumeJourney.hidden = true;
     cache.retry();
     requestFrame();
-  },{renderer:new URLSearchParams(location.search).get('renderer')||'auto'});
+  },{renderer:new URLSearchParams(location.search).get('renderer')||'worker'});
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
   // Verified keyframe seeking benefits from independent scheduling in WebKit.

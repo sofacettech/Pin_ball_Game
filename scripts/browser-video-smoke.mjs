@@ -85,13 +85,20 @@ try{
    else await route.continue();
   });
   try{
-   await page.goto(url,{waitUntil:'domcontentloaded'});
+   const pageURL=new URL(url);if(native)pageURL.searchParams.set('renderer','native');
+   await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    // Autoplay denial must offer an actionable control, including reduced-power browsers.
    await page.waitForFunction(()=>window.sofacetPreview&&(
     document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
    if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
    await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
    await page.touchscreen.tap(195,422);
+   if(!previous){
+    const selected=await page.evaluate(()=>window.sofacetPreview.sequence.stats);
+    assert.equal(selected.requestedRenderer,native?'native':'worker','Current cases must exercise the main-URL default or explicit native override');
+    if(native)assert.equal(selected.mode,'video');
+    else if(engine==='chromium')assert.equal(selected.mode,'worker','The default Chromium case must actually exercise the worker');
+   }
    // Compare steady scrolling before large jumps: the old renderer skips those
    // frames while the paced renderer decodes their full intervening journey.
    // Measure sustained scrolling as well as jumps: arriving eventually does not
@@ -155,12 +162,12 @@ try{
     if(native)assert.equal(swipe.stats.renderer,'native-video','Native touch playback must avoid full-size canvas copies');
     // Native phone seeks must shed an old destination when the finger moves
     // faster than decoding. A four-frame ceiling hid the reported 33-second
-    // backlog; bound target lag and recovery instead. WebCodecs keeps its
-    // existing continuity guarantee.
-    if(swipe.stats.mode==='video')assert.ok(swipe.p95FrameLag<120,'Native fast swipes must stay within 120 source frames of the finger');
-    else assert.ok(swipe.maxFrameJump<=4,'WebCodecs swipes must not jump over more than four source frames per paint');
+    // backlog; bound target lag and recovery for native and worker pacing.
+    // The legacy main-thread WebCodecs path keeps its continuity guarantee.
+    if(swipe.stats.mode==='webcodecs')assert.ok(swipe.maxFrameJump<=4,'Legacy WebCodecs swipes must not jump over more than four source frames per paint');
+    else assert.ok(swipe.p95FrameLag<120,'Responsive fast swipes must stay within 120 source frames of the finger');
     assert.ok(swipe.maxGapMs<300,'Fast swipes must not stall for 300 ms');
-    if(baseline&&swipe.stats.mode!=='video'){
+    if(baseline&&swipe.stats.mode==='webcodecs'){
      const before=swipeMeasurements.get(String(native));
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }

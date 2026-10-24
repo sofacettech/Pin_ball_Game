@@ -186,6 +186,7 @@ jobs:
           SOFACET_BROWSER: ${{ matrix.browser }}
           SOFACET_WORKER_OUTPUT: ${{ runner.temp }}/worker-cadence.json
           SOFACET_WORKER_REQUIRE: '1'
+          SOFACET_WORKER_DEFAULT: '1'
         run: node scripts/browser-worker-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence.log"
       - name: Upload worker comparison evidence
         if: always()
@@ -198,7 +199,7 @@ jobs:
           retention-days: 14
 
   journey:
-    name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'auto' }} full R2 journey
+    name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'default' }} full R2 journey
     strategy:
       fail-fast: false
       matrix:

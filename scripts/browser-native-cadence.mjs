@@ -105,7 +105,7 @@ try{
    window.cadenceSeeks.push({...activeSeek});activeSeek=undefined;
   },true);
  });
- await page.goto(url,{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/?renderer=native',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
  await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});

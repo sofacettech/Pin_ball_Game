@@ -253,3 +253,67 @@ test('unsupported or rejected observer APIs stay distinct from a supported zero 
   assert.deepEqual(supported.report().apis.longtask, {status:'supported', count:0, worstDurationMs:0});
   unsupported.destroy(); rejected.destroy(); supported.destroy();
 });
+
+
+test('pipeline history distinguishes data waiting from decoding and keeps independent scalar snapshots', () => {
+  const recorder = createPerformanceRecorder();
+  const stats = {mode:'worker', renderer:'worker-webcodecs', requestedRenderer:'worker', target:100,
+    direction:1, decoded:1, decodedBytes:8294400, compressed:0, compressedBytes:0,
+    network:2, networkRequests:6, networkFrames:4, networkBytes:300000, diskHits:0,
+    decoding:0, pending:2, queued:20, workerRequests:4, workerCompleted:4, workerTimeouts:0,
+    workerDecodeTotalMs:20, workerBitmapCopies:4, workerBitmapCopyMs:2, canvasDrawCount:1,
+    mediaOrigin:'https://private.example/video?token=secret', lastError:{message:'private detail'}};
+  let reads = 0;
+  const read = () => { reads++; return stats; };
+  recorder.sample(0, state(), read);recorder.sample(499, state(), read);
+  assert.equal(reads, 0, 'Pipeline metrics must not be read on each paint');
+  recorder.sample(500, state(), read);
+  Object.assign(stats, {network:0, networkFrames:28, networkBytes:2100000, compressed:24,
+    compressedBytes:1800000, decoding:4, pending:0, workerRequests:8});
+  recorder.sample(1000, state(), read);
+  Object.assign(stats, {decoded:4, decoding:0, workerCompleted:8, workerBitmapCopies:8,
+    workerDecodeTotalMs:40, workerBitmapCopyMs:4, canvasDrawCount:5});
+  recorder.sample(1500, state({displayedFrame:100}), read);
+  const report = recorder.report(), [waiting, decoding, ready] = report.recentSamples.map(row => row.pipeline);
+  assert.equal(reads, 3);
+  assert.deepEqual([waiting.network, waiting.decoding, waiting.compressed, waiting.workerCompleted], [2, 0, 0, 4]);
+  assert.deepEqual([decoding.network, decoding.decoding, decoding.compressed, decoding.workerCompleted], [0, 4, 24, 4]);
+  assert.deepEqual([ready.decoding, ready.workerCompleted, ready.workerBitmapCopies, ready.canvasDrawCount], [0, 8, 8, 5]);
+  assert.equal(decoding.networkBytes - waiting.networkBytes, 1800000);
+  assert.equal(ready.workerDecodeTotalMs - decoding.workerDecodeTotalMs, 20);
+  assert.equal(waiting.renderer, 'worker-webcodecs');assert.equal(waiting.target, 100);
+  assert.equal(waiting.decodeMs, null, 'An unavailable metric must not imply zero cost');
+  assert.ok(!JSON.stringify(report).includes('private'));assert.ok(!JSON.stringify(report).includes('https:'));
+  report.current.pipeline.workerCompleted = -1;report.recentSamples[0].pipeline.network = -1;
+  stats.target = 999;
+  assert.equal(recorder.report().current.pipeline.workerCompleted, 8);
+  assert.equal(recorder.report().recentSamples[0].pipeline.network, 2);
+  assert.equal(recorder.report().current.pipeline.target, 100);
+});
+
+test('pipeline capture retains only 120 samples at the existing half-second cadence', () => {
+  const recorder = createPerformanceRecorder();let reads = 0;
+  const read = () => ({mode:'worker', target:++reads, networkBytes:reads * 1000});
+  for (let time = 0; time <= 120000; time += 10) recorder.sample(time, state(), read);
+  const report = recorder.report();
+  assert.equal(reads, 240);assert.equal(report.recentSamples.length, 120);
+  assert.equal(report.recentSamples[0].atMs, 60500);
+  assert.equal(report.recentSamples[0].pipeline.target, 121);
+  assert.equal(report.recentSamples.at(-1).pipeline.target, 240);
+  assert.equal(report.recentSamples.at(-1).pipeline.networkBytes, 240000);
+  assert.equal(report.current.pipeline.workerCompleted, null);
+  recorder.suspend();recorder.sample(1000000, state(), read);recorder.sample(1000499, state(), read);
+  assert.equal(reads, 240, 'Resuming after hidden time must start a fresh sample window');
+  recorder.sample(1000500, state(), read);assert.equal(reads, 241);
+  assert.equal(recorder.report().recentSamples.length, 120);
+});
+
+test('pipeline snapshots identify a renderer fallback without substituting unavailable counters', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state());
+  recorder.sample(500, state(), () => ({mode:'worker', renderer:'worker-webcodecs', requestedRenderer:'worker', workerTimeouts:0}));
+  recorder.sample(1000, state(), () => ({mode:'video', renderer:'native-video', requestedRenderer:'worker', workerTimeouts:1, fallbacks:1, networkBytes:NaN}));
+  const [before, after] = recorder.report().recentSamples.map(row => row.pipeline);
+  assert.equal(before.mode, 'worker');assert.equal(after.mode, 'video');assert.equal(after.requestedRenderer, 'worker');
+  assert.equal(after.workerTimeouts, 1);assert.equal(after.fallbacks, 1);assert.equal(after.networkBytes, null);
+});

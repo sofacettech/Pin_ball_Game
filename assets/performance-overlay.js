@@ -1,7 +1,20 @@
-const VERSION = 'scroll-debug-4';
+const VERSION = 'scroll-debug-5';
 const boundedPush = (values, value, limit) => { values.push(value); if (values.length > limit) values.shift(); };
 const round = value => Math.round(value * 10) / 10;
 const p95 = values => [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * .95) - 1)] || 0;
+
+// Capture only scalar pipeline evidence at the existing 500ms boundary. Source
+// stats contain URLs and larger objects that do not belong in every sample.
+const pipelineNumbers = ['target', 'direction', 'decoded', 'decodedBytes', 'compressed', 'compressedBytes',
+  'network', 'networkRequests', 'networkFrames', 'networkBytes', 'diskHits', 'decoding', 'pending', 'queued',
+  'decodeMs', 'workerRequests', 'workerCompleted', 'workerTimeouts', 'workerDecodeTotalMs',
+  'workerBitmapCopies', 'workerBitmapCopyMs', 'workerBitmapCopyMaxMs', 'canvasDrawCount', 'canvasDrawMs',
+  'canvasDrawMaxMs', 'fallbacks'];
+const pipelineSnapshot = (stats = {}) => ({
+  ...Object.fromEntries(['mode', 'renderer', 'requestedRenderer'].map(key => [key, typeof stats[key] === 'string' ? stats[key].slice(0, 64) : null])),
+  ...Object.fromEntries(pipelineNumbers.map(key => [key, Number.isFinite(stats[key]) ? stats[key] : null])),
+});
+const copySample = sample => ({...sample, ...(sample.pipeline ? {pipeline: {...sample.pipeline}} : {})});
 
 // Some phone browsers expose this API but never populate either counter.
 export function playbackQualitySummary(quality, baseline) {
@@ -99,7 +112,7 @@ export function createPerformanceRecorder() {
   const pageGaps = [], journeyGaps = [], history = [], recentPagePauses = [];
   let current = {pageFps: null, journeyUpdatesPerSecond: null, nativeUpdatesPerSecond: null};
   return {
-    sample(now, state) {
+    sample(now, state, readPipeline) {
       if (typeof state.videoCallbacks === 'boolean') callbackSupported = state.videoCallbacks;
       windowAt ??= now;
       const elapsed = previous ? now - previous.now : 0;
@@ -141,6 +154,7 @@ export function createPerformanceRecorder() {
         lagSeconds: state.fps > 0 ? round(Math.abs(state.desiredFrame - state.displayedFrame) / state.fps) : null,
         worstLagSeconds: state.fps > 0 ? round(worstLagFrames / state.fps) : null,
         stalls, totalUpdates, sampledAtMs: round(now),
+        ...(readPipeline ? {pipeline: pipelineSnapshot(readPipeline())} : {}),
       };
       boundedPush(history, {atMs: round(now), ...current}, 120);
       windowAt = now; pageTicks = updates = activeMs = nativeUpdates = 0;
@@ -173,7 +187,7 @@ export function createPerformanceRecorder() {
       lastCallbackAt = lastCompositionCount = undefined;
     },
     report() { return {
-      current: {...current}, recentSamples: history.map(sample => ({...sample})), recentPagePauses: recentPagePauses.map(pause => ({...pause})),
+      current: copySample(current), recentSamples: history.map(copySample), recentPagePauses: recentPagePauses.map(pause => ({...pause})),
       nativeCallbacks: {supported: callbackSupported, callbackCount: callbackSupported === true ? callbackCount : null,
         compositionCounterStatus: compositionCounterSeen ? 'available' : callbackCount ? 'unavailable' : 'not-observed',
         observedCompositionAdvances: compositionCounterSeen ? compositionAdvances : null,
@@ -242,7 +256,7 @@ export function createPerformanceOverlay(sequence, renderer) {
         averageSeekMs: stats.nativeSeeks > 0 ? round(stats.nativeSeekMs / stats.nativeSeeks) : null,
         ...playbackQualitySummary(quality, baselineQuality)},
       graphics: {buffer: [renderer.domElement.width, renderer.domElement.height], draws: renderer.info.render.frame},
-      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Lag seconds is source-video distance from the scroll target, not elapsed catch-up time. Native updates count distinct source frames reported by compositor callbacks; repeated callbacks for the same frame do not increase the rate. Browser drop counters may omit seek stalls; no-frames means they have supplied no frame evidence since Reset. Native video downloads are not included in JavaScript network counters. nativeSeekTiming accumulates successful completed seeks since page load: forward/backward movement is separate from settled confirmation; totalMs/count gives the average, maxMs the worst, and overBudget counts durations above 33.33ms. Failed/cancelled seeks are excluded and Reset does not clear source totals. bufferedAheadSeconds measures native data ahead of the playhead; bufferedSeconds measures the range starting at zero. latencyMs is the last completed cache presentation timing, not current scroll lag. Rates are sampled every 500ms; sequence and nativeVideo are refreshed when exported. P95 covers the latest 600 gaps; worst values persist until Reset. Samples are bounded to 120. Page pauses retain the latest 20 visible paint gaps of at least 100ms with phase/game state before and after. Main-thread observers retain the latest 20 browser-reported long tasks/animation frames; unsupported APIs report null counts, not zero stalls. Observer startTime and page-pause startTime use the same performance clock. Script attribution is browser-limited, includes at most 5 scripts per frame, and removes URL credentials, queries and fragments. Hidden and paused time is excluded from page/observer measurements. Worker renderer counters describe transferred decoded frames, not compositor presentation. canvasDrawCount and canvasDrawMs measure successful canvas draw submissions and CPU submission time; canvasPresentedFrame is the source index of the last submission, not independent proof of display. Worker decode timing includes message transfer and decoder waiting. Decoded memory is an RGBA-equivalent estimate and excludes browser decoder/GPU allocations. requestedRenderer records the selected experiment and workerFailure explains a fallback. No report is uploaded automatically.',
+      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Lag seconds is source-video distance from the scroll target, not elapsed catch-up time. Native updates count distinct source frames reported by compositor callbacks; repeated callbacks for the same frame do not increase the rate. Browser drop counters may omit seek stalls; no-frames means they have supplied no frame evidence since Reset. Native video downloads are not included in JavaScript network counters. nativeSeekTiming accumulates successful completed seeks since page load: forward/backward movement is separate from settled confirmation; totalMs/count gives the average, maxMs the worst, and overBudget counts durations above 33.33ms. Failed/cancelled seeks are excluded and Reset does not clear source totals. bufferedAheadSeconds measures native data ahead of the playhead; bufferedSeconds measures the range starting at zero. latencyMs is the last completed cache presentation timing, not current scroll lag. Rates are sampled every 500ms; sequence and nativeVideo are refreshed when exported. P95 covers the latest 600 gaps; worst values persist until Reset. Samples are bounded to 120. Each pipeline snapshot is read at the same 500ms boundary: network/decoding/pending/queued and decoded/compressed counts describe current work and cache occupancy, while networkBytes/networkFrames/networkRequests/diskHits and worker/decode/copy/draw totals accumulate since page load and are not cleared by Reset. Compare adjacent pipeline snapshots to identify progress; a final idle queue does not describe earlier stalls. Missing pipeline metrics are null, not zero; no media URLs are retained in pipeline history. Page pauses retain the latest 20 visible paint gaps of at least 100ms with phase/game state before and after. Main-thread observers retain the latest 20 browser-reported long tasks/animation frames; unsupported APIs report null counts, not zero stalls. Observer startTime and page-pause startTime use the same performance clock. Script attribution is browser-limited, includes at most 5 scripts per frame, and removes URL credentials, queries and fragments. Hidden and paused time is excluded from page/observer measurements. Worker renderer counters describe transferred decoded frames, not compositor presentation. canvasDrawCount and canvasDrawMs measure successful canvas draw submissions and CPU submission time; canvasPresentedFrame is the source index of the last submission, not independent proof of display. Worker decode timing includes message transfer and decoder waiting. Decoded memory is an RGBA-equivalent estimate and excludes browser decoder/GPU allocations. requestedRenderer records the selected experiment and workerFailure explains a fallback. No report is uploaded automatically.',
     };
   }
   function button(label, action) {
@@ -287,9 +301,10 @@ export function createPerformanceOverlay(sequence, renderer) {
   function tick(now) {
     if (destroyed || paused || document.hidden) return;
     const state = readState();
-    const sample = recorder.sample(now, state);
+    let stats;
+    const sample = recorder.sample(now, state, () => (stats = sequence.stats));
     if (sample) {
-      const s = sequence.stats, quality = playbackQualitySummary(video?.getVideoPlaybackQuality?.(), baselineQuality);
+      const s = stats, quality = playbackQualitySummary(video?.getVideoPlaybackQuality?.(), baselineQuality);
       const drops = quality.browserCounterStatus === 'available' ? `${quality.browserDroppedFrames}/${quality.browserTotalFrames}` : `n/a (${quality.browserCounterStatus})`;
       const seekAverage = timing => timing?.count > 0 ? `${round(timing.totalMs / timing.count)}ms` : 'n/a';
       const decode = s.mode === 'video'

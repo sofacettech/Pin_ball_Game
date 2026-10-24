@@ -47,7 +47,7 @@ try{
    return play.call(this);
   };
  });
- await page.goto(url,{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/?renderer=native',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(
   document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden||!document.querySelector('#journey-resume').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
@@ -55,6 +55,7 @@ try{
  if(!await page.locator('#journey-resume').isVisible())await page.evaluate(()=>window.scrollTo(0,1200*8));
  await page.locator('#journey-resume').waitFor({state:'visible',timeout:10000});
  const blocked=await page.evaluate(()=>({stats:window.sofacetPreview.sequence.stats,ready:document.querySelector('#journey').readyState,test:window.nativePlaybackTest}));
+ assert.equal(blocked.stats.requestedRenderer,'native');assert.equal(blocked.stats.mode,'video');
  assert.ok(blocked.ready>=2,'Recovery must work even after the video has decoded data');
  assert.equal(blocked.stats.nativePlaybackBlocked,true);
  assert.equal(blocked.stats.nativePlaybackActivated,false,'Decoded readiness must not imply permission to play');

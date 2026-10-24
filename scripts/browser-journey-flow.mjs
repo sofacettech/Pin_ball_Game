@@ -8,6 +8,7 @@ import {join} from 'node:path';
 const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'chromium';
 const profile=process.env.SOFACET_DEVICE||'desktop';
+const forceNative=process.env.SOFACET_FORCE_NATIVE==='1';
 const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const url='http://127.0.0.1:8769';
 let server,browser,data;
@@ -29,12 +30,12 @@ try{
   Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});
   Object.defineProperty(navigator,'deviceMemory',{get:()=>8});
  });
- if(process.env.SOFACET_FORCE_NATIVE==='1')await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
+ if(forceNative)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
  page.on('pageerror',error=>errors.push(error.message));
  page.on('response',response=>{
   if(response.url().includes('/videos/'))requests.push({url:response.url(),status:response.status()});
  });
- await page.goto(url,{waitUntil:'domcontentloaded'});
+ await page.goto(url+(forceNative?'/?renderer=native':''),{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').click();
  await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
@@ -72,13 +73,18 @@ try{
   return{elapsedMs:performance.now()-start,displayed:sequence.displayedFrame,end,maxJump,earlyGame,limitExceeded,
    bins:bins.map(({gaps,lags,...bin})=>({...bin,p95GapMs:percentile(gaps),maxGapMs:Math.max(0,...gaps),p95LagFrames:percentile(lags),maxLagFrames:Math.max(0,...lags)})),stats:sequence.stats};
  });
- console.log('Uninterrupted R2 journey',JSON.stringify({engine,profile,forceNative:process.env.SOFACET_FORCE_NATIVE==='1',...result}));
- assert.equal(result.stats.settings.decoded,profile==='desktop'?8:4,'The intended desktop/mobile buffer profile must be exercised');
+ console.log('Uninterrupted R2 journey',JSON.stringify({engine,profile,forceNative,...result}));
+ assert.equal(result.stats.requestedRenderer,forceNative?'native':'worker','The main URL must select the default worker; native cases must select native explicitly');
+ if(forceNative)assert.equal(result.stats.mode,'video','The native case must exercise native video');
+ else if(engine==='chromium')assert.equal(result.stats.mode,'worker','The default Chromium journey must actually exercise the worker');
+ const workerCache=result.stats.mode==='worker'||result.stats.workerRequests>0;
+ assert.equal(result.stats.settings.decoded,workerCache?4:profile==='desktop'?8:4,'Worker caches retain four frames; native startup fallback keeps the device profile');
+ assert.ok(result.stats.peakDecodedAndPending<=result.stats.settings.decoded,'Retained and in-flight frames must share the decoded budget');
  assert.equal(result.displayed,result.end,'The uninterrupted journey must reach the ending');
  assert.equal(result.earlyGame,false,'Game startup must not compete with any part of the journey');
  assert.equal(result.limitExceeded,false,'Memory limits must hold throughout the journey');
- if(profile==='mobile'&&result.stats.mode==='video')for(const bin of result.bins)assert.ok(bin.p95LagFrames<120,`Native scroll lag must remain bounded in ${bin.fromPercent}-${bin.toPercent}%`);
- else assert.ok(result.maxJump<=4,'The desktop/WebCodecs journey must retain frame continuity');
+ if(result.stats.mode==='webcodecs')assert.ok(result.maxJump<=4,'The legacy WebCodecs journey must retain frame continuity');
+ else for(const bin of result.bins)assert.ok(bin.p95LagFrames<120,`Responsive scroll lag must remain bounded in ${bin.fromPercent}-${bin.toPercent}%`);
  for(const bin of result.bins){
   assert.ok(bin.updates>30,`Missing frame delivery in ${bin.fromPercent}-${bin.toPercent}%`);
   assert.ok(bin.maxGapMs<500,`A half-second stall occurred in ${bin.fromPercent}-${bin.toPercent}%`);
