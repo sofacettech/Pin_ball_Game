@@ -159,3 +159,23 @@ test('quick suspend and resume retain all queue slots until reset releases them'
  for(const request of requests.slice(1))worker.emit({type:'released',id:request.id});
  await Promise.all(rejected);complete(worker,replacement);(await resumed).close();assert.equal(decoder.stats.workerPending,0);
 });
+
+
+test('adapter colour rejection reports expected and actual metadata before closing the frame',async t=>{
+ const {decoder,worker}=await fixture(t),pending=decoder.decode(5,new Uint8Array([1]));
+ const rejected=assert.rejects(pending,error=>{
+  const detail=JSON.parse(error.message.slice(error.message.indexOf(': ')+2));
+  assert.deepEqual(detail.expected,config.colorSpace);
+  assert.deepEqual(detail.actual,{primaries:'bt709',transfer:null,matrix:'bt709',fullRange:false});return error.name==='EncodingError';
+ });
+ const image=complete(worker,worker.messages.at(-1),{colorSpace:{...config.colorSpace,transfer:null}});
+ await rejected;assert.equal(image.closed,1);assert.equal(worker.terminated,true);
+});
+
+test('worker colour rejection preserves raw metadata evidence without releasing invalid pixels',async()=>{
+ const f=await workerFixture({buffered:true});f.send(request(1));
+ const image=f.decoders[0].emit(16667,{colorSpace:{primaries:'bt709',transfer:'iec61966-2-1',matrix:'bt709',fullRange:false}});
+ const fatal=f.messages.find(row=>row.type==='fatal'),detail=JSON.parse(fatal.message.slice(fatal.message.indexOf(': ')+2));
+ assert.equal(detail.expected.transfer,'bt709');assert.equal(detail.actual.transfer,'iec61966-2-1');
+ assert.equal(image.closed,1);assert.equal(f.messages.filter(row=>row.type==='frame').length,0);
+});

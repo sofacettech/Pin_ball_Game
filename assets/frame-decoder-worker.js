@@ -4,6 +4,7 @@ let decoder,config,maxPending=4,generation=0,flushTimer,flushing=false,failed=fa
 const requests=new Map(),timestamps=new Map();
 const stats={workerFlushes:0,workerResets:0,workerHardwarePreference:null};
 const namedError=(message,name='EncodingError')=>new DOMException(message,name);
+const colourMismatch=(expected,image)=>'Worker decoder did not preserve colour metadata: '+JSON.stringify({expected,actual:Object.fromEntries(['primaries','transfer','matrix','fullRange'].map(key=>[key,image.colorSpace?.[key]??null]))});
 function clearFlush(){clearTimeout(flushTimer);flushTimer=undefined}
 function stopDecoder(){generation++;clearFlush();flushing=false;try{decoder?.close()}catch{}decoder=undefined}
 function fatal(error,type='fatal'){
@@ -41,7 +42,7 @@ function openDecoder(){
    else if((config.codedWidth&&image.displayWidth!==config.codedWidth)||(config.codedHeight&&image.displayHeight!==config.codedHeight)){
     image.close();fatal(namedError('Worker decoder returned unexpected display dimensions'));return;
    }else if(config.colorSpace&&Object.entries(config.colorSpace).some(([key,value])=>image.colorSpace?.[key]!==value)){
-    image.close();fatal(namedError('Worker decoder did not preserve colour metadata'));return;
+    const message=colourMismatch(config.colorSpace,image);image.close();fatal(namedError(message));return;
    }else{
     try{self.postMessage({type:'frame',id,frame:request.frame,image,stats},[image])}
     catch(error){image.close();fatal(error);return}

@@ -162,6 +162,13 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/worker-check" playwright@1.63.0
           "$RUNNER_TEMP/worker-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Capture raw worker colour metadata and numerical pixel differences
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/worker-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_COLOUR_OUTPUT: ${{ runner.temp }}/worker-cadence-colour.json
+        run: node scripts/browser-worker-colour-probe.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence-colour.log"
       - name: Compare worker and native motion and verify fallback
         shell: bash
         env:
