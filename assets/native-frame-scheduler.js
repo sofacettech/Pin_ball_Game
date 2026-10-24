@@ -40,7 +40,13 @@ export function createNativeFrameScheduler({onFrame, now = () => performance.now
     // An unfinished seek does not spend another cadence slot. If it finishes
     // just after this check, ready() can continue immediately, rather than
     // waiting a second 33 ms interval and dropping to 15 updates/second.
-    if (result?.started || !result?.pending) nextAt = time + interval;
+    if (result?.started || !result?.pending) {
+      // Keep the original phase through small timer delays. Resetting from
+      // every actual start compounds a 3 ms delay into a ~27.5 Hz cadence.
+      // A late decoder or longer pause starts a fresh interval instead of
+      // building a burst of overdue work; recovery keeps at least half a slot.
+      nextAt = time - nextAt <= interval / 2 ? nextAt + interval : time + interval;
+    }
     if (!result?.active) { readyAt = undefined; return; }
     if (!result.pending) schedule();
   }

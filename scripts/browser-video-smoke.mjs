@@ -116,10 +116,27 @@ try{
     // Compare identical capabilities: disabling VideoFrame adds a different
     // presentation path and must also be disabled in its historical baseline.
     const before=measurements.get(String(native));
-    const comparison={native,updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs};
+    // The verified fastSeek scheduler intentionally targets 30 updates/second.
+    // Preserve raw before/after evidence, but do not reject that target merely
+    // because the historical renderer decoded 50 frames/second on this runner.
+    const capped=motion.stats.mode==='video'&&motion.stats.nativeFastSeek===true&&motion.stats.nativeScheduleStarts>0;
+    const referenceRate=capped?Math.min(before.updatesPerSecond,30):before.updatesPerSecond;
+    const referenceGap=capped?Math.max(before.p95GapMs,1000/30):before.p95GapMs;
+    const comparison={native,capped,targetFramesPerSecond:capped?30:null,
+     beforeUpdatesPerSecond:before.updatesPerSecond,updatesPerSecond:motion.updatesPerSecond,
+     beforeP95GapMs:before.p95GapMs,p95GapMs:motion.p95GapMs,
+     updatesRatio:motion.updates/before.updates,p95GapRatio:motion.p95GapMs/before.p95GapMs,
+     referenceUpdatesPerSecond:referenceRate,referenceP95GapMs:referenceGap,
+     targetAdjustedUpdatesRatio:motion.updatesPerSecond/referenceRate,targetAdjustedP95GapRatio:motion.p95GapMs/referenceGap};
     console.log('Same-runner comparison',JSON.stringify(comparison));
-    assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
-    assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+    if(capped){
+     assert.ok(motion.updatesPerSecond>=27,'The native 30 fps scheduler must deliver at least 27 updates/second');
+     assert.ok(comparison.targetAdjustedUpdatesRatio>=.9,'Native frame delivery missed its target-adjusted baseline');
+     assert.ok(comparison.targetAdjustedP95GapRatio<=1.5,'Native frame pacing regressed against its target-adjusted baseline');
+    }else{
+     assert.ok(comparison.updatesRatio>=.75,'Frame delivery regressed against the previous renderer on this runner');
+     assert.ok(comparison.p95GapRatio<=1.5,'Frame pacing regressed against the previous renderer on this runner');
+    }
    }
    const swipe=await measureScroll(page,2.4,4000);
    console.log('Fast swipe and reversal',JSON.stringify({engine,native,previous,...swipe}));
@@ -138,7 +155,10 @@ try{
      assert.ok(swipe.maxFrameJump<=Math.max(4,before.maxFrameJump),'Frame continuity must not regress against the deployed renderer');
     }
    }
-   if(previous&&pacingOnly){assert.deepEqual(errors,[]);continue}
+   // The historical renderer supplies the steady/fast-scroll pacing reference.
+   // Its known recovery bugs must not prevent the current build's full jump,
+   // late-journey, recovery and exact-pixel checks from running below.
+   if(previous){assert.deepEqual(errors,[]);continue}
    const swipeStoppedAt=Date.now();
    await page.waitForFunction(()=>window.sofacetPreview.sequence.displayedFrame===200&&window.sofacetPreview.sequence.stats.pending===0,{},{timeout:5000});
    if(!previous&&swipe.stats.mode==='video')assert.ok(Date.now()-swipeStoppedAt<2000,'Native fast-swipe reversal must settle within two seconds after scrolling stops');
@@ -193,9 +213,6 @@ try{
     assert.ok(surface.canvasVisible&&surface.width===surface.canvasWidth,'Settled native video must keep its full-size compositor behind the captured frame');
     assert.ok(surface.videoLayer<surface.canvasLayer,'The captured frame must cover the paused native video');
    }
-   // The historical mutable-video renderer is a pacing reference, not the
-   // implementation under test for the new immutable-frame pixel guarantee.
-   if(previous){assert.deepEqual(errors,[]);continue}
    const quality=await page.evaluate(async()=>{
     const {waitForVideo}=await import('./assets/video-playback.js');
     const reference=document.createElement('video');

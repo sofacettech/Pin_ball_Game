@@ -4,7 +4,7 @@ import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2e
 import { createFrameSource } from './assets/frame-source.js?v=frames-826a2fc0f067';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
-import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-eea53e8c376c';
+import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
 const FPS = 60;

@@ -78,6 +78,47 @@ test('readiness just after a paint does not add another full paint of decoder id
   before.scheduler.destroy(); after.scheduler.destroy();
 });
 
+test('repeated 3 ms timer delays retain 30 Hz phase with an 8 ms native decoder', () => {
+  const time = clock(), starts = [], updates = [];
+  let busy = false;
+  const scheduler = createNativeFrameScheduler({...time,
+    setTimer: (fn, delay) => time.setTimer(fn, delay + 3),
+    onFrame() {
+      if (busy) return {active: true, pending: true};
+      busy = true; starts.push(time.now());
+      time.setTimer(() => { busy = false; updates.push(time.now()); scheduler.ready(); }, 8);
+      return {active: true, pending: true, started: true};
+    },
+  });
+  scheduler.request(); time.advance(5000);
+  assert.ok(updates.length >= 149 && updates.length <= 151,
+    `Small timer delays must not reduce 30 Hz delivery to 27.5 Hz (${updates.length / 5} Hz)`);
+  const phaseError = starts.at(-1) - (starts.length - 1) * (1000 / 30);
+  assert.ok(Math.abs(phaseError) <= 3.01, 'Timer jitter must not accumulate into phase drift');
+  const gaps = starts.slice(1).map((at, i) => at - starts[i]);
+  assert.ok(Math.min(...gaps) >= 1000 / 30 - 1);
+  assert.ok(Math.max(...gaps) <= 1000 / 30 + 3.01);
+  scheduler.destroy();
+});
+
+test('a timer delayed by more than half a slot resets phase without a catch-up burst', () => {
+  const time = clock(), starts = [];
+  let late = true;
+  const scheduler = createNativeFrameScheduler({...time,
+    setTimer(fn, delay) {
+      const jitter = late ? 20 : 0;
+      late = false;
+      return time.setTimer(fn, delay + jitter);
+    },
+    onFrame() { starts.push(time.now()); return {active: true, pending: false, started: true}; },
+  });
+  scheduler.request(); time.advance(100);
+  assert.ok(Math.abs(starts[1] - (1000 / 30 + 20)) < .01);
+  assert.ok(Math.abs(starts[2] - starts[1] - 1000 / 30) < .01,
+    'A long delay must establish a fresh interval rather than replay missed slots');
+  scheduler.destroy();
+});
+
 test('an in-flight seek does not spend the next deadline before its completion', () => {
   const time = clock();
   let busy = false;
