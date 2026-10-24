@@ -120,9 +120,10 @@ jobs:
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
           SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-current.json
+          SOFACET_CADENCE_ENFORCE: '1'
         run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-current.log"
-      # Keep the measured 30fps goal explicit in JSON while collecting initial
-      # WebKit evidence. Functional errors still fail; no timing gate is relaxed.
+      # Preserve both reports even when the current compositor cadence misses
+      # the 30fps goal. Historical baseline measurements remain informational.
       - name: Upload native cadence measurements
         if: always()
         uses: actions/upload-artifact@v4

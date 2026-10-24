@@ -51,27 +51,34 @@ try{
   // Gate application paints, not native video callbacks. This reproduces a
   // phone's 30 Hz RAF scheduling while retaining real decoder/compositor data.
   const nativeRAF=requestAnimationFrame.bind(window),nativeCancel=cancelAnimationFrame.bind(window);
-  let serial=0,scheduled,lastPaint=-Infinity;
+  let serial=0,scheduled,nextPaint;
   const callbacks=new Map();
   window.cadenceRafRate=60;
   function tick(now){
    scheduled=undefined;
-   const interval=1000/window.cadenceRafRate;
-   if(now-lastPaint>=interval-.5){
-    lastPaint=now;
-    const queued=[...callbacks.values()];callbacks.clear();
-    for(const callback of queued)callback(now);
+   const interval=1000/30;
+   // Retain deadline phase instead of accumulating rounded WebKit timestamps.
+   // One millisecond accommodates integer timestamps without lowering cadence.
+   if(window.cadenceRafRate===60||nextPaint===undefined||now>=nextPaint-1){
+    nextPaint=nextPaint===undefined?now+interval:nextPaint+(Math.floor((Math.max(0,now-nextPaint)+1)/interval)+1)*interval;
+    const queued=[...callbacks];
+    for(const [id,callback] of queued)if(callbacks.delete(id))callback(now);
    }
    if(callbacks.size&&scheduled===undefined)scheduled=nativeRAF(tick);
   }
   window.requestAnimationFrame=callback=>{
-   const id=++serial;callbacks.set(id,callback);
+   // Preserve native callback ordering and cadence for the 60 Hz scenario.
+   if(window.cadenceRafRate===60){nextPaint=undefined;return nativeRAF(callback)}
+   // Negative IDs distinguish gated requests from native requests when changing
+   // rates, so cancellation always reaches the original scheduling mechanism.
+   const id=--serial;callbacks.set(id,callback);
    if(scheduled===undefined)scheduled=nativeRAF(tick);
    return id;
   };
   window.cancelAnimationFrame=id=>{
+   if(id>=0){nativeCancel(id);return}
    callbacks.delete(id);
-   if(!callbacks.size&&scheduled!==undefined){nativeCancel(scheduled);scheduled=undefined}
+   if(!callbacks.size&&scheduled!==undefined){nativeCancel(scheduled);scheduled=undefined;nextPaint=undefined}
   };
   // Capture actual HTMLMediaElement seek requests and dispatched completions.
   // These timings explain cadence; they are never counted as rendered frames.
