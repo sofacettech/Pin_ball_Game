@@ -32,8 +32,13 @@ try {
   assert.ok((await panel.boundingBox()).height <= 48, 'Only a small launcher occupies phone height');
   const blank = await panel.boundingBox();
   assert.equal(await page.evaluate(({x,y}) => !!document.elementFromPoint(x,y)?.closest('#scroll-debug'), {x:blank.x+2,y:blank.y+2}), false, 'Transparent space beside the launcher passes through to the scene');
-  await page.mouse.move(page.viewportSize().width / 2, page.viewportSize().height / 2);
-  await page.mouse.wheel(0, 400);
+  // Mobile WebKit does not implement Playwright wheel input. The hit-test
+  // above checks pass-through on both engines; also verify document scrolling.
+  if (engine === 'webkit') await page.evaluate(() => scrollBy(0, 400));
+  else {
+    await page.mouse.move(page.viewportSize().width / 2, page.viewportSize().height / 2);
+    await page.mouse.wheel(0, 400);
+  }
   await page.waitForFunction(() => scrollY > 0);
   await page.waitForFunction(() => document.querySelector('#scroll-debug pre')?.textContent.includes('Worst:'));
   await page.waitForFunction(() => /Stalls ≥100ms: [1-9]/.test(document.querySelector('#scroll-debug pre').textContent));
