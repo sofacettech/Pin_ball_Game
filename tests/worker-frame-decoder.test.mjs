@@ -6,6 +6,7 @@ import {createWorkerFrameDecoder} from '../assets/worker-frame-decoder.js';
 
 const config={codec:'avc1.64002a',codedWidth:1920,codedHeight:1080,colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false}};
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
+const bitmap=(overrides={})=>({width:1920,height:1080,closed:0,close(){this.closed++},...overrides});
 const frame=(timestamp,overrides={})=>({timestamp,displayWidth:1920,displayHeight:1080,colorSpace:{...config.colorSpace},closed:0,close(){this.closed++},...overrides});
 function fakeWorker({ready=true,unsupported=false}={}){
  return class extends EventTarget {
@@ -25,7 +26,8 @@ async function fixture(t,options={}){
  t.after(()=>decoder.destroy());return{decoder,worker:WorkerClass.instances[0]};
 }
 function complete(worker,request,overrides={}){
- const image=frame(request.timestamp,overrides);worker.emit({type:'frame',id:request.id,frame:request.frame,image});return image;
+ const {timestamp=request.timestamp,sourceColorSpace={...config.colorSpace},outputKind='bitmap',...imageOverrides}=overrides;
+ const image=bitmap(imageOverrides);worker.emit({type:'frame',id:request.id,frame:request.frame,timestamp,sourceColorSpace,outputKind,image});return image;
 }
 
 test('out-of-order and duplicate source-frame requests route by unique IDs without detaching cached samples',async t=>{
@@ -87,7 +89,7 @@ test('decode timeout rejects the complete queue and closes late outputs',async t
  assert.equal(complete(worker,worker.messages.find(row=>row.type==='decode')).closed,1);
 });
 
-for(const bad of [{colorSpace:{...config.colorSpace,matrix:'bt601'}},{displayWidth:1280},{timestamp:-1}]){
+for(const bad of [{sourceColorSpace:{...config.colorSpace,matrix:'bt601'}},{sourceColorSpace:null},{width:1280},{height:720},{timestamp:-1},{outputKind:'video-frame'}]){
  test('invalid worker pixels reject pending work: '+Object.keys(bad)[0],async t=>{
   const {decoder,worker}=await fixture(t),pending=decoder.decode(5,new Uint8Array([1])),rejected=assert.rejects(pending,{name:'EncodingError'});
   const image=complete(worker,worker.messages.at(-1),bad);await rejected;assert.equal(image.closed,1);assert.equal(worker.terminated,true);
@@ -95,30 +97,73 @@ for(const bad of [{colorSpace:{...config.colorSpace,matrix:'bt601'}},{displayWid
 }
 
 const workerSource=await readFile(new URL('../assets/frame-decoder-worker.js',import.meta.url),'utf8');
-async function workerFixture({buffered=false,hardware=true,unsupported=false}={}){
- const messages=[],timers=new Map(),decoders=[],probes=[];let listener,timerId=0;
+async function workerFixture({buffered=false,hardware=true,unsupported=false,surfaceLimit=Infinity,canvas=true,copyFailure,transferFailure=false}={}){
+ const messages=[],timers=new Map(),decoders=[],probes=[],canvases=[],sourceFrames=[],bitmaps=[],events=[];let listener,timerId=0,clock=0;
  class Decoder {
   static async isConfigSupported(value){probes.push(value);return{supported:!unsupported&&(hardware||value.hardwareAcceleration!=='prefer-hardware')}}
-  state='unconfigured';chunks=[];flushes=0;
+  state='unconfigured';chunks=[];flushes=0;liveSurfaces=0;peakSurfaces=0;flushWaiters=[];draining=false;
   constructor(callbacks){this.callbacks=callbacks;decoders.push(this)}
   configure(value){this.config=value;this.state='configured'}
-  decode(chunk){this.chunks.push(chunk);if(!buffered)this.emit(chunk.timestamp)}
-  emit(timestamp,overrides={}){const image=frame(timestamp,overrides);this.callbacks.output(image);return image}
-  async flush(){this.flushes++;for(const chunk of this.chunks.splice(0))this.emit(chunk.timestamp)}
+  decode(chunk){this.chunks.push(chunk);if(!buffered){if(Number.isFinite(surfaceLimit))this.drain();else this.emit(chunk.timestamp)}}
+  emit(timestamp,overrides={}){
+   let released=false;const image=frame(timestamp,overrides);sourceFrames.push(image);
+   if(Number.isFinite(surfaceLimit)){this.liveSurfaces++;this.peakSurfaces=Math.max(this.peakSurfaces,this.liveSurfaces)}
+   image.close=()=>{
+    image.closed++;events.push({type:'source-close',image});
+    if(!released){released=true;if(Number.isFinite(surfaceLimit)){this.liveSurfaces--;this.drain()}}
+   };
+   this.callbacks.output(image);return image;
+  }
+  drain(){
+   if(this.draining||this.state!=='configured')return;this.draining=true;
+   try{while(this.chunks.length&&this.liveSurfaces<surfaceLimit)this.emit(this.chunks.shift().timestamp)}finally{this.draining=false}
+   if(!this.chunks.length)for(const resolve of this.flushWaiters.splice(0))resolve();
+  }
+  async flush(){
+   this.flushes++;
+   if(Number.isFinite(surfaceLimit)){
+    this.drain();if(this.chunks.length)await new Promise(resolve=>this.flushWaiters.push(resolve));
+   }else for(const chunk of this.chunks.splice(0))this.emit(chunk.timestamp);
+  }
   close(){this.state='closed'}
  }
- const self={addEventListener(type,fn){assert.equal(type,'message');listener=fn},postMessage(data,transfer=[]){messages.push({...data,stats:data.stats?{...data.stats}:undefined,transfer})}};
- vm.runInNewContext(workerSource,{self,VideoDecoder:Decoder,EncodedVideoChunk:class{constructor(init){Object.assign(this,init)}},DOMException,setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId},clearTimeout(id){timers.delete(id)}});
+ class Canvas {
+  constructor(width,height){this.width=width;this.height=height;canvases.push(this);if(copyFailure==='construct')throw new Error('Canvas creation failed')}
+  getContext(type,options){
+   assert.equal(type,'2d');this.options=options;if(copyFailure==='context')return null;
+   return{drawImage:(image,...rect)=>{events.push({type:'draw',image,rect});this.source=image;if(copyFailure==='draw')throw new Error('Canvas draw failed')}};
+  }
+  transferToImageBitmap(){
+   events.push({type:'snapshot',image:this.source});if(copyFailure==='snapshot')throw new Error('Canvas snapshot failed');
+   const image=bitmap({width:this.width,height:this.height,contentTimestamp:this.source.timestamp});
+   image.close=()=>{image.closed++;events.push({type:'bitmap-close',image})};bitmaps.push(image);return image;
+  }
+ }
+ const self={addEventListener(type,fn){assert.equal(type,'message');listener=fn},postMessage(data,transfer=[]){
+  events.push({type:'post-'+data.type,image:data.image});
+  if(data.type==='frame'&&transferFailure)throw new DOMException('Bitmap transfer failed','DataCloneError');
+  messages.push({...data,stats:data.stats?{...data.stats}:undefined,transfer});
+ }};
+ vm.runInNewContext(workerSource,{self,VideoDecoder:Decoder,OffscreenCanvas:canvas?Canvas:undefined,performance:{now:()=>++clock},EncodedVideoChunk:class{constructor(init){Object.assign(this,init)}},DOMException,setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId},clearTimeout(id){timers.delete(id)}});
  const send=data=>listener({data});
  send({type:'init',config,fps:60,maxPending:4});await flush();
- return{send,messages,timers,decoders,probes,runTimer:async()=>{const [id,timer]=timers.entries().next().value;timers.delete(id);timer.fn();await flush()}};
+ return{send,messages,timers,decoders,probes,canvases,sourceFrames,bitmaps,events,runTimer:async()=>{const [id,timer]=timers.entries().next().value;timers.delete(id);timer.fn();await flush()}};
 }
 const request=(id,sourceFrame=id)=>({type:'decode',id,frame:sourceFrame,timestamp:id*16667,duration:16667,bytes:new Uint8Array([1]).buffer});
 
-test('worker immediate output transfers VideoFrames directly with no per-frame flush',async()=>{
+test('worker immediate output closes decoder frames before transferring independent bitmaps with no per-frame flush',async()=>{
  const f=await workerFixture();for(let i=1;i<=4;i++)f.send(request(i));
  const outputs=f.messages.filter(row=>row.type==='frame');assert.equal(outputs.length,4);assert.equal(f.decoders[0].flushes,0);assert.equal(f.timers.size,0);
- for(const row of outputs){assert.equal(row.transfer[0],row.image);assert.equal(row.image.closed,0);row.image.close()}
+ for(const row of outputs){
+  assert.equal(row.transfer[0],row.image);assert.equal(row.image.closed,0);assert.equal(row.outputKind,'bitmap');
+  assert.equal(row.timestamp,row.image.contentTimestamp);assert.equal(row.timestamp,row.id*16667);
+  assert.deepEqual({...row.sourceColorSpace},config.colorSpace);
+  assert.ok(f.events.findIndex(event=>event.type==='source-close'&&event.image.timestamp===row.timestamp)<f.events.findIndex(event=>event.type==='post-frame'&&event.image===row.image));
+  row.image.close();
+ }
+ assert.ok(f.sourceFrames.every(image=>image.closed===1));assert.equal(f.canvases.length,1);
+ assert.deepEqual({...f.canvases[0].options},{alpha:false,colorSpace:'srgb'});
+ assert.equal(outputs.at(-1).stats.workerBitmapCopies,4);assert.equal(outputs.at(-1).stats.workerBitmapCopyMs,4);assert.equal(outputs.at(-1).stats.workerBitmapCopyMaxMs,1);
  assert.equal(f.probes[0].hardwareAcceleration,'prefer-hardware');
 });
 
@@ -168,7 +213,7 @@ test('adapter colour rejection reports expected and actual metadata before closi
   assert.deepEqual(detail.expected,config.colorSpace);
   assert.deepEqual(detail.actual,{primaries:'bt709',transfer:null,matrix:'bt709',fullRange:false});return error.name==='EncodingError';
  });
- const image=complete(worker,worker.messages.at(-1),{colorSpace:{...config.colorSpace,transfer:null}});
+ const image=complete(worker,worker.messages.at(-1),{sourceColorSpace:{...config.colorSpace,transfer:null}});
  await rejected;assert.equal(image.closed,1);assert.equal(worker.terminated,true);
 });
 
@@ -178,4 +223,69 @@ test('worker colour rejection preserves raw metadata evidence without releasing 
  const fatal=f.messages.find(row=>row.type==='fatal'),detail=JSON.parse(fatal.message.slice(fatal.message.indexOf(': ')+2));
  assert.equal(detail.expected.transfer,'bt709');assert.equal(detail.actual.transfer,'iec61966-2-1');
  assert.equal(image.closed,1);assert.equal(f.messages.filter(row=>row.type==='frame').length,0);
+});
+
+
+for(const surfaceLimit of [2,3]){
+ test('finite '+surfaceLimit+'-surface decoder control stalls until an output is closed',async()=>{
+  const f=await workerFixture({surfaceLimit}),outputs=[],Decoder=f.decoders[0].constructor;
+  const decoder=new Decoder({output:image=>outputs.push(image)});decoder.configure(config);
+  for(let id=1;id<=4;id++)decoder.decode(request(id));
+  let flushed=false;const pending=decoder.flush().then(()=>{flushed=true});await flush();
+  assert.equal(outputs.length,surfaceLimit);assert.equal(decoder.liveSurfaces,surfaceLimit);
+  assert.equal(flushed,false,'Flush cannot reclaim output surfaces retained by the caller');
+  outputs[0].close();await flush();assert.equal(outputs.length,surfaceLimit+1,'Closing one output releases exactly one blocked frame');
+  if(surfaceLimit===2)outputs[1].close();await pending;
+  assert.equal(outputs.length,4);assert.equal(decoder.peakSurfaces,surfaceLimit);
+  outputs.forEach(image=>{if(!image.closed)image.close()});assert.equal(decoder.liveSurfaces,0);
+ });
+
+ test('worker completes four retained outputs with only '+surfaceLimit+' decoder surfaces',async t=>{
+  const f=await workerFixture({surfaceLimit}),outputs=()=>f.messages.filter(row=>row.type==='frame');
+  t.after(()=>{for(const row of outputs())if(!row.image.closed)row.image.close()});
+  for(let id=1;id<=4;id++)f.send(request(id));
+  if(f.timers.size)await f.runTimer();await flush();
+  assert.equal(outputs().length,4,'Retained cache images must not prevent the decoder from completing the four-frame warm batch');
+  assert.equal(f.decoders[0].liveSurfaces,0,'Transferred cache images must be independent of decoder output surfaces');
+  assert.equal(f.messages.some(row=>row.type==='fatal'),false);
+ });
+}
+
+
+test('worker rejects startup when independent bitmap storage is unavailable',async()=>{
+ const f=await workerFixture({canvas:false});assert.equal(f.decoders.length,0);
+ assert.equal(f.messages[0].type,'unsupported');assert.equal(f.messages[0].name,'NotSupportedError');
+});
+
+for(const copyFailure of ['construct','context','draw','snapshot']){
+ test('worker releases its decoder surface when bitmap '+copyFailure+' fails',async()=>{
+  const f=await workerFixture({surfaceLimit:2,copyFailure});f.send(request(1));await flush();
+  assert.equal(f.sourceFrames.length,1);assert.equal(f.sourceFrames[0].closed,1);
+  assert.equal(f.decoders[0].liveSurfaces,0);assert.equal(f.decoders[0].state,'closed');
+  assert.equal(f.messages.filter(row=>row.type==='frame').length,0);assert.ok(f.messages.some(row=>row.type==='fatal'));
+  assert.equal(f.bitmaps.length,0);assert.equal(f.timers.size,0);
+ });
+}
+
+test('worker closes both resources when transferring a copied bitmap fails',async()=>{
+ const f=await workerFixture({surfaceLimit:2,transferFailure:true});f.send(request(1));await flush();
+ assert.equal(f.sourceFrames[0].closed,1);assert.equal(f.bitmaps[0].closed,1);assert.equal(f.decoders[0].liveSurfaces,0);
+ assert.equal(f.messages.filter(row=>row.type==='frame').length,0);assert.equal(f.messages.find(row=>row.type==='fatal').name,'DataCloneError');
+ assert.ok(f.events.findIndex(row=>row.type==='source-close')<f.events.findIndex(row=>row.type==='post-frame'));
+ assert.ok(f.events.findIndex(row=>row.type==='bitmap-close')<f.events.findIndex(row=>row.type==='post-fatal'));
+});
+
+test('worker validates source metadata before making a bitmap copy',async()=>{
+ const f=await workerFixture({buffered:true,surfaceLimit:2});f.send(request(1));
+ const source=f.decoders[0].emit(16667,{colorSpace:{...config.colorSpace,fullRange:true}});
+ assert.equal(source.closed,1);assert.equal(f.canvases.length,0);assert.equal(f.bitmaps.length,0);
+ assert.equal(f.messages.filter(row=>row.type==='frame').length,0);assert.ok(f.messages.some(row=>row.type==='fatal'));
+});
+
+test('cancelled and stale outputs release codec surfaces without allocating bitmaps',async()=>{
+ const f=await workerFixture({buffered:true});f.send(request(1));f.send(request(2));f.send({type:'cancel',id:1});
+ const old=f.decoders[0],cancelled=old.emit(16667);assert.equal(cancelled.closed,1);assert.equal(f.bitmaps.length,0);
+ assert.ok(f.events.findIndex(row=>row.type==='source-close'&&row.image===cancelled)<f.events.findIndex(row=>row.type==='post-released'));
+ f.send({type:'reset'});const stale=old.emit(33334);assert.equal(stale.closed,1);assert.equal(f.bitmaps.length,0);
+ f.send(request(3));await f.runTimer();assert.equal(f.bitmaps.length,1);assert.equal(f.sourceFrames.at(-1).closed,1);
 });

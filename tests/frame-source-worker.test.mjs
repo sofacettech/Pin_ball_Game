@@ -29,8 +29,9 @@ async function fixture(t,{unsupported=false}={}){
  return{video,source,worker};
 }
 function output(worker,request,overrides={}){
- const image={timestamp:request.timestamp,displayWidth:1920,displayHeight:1080,colorSpace:{...colour},closed:0,close(){this.closed++},...overrides};
- worker.emit({type:'frame',id:request.id,frame:request.frame,image});return image;
+ const {timestamp=request.timestamp,sourceColorSpace={...colour},...imageOverrides}=overrides;
+ const image={width:1920,height:1080,closed:0,close(){this.closed++},...imageOverrides};
+ worker.emit({type:'frame',id:request.id,frame:request.frame,timestamp,sourceColorSpace,outputKind:'bitmap',image});return image;
 }
 
 test('unsupported worker startup preserves a usable native source',async t=>{
@@ -54,7 +55,7 @@ test('a failed worker frame can fall back to native decoding without retaining w
  const {source,worker,video}=await fixture(t);
  const pending=[20,21,22,23].map(frame=>source.decode(frame,new Uint8Array([1]),false));
  const rejected=pending.map(job=>assert.rejects(job,{name:'EncodingError'}));
- const bad=output(worker,worker.messages.find(row=>row.type==='decode'),{displayHeight:720});
+ const bad=output(worker,worker.messages.find(row=>row.type==='decode'),{height:720});
  await Promise.all(rejected);assert.equal(bad.closed,1);assert.equal(worker.terminated,true);
  assert.equal(source.stats.workerFailure.name,'EncodingError');assert.equal(source.stats.workerPending,0);
  assert.equal(source.fallback('decode-or-range'),true);assert.equal(source.mode,'video');assert.equal(source.decodeConcurrency,1);

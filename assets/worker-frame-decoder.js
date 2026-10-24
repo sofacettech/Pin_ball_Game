@@ -2,14 +2,14 @@ const namedError=(message,name='EncodingError')=>new DOMException(message,name);
 const colourMismatch=(expected,image)=>'Worker decoder did not preserve colour metadata: '+JSON.stringify({expected,actual:Object.fromEntries(['primaries','transfer','matrix','fullRange'].map(key=>[key,image.colorSpace?.[key]??null]))});
 const cancelled=()=>namedError('Frame decoding cancelled','AbortError');
 
-// Returned VideoFrames belong to the caller. Their timestamps identify decode
-// requests; the caller's source-frame index remains the journey position.
+// Returned ImageBitmaps belong to the caller and do not retain codec surfaces.
+// Message timestamps identify requests; source indices identify journey frames.
 export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,WorkerClass=globalThis.Worker,startupTimeout=5000,decodeTimeout=8000}={}){
  if(!Number.isFinite(fps)||fps<=0||!Number.isSafeInteger(maxPending)||maxPending<1||maxPending>4||!Number.isFinite(startupTimeout)||startupTimeout<=0||!Number.isFinite(decodeTimeout)||decodeTimeout<=0)throw new RangeError('Invalid worker decoder limits');
  if(typeof WorkerClass!=='function')throw namedError('Module workers are unavailable','NotSupportedError');
- const started=performance.now(),worker=new WorkerClass(new URL('./frame-decoder-worker.js?v=frames-bc906fdbef8e',import.meta.url),{type:'module',name:'sofacet-frame-decoder'});
+ const started=performance.now(),worker=new WorkerClass(new URL('./frame-decoder-worker.js?v=frames-ba9f4c7055b9',import.meta.url),{type:'module',name:'sofacet-frame-decoder'});
  const jobs=new Map(),duration=Math.max(1,Math.round(1e6/fps));
- const counters={workerRequests:0,workerCompleted:0,workerCancelled:0,workerTimeouts:0,workerPeakPending:0,workerDecodeMs:0,workerDecodeTotalMs:0,workerStartupMs:0,workerFlushes:0,workerResets:0,workerHardwarePreference:null};
+ const counters={workerRequests:0,workerCompleted:0,workerCancelled:0,workerTimeouts:0,workerPeakPending:0,workerDecodeMs:0,workerDecodeTotalMs:0,workerStartupMs:0,workerFlushes:0,workerResets:0,workerHardwarePreference:null,workerOutputKind:null,workerBitmapCopies:0,workerBitmapCopyMs:0,workerBitmapCopyMaxMs:0};
  let nextId=0,destroyed=false,failure,startupTimer,resolveStartup,rejectStartup;
  const startup=new Promise((resolve,reject)=>{resolveStartup=resolve;rejectStartup=reject});
  function release(job){clearTimeout(job.timer);job.signal?.removeEventListener('abort',job.abort);jobs.delete(job.id)}
@@ -25,17 +25,17 @@ export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,Worke
  worker.addEventListener('message',({data})=>{
   const image=data?.image;
   if(failure||destroyed){image?.close();return}
-  if(data?.stats)for(const key of ['workerFlushes','workerResets','workerHardwarePreference'])if(key in data.stats)counters[key]=data.stats[key];
+  if(data?.stats)for(const key of ['workerFlushes','workerResets','workerHardwarePreference','workerOutputKind','workerBitmapCopies','workerBitmapCopyMs','workerBitmapCopyMaxMs'])if(key in data.stats)counters[key]=data.stats[key];
   if(data?.type==='ready'){clearTimeout(startupTimer);counters.workerStartupMs=performance.now()-started;resolveStartup();return}
   if(data?.type==='unsupported'||data?.type==='fatal'){image?.close();fail(namedError(data.message||'Worker decoding is unavailable',data.name||'NotSupportedError'));return}
   if(data?.type==='released'){const job=jobs.get(data.id);if(job?.cancelled){release(job);job.reject(cancelled())}return}
   if(data?.type!=='frame'){image?.close();return}
   const job=jobs.get(data.id);
   if(!job||job.cancelled){image?.close();if(job){release(job);job.reject(cancelled())}return}
-  if(!image||typeof image.close!=='function'||image.timestamp!==job.timestamp||data.frame!==job.frame){image?.close();fail(namedError('Worker returned an unexpected frame'));return}
-  if((config.codedWidth&&image.displayWidth!==config.codedWidth)||(config.codedHeight&&image.displayHeight!==config.codedHeight)){image.close();fail(namedError('Worker decoder returned unexpected display dimensions'));return}
-  if(config.colorSpace&&Object.entries(config.colorSpace).some(([key,value])=>image.colorSpace?.[key]!==value)){
-   const message=colourMismatch(config.colorSpace,image);image.close();fail(namedError(message));return;
+  if(!image||typeof image.close!=='function'||data.outputKind!=='bitmap'||data.timestamp!==job.timestamp||data.frame!==job.frame){image?.close();fail(namedError('Worker returned an unexpected frame'));return}
+  if((config.codedWidth&&image.width!==config.codedWidth)||(config.codedHeight&&image.height!==config.codedHeight)){image.close();fail(namedError('Worker decoder returned unexpected display dimensions'));return}
+  if(config.colorSpace&&Object.entries(config.colorSpace).some(([key,value])=>data.sourceColorSpace?.[key]!==value)){
+   const message=colourMismatch(config.colorSpace,{colorSpace:data.sourceColorSpace});image.close();fail(namedError(message));return;
   }
   release(job);counters.workerCompleted++;counters.workerDecodeMs=performance.now()-job.started;counters.workerDecodeTotalMs+=counters.workerDecodeMs;
   job.resolve(image);

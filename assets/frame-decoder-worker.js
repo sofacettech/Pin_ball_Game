@@ -1,12 +1,33 @@
 // All supplied samples are independent IDR frames. Synthetic timestamps keep
-// duplicate/reversed requests distinct without copying decoded pixel planes.
-let decoder,config,maxPending=4,generation=0,flushTimer,flushing=false,failed=false;
+// duplicate/reversed requests distinct while copying outputs off codec surfaces.
+let decoder,config,copyCanvas,copyContext,maxPending=4,generation=0,flushTimer,flushing=false,failed=false;
 const requests=new Map(),timestamps=new Map();
-const stats={workerFlushes:0,workerResets:0,workerHardwarePreference:null};
+const stats={workerFlushes:0,workerResets:0,workerHardwarePreference:null,workerOutputKind:'bitmap',workerBitmapCopies:0,workerBitmapCopyMs:0,workerBitmapCopyMaxMs:0};
 const namedError=(message,name='EncodingError')=>new DOMException(message,name);
 const colourMismatch=(expected,image)=>'Worker decoder did not preserve colour metadata: '+JSON.stringify({expected,actual:Object.fromEntries(['primaries','transfer','matrix','fullRange'].map(key=>[key,image.colorSpace?.[key]??null]))});
 function clearFlush(){clearTimeout(flushTimer);flushTimer=undefined}
-function stopDecoder(){generation++;clearFlush();flushing=false;try{decoder?.close()}catch{}decoder=undefined}
+function stopDecoder(){
+ generation++;clearFlush();flushing=false;try{decoder?.close()}catch{}decoder=undefined;
+ if(copyCanvas){copyCanvas.width=0;copyCanvas.height=0}copyCanvas=copyContext=undefined;
+}
+// Transferring a VideoFrame keeps its decoder-owned output surface alive.
+// A few cached frames can exhaust a phone's hardware pool and block flush().
+// Snapshot into independent canvas storage, then promptly release the codec
+// surface. No pixel planes are read back into JavaScript.
+function detachFrame(image){
+ const started=performance.now();
+ try{
+  if(!copyCanvas){
+   copyCanvas=new OffscreenCanvas(image.displayWidth,image.displayHeight);
+   copyContext=copyCanvas.getContext('2d',{alpha:false,colorSpace:'srgb'});
+   if(!copyContext)throw namedError('Worker frame copy canvas is unavailable','NotSupportedError');
+  }
+  copyContext.drawImage(image,0,0,copyCanvas.width,copyCanvas.height);
+  const bitmap=copyCanvas.transferToImageBitmap(),elapsed=performance.now()-started;
+  stats.workerBitmapCopies++;stats.workerBitmapCopyMs+=elapsed;stats.workerBitmapCopyMaxMs=Math.max(stats.workerBitmapCopyMaxMs,elapsed);
+  return bitmap;
+ }finally{image.close()}
+}
 function fatal(error,type='fatal'){
  if(failed)return;
  failed=true;stopDecoder();requests.clear();timestamps.clear();
@@ -44,8 +65,12 @@ function openDecoder(){
    }else if(config.colorSpace&&Object.entries(config.colorSpace).some(([key,value])=>image.colorSpace?.[key]!==value)){
     const message=colourMismatch(config.colorSpace,image);image.close();fatal(namedError(message));return;
    }else{
-    try{self.postMessage({type:'frame',id,frame:request.frame,image,stats},[image])}
-    catch(error){image.close();fatal(error);return}
+    const sourceColorSpace=Object.fromEntries(['primaries','transfer','matrix','fullRange'].map(key=>[key,image.colorSpace?.[key]??null]));
+    let bitmap;
+    try{
+     bitmap=detachFrame(image);
+     self.postMessage({type:'frame',id,frame:request.frame,timestamp:request.timestamp,sourceColorSpace,outputKind:'bitmap',image:bitmap,stats},[bitmap]);
+    }catch(error){bitmap?.close();fatal(error);return}
    }
    armFlush();
   },
@@ -60,6 +85,7 @@ function reset(){
  openDecoder();self.postMessage({type:'stats',stats});
 }
 async function initialize(message){
+ if(typeof OffscreenCanvas!=='function')throw namedError('Worker frame copying is unavailable','NotSupportedError');
  if(typeof VideoDecoder!=='function'||typeof EncodedVideoChunk!=='function')throw namedError('WebCodecs is unavailable in this worker','NotSupportedError');
  maxPending=message.maxPending;
  if(!Number.isSafeInteger(maxPending)||maxPending<1||maxPending>4)throw new RangeError('Invalid worker queue limit');
