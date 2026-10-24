@@ -6,7 +6,7 @@ import { createSequence } from './sequence.js?v=frames-32cd185c7950';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
-import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-75503048eed8';
+import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-5775b2d67d0e';
 
 import { prepareMedia } from './assets/media-delivery.js?v=frames-dc4a9c95ed77';
 

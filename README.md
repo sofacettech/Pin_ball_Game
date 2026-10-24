@@ -164,6 +164,8 @@ Run `npm run build:frames` after changing source media. It checks Full HD dimens
 
 Touch devices keep the scene at a stable large viewport height while browser bars resize the controls. Native video uses `object-fit: contain` inside the 16:9 stage so viewport changes cannot stretch the ball. The WebGL backing buffer is capped at Full HD, and the journey canvas is allocated on its first draw and released on exit. With a local server running, `SOFACET_VIDEO_URL=http://127.0.0.1:8768 node scripts/browser-mobile-geometry.mjs` checks portrait, landscape and simulated browser-bar changes with automatic and forced native playback.
 
+To capture a physical phone's scroll performance, open the site with `?perf=1`. After the intro, tap **Reset**, scroll until the problem occurs, then **Pause** for a screenshot, **Copy report** to paste the JSON, or **Save report** to attach it. The opt-in panel works on production as well as localhost. It distinguishes page RAF frequency, selected journey-frame updates, and native compositor callbacks when available; browser dropped-frame counters alone can miss seek stalls. Worst gaps and frame lag persist until Reset, and reports include the last 120 half-second samples, decoder/cache state and device details. Hidden/paused time is excluded. Reports stay in the browser until explicitly copied or saved. Ordinary visits do not run the recorder.
+
 After creating the bucket and connecting its custom domain:
 
 ```sh

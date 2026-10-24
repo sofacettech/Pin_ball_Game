@@ -159,9 +159,9 @@ test('cache reverses, bounds resources, and only makes the latest target ready',
  }finally{cache.destroy();await wait(10)}
  assert.equal(f.alive,0);assert.ok(f.closed.length>0);
 });
-test('the development overlay never touches production or normal-page DOM',()=>{
+test('the opt-in overlay never touches normal-page DOM on production or localhost',()=>{
  const old=globalThis.location;
- try{for(const location of [{hostname:'sofacet.example',search:'?perf'},{hostname:'127.0.0.1',search:''}]){globalThis.location=location;assert.equal(typeof createPerformanceOverlay(),'function')}}finally{if(old===undefined)delete globalThis.location;else globalThis.location=old}
+ try{for(const location of [{hostname:'sofacet.example',search:''},{hostname:'127.0.0.1',search:''}]){globalThis.location=location;assert.equal(typeof createPerformanceOverlay(),'function')}}finally{if(old===undefined)delete globalThis.location;else globalThis.location=old}
 });
 test('disposing during decode closes its late resource',async()=>{
  let resolve,closed=0;const source={mode:'webcodecs',stats:{},load:async()=>new Uint8Array(1),decode:()=>new Promise(r=>resolve=r),fallback:()=>false,destroy(){}};

@@ -61,6 +61,11 @@ jobs:
           # Hosted runners already include browser system libraries. Avoid slow
           # APT font downloads; keep Playwright's exact pinned browser binaries.
           "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Check opt-in performance capture on a production hostname
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+        run: node scripts/browser-performance-overlay.mjs
       - name: Check mobile opening, fast swipes and scroll response
         env:
           SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
