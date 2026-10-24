@@ -174,3 +174,35 @@ test('settled destinations stop scheduling so the cache can confirm the exact fi
   assert.equal(scheduler.stats.nativeScheduleStarts, 0);
   scheduler.destroy();
 });
+
+test('losing verified fastSeek disables a queued timer and preserves responsive RAF catch-up', () => {
+  const time = clock(), nativePacer = createFramePacer({responsive: true});
+  let fastSeek = true, displayed = 500, wanted = 500, desired = 1100, pacedAt = -1000 / 30;
+  const requests = [];
+  function requestFrame() {
+    wanted = nativePacer.next(displayed, desired, (time.now() - pacedAt) / 1000, displayed);
+    pacedAt = time.now(); requests.push(wanted);
+    return wanted;
+  }
+  const scheduler = createNativeFrameScheduler({...time, onFrame() {
+    if (!fastSeek) return {active: false};
+    const previous = wanted;
+    requestFrame();
+    return {active: wanted !== desired, pending: wanted !== displayed, started: wanted !== previous};
+  }});
+  scheduler.request();
+  const pending = wanted;
+  assert.ok(pending > 504, 'Native responsive catch-up must remain active');
+  time.advance(17); displayed = pending; scheduler.ready();
+  assert.equal(time.pending, 1);
+  // The source can discover that fastSeek selected an inaccurate keyframe and
+  // switch to precise seeking while a scheduler continuation is still queued.
+  fastSeek = false;
+  time.advance(40);
+  assert.equal(requests.length, 1, 'The queued callback must not start another timer-driven seek');
+  assert.equal(time.pending, 0);
+  requestFrame(); // The next page RAF takes over using the same native pacer.
+  assert.ok(wanted > displayed && wanted <= desired);
+  assert.ok(wanted - displayed > 4, 'CurrentTime native seeking retains responsive catch-up');
+  scheduler.destroy();
+});

@@ -201,9 +201,11 @@ test('an indexed all-IDR native seek accepts the requested sync frame without a 
  video.fastSeek=time=>{fastCalls++;video.time=Math.floor(time*60)/60;video.seeking=true};
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());
+ assert.equal(source.nativeFastSeek,true);
  const pending=source.decode(20);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,20/60);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));
  const image=await pending;assert.equal(image.time,20/60);assert.equal(video.seeking,false);image.close();
+ assert.equal(source.nativeFastSeek,true);assert.equal(source.stats.nativeFastSeek,true);
 });
 
 test('native seeking verifies compositor timestamps instead of trusting the requested currentTime',async t=>{
@@ -243,6 +245,7 @@ test('an approximate native seek corrects the frame and disables further approxi
  video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
  assert.equal(done,false,'An approximate frame must not be presented as the requested frame');
  assert.equal(video.currentTime,20.25/60);assert.equal(video.seeking,true);
+ assert.equal(source.nativeFastSeek,false);assert.equal(source.stats.nativeFastSeek,false);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await pending;assert.equal(image.time,20.25/60);image.close();
  const next=source.decode(21);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,21.25/60);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));(await next).close();
@@ -258,7 +261,7 @@ test('native fast seeking requires the complete verified frame index and a worki
  const other=new Video();other.readyState=2;other.fastSeek=()=>{throw new TypeError('Unsupported')};
  const fallback=await createFrameSource(other,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
  t.after(()=>fallback.destroy());
- const precise=fallback.decode(20);await turn();assert.equal(other.currentTime,20.25/60);
+ const precise=fallback.decode(20);await turn();assert.equal(other.currentTime,20.25/60);assert.equal(fallback.nativeFastSeek,false);
  other.seeking=false;other.dispatchEvent(new Event('seeked'));(await precise).close();
 });
 test('reversing an approximate native seek cancels it before any corrective seek',async t=>{

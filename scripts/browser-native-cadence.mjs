@@ -114,7 +114,7 @@ try{
    const start=performance.now(),before=sequence.stats;
    function presented(now,metadata){
     const frame=Math.round(metadata.mediaTime*sourceFps);
-    if(frame!==lastNative){native.push({at:now-start,frame,mediaTime:metadata.mediaTime,presentedFrames:metadata.presentedFrames});lastNative=frame}
+    if(frame!==lastNative){native.push({at:now-start,observedAt:performance.now()-start,frame,mediaTime:metadata.mediaTime,presentedFrames:metadata.presentedFrames,seeking:video.seeking,readyState:video.readyState,currentTime:video.currentTime,presentationAt:metadata.presentationTime-start,expectedDisplayAt:metadata.expectedDisplayTime-start});lastNative=frame}
     videoCallback=video.requestVideoFrameCallback(presented);
    }
    videoCallback=video.requestVideoFrameCallback(presented);

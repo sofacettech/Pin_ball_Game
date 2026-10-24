@@ -1,7 +1,7 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-36e551daa2ee';
-import { createFrameSource } from './assets/frame-source.js?v=frames-081310359d24';
+import { createFrameSource } from './assets/frame-source.js?v=frames-4544a243368a';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-1e53ce611dd0';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-9e74ace4e90d';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-eea53e8c376c';
@@ -92,6 +92,10 @@ export async function createSequence(setInteractive, requestFrame, media) {
   });
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
+  // Verified keyframe seeking benefits from independent scheduling in WebKit.
+  // Precise currentTime seeking stays aligned with RAF: timer-driven seeks
+  // increased decoder latency on that path in the same-browser comparison.
+  const usesNativeScheduler = () => source.transient && source.nativeFastSeek;
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video
   // itself through its compositor; only its completed position is reported here.
@@ -99,7 +103,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
     if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
-      if (source.transient && displayedFrame !== scrollFrame()) nativeScheduler.ready();
+      if (usesNativeScheduler() && displayedFrame !== scrollFrame()) nativeScheduler.ready();
     }
     requestFrame();
   },
@@ -121,8 +125,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   });
 
   const nativeScheduler = createNativeFrameScheduler({onFrame() {
-    if (!source.transient || !nativeMotionReady || document.hidden || !['idle','journey'].includes(phase)) return {active: false};
-    readScrollTarget();
+    if (!usesNativeScheduler() || !nativeMotionReady || document.hidden || !['idle','journey'].includes(phase)) return {active: false};
+    readScrollTarget(true);
     const previous = wantedFrame;
     const pending = previous !== displayedFrame;
     const target = requestNextFrame(true);
@@ -135,8 +139,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   resumeJourney.addEventListener('click', () => { source.activate(); }, {signal: events.signal});
 
-  function readScrollTarget() {
-    if (!scrollDirty && desiredFrame === scrollFrame()) return;
+  function readScrollTarget(force = false) {
+    if (!scrollDirty && !force) return;
     scrollDirty = false;
     desiredFrame = scrollFrame();
     if (desiredFrame > 0) allowHover(false);
@@ -144,7 +148,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   function requestNextFrame(native = false) {
     const now = performance.now();
-    const target = (native ? nativePacer : pacer).next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, native ? displayedFrame : paintedFrame);
+    const target = (source.transient ? nativePacer : pacer).next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, native ? displayedFrame : paintedFrame);
     pacedAt = now;
     wantedFrame = target;
     cache.request(target, desiredFrame, displayedFrame);
@@ -222,7 +226,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (['opening','buffering','settling'].includes(phase)) return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
-    if (source.transient) nativeScheduler.request();
+    if (usesNativeScheduler()) nativeScheduler.request();
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {
@@ -323,8 +327,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
       nativeMotionReady = hoverWeight <= .001;
       // Pace from the frame actually on screen, not an unseen scroll target.
       // Nearby samples remain useful while a slower connection catches up.
-      if (source.transient) nativeScheduler.request();
-      const target = source.transient ? wantedFrame : requestNextFrame();
+      if (usesNativeScheduler()) nativeScheduler.request();
+      const target = usesNativeScheduler() ? wantedFrame : requestNextFrame();
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
