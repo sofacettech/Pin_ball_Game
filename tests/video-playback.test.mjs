@@ -201,9 +201,11 @@ test('an indexed all-IDR native seek accepts the requested sync frame without a 
  video.fastSeek=time=>{fastCalls++;video.time=Math.floor(time*60)/60;video.seeking=true};
  const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
  t.after(()=>source.destroy());
+ assert.equal(source.nativeFastSeek,true);
  const pending=source.decode(20);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,20/60);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));
  const image=await pending;assert.equal(image.time,20/60);assert.equal(video.seeking,false);image.close();
+ assert.equal(source.nativeFastSeek,true);assert.equal(source.stats.nativeFastSeek,true);
 });
 
 test('native seeking verifies compositor timestamps instead of trusting the requested currentTime',async t=>{
@@ -243,6 +245,7 @@ test('an approximate native seek corrects the frame and disables further approxi
  video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
  assert.equal(done,false,'An approximate frame must not be presented as the requested frame');
  assert.equal(video.currentTime,20.25/60);assert.equal(video.seeking,true);
+ assert.equal(source.nativeFastSeek,false);assert.equal(source.stats.nativeFastSeek,false);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));const image=await pending;assert.equal(image.time,20.25/60);image.close();
  const next=source.decode(21);await turn();assert.equal(fastCalls,1);assert.equal(video.currentTime,21.25/60);
  video.seeking=false;video.dispatchEvent(new Event('seeked'));(await next).close();
@@ -258,7 +261,7 @@ test('native fast seeking requires the complete verified frame index and a worki
  const other=new Video();other.readyState=2;other.fastSeek=()=>{throw new TypeError('Unsupported')};
  const fallback=await createFrameSource(other,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
  t.after(()=>fallback.destroy());
- const precise=fallback.decode(20);await turn();assert.equal(other.currentTime,20.25/60);
+ const precise=fallback.decode(20);await turn();assert.equal(other.currentTime,20.25/60);assert.equal(fallback.nativeFastSeek,false);
  other.seeking=false;other.dispatchEvent(new Event('seeked'));(await precise).close();
 });
 test('reversing an approximate native seek cancels it before any corrective seek',async t=>{
@@ -404,4 +407,92 @@ test('settled native pixels are captured inside the matching callback before the
  source.suspend();assert.equal(await source.decode(20),still);assert.equal(captures,1,'Resume from the captured still without waiting on a hidden video compositor');
  const moving=source.decode(21,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));assert.equal(await moving,video);
  assert.equal(captures,1,'Continuous scrolling must keep using native video without full-size copies');assert.equal(source.stats.renderer,'native-video');
+});
+
+test('decoded native data does not suppress a gesture after autoplay was denied', async t => {
+ snapshotEnvironment(t);
+ const previousDocument=globalThis.document,previousMedia=globalThis.matchMedia;
+ globalThis.document=Object.assign(new EventTarget(),{hidden:false});globalThis.matchMedia=()=>({matches:true});
+ t.after(()=>{globalThis.document=previousDocument;globalThis.matchMedia=previousMedia});
+ const video=new Video();video.readyState=2;video.reject=true;let activated=0;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'),undefined,()=>activated++);
+ t.after(()=>source.destroy());
+ const moving=source.decode(4,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await moving;
+ assert.equal(source.stats.nativePlaybackBlocked,true);
+ assert.equal(source.stats.nativePlaybackActivated,false);
+ assert.equal(video.readyState,2,'Decoded data alone must not count as playback permission');
+ const calls=video.calls;
+ video.reject=false;document.dispatchEvent(new Event('touchend'));
+ assert.equal(video.calls,calls+1,'Retry play synchronously inside the real gesture');
+ await turn();assert.equal(source.stats.nativePlaybackActivated,true);assert.equal(source.playbackBlocked,false);assert.equal(activated,1);
+ assert.equal(video.paused,true);assert.equal(video.loads,1,'Permission recovery retains the loaded media');
+ document.dispatchEvent(new Event('click'));assert.equal(video.calls,calls+1,'Do not restart an already activated video');
+});
+
+test('denied settled playback is promptable and recovers without reloading or leaking callbacks', async t => {
+ snapshotEnvironment(t);
+ const previousMedia=globalThis.matchMedia;globalThis.matchMedia=()=>({matches:true});t.after(()=>{globalThis.matchMedia=previousMedia});
+ const video=new Video(),callbacks=new Map();let id=0;video.readyState=2;
+ video.requestVideoFrameCallback=callback=>{callbacks.set(++id,callback);return id};video.cancelVideoFrameCallback=key=>callbacks.delete(key);
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));t.after(()=>source.destroy());
+ const moving=source.decode(4,null,false);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await moving;
+ video.reject=true;
+ const denied=source.decode(20);const rejection=assert.rejects(denied,{name:'NotAllowedError'});
+ await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await rejection;
+ assert.equal(source.playbackBlocked,true);assert.equal(callbacks.size,0);assert.equal(video.playbackRate,1);
+ const calls=video.calls;
+ await assert.rejects(source.decode(20),{name:'NotAllowedError'});assert.equal(video.calls,calls,'No automatic denied-play loop');
+ video.reject=false;source.activate();assert.equal(video.calls,calls+1);await turn();
+ const recovered=source.decode(20);await turn();video.seeking=false;video.dispatchEvent(new Event('seeked'));await turn();
+ const batch=[...callbacks.values()];callbacks.clear();for(const callback of batch)callback(0,{mediaTime:20/60});
+ assert.equal(await recovered,video);assert.equal(source.presentedFrame,20);assert.equal(callbacks.size,0);assert.equal(video.loads,1);
+ assert.equal(source.stats.nativePlayRejections,1);
+});
+
+test('native buffering reports data ahead of the playhead separately from opening coverage', async t => {
+ snapshotEnvironment(t);const video=new Video();video.time=12;
+ video.buffered={length:2,start:i=>[0,10][i],end:i=>[3,16][i]};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));t.after(()=>source.destroy());
+ assert.equal(source.stats.bufferedSeconds,3);assert.equal(source.stats.bufferedAheadSeconds,4);
+ video.time=8;assert.equal(source.stats.bufferedAheadSeconds,0);
+});
+
+
+test('native seek timing separates both scroll directions from stationary confirmation',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ for(const [frame,settled] of [[20,false],[10,false],[12,true]]){
+  const decoded=source.decode(frame,undefined,settled);await turn();
+  video.seeking=false;video.dispatchEvent(new Event('seeked'));(await decoded).close();
+ }
+ const timings=source.stats.nativeSeekTiming;
+ assert.equal(source.stats.nativeSeeks,3);
+ for(const value of Object.values(timings)){
+  assert.equal(value.count,1);assert.ok(value.totalMs>=0);assert.equal(value.maxMs,value.totalMs);
+ }
+ assert.equal(Object.values(timings).reduce((sum,value)=>sum+value.totalMs,0),source.stats.nativeSeekMs);
+ timings.forward.count=99;assert.equal(source.stats.nativeSeekTiming.forward.count,1,'Reports cannot mutate live counters');
+ const cancelled=source.decode(30,undefined,false);await turn();source.suspend();
+ await assert.rejects(cancelled,{name:'AbortError'});
+ assert.equal(source.stats.nativeSeekTiming.forward.count,1,'Cancelled work is not reported as a displayed frame');
+});
+
+
+test('priming frame zero cannot disable verified fast seeking when playback advances',async t=>{
+ snapshotEnvironment(t);
+ const video=new Video();video.readyState=2;let resolvePlay,fastCalls=0;
+ video.play=()=>{video.paused=false;return new Promise(resolve=>{resolvePlay=resolve})};
+ video.fastSeek=time=>{fastCalls++;video.time=Math.floor(time*60)/60;video.seeking=true};
+ const source=await createFrameSource(video,{source:'./journey.mp4',fps:60,version:1,frameCount:30,frames:Array(30).fill([0,10])},new URL('https://example.test/index.json'));
+ t.after(()=>source.destroy());
+ const opening=source.decode(0,undefined,false);await turn();
+ assert.equal(fastCalls,0,'The priming still uses precise positioning while play is pending');
+ video.time=1/60;video.seeking=false;video.dispatchEvent(new Event('seeked'));(await opening).close();
+ assert.equal(source.nativeFastSeek,true);assert.equal(source.stats.nativeFastSeekFailure,null);
+ resolvePlay();await turn();assert.equal(video.paused,true);
+ const motion=source.decode(20,undefined,false);await turn();assert.equal(fastCalls,1);
+ video.seeking=false;video.dispatchEvent(new Event('seeked'));(await motion).close();
+ assert.equal(source.nativeFastSeek,true);
 });

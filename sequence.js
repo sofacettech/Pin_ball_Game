@@ -1,9 +1,11 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-06241f194c1d';
-import { createFrameSource } from './assets/frame-source.js?v=frames-640fabab1617';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-29c68baef5bc';
-import { createFramePacer } from './assets/frame-pacing.js?v=frames-d1c131689a24';
+import { createFrameSource } from './assets/frame-source.js?v=frames-5e14aac089b1';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-e50d5678e968';
+import { createFramePacer } from './assets/frame-pacing.js?v=frames-fcf79e1ee64b';
+import { createBufferPacingController, getBufferPacingLimits } from './assets/buffer-pacing.js?v=frames-22288daf15bd';
+import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
 import { prepareInlineVideo, waitForVideo, connectOpeningVideo } from './assets/video-playback.js?v=frames-82220d500c54';
 
 const FPS = 60;
@@ -17,6 +19,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const game = document.querySelector('#game-page');
   const enter = document.querySelector('#enter');
   const status = document.querySelector('#status');
+  const resumeJourney = document.querySelector('#journey-resume');
   const preparation = document.querySelector('#journey-preparation');
   const preparationTitle = document.querySelector('#preparation-title');
   const preparationStatus = document.querySelector('#preparation-status');
@@ -30,9 +33,13 @@ export async function createSequence(setInteractive, requestFrame, media) {
   frame.height = media.journey.height;
   // Native video does not need this surface until a settled frame is captured.
   let context;
-  function drawFrame(image) {
+  let canvasDrawCount=0,canvasDrawMs=0,canvasDrawMaxMs=0,canvasPresentedFrame=null;
+  function drawFrame(image,index) {
     context ||= frame.getContext('2d', { alpha: false });
+    const started=performance.now();
     context.drawImage(image, 0, 0, frame.width, frame.height);
+    const elapsed=performance.now()-started;
+    canvasDrawCount++;canvasDrawMs+=elapsed;canvasDrawMaxMs=Math.max(canvasDrawMaxMs,elapsed);canvasPresentedFrame=index;
   }
   const updateCopy = await createLandingCopy();
   const indexURL = media.indexURL;
@@ -72,8 +79,8 @@ export async function createSequence(setInteractive, requestFrame, media) {
   let refreshFrame = false;
   let preparationStarted = 0, preparationPhrase = -1, preparationPercent = -1;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const pacer = createFramePacer();
   let pacedAt = performance.now(), paintedFrame = 0;
+  let nativeMotionReady = false;
   const events = new AbortController();
   const scrollFrame = () => Math.round(Math.min(1, Math.max(0, window.scrollY / travel)) * (frameCount - 1));
   // Freeze only settled destinations inside their video-frame callback. Safari
@@ -81,9 +88,28 @@ export async function createSequence(setInteractive, requestFrame, media) {
   frame.transient = true; frame.close = () => {};
   const source = await createFrameSource(journey,index,indexURL,index => {
     if (scrollDirty || index !== scrollFrame()) throw new DOMException('Scroll resumed','AbortError');
-    drawFrame(journey);
+    drawFrame(journey,index);
     return frame;
-  });
+  }, () => {
+    resumeJourney.hidden = true;
+    cache.retry();
+    requestFrame();
+  },{renderer:new URLSearchParams(location.search).get('renderer')||'worker'});
+  const pacer = createFramePacer();
+  const nativePacer = createFramePacer({responsive: true});
+  const workerPacer = createFramePacer({responsive: true});
+  const bufferPacing = createBufferPacingController();
+  let bufferDirection = 1, bufferMetrics = null;
+  const workerTravelSpeed = 180;
+  function resetBufferPacing() {
+    bufferPacing.reset(); workerPacer.reset(displayedFrame);
+    bufferDirection = Math.sign(desiredFrame - displayedFrame) || 1;
+    bufferMetrics = null; pacedAt = performance.now();
+  }
+  // Verified keyframe seeking benefits from independent scheduling in WebKit.
+  // Precise currentTime seeking retains its existing responsive RAF path;
+  // independent scheduling is limited to the verified keyframe capability.
+  const usesNativeScheduler = () => source.transient && source.nativeFastSeek;
   const constrained = matchMedia('(any-pointer: coarse)').matches || navigator.deviceMemory <= 4 || navigator.hardwareConcurrency <= 4;
   // Immutable frames are presented in tick(). Older Safari presents the video
   // itself through its compositor; only its completed position is reported here.
@@ -91,26 +117,76 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const advances = wantedFrame > displayedFrame ? available > displayedFrame && available <= wantedFrame : available < displayedFrame && available >= wantedFrame;
     if (image?.transient && (advances || refreshFrame && available === wantedFrame && phase === 'journey' || phase === 'journey' && available === displayedFrame && cache.settled)) {
       display(image,available);
-      // Schedule the next seek on the next paint. Starting it here spends the
-      // remainder of the previous paint's four-frame budget on a tiny step.
-      // With 30-40 ms native seeks that locks playback below the scroll rate,
-      // so lag accumulates throughout a long journey even with buffered video.
+      if (usesNativeScheduler() && displayedFrame !== scrollFrame()) nativeScheduler.ready();
     }
     requestFrame();
   },
-    config: constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
+    // Fast desktop scrolling needs more compressed frames available through
+    // range-delivery gaps. Keep worker output surfaces bounded to four and
+    // retain the same opening readiness threshold on every device.
+    config: source.mode==='worker'
+      ? constrained ? {network:2,batch:24,decoded:4,ahead:80,behind:40,prefetch:128,preparationFrames:57,compressedBytes:16*1024*1024} : {network:3,batch:24,decoded:4,ahead:192,behind:40,prefetch:256,preparationFrames:57,compressedBytes:24*1024*1024}
+      : constrained ? {network:2,batch:24,decoded:4,ahead:56,behind:8,prefetch:80,preparationFrames:57,compressedBytes:10*1024*1024} : {},
     onError(error) {
       status.hidden = false;
-      if (['NotSupportedError','EncodingError'].includes(error.name)) {
+      if (error.name === 'NotAllowedError') {
+        status.hidden = true;
+        resumeJourney.hidden = false;
+      } else if (['NotSupportedError','EncodingError'].includes(error.name)) {
         cache.suspend();
         status.textContent = 'This browser cannot play the journey. Use Skip to Game to enter the game.';
-      } else status.textContent = 'This frame is still loading. Your last frame stays visible.';
+      } else {
+        // Preserve the scene during transient loading; details remain in Debug.
+        status.hidden = true;
+        status.textContent = '';
+      }
     },
   });
 
-  function requestNextFrame() {
+  const {ahead: bufferCapacity, behind: retainedHistory} = cache.stats.settings;
+
+  const nativeScheduler = createNativeFrameScheduler({onFrame() {
+    if (!usesNativeScheduler() || !nativeMotionReady || document.hidden || !['idle','journey'].includes(phase)) return {active: false};
+    readScrollTarget(true);
+    const previous = wantedFrame;
+    const pending = previous !== displayedFrame;
+    const target = requestNextFrame(true);
+    return {
+      active: displayedFrame !== desiredFrame,
+      pending: target !== displayedFrame,
+      started: target !== displayedFrame && (!pending || target !== previous),
+    };
+  }});
+
+  resumeJourney.addEventListener('click', () => { source.activate(); }, {signal: events.signal});
+
+  function readScrollTarget(force = false) {
+    if (!scrollDirty && !force) return;
+    scrollDirty = false;
+    desiredFrame = scrollFrame();
+    if (desiredFrame > 0) allowHover(false);
+  }
+
+  function requestNextFrame(native = false) {
     const now = performance.now();
-    const target = pacer.next(displayedFrame, desiredFrame, (now - pacedAt) / 1000, paintedFrame);
+    const delta = (now - pacedAt) / 1000;
+    let target;
+    if (source.mode === 'worker') {
+      bufferDirection = Math.sign(desiredFrame - displayedFrame) || bufferDirection;
+      const coverage = cache.coverage(displayedFrame, bufferDirection, bufferCapacity);
+      const pacing = bufferPacing.update({delta, bufferedFrames: coverage.available,
+        remainingFrames: coverage.remaining, direction: bufferDirection,
+        desiredDistance: Math.abs(desiredFrame - displayedFrame),
+        consumptionSpeed: workerTravelSpeed, capacityFrames: bufferCapacity});
+      const limits = getBufferPacingLimits(pacing, {bufferedFrames: coverage.available, retainedBehindFrames: retainedHistory, baseSpeed: workerTravelSpeed});
+      bufferMetrics = {bufferAheadFrames: coverage.available, bufferAheadSeconds: coverage.available / FPS,
+        bufferRequiredFrames: pacing.recoveryWatermark, bufferPacingScale: pacing.scale,
+        bufferPacingLimited: pacing.limited, bufferPacingSpeed: limits.maxSpeed};
+      target = workerPacer.next(displayedFrame, desiredFrame, delta, paintedFrame, limits);
+    } else {
+      if (bufferMetrics) resetBufferPacing();
+      target = (source.transient ? nativePacer : pacer).next(displayedFrame, desiredFrame, delta, native ? displayedFrame : paintedFrame);
+    }
     pacedAt = now;
     wantedFrame = target;
     cache.request(target, desiredFrame, displayedFrame);
@@ -172,12 +248,15 @@ export async function createSequence(setInteractive, requestFrame, media) {
     preparationRetry.hidden = true; status.hidden = true; requestFrame();
   }, {signal: events.signal});
   document.addEventListener('visibilitychange', () => {
+    resetBufferPacing();
     if (document.hidden) {
       setGameVisibility(false);
+      nativeScheduler.suspend();
       cache.suspend();
     } else {
       setGameVisibility(document.body.dataset.game === 'visible');
       refreshFrame = true;
+      nativeScheduler.resume();
       cache.resume();
       requestFrame();
     }
@@ -186,6 +265,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (['opening','buffering','settling'].includes(phase)) return;
     updateCopy.setScrolled(window.scrollY > 0);
     scrollDirty = true;
+    if (usesNativeScheduler()) nativeScheduler.request();
     requestFrame();
   }, { passive: true, signal: events.signal });
   function display(image,index) {
@@ -194,18 +274,19 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (journey.parentNode !== frame.parentNode) frame.after(journey);
       if (!journey.classList.contains('native-renderer')) journey.classList.add('native-renderer');
     } else {
-      if (image !== frame) drawFrame(image);
+      if (image !== frame) drawFrame(image,index);
       // Keep the native compositor surface sized behind the captured canvas.
       // Shrinking it after every stop forces WebKit to rebuild it on resume.
     }
     refreshFrame = false;
+    if (!source.playbackBlocked) resumeJourney.hidden = true;
     displayedFrame = index;
     // Start the game only at the settled handoff below. Loading its iframe
     // creates another WebGL scene and compiles physics while the final video
     // frames are still being decoded, even when the iframe is hidden.
     updateCopy(240 + displayedFrame);
     if (displayedFrame !== frameCount - 1 || cache.settled) siteSound.frame(240 + displayedFrame);
-    const atEnd = displayedFrame === frameCount - 1;
+    const atEnd = displayedFrame === frameCount - 1 && cache.settled;
     if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1 && cache.settled) {
       siteSound.handoff();
@@ -233,9 +314,9 @@ export async function createSequence(setInteractive, requestFrame, media) {
     }
     progress.style.transform = `scaleX(${displayedFrame / (frameCount - 1)})`;
   }
-  const destroy = () => { openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); frame.width = frame.height = 1; };
-  window.addEventListener('pagehide', event => { setGameVisibility(false); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
-  window.addEventListener('pageshow', event => { if (event.persisted) { refreshFrame = true; cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
+  const destroy = () => { nativeScheduler.destroy(); openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); frame.width = frame.height = 1; };
+  window.addEventListener('pagehide', event => { resetBufferPacing(); setGameVisibility(false); nativeScheduler.suspend(); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
+  window.addEventListener('pageshow', event => { if (event.persisted) { resetBufferPacing(); refreshFrame = true; nativeScheduler.resume(); cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
   status.hidden = true;
   await finishLoading();
   updateCopy(0);
@@ -245,6 +326,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   return {
     tick(delta, hoverWeight) {
       paintedFrame = displayedFrame;
+      nativeMotionReady = false;
       if (phase === 'opening') {
         updateCopy(opening.currentTime * FPS);
         return !opening.paused && !opening.ended;
@@ -276,18 +358,16 @@ export async function createSequence(setInteractive, requestFrame, media) {
         changePhase('idle'); allowHover(true);
         return false;
       }
-      if (scrollDirty) {
-        scrollDirty = false;
-        desiredFrame = scrollFrame();
-        if (desiredFrame > 0) allowHover(false);
-      }
+      readScrollTarget();
       const hideHold = hoverWeight > .0001;
       if (hold.hidden !== hideHold) hold.hidden = hideHold;
       // Let lifted plates settle before the rendered ball starts travelling.
       if (hoverWeight > .001 && !interactive) return false;
+      nativeMotionReady = hoverWeight <= .001;
       // Pace from the frame actually on screen, not an unseen scroll target.
       // Nearby samples remain useful while a slower connection catches up.
-      const target = requestNextFrame();
+      if (usesNativeScheduler()) nativeScheduler.request();
+      const target = usesNativeScheduler() ? wantedFrame : requestNextFrame();
       const available = cache.get(target) ? target : cache.closest(target,displayedFrame);
       const image = cache.get(available);
       if (image && (available !== displayedFrame || refreshFrame && phase === 'journey')) display(image,available);
@@ -299,7 +379,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     get displayedFrame() { return displayedFrame; },
     get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
-    get stats() { return {...cache.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...bufferMetrics,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,
     frameCount, travel,
   };

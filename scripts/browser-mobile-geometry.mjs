@@ -14,7 +14,8 @@ try {
    const page=await context.newPage(),errors=[];
    page.on('pageerror',error=>errors.push(error.message));
    if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
-   await page.goto(url+'/#experience',{waitUntil:'domcontentloaded'});
+   const pageURL=new URL(url);if(native)pageURL.searchParams.set('renderer','native');pageURL.hash='experience';
+   await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.sofacetPreview&&(
     document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),null,{timeout:60000});
    if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();

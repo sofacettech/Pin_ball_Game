@@ -7,23 +7,26 @@ export const FRAME_CACHE_DEFAULTS = {
 
 export function createFrameCache({count, source, onReady, onError, canConfirm, config = {}}) {
   const settings = {...FRAME_CACHE_DEFAULTS, ...config};
-  const compressed = new Map(), decoded = new Map(), active = new Set(), loading = new Set(), failures = new Map();
+  const compressed = new Map(), decoded = new Map(), active = new Set(), loading = new Set(), failures = new Map(), decodeJobs = new Map();
   for (const name of Object.keys(FRAME_CACHE_DEFAULTS)) {
     if (!Number.isSafeInteger(settings[name]) || settings[name] < (name === 'behind' || name === 'ahead' ? 0 : 1)) {
       throw RangeError('Invalid frame cache setting: ' + name);
     }
   }
-  let target = 0, lead = 0, presented = 0, direction = 1, order = [], ranks = new Map(), timer, decoding = false;
+  let target = 0, lead = 0, presented = 0, direction = 1, order = [], ranks = new Map(), timer, progressPin;
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
-  const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, peakDecoded: 0, peakNetwork: 0, latencyMs: 0};
+  const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, decodeCancelled: 0, peakDecoded: 0, peakDecoding: 0, peakDecodedAndPending: 0, peakNetwork: 0, latencyMs: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
   const advances = frame => frame > Math.min(presented, target) && frame < Math.max(presented, target);
   const useful = frame => ranks.has(frame) || advances(frame);
+  const pinned = frame => source.mode === 'worker' && frame === progressPin && decoded.has(frame) && advances(frame);
+  const decodeConcurrency = () => Math.min(settings.decoded,
+    Number.isSafeInteger(source.decodeConcurrency) && source.decodeConcurrency > 0 ? source.decodeConcurrency : 1);
   const needsNativeConfirmation = () => source.transient && target > 0 && target === lead && 'presentedFrame' in source && source.presentedFrame !== target;
-  function progressFrame() {
+  function progressFrame(frames = compressed.keys()) {
     let best;
-    for (const frame of compressed.keys()) {
+    for (const frame of frames) {
       if (advances(frame) && (best === undefined || Math.abs(target - frame) < Math.abs(target - best))) best = frame;
     }
     return best;
@@ -53,6 +56,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   function warmFrames() {
     if (source.transient) return [target];
     const frames = [target];
+    if (pinned(progressPin)) frames.push(progressPin);
     // A completed range can trail a moving target and still advance the image.
     // Present that progress instead of cancelling every request on a slow link.
     const progress = source.mode === 'video' ? undefined : progressFrame();
@@ -82,7 +86,8 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     }
     const warm = warmFrames();
     while (decoded.size > settings.decoded) {
-      const key = [...decoded.keys()].find(key => !warm.includes(key)) ?? [...decoded.keys()].find(key => key !== target);
+      const candidates = [...decoded.keys()].filter(key => !pinned(key));
+      const key = candidates.find(key => !warm.includes(key)) ?? candidates.find(key => key !== target);
       decoded.get(key).close(); decoded.delete(key); counters.evictions++;
     }
   }
@@ -92,12 +97,34 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     if (!suspended && !destroyed) timer = setTimeout(pump, settings.idleMs);
   }
 
+  function cancelDecodes(obsolete = () => true) {
+    for (const [frame, job] of decodeJobs) {
+      if (obsolete(frame) && !job.controller.signal.aborted) {
+        job.controller.abort(); counters.decodeCancelled++;
+      }
+    }
+    // Keep canceled jobs reserved until the source acknowledges cancellation.
+    // A decoder that ignores AbortSignal may still return a full-size image.
+  }
+
+  function reserveDecodeSlot(next, warm) {
+    while (decoded.size + decodeJobs.size >= settings.decoded) {
+      const candidates = [...decoded.keys()].filter(frame => !pinned(frame));
+      const key = candidates.find(frame => !warm.includes(frame)) ??
+        candidates.reverse().find(frame => warm.indexOf(frame) > warm.indexOf(next));
+      if (key === undefined) return false;
+      decoded.get(key).close(); decoded.delete(key); counters.evictions++;
+    }
+    return true;
+  }
+
   function fail(error, frame, transient = false) {
     if (destroyed || suspended || error.name === 'AbortError') return;
     lastError = {frame, name: error.name, message: error.message};
     if (!transient && source.fallback()) {
       generation++;
       for (const job of active) job.controller.abort();
+      cancelDecodes();
       for (const image of decoded.values()) image.close();
       decoded.clear(); compressed.clear(); bytes = 0; failures.clear();
       onReady(); arm(); return;
@@ -110,6 +137,16 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   function pump() {
     if (destroyed || suspended) return;
     const scrollSettled = performance.now() - requestedAt >= settings.idleMs && (canConfirm?.(lead) ?? true);
+    // A denied play() needs a gesture, not repeated seek/play retries. Keep
+    // scrolling available while the exact settled frame waits for activation.
+    if (scrollSettled && needsNativeConfirmation() && source.playbackBlocked) {
+      if (lastError?.name !== 'NotAllowedError' || lastError.frame !== target) {
+        const error = new DOMException('Tap to resume the journey', 'NotAllowedError');
+        lastError = {frame: target, name: error.name, message: error.message};
+        onError(error, target);
+      }
+      return;
+    }
     if (scrollSettled && needsNativeConfirmation()) decoded.delete(target);
     const video = source.mode === 'video';
     // Native seeking has no compressed-sample download. Make the target ready
@@ -206,44 +243,66 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
         pump();
       });
     }
-    if (decoding) return;
-    const next = warmFrames().find(frame => !decoded.has(frame) && compressed.has(frame) && (failures.get(frame) || 0) <= Date.now());
-    if (next === undefined) {
-      // A pending scroll event or an early idle timer can defer confirmation.
-      // Keep the existing idle pump alive until the destination is current.
-      if (needsNativeConfirmation()) { arm(); return; }
-      if (!active.size) {
-        const retry = Math.min(...downloads.map(frame => failures.get(frame) || Infinity).filter(time => time > Date.now()));
-        if (Number.isFinite(retry)) { clearTimeout(timer); timer = setTimeout(pump, Math.max(1, retry - Date.now())); }
+    while (decodeJobs.size < decodeConcurrency()) {
+      const warm = warmFrames();
+      const next = warm.find(frame => !decoded.has(frame) && !decodeJobs.has(frame) && compressed.has(frame) && (failures.get(frame) || 0) <= Date.now());
+      if (next === undefined) {
+        // A pending scroll event or an early idle timer can defer confirmation.
+        // Keep the existing idle pump alive until the destination is current.
+        if (needsNativeConfirmation() && !decodeJobs.size) { arm(); return; }
+        if (!active.size && !decodeJobs.size) {
+          const retry = Math.min(...downloads.map(frame => failures.get(frame) || Infinity).filter(time => time > Date.now()));
+          if (Number.isFinite(retry)) { clearTimeout(timer); timer = setTimeout(pump, Math.max(1, retry - Date.now())); }
+        }
+        return;
       }
-      return;
+      // Retained images and pending decoder outputs share the same budget.
+      // Close a replaceable image before starting work that can allocate one.
+      if (!reserveDecodeSlot(next, warm)) return;
+      const controller = new AbortController(), job = {controller}, epoch = generation;
+      decodeJobs.set(next, job);
+      counters.peakDecoding = Math.max(counters.peakDecoding, decodeJobs.size);
+      counters.peakDecodedAndPending = Math.max(counters.peakDecodedAndPending, decoded.size + decodeJobs.size);
+      const release = () => { if (decodeJobs.get(next) === job) decodeJobs.delete(next); };
+      // Native and existing WebCodecs sources remain serial by default. Worker
+      // sources opt into parallel decoding and acknowledge cancellation through
+      // the optional fourth argument. Frame zero needs no native confirmation.
+      let work;
+      try { work = source.decode(next, compressed.get(next), next === lead && next !== 0 && scrollSettled, controller.signal); }
+      catch (error) { work = Promise.reject(error); }
+      Promise.resolve(work).then(image => {
+        release();
+        if (destroyed || suspended || controller.signal.aborted || epoch !== generation || !useful(next)) { image.close(); return; }
+        if (image.transient) {
+          for (const retained of decoded.values()) retained.close();
+          decoded.clear();
+          if (next !== target) { onReady(next, image); return; }
+        }
+        decoded.set(next, image); trim(); counters.decodedTotal++;
+        counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
+        if (next === target) { counters.latencyMs = performance.now() - requestedAt; lastError = null; }
+        onReady(next, image);
+      }).catch(error => {
+        release();
+        if (epoch === generation && !controller.signal.aborted) fail(error, next);
+      }).finally(() => { release(); pump(); });
     }
-    decoding = true;
-    const epoch = generation;
-    // Keep motion responsive; confirm compositor pixels at the final scroll
-    // destination instead of starting/stopping native playback for every step.
-    // Frame zero displays the authored still while the native video warms out
-    // of view; hidden video surfaces need not produce compositor callbacks.
-    source.decode(next, compressed.get(next), next === lead && next !== 0 && scrollSettled).then(image => {
-      if (destroyed || suspended || epoch !== generation || !useful(next)) { image.close(); return; }
-      if (image.transient) {
-        for (const retained of decoded.values()) retained.close();
-        decoded.clear();
-        if (next !== target) { onReady(next, image); return; }
-      }
-      decoded.set(next, image); trim(); counters.decodedTotal++;
-      counters.peakDecoded = Math.max(counters.peakDecoded, decoded.size);
-      if (next === target) { counters.latencyMs = performance.now() - requestedAt; lastError = null; }
-      onReady(next, image);
-    }).catch(error => { if (epoch === generation) fail(error, next); }).finally(() => { decoding = false; pump(); });
   }
 
   function request(frame, next = frame, visible = frame) {
     if (![frame, next, visible].every(value => Number.isInteger(value) && valid(value))) throw RangeError('Frame is outside the source sequence');
     if (order.length && target === frame && lead === next && presented === visible) return;
-    if (next !== lead) direction = Math.sign(next - lead);
+    // A finger can reverse while the image still needs to catch up forward.
+    // Prefetch toward the required painted-frame travel, or a held worker can
+    // fill its byte budget behind itself and never receive its next frame.
+    if (source.mode === 'worker' && (frame !== visible || next !== visible)) direction = Math.sign(frame - visible) || Math.sign(next - visible);
+    else if (next !== lead) direction = Math.sign(next - lead);
     else if (frame !== target) direction = Math.sign(frame - target);
     target = frame; lead = next; presented = visible; requestedAt = performance.now(); plan();
+    // request() starts decoding before the caller asks closest() for pixels.
+    // Keep the best worker image that can advance this paint, even when new
+    // target/lookahead jobs need to replace the rest of the four-frame window.
+    progressPin = source.mode === 'worker' && !decoded.has(target) ? progressFrame(decoded.keys()) : undefined;
     source.retarget?.(target,presented,lead);
     for (const [index, image] of decoded) if (image.transient && index !== target) decoded.delete(index);
     for (const [index, data] of compressed) {
@@ -253,6 +312,8 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     for (const job of active) {
       if (!job.frames.some(useful) && !job.controller.signal.aborted) { job.controller.abort(); counters.cancelled++; }
     }
+    const warm = new Set(warmFrames());
+    cancelDecodes(frame => !useful(frame) || (source.mode === 'worker' && !warm.has(frame) && !advances(frame)));
     if (decoded.has(frame)) { counters.hits++; counters.latencyMs = 0; }
     pump(); arm();
   }
@@ -260,6 +321,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   request(0);
   return {
     request,
+    retry() { if (!destroyed && !suspended) { failures.clear(); pump(); arm(); } },
     get settled() { return !needsNativeConfirmation(); },
     // Readiness describes a bounded opening window, never the whole movie.
     // Keep room for the decoder and for requests already in flight.
@@ -282,6 +344,26 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       const progress = required ? available / required : 0;
       return {progress: decoded.has(0) ? progress : Math.min(progress, .99), ready: decoded.has(0) && progress === 1};
     },
+    // Count consecutive ready samples after the painted frame, never queued
+    // ranges. The remaining distance keeps short endings/reversals distinct
+    // from starvation. A caller can use a small pacing horizon; even an
+    // oversized limit cannot scan beyond this cache's bounded prefetch window.
+    coverage(frame, travel = 1, limit = settings.prefetch) {
+      if (!Number.isInteger(frame) || !valid(frame) || (travel !== -1 && travel !== 0 && travel !== 1) ||
+          !Number.isSafeInteger(limit) || limit < 0) throw RangeError('Invalid frame coverage query');
+      const remaining = travel > 0 ? count - 1 - frame : travel < 0 ? frame : 0;
+      const scan = Math.min(remaining, limit, settings.prefetch);
+      let available = 0;
+      if (!destroyed && !suspended && source.mode !== 'video') {
+        while (available < scan) {
+          const next = frame + (available + 1) * travel;
+          const image = decoded.get(next);
+          if (!(image && !image.transient) && compressed.get(next) == null) break;
+          available++;
+        }
+      }
+      return {available, remaining};
+    },
     get: frame => decoded.get(frame),
     closest(frame, previous) {
       let best;
@@ -295,7 +377,8 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       return {
         ...counters, lastError, target, direction, decoded: decoded.size, decodedBytes: decoded.size * (source.decodedFrameBytes || 1920 * 1080 * 4),
         compressed: compressed.size, compressedBytes: bytes, reservedBytes: reserved,
-        pending: active.size + (decoding ? 1 : 0) + (needsNativeConfirmation() ? 1 : 0), network: active.size,
+        pending: active.size + decodeJobs.size + (needsNativeConfirmation() ? 1 : 0), network: active.size,
+        decoding: decodeJobs.size, decodeConcurrency: decodeConcurrency(),
         queued: (source.mode === 'video' ? warmFrames() : order).filter(i => !compressed.has(i) && !decoded.has(i) && !loading.has(i)).length,
         settings, ...source.stats,
       };
@@ -303,6 +386,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     suspend() {
       suspended = true; generation++; clearTimeout(timer);
       for (const job of active) job.controller.abort();
+      cancelDecodes();
       for (const image of decoded.values()) image.close();
       decoded.clear();
       source.suspend?.();
@@ -311,6 +395,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     destroy() {
       destroyed = true; generation++; clearTimeout(timer);
       for (const job of active) job.controller.abort();
+      cancelDecodes();
       for (const image of decoded.values()) image.close();
       decoded.clear(); compressed.clear(); bytes = 0; source.destroy();
     },

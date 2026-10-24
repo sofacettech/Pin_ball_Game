@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
 import { createPlateHover } from './plate-hover.js?v=frames-46f0ceb7b395';
 import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
-import { createSequence } from './sequence.js?v=frames-e3e7e0fb07e0';
+import { createSequence } from './sequence.js?v=frames-2b1d4c2699f0';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
-import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-75503048eed8';
+import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-9c5137db699f';
 
 import { prepareMedia } from './assets/media-delivery.js?v=frames-dc4a9c95ed77';
 
