@@ -1,6 +1,6 @@
 // All supplied samples are independent IDR frames. Synthetic timestamps keep
 // duplicate/reversed requests distinct while copying outputs off codec surfaces.
-let decoder,config,copyCanvas,copyContext,maxPending=4,generation=0,flushTimer,flushing=false,failed=false;
+let decoder,config,copyCanvas,copyContext,maxPending=4,generation=0,flushTimer,flushing=false,failed=false,diagnostics=false;
 const requests=new Map(),timestamps=new Map();
 const stats={workerFlushes:0,workerResets:0,workerHardwarePreference:null,workerOutputKind:'bitmap',workerBitmapCopies:0,workerBitmapCopyMs:0,workerBitmapCopyMaxMs:0};
 const namedError=(message,name='EncodingError')=>new DOMException(message,name);
@@ -56,6 +56,7 @@ function openDecoder(){
  decoder=new VideoDecoder({
   output(image){
    if(active!==generation||failed){image.close();return}
+   const outputAt=diagnostics?performance.timeOrigin+performance.now():undefined;
    const id=timestamps.get(image.timestamp),request=requests.get(id);
    if(!request){image.close();return}
    timestamps.delete(request.timestamp);requests.delete(id);
@@ -69,7 +70,8 @@ function openDecoder(){
     let bitmap;
     try{
      bitmap=detachFrame(image);
-     self.postMessage({type:'frame',id,frame:request.frame,timestamp:request.timestamp,sourceColorSpace,outputKind:'bitmap',image:bitmap,stats},[bitmap]);
+     const timing=diagnostics?{received:request.received,output:outputAt,bitmap:performance.timeOrigin+performance.now()}:undefined;
+     self.postMessage({type:'frame',timing,id,frame:request.frame,timestamp:request.timestamp,sourceColorSpace,outputKind:'bitmap',image:bitmap,stats},[bitmap]);
     }catch(error){bitmap?.close();fatal(error);return}
    }
    armFlush();
@@ -87,7 +89,7 @@ function reset(){
 async function initialize(message){
  if(typeof OffscreenCanvas!=='function')throw namedError('Worker frame copying is unavailable','NotSupportedError');
  if(typeof VideoDecoder!=='function'||typeof EncodedVideoChunk!=='function')throw namedError('WebCodecs is unavailable in this worker','NotSupportedError');
- maxPending=message.maxPending;
+ maxPending=message.maxPending;diagnostics=message.diagnostics===true;
  if(!Number.isSafeInteger(maxPending)||maxPending<1||maxPending>4)throw new RangeError('Invalid worker queue limit');
  const base={...message.config,optimizeForLatency:true};
  let chosen={...base,hardwareAcceleration:'prefer-hardware'},support;
@@ -116,7 +118,7 @@ self.addEventListener('message',({data})=>{
   if(!decoder||decoder.state!=='configured')throw namedError('Worker decoder is not configured','InvalidStateError');
   if(requests.size>=maxPending)throw namedError('Worker decode queue is full','QuotaExceededError');
   if(requests.has(data.id)||timestamps.has(data.timestamp)||!Number.isSafeInteger(data.id)||!Number.isSafeInteger(data.timestamp))throw namedError('Duplicate or invalid worker request');
-  requests.set(data.id,{id:data.id,frame:data.frame,timestamp:data.timestamp,cancelled:false});timestamps.set(data.timestamp,data.id);
+  requests.set(data.id,{id:data.id,frame:data.frame,timestamp:data.timestamp,cancelled:false,received:diagnostics?performance.timeOrigin+performance.now():undefined});timestamps.set(data.timestamp,data.id);
   decoder.decode(new EncodedVideoChunk({type:'key',timestamp:data.timestamp,duration:data.duration,data:data.bytes}));
   armFlush();
  }catch(error){fatal(error)}

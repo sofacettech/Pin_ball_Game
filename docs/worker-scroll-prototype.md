@@ -79,3 +79,14 @@ A local real-video Chromium probe at 20 Mbps and 100 ms latency exposed the sust
 
 
 The final phone threshold deliberately favors steadier travel: with the same 80-frame buffer, slowing below 64 available frames instead of 48 reduces the model's longest phone hold from 500 ms without pacing to 80 ms with pacing. Completion takes 5.84 seconds instead of 3.28 seconds, and reverse travel reaches the exact start with a 20 ms maximum gap. The desktop model retains its 40–60 ms maximum hold. All memory/concurrency limits remain unchanged. Healthy large-jump catch-up is preserved and covered by the existing browser deadlines; no FPS assertion has been weakened.
+
+
+## Tail-stall tracing and reduced scrolling overhead
+
+Debug version 6 separates genuine outstanding movement from the 180 ms input-activity tail. A settled gesture pause no longer creates a stall. Existing raw frame gaps remain available, while the last 20 stall episodes retain onset, detection and ending states, direction, paced target, compressed/decoded readiness, decode age and decoded-image age. Episode outcomes distinguish progress, settled demand, reversal and suspension. Onset pipeline evidence uses the most recent half-second snapshot with its age; detection/end snapshots are refreshed. Hidden time does not extend an episode.
+
+With `?perf=1`, worker stage timing separates request-to-worker, worker-to-decoder-output, output-to-bitmap, bitmap-to-main receipt, and receipt-to-first-draw. Each stage has lifetime count/mean/max and a p95 over its most recent 120 observations. First-draw durations include deliberate cache/lookahead residence; they do not measure main-thread execution time, GPU completion or physical presentation. Undrawn outputs include useful retained lookahead/history and must not be reported as wasted frames. Ordinary visits do not load the timing recorder or allocate its sample windows. Closing Debug continues recording but stops formatting and rewriting its hidden text; reopening refreshes it immediately.
+
+The runtime reuses an identical compressed download plan when only the displayed progress changes, skips unchanged stage-placement/cue calculations, and avoids rolling-audio stop timers when sound is silent. Frame-cache limits, source dimensions, strict colour validation, bitmap detachment and native fallback remain unchanged.
+
+Two predictive decoded-lookahead experiments were evaluated and rejected. Replacing adjacent lookahead with predicted targets reduced useful draws in a healthy scheduling case; a conservative single-slot variant preserved cadence across 24 model profiles but saved only a few decodes without improving draw cadence. The production lookahead stays unchanged. These model and behavior checks establish specific work reductions, not a new physical-device FPS guarantee.

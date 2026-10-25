@@ -13,7 +13,7 @@ class Video extends EventTarget {
  set currentTime(value){this.time=value;this.seeking=true}
  complete(){this.seeking=false;this.dispatchEvent(new Event('seeked'))}
 }
-async function fixture(t,{unsupported=false}={}){
+async function fixture(t,{unsupported=false,diagnostics=false}={}){
  const previous={Worker:globalThis.Worker,matchMedia:globalThis.matchMedia,VideoFrame:globalThis.VideoFrame};
  let worker;
  globalThis.matchMedia=()=>({matches:true});globalThis.VideoFrame=undefined;
@@ -24,7 +24,7 @@ async function fixture(t,{unsupported=false}={}){
   emit(data){this.dispatchEvent(new MessageEvent('message',{data}))}
   terminate(){this.terminated=true}
  };
- const video=new Video(),source=await createFrameSource(video,index,new URL('https://example.test/index.json'),undefined,undefined,{renderer:'worker'});
+ const video=new Video(),source=await createFrameSource(video,index,new URL('https://example.test/index.json'),undefined,undefined,{renderer:'worker',diagnostics});
  t.after(()=>{source.destroy();Object.assign(globalThis,previous)});
  return{video,source,worker};
 }
@@ -70,4 +70,21 @@ test('source passes cancellation through without releasing decoder credit before
  controller.abort();await flush();assert.equal(settled,false);assert.equal(source.stats.workerPending,1);
  worker.emit({type:'released',id:request.id});await rejected;assert.equal(source.stats.workerPending,0);assert.equal(source.stats.workerFailure,null);
  const next=source.decode(10,new Uint8Array([1]),false);output(worker,worker.messages.at(-1));(await next).close();assert.equal(source.mode,'worker');
+});
+
+
+test('source records first draws only when opted in and preserves timing evidence on fallback',async t=>{
+ const regular=await fixture(t);
+ assert.equal(regular.source.markDrawn,undefined);
+ assert.equal(regular.source.stats.workerFrameTimings,undefined);
+ const {source,worker}=await fixture(t,{diagnostics:true});
+ const pending=source.decode(12,new Uint8Array([1]),false);
+ output(worker,worker.messages.at(-1));const image=await pending;
+ source.markDrawn(image);source.markDrawn(image);
+ assert.equal(source.stats.workerDrawnOutputs,1);
+ assert.equal(source.stats.workerFrameTimings.receiptToDraw.count,1);
+ source.fallback('probe');
+ assert.equal(source.stats.workerDrawnOutputs,1);
+ assert.equal(source.stats.workerFrameTimings.requestToReceipt.count,1);
+ assert.doesNotThrow(()=>source.markDrawn(image));image.close();
 });

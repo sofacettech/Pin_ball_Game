@@ -97,7 +97,7 @@ for(const bad of [{sourceColorSpace:{...config.colorSpace,matrix:'bt601'}},{sour
 }
 
 const workerSource=await readFile(new URL('../assets/frame-decoder-worker.js',import.meta.url),'utf8');
-async function workerFixture({buffered=false,hardware=true,unsupported=false,surfaceLimit=Infinity,canvas=true,copyFailure,transferFailure=false}={}){
+async function workerFixture({buffered=false,hardware=true,unsupported=false,surfaceLimit=Infinity,canvas=true,copyFailure,transferFailure=false,diagnostics=false}={}){
  const messages=[],timers=new Map(),decoders=[],probes=[],canvases=[],sourceFrames=[],bitmaps=[],events=[];let listener,timerId=0,clock=0;
  class Decoder {
   static async isConfigSupported(value){probes.push(value);return{supported:!unsupported&&(hardware||value.hardwareAcceleration!=='prefer-hardware')}}
@@ -144,9 +144,9 @@ async function workerFixture({buffered=false,hardware=true,unsupported=false,sur
   if(data.type==='frame'&&transferFailure)throw new DOMException('Bitmap transfer failed','DataCloneError');
   messages.push({...data,stats:data.stats?{...data.stats}:undefined,transfer});
  }};
- vm.runInNewContext(workerSource,{self,VideoDecoder:Decoder,OffscreenCanvas:canvas?Canvas:undefined,performance:{now:()=>++clock},EncodedVideoChunk:class{constructor(init){Object.assign(this,init)}},DOMException,setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId},clearTimeout(id){timers.delete(id)}});
+ vm.runInNewContext(workerSource,{self,VideoDecoder:Decoder,OffscreenCanvas:canvas?Canvas:undefined,performance:{timeOrigin:10000,now:()=>++clock},EncodedVideoChunk:class{constructor(init){Object.assign(this,init)}},DOMException,setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId},clearTimeout(id){timers.delete(id)}});
  const send=data=>listener({data});
- send({type:'init',config,fps:60,maxPending:4});await flush();
+ send({type:'init',config,fps:60,maxPending:4,diagnostics});await flush();
  return{send,messages,timers,decoders,probes,canvases,sourceFrames,bitmaps,events,runTimer:async()=>{const [id,timer]=timers.entries().next().value;timers.delete(id);timer.fn();await flush()}};
 }
 const request=(id,sourceFrame=id)=>({type:'decode',id,frame:sourceFrame,timestamp:id*16667,duration:16667,bytes:new Uint8Array([1]).buffer});
@@ -288,4 +288,33 @@ test('cancelled and stale outputs release codec surfaces without allocating bitm
  assert.ok(f.events.findIndex(row=>row.type==='source-close'&&row.image===cancelled)<f.events.findIndex(row=>row.type==='post-released'));
  f.send({type:'reset'});const stale=old.emit(33334);assert.equal(stale.closed,1);assert.equal(f.bitmaps.length,0);
  f.send(request(3));await f.runTimer();assert.equal(f.bitmaps.length,1);assert.equal(f.sourceFrames.at(-1).closed,1);
+});
+
+
+test('worker stage timestamps are opt-in and preserve bitmap ownership',async()=>{
+ const regular=await workerFixture();regular.send(request(1));
+ assert.equal(regular.messages.find(row=>row.type==='frame').timing,undefined);
+ const diagnostic=await workerFixture({diagnostics:true});diagnostic.send(request(1));
+ const row=diagnostic.messages.find(row=>row.type==='frame');
+ assert.ok(row.timing.received>10000);
+ assert.ok(row.timing.received<row.timing.output);
+ assert.ok(row.timing.output<row.timing.bitmap);
+ assert.equal(row.image.closed,0);assert.equal(diagnostic.sourceFrames[0].closed,1);
+ row.image.close();regular.messages.find(row=>row.type==='frame').image.close();
+});
+
+test('adapter timing history is absent by default and records only first draws when opted in',async t=>{
+ const regular=await fixture(t),ordinary=regular.decoder.decode(1,new Uint8Array([1]));
+ complete(regular.worker,regular.worker.messages.at(-1));const ordinaryImage=await ordinary;
+ regular.decoder.markDrawn(ordinaryImage);
+ assert.equal(regular.decoder.stats.workerFrameTimings,undefined);ordinaryImage.close();
+ const diagnostic=await fixture(t,{diagnostics:true}),pending=diagnostic.decoder.decode(2,new Uint8Array([1]));
+ complete(diagnostic.worker,diagnostic.worker.messages.at(-1));const image=await pending;
+ assert.equal(diagnostic.decoder.stats.workerUndrawnOutputs,1);
+ diagnostic.decoder.markDrawn(image);diagnostic.decoder.markDrawn(image);
+ assert.equal(diagnostic.decoder.stats.workerDrawnOutputs,1);
+ assert.equal(diagnostic.decoder.stats.workerUndrawnOutputs,0);
+ assert.equal(diagnostic.decoder.stats.workerFrameTimings.requestToReceipt.count,1);
+ assert.equal(diagnostic.decoder.stats.workerFrameTimings.receiptToDraw.count,1);
+ image.close();
 });
