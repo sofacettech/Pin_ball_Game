@@ -109,7 +109,7 @@
   if(story){
    root.dataset.story='';phrase.style.opacity=motion.matches?'1':'0';phrase.style.transform='none';renderStatement();
    const run=textRun;
-   Promise.all(['Biarty','SOFacetWordmark'].map(font=>document.fonts.load('400 16px '+font))).catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
+   Promise.all(['Acumin','SOFacetWordmark'].map(font=>document.fonts.load('400 16px '+font))).catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
   }
   status.firstChild.textContent='Preparing your table. ';
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;
