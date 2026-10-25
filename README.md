@@ -88,7 +88,7 @@ All writes require JSON and the configured exact Origin. Keep the frontend and A
 | `GET /api/membership/config` | Public OTP availability, approved policy URLs and `pointsPerRupee: 10` |
 | `POST /api/membership/otp/request` | `{phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}` |
 | `POST /api/membership/otp/verify` | `{phoneNumber, otp, challengeId}` → `{verified, verificationToken}` |
-| `POST /api/membership` | `{name, leaderboardName, email, dateOfBirth, city, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
+| `POST /api/membership` | `{name, leaderboardName, email, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
 | `POST /api/membership/rewards` | Existing member sends `{gameId}` → `{success, pointsSaved, savedPoints, bestPoints, remainingPoints}` |
 | `GET /api/leaderboard` | Member-only game ranking with `entries` and `me` |
 | `GET /api/rewards/leaderboard` | Member-only external rewards ranking; requires rewards configuration |
@@ -191,7 +191,7 @@ Before collecting memberships publicly, finish SMS and approved policies, test t
 
 `account-source/` is the React sign-in and points page. The shared navigation links **My Account** to `account.html`; registration remains a separate flow for saving a new player's score. The existing brand artwork and navbar anchors are reused. Written brand names use the supplied wordmark font without changing surrounding typography.
 
-I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Registration also includes Indian city suggestions while retaining the existing city field contract.
+I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Sign-up collects full name, mobile number and email on one screen, with the existing 18+ / policy declaration and optional launch-update consent. “Save my points” goes directly to SMS confirmation. Date of birth and city are no longer collected; the server still validates those fields if an older client supplies them. The initial public leaderboard name is derived from the full name, and the existing account/profile name-editing flow remains available.
 
 An existing member session can read `GET /api/account`: `{name, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
 
