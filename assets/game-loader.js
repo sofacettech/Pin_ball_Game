@@ -6,6 +6,7 @@
  const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
  const status=root.querySelector('[role="status"]'),error=root.querySelector('.game-loading-error');
  const gamePage=document.body.hasAttribute('data-game-loading');
+ const entry=gamePage?document.getElementById('game-loader-controller')?.dataset.gameEntry:'';
  const story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
  const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
  const messages=['Your points could become something precious','Every 10 points gets you ₹1 closer to your first diamond.','Play well. Save your points. Shine later.'];
@@ -14,8 +15,24 @@
  let active=false,failed=false,parentVisible=parent===window,events,observer;
  let points=[],impacts=[],blocked=[];
  let textAnimation,statementIndex=0,textRun=0,storyDone=true,readyPending=false;
+ let importFrame=0,importTask=0,importStarted=false,pageActive=true;
+ function cancelGameImport(){cancelAnimationFrame(importFrame);clearTimeout(importTask);importFrame=importTask=0}
+ function canImportGame(){return entry&&!importStarted&&active&&!failed&&!root.hidden&&parentVisible&&!document.hidden&&pageActive}
+ function scheduleGameImport(){
+  if(!canImportGame()){cancelGameImport();return}
+  if(importFrame||importTask)return;
+  // Wait for the embedded handoff, then let the shell paint before evaluating
+  // the game. A reversal or hidden tab can cancel either scheduled boundary.
+  importFrame=requestAnimationFrame(()=>{
+   importFrame=0;if(!canImportGame())return;
+   importTask=setTimeout(()=>{
+    importTask=0;if(!canImportGame())return;importStarted=true;
+    import(new URL(entry,location.href).href).catch(fail);
+   },0);
+  });
+ }
  const stop=()=>{cancelAnimationFrame(frame);frame=0;last=0;textAnimation?.pause()};
- function cleanup(){stop();textAnimation?.cancel();textAnimation=null;textRun++;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
+ function cleanup(){cancelGameImport();stop();textAnimation?.cancel();textAnimation=null;textRun++;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
  function renderStatement(){
   statement.dataset.statement=String(statementIndex);
   phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1)/).map(part=>{
@@ -89,11 +106,11 @@
   points=points.filter(p=>time-p.t<=2).slice(-240);impacts=impacts.filter(p=>time-p.t<.42).slice(-8);
  }
  function tick(now){frame=0;if(!active||failed||document.hidden||!parentVisible||motion.matches)return;advance(last?Math.min((now-last)/1000,.05):0);last=now;draw();frame=requestAnimationFrame(tick)}
- function resume(){stop();if(active&&!failed&&!root.hidden){measure();draw();if(!document.hidden&&parentVisible){if(!storyDone)textAnimation?.play();if(!motion.matches)frame=requestAnimationFrame(tick)}}}
+ function resume(){stop();if(active&&!failed&&!root.hidden){measure();draw();if(!document.hidden&&parentVisible){if(!storyDone)textAnimation?.play();if(!motion.matches)frame=requestAnimationFrame(tick)}}scheduleGameImport()}
  function listen(){
   events=new AbortController();const signal=events.signal;
   addEventListener('resize',resume,{signal});visualViewport?.addEventListener('resize',resume,{signal});
-  document.addEventListener('visibilitychange',()=>document.hidden?stop():resume(),{signal});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();cancelGameImport()}else resume()},{signal});
   motion.addEventListener('change',()=>{
    points=[];impacts=[];
    if(story&&motion.matches){textAnimation?.cancel();textAnimation=null;textRun++;storyDone=true;renderStatement();phrase.style.opacity='1';phrase.style.transform='none';if(readyPending){finishReady();return}}
@@ -135,7 +152,7 @@
  const style=document.getElementById('game-entry-style');
  const stylesReady=style?.dataset.failed?Promise.reject(Error('Game styles unavailable')):!style||style.sheet?Promise.resolve():new Promise((resolve,reject)=>{style.addEventListener('load',resolve,{once:true});style.addEventListener('error',()=>{fail();reject(Error('Game styles unavailable'))},{once:true})});
  stylesReady.catch(fail);
- window.sofacetGameLoader={show,ready,fail,cancel:hide,stylesReady,isActive:()=>parentVisible,setActive(value){parentVisible=value;value?resume():stop()}};
+ window.sofacetGameLoader={show,ready,fail,cancel:hide,stylesReady,isActive:()=>parentVisible,setActive(value){parentVisible=value;if(value)resume();else{stop();cancelGameImport()}}};
  root.querySelector('[data-game-retry]').onclick=()=>location.reload();
  document.addEventListener('click',event=>{
   if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.defaultPrevented)return;
@@ -144,14 +161,7 @@
   show();setTimeout(()=>{if(event.defaultPrevented)hide()},0);
  },true);
  addEventListener('message',event=>{if(event.source===parent&&event.origin===location.origin&&event.data?.type==='sofacet:experience-visibility'&&typeof event.data.visible==='boolean')window.sofacetGameLoader.setActive(event.data.visible)});
- addEventListener('pagehide',()=>{cleanup();clearTimeout(fade)});
- addEventListener('pageshow',event=>{if(event.persisted){if(gamePage&&failed){root.hidden=false;return}if(gamePage&&document.getElementById('stage')?.dataset.ready!=='true'){active=false;show()}else hide()}});
- if(gamePage){
-  show();
-  const entry=document.getElementById('game-loader-controller').dataset.gameEntry;
-  // Paint the shell before evaluating the large game module. Hidden preloads
-  // use tasks because requestAnimationFrame is suspended in hidden documents.
-  const load=()=>import(new URL(entry,location.href).href).catch(fail);
-  if(entry){if(document.hidden||!parentVisible)setTimeout(load,0);else requestAnimationFrame(()=>setTimeout(load,0))}
- }
+ addEventListener('pagehide',()=>{pageActive=false;cleanup();clearTimeout(fade)});
+ addEventListener('pageshow',event=>{pageActive=true;if(event.persisted){if(gamePage&&failed){root.hidden=false;return}if(gamePage&&document.getElementById('stage')?.dataset.ready!=='true'){active=false;show()}else hide()}});
+ if(gamePage)show();
 })();
