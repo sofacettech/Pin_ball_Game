@@ -123,6 +123,7 @@ function togglePause(){if(!loaded||inspecting||!physics.active||physics.state===
 $('pause').onclick=togglePause;
 settings.onclick=()=>{if(!menu.hidden){resumeGame();return}if(inspecting)toggleInspection();menu.hidden=false;settings.setAttribute('aria-expanded','true');setGamePaused(true);$('menu-title').focus({preventScroll:true});menu.scrollIntoView({block:'nearest'})};
 function resumeGame(){closeSettings();closeNavigation();setGamePaused(false)}
+window.addEventListener('sofacet:back-to-game',resumeGame);
 $('resume').onclick=resumeGame;
 $('menu-close').onclick=resumeGame;
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();event.stopPropagation();resumeGame()}});
@@ -178,4 +179,9 @@ if(import.meta.env.DEV||(new URLSearchParams(location.search)).has('review')){
 }
 const gameReady=start();
 if(location.hash==='#leaderboard')void Promise.all([leaderboard.ready,gameReady]).then(()=>{if(loaded)showLeaderboard()});
+if(['#settings','#profile'].includes(location.hash))void gameReady.then(()=>{
+ if(!loaded)return;
+ if(navToggle.getAttribute('aria-expanded')!=='true')navToggle.click();
+ $(location.hash==='#settings'?'settings':'profile').click();
+});
 

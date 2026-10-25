@@ -27,22 +27,22 @@ test('actual bumper impacts use the requested scores and keep contact debounce',
  for(const [handle,obstacle] of physics.bumpers){
   physics.start(123);physics.charge=.5;physics.launch();physics.score=0;physics.time=1;
   const incoming={x:-.4,y:0,z:0};physics.ball.setLinvel(incoming,true);
-  const expected=obstacle.id.startsWith('ring_')?50:obstacle.id.startsWith('bumper_neutral_')?100:['bumper_plus','drum_base_bumper'].includes(obstacle.role)?500:obstacle.role==='bumper_minus'?-500:0;
+  const expected=obstacle.id.startsWith('ring_')?50:obstacle.id.startsWith('bumper_neutral_')?100:obstacle.role==='bumper_plus'?500:obstacle.role==='drum_base_bumper'?250:obstacle.role==='bumper_minus'?-500:0;
   physics.applyBumper(handle,[1,0,0],incoming,{x:0,y:physics.floorY,z:0});
   assert.equal(physics.score,expected,obstacle.id);assert.equal(physics.lastHit.delta,expected,obstacle.id);
   physics.time+=.01;physics.applyBumper(handle,[1,0,0],incoming,{x:0,y:physics.floorY,z:0});
   assert.equal(physics.score,expected,obstacle.id+' repeat contact');
  }
- assert.equal(RING_SCORE,50);assert.equal(TRIANGLE_SCORE,100);assert.equal(CAVE_SCORE,3000);
+ assert.equal(RING_SCORE,50);assert.equal(TRIANGLE_SCORE,100);assert.equal(CAVE_SCORE,700);
 });
 
-test('launcher awards 450 exactly once for a manual or automatic launch, and zero for an unlaunched charge',()=>{
- assert.equal(LAUNCHER_SCORE,450);
+test('manual and automatic launches award zero points, as does an unlaunched charge',()=>{
+ assert.equal(LAUNCHER_SCORE,0);
  const idle={left:false,right:false,space:false},held={...idle,space:true};
  physics.start(123);physics.tick(idle);for(let i=0;i<30;i++)physics.tick(held);physics.tick(idle);
- assert.equal(physics.launches,1);assert.equal(physics.score,450);physics.launch();assert.equal(physics.score,450);
+ assert.equal(physics.launches,1);assert.equal(physics.score,0);physics.launch();assert.equal(physics.score,0);
  physics.start(123);physics.tick(idle);for(let i=0;i<200&&physics.launches===0;i++)physics.tick(held);
- assert.equal(physics.launches,1);assert.equal(physics.score,450);
+ assert.equal(physics.launches,1);assert.equal(physics.score,0);
  physics.start(123);physics.tick(idle);physics.tick(held);physics.tick(idle);
  assert.equal(physics.launches,0);assert.equal(physics.score,0);
 });
@@ -51,9 +51,9 @@ test('runtime scoring data agrees with entity declarations and its cache checksu
  for(const o of obstacles){
   const e=manifest.entities.find(e=>e.game_id===o.id);assert.ok(e,o.id);assert.equal(e.score_delta,o.score_delta,o.id);
  }
- assert.equal(manifest.entities.find(e=>e.role==='launcher').score_delta,450);
+ assert.equal(manifest.entities.find(e=>e.role==='launcher').score_delta,0);
  assert.equal(manifest.asset_checksums['collider-entities.json'],createHash('sha256').update(readFileSync(asset('collider-entities.json'))).digest('hex'));
- assert.equal(REPLAY_VERSION,18);
+ assert.equal(REPLAY_VERSION,19);
 });
 
 test('a complete three-ball game has the same score in the server replay worker',async()=>{
@@ -64,4 +64,13 @@ test('a complete three-ball game has the same score in the server replay worker'
  }
  assert.equal(physics.state,'finished');assert.equal(physics.drains,3);assert.equal(physics.lives,0);assert.ok(physics.launches>=3);
  const score=physics.score,result=await verifyGame(seed,inputs);assert.equal(result.score,score);
+});
+
+
+test('a valid cave entry awards 700 once and duplicate capture adds no points',()=>{
+ physics.start(123);physics.charge=.5;physics.launch();physics.laneExited=true;
+ const def=manifest.cave,r=manifest.ball_diameter/2/(def.world_scale*manifest.scale),gate=Math.max(def.entry_plane,def.approach_front+r+.06);
+ const vector=p=>({x:p[0],y:p[1],z:p[2]}),from=vector(physics.cavePoint(0,gate+.1)),to=vector(physics.cavePoint(0,gate-.01)),direction=physics.caveDirection(),incoming={x:-direction[0]*.5,y:0,z:-direction[2]*.5};
+ assert.equal(physics.tryEnterCave(from,to,incoming),true);assert.equal(physics.score,700);assert.equal(physics.caveEntries,1);
+ assert.equal(physics.tryEnterCave(from,to,incoming),false);assert.equal(physics.score,700);
 });

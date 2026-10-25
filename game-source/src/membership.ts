@@ -9,7 +9,7 @@ export function connectMembership(options:Options){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
  const dialog=$<HTMLDialogElement>('registration-dialog'),frame=$<HTMLIFrameElement>('registration-frame');
  const profile=$<HTMLButtonElement>('profile'),profileMenu=$('profile-menu'),profileArea=$('profile-navigation');
- const profileMember=$<HTMLButtonElement>('profile-member'),profileRetry=$<HTMLButtonElement>('profile-retry');
+ const profileRetry=$<HTMLButtonElement>('profile-retry');
  const member=$<HTMLButtonElement>('member'),menuMember=$<HTMLButtonElement>('menu-member');
  const edit=$<HTMLButtonElement>('profile-edit'),editForm=$<HTMLFormElement>('profile-edit-form'),editName=$<HTMLInputElement>('profile-display-name'),editStatus=$('profile-edit-status'),editSave=$<HTMLButtonElement>('profile-save');
  let profileUpdateUrl:string|null=null,editing=false;
@@ -24,25 +24,24 @@ export function connectMembership(options:Options){
   profile.title='Profile';
   $('profile-name').textContent=registered?player!.display_name:'Your profile';
   setBrandText($('profile-status'),checking?'Checking your membership…':registered?'Your So/Facet membership is active.':guest?'Become a So/Facet member and keep playing.':'We couldn’t load your membership. Please try again.');
-  profileMember.hidden=!guest;profileRetry.hidden=checking||player!==null;
+  profileRetry.hidden=checking||player!==null;
   edit.hidden=!registered;
   if(!registered){editing=false;editForm.hidden=true}
-  member.hidden=menuMember.hidden=!player;
-  member.textContent=menuMember.textContent=registered?'Leaderboard':'Become a member';
+  member.hidden=menuMember.hidden=!registered;
  }
  function updatePlayer(next:Player|null){checking=false;player=next;paint()}
  function closeProfile(restoreFocus=false){if(editing)return;profileMenu.hidden=true;profile.setAttribute('aria-expanded','false');if(restoreFocus)profile.focus()}
  function showProfile(){
   if(!profileMenu.hidden){closeProfile(true);return}
   profileMenu.hidden=false;profile.setAttribute('aria-expanded','true');
-  (profileMember.hidden?profileRetry.hidden?$('profile-close'):profileRetry:profileMember).focus();
+  (profileRetry.hidden?$('profile-close'):profileRetry).focus();
  }
  async function open(source:HTMLElement=profile,pending:CompletedGameResult|null=null){
   if(dialog.open)return;
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member){closeProfile();options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;closeProfile();options.beforeOpen();
-  frame.src='/membership.html';dialog.showModal();document.body.classList.add('membership-open');
+  frame.src='/membership.html?nav=game';dialog.showModal();document.body.classList.add('membership-open');
  }
  function close(){
   if(!dialog.open)return;
@@ -52,7 +51,6 @@ export function connectMembership(options:Options){
  }
  profile.onclick=showProfile;
  $('profile-close').onclick=()=>closeProfile(true);
- profileMember.onclick=()=>open(profile);
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
  profileRetry.onclick=async()=>{checking=true;paint();await options.refreshPlayer()};
  const requestExit=()=>frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);

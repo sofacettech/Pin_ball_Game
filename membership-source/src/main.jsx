@@ -3,8 +3,10 @@ import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request, pendingResult} from './api.js';
 import {countries, normalisePhone, phoneCountry, maskedPhone} from './phone.js';
+import {matchingIndianCities} from './cities.js';
 import {birthDateState,underAgeCopy,splitPlayerName,publicPlayerName,validPlayerName,validPublicName,leaveCopy,exitCopy} from '../../game-source/src/player-copy.ts';
 import {BrandText} from '../../assets/brand-text.jsx';
+import {accountHref,accountSignInHref,readPreviewAccount} from '../../shared/account-session.js';
 import './style.css';
 
 const embedded = window.parent !== window;
@@ -30,6 +32,10 @@ function PhoneField({id,country,onCountry,compact=false,...props}) {
     <Field id={id} label="Phone number" name={id} type="tel" inputMode="tel" placeholder={country?'Phone number':'Include + country code'} autoComplete="tel" maxLength={30} required {...props}/>
   </div>;
 }
+function CityField(props){
+ const matches=matchingIndianCities(props.value);
+ return <><Field id="city" label="City" icon="pin" name="city" placeholder="Type or select your city" autoComplete="off" spellCheck={false} maxLength={100} required list="indian-city-suggestions" {...props}/><datalist id="indian-city-suggestions">{matches.map(city=><option key={city.name+'|'+city.state} value={city.name} label={city.state}/>)}</datalist></>;
+}
 function App() {
   const [identity,setIdentity]=useState({name:'',phone:'',country:'IN'}),[details,setDetails]=useState(initialDetails);
   const [stage,setStage]=useState('identity'),[step,setStep]=useState(1),[compact,setCompact]=useState(matchMedia('(max-width:1100px)').matches);
@@ -40,12 +46,12 @@ function App() {
   const [saved,setSaved]=useState(null),[dialog,setDialog]=useState(null),[shareStatus,setShareStatus]=useState('');
   const [memberCheck,setMemberCheck]=useState('checking');
   const [exit,setExit]=useState(null),[newCountry,setNewCountry]=useState('IN');
-  const controller=useRef(null),locked=useRef(false),policyDialog=useRef(null),mounted=useRef(true),pendingRef=useRef(null),exitHandler=useRef(null),exitDestination=useRef('/index.html#experience'),nicknameEdited=useRef(false);
+  const controller=useRef(null),locked=useRef(false),policyDialog=useRef(null),mounted=useRef(true),pendingRef=useRef(null),exitHandler=useRef(null),exitDestination=useRef('/'),nicknameEdited=useRef(false);
   const hasUnsaved=()=>!!pendingRef.current&&pendingRef.current.points>=10&&!saved;
-  function requestExit(destination='/index.html#experience') {
+  function requestExit(destination='/') {
     if(locked.current){setStatus('Please wait for the current request to finish.');return}
     if(!hasUnsaved()){if(typeof destination==='function')destination();else window.top.location.assign(destination);return}
-    exitDestination.current=typeof destination==='string'?destination:'/index.html#experience';setExit('confirm');
+    exitDestination.current=typeof destination==='string'?destination:'/';setExit('confirm');
   }
   function restoreDraft(){setExit(null);requestAnimationFrame(()=>document.getElementById(stage==='identity'?'front-name':stage==='details'?(step===1?'member-name':'birthdate'):changing?'new-phone':'final-otp')?.focus({preventScroll:true}))}
   exitHandler.current=(destination,escape=false)=>{if(escape&&exit==='confirm'){restoreDraft();return}requestExit(destination)};
@@ -53,11 +59,12 @@ function App() {
   async function checkMembership(signal) {
     if(!signal){controller.current?.abort();controller.current=new AbortController();signal=controller.current.signal}
     setMemberCheck('checking');
+    if(!embedded&&readPreviewAccount()){location.replace(accountHref);return}
     try{
       const player=await request('/api/player',undefined,signal);
       if(signal.aborted||!mounted.current)return;
       if(typeof player.member!=='boolean')throw new Error('Membership could not be checked.');
-      if(player.member){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace('/play.html#leaderboard')}
+      if(player.member){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountHref)}
       else setMemberCheck('guest');
     }catch(error){if(!signal.aborted&&mounted.current)setMemberCheck('error')}
   }
@@ -66,7 +73,7 @@ function App() {
     const resize=event=>setCompact(event.matches),resizeForm=event=>setSplitForm(event.matches);
     Object.defineProperty(window,'sofacetPendingReward',{get:()=>pendingRef.current,configurable:true});
     const receive=event=>{if(!embedded||event.origin!==location.origin||event.source!==window.parent)return;if(event.data?.type==='sofacet:pending-reward'){const result=pendingResult(event.data.result);if(result){pendingRef.current=result;setPending(result)}}else if(event.data?.type==='sofacet:request-exit')exitHandler.current(()=>post({type:'contest-registration:close'}),true)};
-    const escape=event=>{if(event.key==='Escape'&&!policyDialog.current?.open){event.preventDefault();exitHandler.current(embedded?()=>post({type:'contest-registration:close'}):'/index.html#experience',true)}};
+    const escape=event=>{if(event.key==='Escape'&&!policyDialog.current?.open){event.preventDefault();exitHandler.current(embedded?()=>post({type:'contest-registration:close'}):'/',true)}};
     const navigate=event=>{
       if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
       const link=event.target instanceof Element?event.target.closest('a[href]'):null;if(!link||link.target==='_blank'||link.hasAttribute('download'))return;
@@ -160,7 +167,7 @@ function App() {
       else{setIdentity(current=>({...current,name:details.name}));setStage('identity')}
       return;
     }
-    requestExit('/index.html#experience');
+    requestExit('/');
   }
   function policy(kind) {
     const url=config?.policies?.[kind];
@@ -177,7 +184,7 @@ function App() {
   const summary=<aside className="score-section" aria-label="About your points"><h2>Keep them before<br/> they disappear.</h2><p className="score-copy">Unsaved points disappear when you leave this page.<br/>10 points = ₹1, and eligible points can be used toward up to 10% of the diamond value plus making charges on an order. <span className="best-score">Only your best score counts.</span></p></aside>;
   return brandText(<>
     <div className="scene" aria-hidden="true"/>
-    <a className="membership-close" href="/index.html#experience" target="_top" aria-label="Return to landing page">×</a>
+    <a className="membership-close" href="/" target="_top" aria-label="Return to landing page">×</a>
     <main className="membership-page">{exit?<section className="membership-exit" aria-labelledby="exit-title"><p className="eyebrow">{exit==='confirm'?'BEFORE YOU GO':exitCopy.label}</p><h1 id="exit-title" tabIndex={-1}>{exit==='confirm'?leaveCopy(pending.points).title:exitCopy.title}</h1><p className="step-copy">{exit==='confirm'?leaveCopy(pending.points).support:exitCopy.support}</p><div className="exit-actions">{exit==='confirm'?<><CrystalButton type="button" arrow onClick={restoreDraft}>Save my points</CrystalButton><button className="secondary-button" type="button" onClick={()=>{pendingRef.current=null;setPending(null);post({type:'sofacet:reward-discarded'});setExit('left')}}>Leave anyway</button></>:<><CrystalButton type="button" onClick={replay}>Play again</CrystalButton><button className="secondary-button" type="button" onClick={()=>window.top.location.assign(exitDestination.current)}>Back to the world</button></>}</div>{exit==='left'&&<p className="sign-off"><BrandText>{exitCopy.signoff}</BrandText></p>}</section>:memberCheck!=='guest'?<div className="membership-layout"><p className="step-copy" role="status">{memberCheck==='error'?'We couldn’t check your membership.':memberCheck==='member'?'Opening the leaderboard…':'Checking your membership…'}{memberCheck==='error'&&<button className="secondary-button" type="button" onClick={()=>void checkMembership()}>Try again</button>}</p></div>:<div className="membership-layout">
       <section className="left-column" aria-label="SO/FACET membership">
         <button className="membership-back" type="button" aria-label="Go back" onClick={back} disabled={busy} hidden={memberCheck==='member'||!!saved}><Icon name="arrow" viewBox="0 0 34 28"/></button>
@@ -191,7 +198,7 @@ function App() {
             <form className="front-form" id="identity-form" onSubmit={flip} noValidate>
               <Field id="front-name" label="Your name" name="name" placeholder="Your name" autoComplete="name" maxLength={80} required value={identity.name} error={errors['front-name']} onChange={event=>{setIdentity(current=>({...current,name:event.target.value}));clear('front-name')}}/>
               <PhoneField id="phone" compact country={identity.country} onCountry={country=>{setIdentity(current=>({...current,country}));clear('phone')}} value={identity.phone} error={errors.phone} onChange={event=>{const phone=event.target.value;setIdentity(current=>({...current,phone,country:phone.startsWith('+')?phoneCountry(phone,current.country):current.country}));clear('phone')}}/>
-              <p className="front-copy"><a className="text-link existing-member-link" role="link" aria-disabled="true">already a member?</a>Verify your number after “Save My Points”. Points can be used once the shop opens and expire 6 months after launch. Terms apply.</p>
+              <p className="front-copy"><a className="text-link existing-member-link" href={accountSignInHref} target="_top">already a member?</a>Verify your number after “Save My Points”. Points can be used once the shop opens and expire 6 months after launch. Terms apply.</p>
               <div className="front-actions"><CrystalButton type="submit" arrow>Become a member</CrystalButton><button className="secondary-button" type="button" onClick={replay}><Icon name="replay" className="replay-icon" viewBox="0 0 40 40"/><span>Play again</span></button></div>
             </form>
           </section>
@@ -202,7 +209,7 @@ function App() {
                 <Field id="member-name" label="Name" icon="person" name="name" placeholder="Name" autoComplete="name" maxLength={80} required value={details.name} error={errors['member-name']} disabled={busy} onChange={change('name','member-name')}/>
                 <div className="two-column identity-row"><Field id="leaderboard" label="Leaderboard name" icon="trophy" name="leaderboardName" placeholder="Leaderboard name" autoComplete="nickname" maxLength={30} required value={details.leaderboardName} error={errors.leaderboard} disabled={busy} onChange={change('leaderboardName','leaderboard')}/><Field id="email" label="Email" icon="mail" name="email" type="email" placeholder="Email address" autoComplete="email" maxLength={254} required value={details.email} error={errors.email} disabled={busy} onChange={change('email','email')}/><p className="leaderboard-helper">Your leaderboard name, best score and rank are public. Names may be reviewed.</p></div>
               </div>
-              <div className="registration-second"><div className="two-column details-row"><Field id="birthdate" label="Date of birth" icon="calendar" name="dateOfBirth" type="date" autoComplete="bday" min="1900-01-01" max={maxBirth} required value={details.dateOfBirth} error={errors.birthdate} disabled={busy} onChange={change('dateOfBirth','birthdate')}/><Field id="city" label="City" icon="pin" name="city" placeholder="Your city" autoComplete="address-level2" maxLength={100} required value={details.city} error={errors.city} disabled={busy} onChange={change('city','city')}/></div>
+              <div className="registration-second"><div className="two-column details-row"><Field id="birthdate" label="Date of birth" icon="calendar" name="dateOfBirth" type="date" autoComplete="bday" min="1900-01-01" max={maxBirth} required value={details.dateOfBirth} error={errors.birthdate} disabled={busy} onChange={change('dateOfBirth','birthdate')}/><CityField value={details.city} error={errors.city} disabled={busy} onChange={change('city','city')}/></div>
                 {birthDateState(details.dateOfBirth)==='underage'&&<div className="guest-notice" role="status"><p>{underAgeCopy}</p><button className="text-link" type="button" onClick={replay}>Keep playing as a guest <span aria-hidden="true">→</span></button></div>}
                 <div className="consents"><div className="consent-row"><input id="terms" name="termsAccepted" type="checkbox" required checked={details.termsAccepted} aria-invalid={!!errors.terms} aria-describedby="terms-error" disabled={busy} onChange={change('termsAccepted','terms')}/><label htmlFor="terms">I’m 18 or older and I agree to the <button className="text-link" type="button" onClick={()=>policy('terms')}>Terms and Conditions</button> and <button className="text-link" type="button" onClick={()=>policy('privacy')}>Privacy Policy</button>. <span className="required" aria-hidden="true">*</span></label></div><div className="consent-row"><input id="marketing" name="marketingConsent" type="checkbox" checked={details.marketingConsent} disabled={busy} onChange={change('marketingConsent','marketing')}/><label htmlFor="marketing"><BrandText>Send me So/Facet news and launch updates.</BrandText></label></div><span className="field-error" id="terms-error">{errors.terms}</span></div>
               </div>
