@@ -11,7 +11,8 @@ try {
  for (const native of [false,true]) {
   const context=await browser.newContext({...devices[engine==='webkit'?'iPhone 13':'Pixel 7']});
   try {
-   const page=await context.newPage(),errors=[];
+   const page=await context.newPage(),errors=[],timingRequests=[];
+   page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/frame-timing.js'))timingRequests.push(request.url())});
    page.on('pageerror',error=>errors.push(error.message));
    if(native)await page.addInitScript(()=>{globalThis.VideoDecoder=undefined});
    const pageURL=new URL(url);if(native)pageURL.searchParams.set('renderer','native');pageURL.hash='experience';
@@ -55,6 +56,7 @@ try {
     if(geometry.video)assert.equal(geometry.fit,'contain');
    }
    assert.deepEqual(errors,[]);
+   assert.deepEqual(timingRequests,[],'Normal visits must not load worker diagnostics');
    console.log(JSON.stringify({engine,native,chromeResize,result:'Mobile geometry checks passed'}));
   } finally {await context.close()}
  }

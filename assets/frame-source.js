@@ -34,7 +34,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  if(requestedRenderer==='worker'){
   try{
    if(!index.codec)throw new DOMException('A frame index is required','NotSupportedError');
-   const {createWorkerFrameDecoder}=await import('./worker-frame-decoder.js?v=frames-3313c37a228e');
+   const {createWorkerFrameDecoder}=await import('./worker-frame-decoder.js?v=frames-5740f20ba5e4');
    workerDecoder=await createWorkerFrameDecoder(config,{fps:index.fps,maxPending:4,diagnostics});
    mode='worker';fallbackReason=null;
   }catch(error){workerFailure={name:error.name,message:error.message};fallbackReason='worker-unavailable';preferNative=true}

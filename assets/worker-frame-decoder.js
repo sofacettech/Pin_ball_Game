@@ -1,4 +1,3 @@
-import { createFrameTimingRecorder } from './frame-timing.js?v=frames-b8f641307d70';
 const namedError=(message,name='EncodingError')=>new DOMException(message,name);
 const colourMismatch=(expected,image)=>'Worker decoder did not preserve colour metadata: '+JSON.stringify({expected,actual:Object.fromEntries(['primaries','transfer','matrix','fullRange'].map(key=>[key,image.colorSpace?.[key]??null]))});
 const cancelled=()=>namedError('Frame decoding cancelled','AbortError');
