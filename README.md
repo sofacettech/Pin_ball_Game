@@ -50,6 +50,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 
 - The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges. The welcome copy stays visible until scrolling starts, fades out over one second and returns when the player scrolls back to the starting position. Reduced-motion mode switches immediately.
 - The queen impact at source frame 2164 hands directly into the game. Skip to Game bypasses the journey.
+- The game-loading screen uses our approved bouncing-ball and trail treatment. It appears while the table resources are being prepared and clears as soon as the game is ready.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
 - Phone and tablet layouts flip between Hold to launch and the live scorecard as the ball launches and returns. Desktop retains the keyboard instructions and flip card, with a Hold button below the card. Only one paddle accepts input at a time; the held paddle keeps priority until released. Sound controls respect browser activation requirements.
@@ -63,9 +64,10 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 | Triangular block | +100 |
 | Ring block | +50 |
 | Cyan bumper | −500 |
-| Neon green bumper / drum | +500 |
-| Launcher | +450 once per launch |
-| Cave | +3,000 |
+| Neon green bumper | +500 |
+| Drum base bumper | +250 |
+| Launcher | 0 |
+| Cave | +700 |
 
 Scoring is shared between the client simulation and server replay verification. Keep replay versions, collision data and simulation parameters in sync when changing gameplay.
 
@@ -189,6 +191,8 @@ Before collecting memberships publicly, finish SMS and approved policies, test t
 
 `account-source/` is the React sign-in and points page. The shared navigation links **My Account** to `account.html`; registration remains a separate flow for saving a new player's score. The existing brand artwork and navbar anchors are reused. Written brand names use the supplied wordmark font without changing surrounding typography.
 
+I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Registration also includes Indian city suggestions while retaining the existing city field contract.
+
 An existing member session can read `GET /api/account`: `{name, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
 
 The backend account service still needs to connect these same-origin routes. They currently return 503 without sending messages or changing records:
@@ -199,4 +203,6 @@ The backend account service still needs to connect these same-origin routes. The
 - `POST /api/account/preferences {marketingConsent}` → `{success: true}` after saving the choice.
 - `POST /api/account/delete {confirm: true}` → `{success: true}` only after the deletion policy is applied and the session is invalidated.
 
-The frontend refreshes account data after changes and does not claim success on unconfirmed writes. OTP codes, account details and tokens are not persisted in browser storage. Score sharing uses the session's verified score. No preview OTP, sample balance or fabricated account state is included.
+The authenticated flow refreshes account data after changes and does not claim success on unconfirmed server writes. Its OTP codes and tokens are not persisted in browser storage, and score sharing uses the session's verified score.
+
+The supplied frontend also has an explicit account review mode at `account.html?view=signin&preview=1`. It uses the displayed test code `123456` and a labelled sample account with 3,200 points. Preview details stay in this tab's session storage under `sofacet-account-preview`; signing out or deleting the preview clears that state. This mode does not authenticate a member, grant rewards or unlock the server's member-only APIs. Please connect the live account endpoints above before treating a frontend preview as a real saved account.

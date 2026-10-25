@@ -3,84 +3,81 @@
  if(window.sofacetGameLoader)return;
  const root=document.getElementById('game-loading-screen');
  if(!root)return;
- // Retire any canvas left by an older, already-open preview.
- root.querySelectorAll('canvas').forEach(canvas=>canvas.remove());
- const statement=root.querySelector('.loading-statement');
+ const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
  const status=root.querySelector('[role="status"]'),error=root.querySelector('.game-loading-error');
- const phrases=[
-  'Your points could become something precious',
-  'Your next high score is loading',
-  'Every 10 points gets you ₹1 closer to your first diamond',
-  'Play well. Save your points. Shine later',
-  "Let's see what's yours?"
- ];
- // The supplied display face has letters only. Draw its missing symbols rather
- // than silently switching any part of the statements to a different font.
- const symbols={
-  '1':['M5 7 10 3V24',.4],
-  '0':['M11 3C1 3 1 24 11 24S21 3 11 3Z',.6],
-  '₹':['M3 4h16M3 10h16M13 4c3 8-2 11-10 11l14 10',.62],
-  '.':['M10 23h2v2h-2Z',.2],
-  "'":['M10 3h2l-2 5',.2],
-  '’':['M10 3h2l-2 5',.2],
-  '?':['M4 8C4 0 19 0 19 8c0 6-8 6-8 12M10 24h2v1h-2',.55]
- };
  const gamePage=document.body.hasAttribute('data-game-loading');
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
- let animation,fade=0,delay=0,turn=0;
- let active=false,failed=false,parentVisible=parent===window,events,observer,blocked=[];
- function glyphs(text){
-  return [...text].map(character=>{
-   if(!symbols[character])return document.createTextNode(character);
-   const [path,width]=symbols[character],span=document.createElement('span'),copy=document.createElement('span');
-   span.className='loading-symbol';span.style.width=width+'em';copy.className='loading-symbol-copy';copy.textContent=character;
-   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),shape=document.createElementNS('http://www.w3.org/2000/svg','path');
-   svg.setAttribute('viewBox','0 0 22 28');svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');shape.setAttribute('d',path);svg.append(shape);span.append(copy,svg);return span;
-  });
- }
- function renderStatement(){
-  statement.dataset.statement=String(turn%phrases.length);
-  statement.style.color=turn%2?'#c9a0ff':'#fff';
-  statement.replaceChildren(...phrases[turn%phrases.length].split(/(10|₹1)/).flatMap(part=>{
-   if(part!=='10'&&part!=='₹1')return glyphs(part);
-   const token=document.createElement('span');token.className='loading-token';token.append(...glyphs(part));return token;
-  }));
- }
- function stop(){animation?.pause()}
- function cleanup(){animation?.cancel();animation=null;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
+ let width=1,height=1,radius=9,x=0,y=0,vx=0,vy=0,time=0,last=0,frame=0,fade=0,delay=0;
+ let active=false,failed=false,parentVisible=parent===window,events,observer;
+ let points=[],impacts=[],blocked=[];
+ const stop=()=>{cancelAnimationFrame(frame);frame=0;last=0};
+ function cleanup(){stop();events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
  function measure(){
   const anchors=gamePage?document.querySelectorAll('.navbar-backdrop,.nav-trim,#game-header .site-brand,#nav-toggle'):document.querySelectorAll('.site-brand,[data-menu-toggle]');
   let top=0;
   for(const element of anchors){const box=element.getBoundingClientRect();if(box.width&&box.height&&getComputedStyle(element).visibility!=='hidden')top=Math.max(top,box.bottom)}
   root.style.setProperty('--game-loader-top',Math.ceil(top+4)+'px');
+  const box=root.getBoundingClientRect(),w=Math.max(1,box.width),h=Math.max(1,box.height);
+  if(w===width&&h===height&&canvas.width===Math.round(w*Math.min(devicePixelRatio||1,2)))return;
+  const oldWidth=width,oldHeight=height;width=w;height=h;
+  radius=Math.min(12,Math.max(8,width*.007),width/4,height/4);
+  x=oldWidth>1?x/oldWidth*width:width*.62;y=oldHeight>1?y/oldHeight*height:height*.60;
+  x=Math.max(radius,Math.min(width-radius,x));y=Math.max(radius,Math.min(height-radius,y));
+  const speed=Math.min(800,Math.max(280,Math.hypot(width,height)*.55));
+  vx=(vx<0?-1:1)*speed*.8;vy=(vy<0?-1:1)*speed*.6;
+  const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx?.setTransform(dpr,0,0,dpr,0,0);
+  points=[];impacts=[];last=0;draw();
  }
- function cycle(first=false){
-  if(!active||failed||motion.matches)return;
-  animation=statement.animate([{opacity:first?1:0,offset:0},{opacity:1,offset:.18},{opacity:1,offset:.80},{opacity:0,offset:1}],{duration:4400,easing:'ease-in-out'});
-  animation.onfinish=()=>{if(!active||failed)return;turn++;renderStatement();cycle()};
-  if(document.hidden||!parentVisible)stop();
+ function draw(){
+  if(!ctx||document.hidden||!parentVisible)return;
+  ctx.fillStyle='#08060c';ctx.fillRect(0,0,width,height);
+  if(!motion.matches){
+   for(const impact of impacts){
+    const age=(time-impact.t)/.42;if(age>=1)continue;
+    const side=impact.edge==='left'||impact.edge==='right',length=46*(1+age*.35),thickness=11;
+    ctx.save();ctx.translate(impact.x,impact.y);ctx.scale(side?thickness:length,side?length:thickness);
+    const gradient=ctx.createRadialGradient(0,0,0,0,0,1);gradient.addColorStop(0,`rgba(191,255,0,${.85*(1-age)**2})`);gradient.addColorStop(.25,`rgba(191,255,0,${.45*(1-age)**2})`);gradient.addColorStop(1,'rgba(191,255,0,0)');
+    ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);ctx.fill();ctx.restore();
+   }
+   ctx.lineWidth=width<600?1.8:1.4;ctx.lineCap='butt';ctx.lineJoin='round';
+   for(let i=1;i<points.length;i++){
+    const a=points[i-1],b=points[i],alpha=Math.max(0,1-(time-b.t)/2)**1.6;
+    ctx.strokeStyle=`rgba(255,255,255,${alpha*.8})`;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+   }
+  }
+  ctx.shadowBlur=18;ctx.shadowColor='rgba(255,255,255,.6)';ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  canvas.style.background='none';
  }
- function resume(){
-  if(!active||failed||root.hidden)return;
-  measure();
-  if(document.hidden||!parentVisible){stop();return}
-  if(!motion.matches){if(animation)animation.play();else cycle(true)}
+ function advance(dt){
+  let remaining=dt;
+  while(remaining>1e-8){
+   const tx=vx>0?(width-radius-x)/vx:(radius-x)/vx,ty=vy>0?(height-radius-y)/vy:(radius-y)/vy;
+   const step=Math.min(remaining,Math.max(0,tx),Math.max(0,ty));
+   x+=vx*step;y+=vy*step;time+=step;remaining-=step;
+   const hitX=tx<=step+1e-8,hitY=ty<=step+1e-8;
+   points.push({x,y,t:time});
+   if(hitX){impacts.push({edge:vx>0?'right':'left',x:vx>0?width:0,y,t:time});vx=-vx}
+   if(hitY){impacts.push({edge:vy>0?'bottom':'top',x,y:vy>0?height:0,t:time});vy=-vy}
+   if(!hitX&&!hitY)break;
+  }
+  points=points.filter(p=>time-p.t<=2).slice(-240);impacts=impacts.filter(p=>time-p.t<.42).slice(-8);
  }
+ function tick(now){frame=0;if(!active||failed||document.hidden||!parentVisible||motion.matches)return;advance(last?Math.min((now-last)/1000,.05):0);last=now;draw();frame=requestAnimationFrame(tick)}
+ function resume(){stop();if(active&&!failed&&!root.hidden){measure();draw();if(!document.hidden&&parentVisible&&!motion.matches)frame=requestAnimationFrame(tick)}}
  function listen(){
   events=new AbortController();const signal=events.signal;
-  addEventListener('resize',measure,{signal});visualViewport?.addEventListener('resize',measure,{signal});
+  addEventListener('resize',resume,{signal});visualViewport?.addEventListener('resize',resume,{signal});
   document.addEventListener('visibilitychange',()=>document.hidden?stop():resume(),{signal});
-  motion.addEventListener('change',()=>{animation?.cancel();animation=null;resume()},{signal});
-  observer=new ResizeObserver(measure);
+  motion.addEventListener('change',()=>{points=[];impacts=[];resume()},{signal});
+  observer=new ResizeObserver(()=>{measure();if(motion.matches)draw()});
   for(const element of document.querySelectorAll('#game-header,.navbar-backdrop,.site-brand,[data-menu-toggle]'))observer.observe(element);
  }
  function show(){
   if(active&&!failed)return;
-  clearTimeout(fade);cleanup();active=true;failed=false;turn=0;root.hidden=false;delete root.dataset.state;error.hidden=true;
+  clearTimeout(fade);cleanup();active=true;failed=false;root.hidden=false;delete root.dataset.state;error.hidden=true;
   status.firstChild.textContent='Preparing your table. ';
-  renderStatement();
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;
-  listen();resume();
+  listen();measure();draw();resume();
   delay=setTimeout(()=>{if(active&&!failed)status.firstChild.textContent='Still preparing your game. Please wait. '},20000);
  }
  function hide(){clearTimeout(fade);cleanup();root.hidden=true;active=false;delete root.dataset.state;for(const [element,inert] of blocked)element.inert=inert;blocked=[];if(gamePage&&document.getElementById('stage')?.dataset.ready==='true')document.body.removeAttribute('data-game-loading')}
@@ -110,8 +107,8 @@
  if(gamePage){
   show();
   const entry=document.getElementById('game-loader-controller').dataset.gameEntry;
-  // Show the initial shell before evaluating the game module; never wait for
-  // the statement sequence or font loading before initializing the game.
+  // Paint the shell before evaluating the large game module. Hidden preloads
+  // use tasks because requestAnimationFrame is suspended in hidden documents.
   const load=()=>import(new URL(entry,location.href).href).catch(fail);
   if(entry){if(document.hidden||!parentVisible)setTimeout(load,0);else requestAnimationFrame(()=>setTimeout(load,0))}
  }
