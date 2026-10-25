@@ -82,7 +82,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     <button id="settings" aria-controls="game-menu" aria-expanded="false" class="menu-item nav-icon" type="button" aria-label="Open settings and pause game" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 3 3-1 3 5-2 2 2 2-3 5-3-1-1 3H9l-1-3-3 1-3-5 2-2-2-2 3-5 3 1Z"/><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></button>
  <section id="game-menu" hidden aria-labelledby="menu-title" aria-describedby="menu-description">
   <button id="menu-close" type="button" aria-label="Close settings and resume game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><h2 id="menu-title" tabindex="-1">Settings</h2><p id="menu-description">Game paused. Your progress is saved here.</p>
-  <fieldset><legend>Game settings</legend><label for="quality">Visual quality</label><div class="select-control"><select id="quality"><option value="auto">Quality: Auto</option><option value="full">Full resolution</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></fieldset>
+  <fieldset><legend>Game settings</legend><label for="quality">Visual quality</label><div class="select-control"><select id="quality"><option value="full">Full resolution</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></fieldset>
   <fieldset class="sound-settings"><legend>Sound settings</legend><div class="volume-label"><label for="volume">Game volume</label><output id="volume-value" for="volume">100%</output></div><input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Game volume"><button id="sound" type="button" aria-pressed="false" aria-label="Mute game sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-muted" d="m16 9 5 6m0-6-5 6"/></svg><span id="sound-label">Mute</span></button></fieldset>
   <section class="how-to-play"><button id="how-to-play-toggle" type="button" aria-expanded="false" aria-controls="how-to-play-controls">How to play<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="controls-reveal" id="how-to-play-controls" inert><div class="controls-clip"><div class="controls-guide"><div class="touch-guide"><span>Touch and hold the left half of the table for the left paddle.</span><span>Touch and hold the right half for the right paddle. Use one paddle at a time.</span><span>Hold the launch button to charge; release to launch.</span><span>Open Settings to pause or resume the game.</span></div><span><kbd>A</kbd> / <kbd>←</kbd> Left paddle</span><span><kbd>D</kbd> / <kbd>→</kbd> Right paddle</span><span><kbd>Space</kbd> Hold to charge</span><span><kbd>Esc</kbd> / <kbd>P</kbd> Pause</span></div></div></div></section>
   <button id="menu-member" type="button" hidden>Leaderboard</button>
@@ -154,15 +154,16 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div class="rewards-panel">
   <div class="rewards-floor" aria-hidden="true"></div>
   <section class="rewards-content" id="rewards-result">
+   <div class="rewards-intro"><p class="flow-eyebrow"><span class="brand-word">SO/ UNLOCKED</span></p><p class="rewards-unlocked-copy">You unlocked a facet.</p></div>
    <h1 id="rewards-heading" tabindex="-1">Here’s what’s yours.</h1>
    <div class="rewards-divider" aria-hidden="true"></div>
    <p class="rewards-score" id="rewards-score"><strong class="rewards-number" id="rewards-points">0</strong><span class="rewards-points-word">pts</span></p>
-   <p class="rewards-value-line" id="rewards-value-line">That’s <span id="rewards-value">₹0</span> off your <span class="brand-word">So/Facet</span> purchases.</p>
-   <p class="rewards-expiry" id="rewards-expiry">Keep them. Unsaved points disappear when you leave this page.</p>
+   <p class="rewards-value-line" id="rewards-value-line">That’s <span id="rewards-value">₹0</span> off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
+   <p class="rewards-expiry" id="rewards-expiry">Unsaved points disappear when you leave this page.</p>
    <div class="rewards-divider" aria-hidden="true"></div>
    <div class="rewards-actions">
     <button id="rewards-register" type="button"><span>Save my points</span><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M2 12h23m-9-8 9 8-9 8"/></svg></button>
-    <button id="rewards-retry" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg><span>RETRY</span></button>
+    <button id="rewards-retry" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg><span>Play again</span></button>
    </div>
   </section>
   <section class="rewards-content reward-flow" id="rewards-leave" hidden>

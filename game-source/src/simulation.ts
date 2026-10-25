@@ -1,5 +1,5 @@
 import type {Input} from './physics.ts';
-export const REPLAY_VERSION=19;
+export const REPLAY_VERSION=20;
 export const MAX_GAME_TICKS=120*60*30;
 export const MAX_INPUT_RUNS=120000;
 export type InputRun=[number,number];

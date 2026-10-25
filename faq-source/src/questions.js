@@ -26,7 +26,13 @@ export const sections = [
       {
         "question": "When do you launch?",
         "answer": [
-          "Soon. Save your points or join the list, and you’ll hear first."
+          "Soon. Save your points or join THE FIRST CUTS, and you’ll be among the first to know."
+        ]
+      },
+      {
+        "question": "What is THE FIRST CUTS?",
+        "answer": [
+          "Everyone who saves their points or joins our list before our doors open."
         ]
       }
     ]
@@ -46,7 +52,7 @@ export const sections = [
       {
         "question": "What are my points worth?",
         "answer": [
-          "10 points = ₹1 off your So/Facet purchases. Score 100,000 and that’s ₹10,000 off."
+          "10 points = ₹1 off SO/ FACET diamond jewellery. Score 3,200 and that’s ₹320 off."
         ]
       },
       {
@@ -70,7 +76,7 @@ export const sections = [
       {
         "question": "How do I save my points?",
         "answer": [
-          "After your game, enter your name, email and phone number, then confirm with the code we send you by SMS. Unsaved points disappear when you leave the page."
+          "After your game, enter your full name, mobile number and email, then confirm with the code we send you by SMS. Unsaved points disappear when you leave the page."
         ]
       },
       {

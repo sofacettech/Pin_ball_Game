@@ -114,7 +114,6 @@ function sync(){
 }
 function toggleInspection(){if(!loaded)return;inspecting=!inspecting;clearKeys();if(physics.active&&physics.state!=='finished')physics.setPaused(true);
  document.body.classList.toggle('inspect-mode',inspecting);$('inspection').hidden=!inspecting;view.setInspect(inspecting);applyScoreboardLayout();applyInspectionLayout();updateOverlay();sync();if(!inspecting&&physics.state==='finished')showResult()}
-$<HTMLSelectElement>('quality').onchange=e=>view.setQuality((e.target as HTMLSelectElement).value==='auto');
 $<HTMLSelectElement>('view').onchange=e=>{view.setReference(Number((e.target as HTMLSelectElement).value));applyInspectionLayout();updateOverlay()};
 function updateOverlay(){const opacity=Number($<HTMLInputElement>('overlay').value)/100;const image=$<HTMLImageElement>('reference');image.src='/references/'+view.references[view.referenceIndex].file;image.hidden=!inspecting||!opacity;image.style.opacity=String(opacity);document.querySelector<HTMLElement>('.compare-label')!.hidden=!inspecting||!opacity}
 $<HTMLInputElement>('overlay').oninput=updateOverlay;
@@ -150,7 +149,7 @@ addEventListener('keyup',event=>{const wasHeld=keys.delete(event.code);if(wasHel
 function pauseOnFocusLoss(){clearKeys();if(loaded&&physics.active&&physics.state!=='finished')setGamePaused(true)}
 addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilitychange',()=>{syncLoadingAnimation();if(document.hidden){pauseOnFocusLoss();cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0}else requestGameFrame()});
 window.addEventListener('resize',()=>{clearKeys();applyDeviceView();applyInspectionLayout()});
-function bindFeedback(){caveEjecting=false;physics.onHit=(id)=>{view.hit(id);sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>sound.play('collect');physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
+function bindFeedback(){caveEjecting=false;physics.onHit=(id,delta)=>{view.hit(id);if(delta>0)view.scoreDiamonds();sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>{view.scoreDiamonds();sound.play('collect')};physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
 async function start(){try{
  await window.sofacetGameLoader?.stylesReady;
  await view.load((_value,label)=>{$('loading-detail').textContent=label});

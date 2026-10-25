@@ -36,6 +36,10 @@ function CityField(props){
  const matches=matchingIndianCities(props.value);
  return <><Field id="city" label="City" icon="pin" name="city" placeholder="Type or select your city" autoComplete="off" spellCheck={false} maxLength={100} required list="indian-city-suggestions" {...props}/><datalist id="indian-city-suggestions">{matches.map(city=><option key={city.name+'|'+city.state} value={city.name} label={city.state}/>)}</datalist></>;
 }
+function selectShareCopy(element) {
+  const selection=window.getSelection();if(!selection)return;
+  const range=document.createRange();range.selectNodeContents(element);selection.removeAllRanges();selection.addRange(range);
+}
 function App() {
   const [identity,setIdentity]=useState({name:'',phone:'',country:'IN'}),[details,setDetails]=useState(initialDetails);
   const [stage,setStage]=useState('identity'),[step,setStep]=useState(1),[compact,setCompact]=useState(matchMedia('(max-width:1100px)').matches);
@@ -175,7 +179,7 @@ function App() {
     setDialog({title:kind==='terms'?'Terms and Conditions':'Privacy Policy',copy:'The official policy is not available yet. Please check back before completing your membership.'});
   }
   async function share() {
-    const text=pending?'I scored '+numbers.format(pending.points)+' in the So/Facet world.\nSo/Facet. Coming soon. What’s yours?\n'+location.origin+'/':'So/Facet. Coming soon. What’s yours?\n'+location.origin+'/';
+    const text=pending?'I unlocked a facet in the SO/ FACET world and scored '+numbers.format(pending.points)+'. What’s yours?\n'+location.origin+'/':'So/Facet. Coming soon. What’s yours?\n'+location.origin+'/';
     try{if(navigator.share){await navigator.share({title:'SO/FACET · My score',text});return}if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);setShareStatus('Your score message was copied.');return}}catch(error){if(error.name==='AbortError')return}
     setDialog({title:'Share your score',copy:'Copy your score message below.',text});
   }
@@ -224,10 +228,11 @@ function App() {
               <p className="confirmation-status" role="status" aria-live="polite"><BrandText>{stage==='confirmation'?status:''}</BrandText></p>
             </section>
             <section className="success" id="success" hidden={stage!=='success'} aria-labelledby="success-title" tabIndex={-1}>
-              <p className="step-eyebrow">{saved?.pointsSaved?'POINTS SAVED':'MEMBERSHIP ACTIVE'}</p><h2 className="step-title" id="success-title">It’s official. They’re yours, <span>{details.name}.</span></h2>
-              <p className="step-copy"><BrandText>{saved?.pointsSaved?numbers.format(saved.savedPoints)+' points ('+money(saved.savedPoints)+' off) are saved to your number. Spend them on So/Facet purchases when we open.':'Your So/Facet membership is active. Play a round to earn points.'}</BrandText></p>
+              <p className="step-eyebrow">{saved?.pointsSaved?<span className="brand-word">SO/ SAVED</span>:'MEMBERSHIP ACTIVE'}</p><h2 className="step-title" id="success-title">It’s yours, <span>{details.name.trim().split(/\s+/)[0]}.</span></h2>
+              <p className="step-copy">Welcome to THE FIRST CUTS.</p>
+              <p className="step-copy">{saved?.pointsSaved?<>{numbers.format(saved.savedPoints)} points ({money(saved.savedPoints)} off) are saved for <BrandText>SO/FACET</BrandText> diamond jewellery. When our doors open, start collecting your facets.</>:<BrandText>Your So/Facet membership is active. Play a round to earn points.</BrandText>}</p>
               {!!saved?.remainingPoints&&<p className="step-copy">Your remaining {saved.remainingPoints} game points are kept with your best score. Rewards are credited in groups of 10 points.</p>}
-              <p className="step-copy"><BrandText>{details.marketingConsent?'You chose to receive So/Facet news and launch updates.':'Your launch-update preference is off.'}</BrandText></p><p className="leaderboard-line">Your leaderboard name: {details.leaderboardName}</p>
+              <p className="leaderboard-line">Your leaderboard name: {details.leaderboardName}</p>
               <div className="success-bottom"><p className="replay-nudge">Want more? Play again. Only your best score counts.</p><div className="success-actions"><button className="secondary-button" type="button" onClick={replay}>Play again</button><CrystalButton type="button" onClick={()=>void share()}>Share my score</CrystalButton></div><p className="sign-off"><BrandText>So/Facet. Coming soon. What’s yours?</BrandText></p><p className="sr-only" role="status">{shareStatus}</p></div>
             </section>
           </section>
@@ -236,7 +241,7 @@ function App() {
       </section>
       {!compact&&summary}
     </div>}</main>
-    <dialog ref={policyDialog} aria-labelledby="dialog-title" onClose={()=>setDialog(null)}><h2 id="dialog-title">{dialog?.title}</h2><p>{dialog?.copy}</p>{dialog?.text&&<textarea readOnly aria-label="Score message to copy" value={dialog.text} onFocus={event=>event.target.select()}/>}<div className="dialog-actions"><button type="button" onClick={()=>policyDialog.current.close()}>Close</button></div></dialog>
+    <dialog ref={policyDialog} aria-labelledby="dialog-title" onClose={()=>setDialog(null)}><h2 id="dialog-title">{dialog?.title}</h2><p>{dialog?.copy}</p>{dialog?.text&&<div className="share-copy" role="textbox" aria-label="Score message to copy" aria-readonly="true" aria-multiline="true" tabIndex={0} onFocus={event=>selectShareCopy(event.currentTarget)} onKeyDown={event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='a'){event.preventDefault();selectShareCopy(event.currentTarget)}}}>{dialog.text}</div>}<div className="dialog-actions"><button type="button" onClick={()=>policyDialog.current.close()}>Close</button></div></dialog>
   </>);
 }
 createRoot(document.getElementById('membership-root')).render(<App/>);

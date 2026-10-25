@@ -5,6 +5,7 @@ import {prepareGeometry,NeonMaterial,batchOverview} from './visual-quality';
 import type {GlowMaterial} from './visual-quality';
 import {TeleportEffect} from './teleport';
 import {Scoreboard} from './scoreboard';
+import {FloatingDiamonds} from './floating-diamonds';
 import type {DisplayLayout} from './scoreboard';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -33,7 +34,7 @@ export class TableView {
  private get destinationCamera(){return !this.inspect&&!this.railCamera?this.overviewFocus.camera:this.camera}
  get activeCamera(){return this.cameraTransition.active?this.cameraTransition.camera:this.destinationCamera}
  readonly renderer:THREE.WebGLRenderer;
- readonly composer:EffectComposer;private fxaa=new ShaderPass(FXAAShader);private automaticQuality=true;private qualityClock=0;private geometryQuality!:Awaited<ReturnType<typeof prepareGeometry>>;
+ readonly composer:EffectComposer;private fxaa=new ShaderPass(FXAAShader);private geometryQuality!:Awaited<ReturnType<typeof prepareGeometry>>;
  readonly groups=new Map<string,THREE.Object3D[]>();references:Reference[]=[];
  manifest!:Manifest;referenceIndex=0;inspect=false;frames:number[]=[];needsRender=true;
  private reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;readonly teleportEffect=new TeleportEffect(this.reduced);
@@ -42,11 +43,12 @@ export class TableView {
  private previewKeys:THREE.DirectionalLight[]=[];private authoredKeys:THREE.RectAreaLight[]=[];private ballShadow!:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
  private springScale=new Map<THREE.Object3D,number>();private flashes=new Map<string,number>();private glow=new Map<string,{material:GlowMaterial;baseline:number}[]>();scoreboard!:Scoreboard;
  private halos=new Map<string,THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>>();
+ private diamonds?:FloatingDiamonds;
  private caveGlow:{material:GlowMaterial;baseline:number}[]=[];
  private glassQuality=new Map<THREE.Mesh,{full:THREE.MeshPhysicalMaterial;fast:THREE.MeshStandardMaterial}>();
  constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement){
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(pointer: coarse)').matches?1:1.25));this.renderer.transmissionResolutionScale=.5;this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
+  this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.transmissionResolutionScale=1;this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
   this.renderer.info.autoReset=false;
   this.scene.background=new THREE.Color('#000');
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:2});
@@ -193,7 +195,9 @@ export class TableView {
    full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
    const fast=full.clone();fast.name=full.name;fast.transmission=.94;fast.clearcoat=.6;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
   await new Promise<void>(resolve=>setTimeout(resolve,0));
-  this.overviewBatch=batchOverview(this.scene);this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
+  this.overviewBatch=batchOverview(this.scene);
+  this.diamonds=new FloatingDiamonds(this.scene,this.scene.environment!,[this.convert([-8.6,10.2,.18]),this.convert([8.7,10.5,.18])],this.reduced);
+  this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
  }
  setReference(index:number){
   this.needsRender=true;
@@ -210,7 +214,7 @@ export class TableView {
  }
  private updatePixelRatio(){
   const requested=this.handheld?Math.max(devicePixelRatio,1.25):devicePixelRatio;
-  const limit=this.handheld?1.5:this.automaticQuality?(matchMedia('(pointer: coarse)').matches?1:1.25):1.5;
+  const limit=1.5;
   this.renderer.setPixelRatio(Math.min(requested,limit));
  }
  setPhonePlay(active:boolean){
@@ -223,11 +227,11 @@ export class TableView {
   this.renderer.setSize(w,h,false);this.composer.setPixelRatio(this.renderer.getPixelRatio());this.composer.setSize(w,h);
   this.fxaa.uniforms.resolution.value.set(1/(w*this.renderer.getPixelRatio()),1/(h*this.renderer.getPixelRatio()));
   this.camera.aspect=w/h;this.camera.updateProjectionMatrix();if(this.overviewBounds.isEmpty())return;
-  // Keep the playable area large on phones, retaining the full vertical span.
+  // Retain the playable span and the two ledge decorations in portrait play.
   const portrait=this.phonePlay&&w/h<.85,tilt=this.phonePlay?.8:.62;
   if(this.overviewPoints.length!==(portrait?8:5)||this.overviewCamera.aspect!==w/h){
    this.overviewPoints=overviewGeometryPoints(this.overviewMeshes,w/h,tilt);
-   if(portrait){const x=this.overviewBounds.getCenter(new THREE.Vector3()).x,vertical=this.overviewPoints.slice(2).map(p=>p.setX(x));this.overviewPoints=[...overviewGeometryPoints(this.phoneMeshes,w/h,tilt),...vertical]}
+   if(portrait){const x=this.overviewBounds.getCenter(new THREE.Vector3()).x,vertical=this.overviewPoints.slice(2).map(p=>p.setX(x));this.overviewPoints=[...overviewGeometryPoints([...this.phoneMeshes,...(this.diamonds?.framingMeshes||[])],w/h,tilt),...vertical]}
   }
   fitOverview(this.overviewCamera,this.overviewBounds,w/h,this.overviewPoints,tilt);
   this.overviewFocus.frame(this.overviewCamera,this.overviewBounds,this.overviewPoints,portrait,document.body.classList.contains('phone-layout'));
@@ -235,8 +239,7 @@ export class TableView {
 
  advanceCamera(dt:number){if(!this.cameraTransition.active)return;this.cameraTransition.advance(this.destinationCamera,dt);this.renderer.toneMappingExposure=THREE.MathUtils.lerp(this.transitionExposure,this.sourceExposure*(!this.railCamera?this.overviewExposure:1),this.cameraTransition.progress);this.needsRender=true}
  private updateCameraLighting(){this.frames=[];this.last=performance.now();const complete=!this.inspect&&!this.railCamera;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);if(!this.cameraTransition.active)this.renderer.toneMappingExposure=this.sourceExposure*(complete?this.overviewExposure:1)}
- private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=!this.automaticQuality;for(const light of this.previewKeys)light.visible=this.automaticQuality;for(const [mesh,materials] of this.glassQuality)mesh.material=this.automaticQuality?materials.fast:materials.full}
- setQuality(automatic:boolean){this.automaticQuality=automatic;this.renderer.transmissionResolutionScale=automatic?.5:1;this.updateLightingQuality();this.composer.renderTarget1.samples=this.composer.renderTarget2.samples=2;this.composer.renderTarget1.dispose();this.composer.renderTarget2.dispose();this.fxaa.enabled=false;this.updatePixelRatio();this.frames=[];this.qualityClock=performance.now();this.resize()}
+ private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=true;for(const light of this.previewKeys)light.visible=false;for(const [mesh,materials] of this.glassQuality)mesh.material=materials.full}
  setInspect(inspect:boolean){this.cameraTransition.active=false;this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
  updateBall(position:XYZ,rotation:{x:number;y:number;z:number;w:number},visible=true){if(!visible)this.teleportEffect.reset();const fx=this.inspect?{position,presence:1,strength:0}:this.teleportEffect.sample(position);this.teleportEffect.apply(fx.position,fx.presence,fx.strength);const floor=this.ballShadow.userData.floorHeight;this.ballShadow.visible=visible&&fx.presence>0&&fx.position[1]<floor+this.manifest.ball_diameter*.9;this.ballShadow.position.set(fx.position[0],floor+.00035,fx.position[2]);this.ballShadow.material.opacity=.32*fx.presence;for(const obj of this.groups.get('ball_main')||[]){obj.visible=visible;obj.position.set(...fx.position);obj.quaternion.set(rotation.x,rotation.y,rotation.z,rotation.w)}}
  updatePaddle(id:string,angle:number){for(const obj of this.groups.get(id)||[])obj.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),angle)}
@@ -246,8 +249,9 @@ export class TableView {
   hit(id:string){if(id==='triangle_left'||id==='triangle_right'){for(let i=1;i<=3;i++)this.flashes.set(`bumper_neutral_${id.slice(9)}_${i}`,.24)}else this.flashes.set(id,.24)}
  teleport(source:XYZ,destination:XYZ){this.teleportEffect.begin(source,this.initializedFollow?this.smoothedBall.toArray() as XYZ:source);this.needsRender=true}
  retarget(ball?:XYZ){this.teleportEffect.reset();this.initializedFollow=false;this.needsRender=true;if(ball)this.follow(ball,0,'playing')}
- resetFeedback(){this.cameraTransition.active=false;this.railCamera=false;this.overviewFocus.reset();this.updateCameraLighting();this.teleportEffect.reset();this.flashes.clear();for(const parts of this.glow.values())for(const p of parts)p.material.emissiveIntensity=p.baseline;for(const halo of this.halos.values())halo.visible=false}
- updateFeedback(dt:number){this.teleportEffect.advance(dt);for(const [id,remaining] of this.flashes){const t=Math.max(0,remaining-dt);for(const p of this.glow.get(id)||[])p.material.emissiveIntensity=p.baseline*(1+1.5*t/.24);const halo=this.halos.get(id);if(halo){halo.visible=t>0;halo.material.opacity=.75*t/.24}if(t===0)this.flashes.delete(id);else this.flashes.set(id,t)}}
+ scoreDiamonds(){this.diamonds?.score()}
+ resetFeedback(){this.diamonds?.reset();this.cameraTransition.active=false;this.railCamera=false;this.overviewFocus.reset();this.updateCameraLighting();this.teleportEffect.reset();this.flashes.clear();for(const parts of this.glow.values())for(const p of parts)p.material.emissiveIntensity=p.baseline;for(const halo of this.halos.values())halo.visible=false}
+ updateFeedback(dt:number){if(this.diamonds?.advance(dt))this.needsRender=true;this.teleportEffect.advance(dt);for(const [id,remaining] of this.flashes){const t=Math.max(0,remaining-dt);for(const p of this.glow.get(id)||[])p.material.emissiveIntensity=p.baseline*(1+1.5*t/.24);const halo=this.halos.get(id);if(halo){halo.visible=t>0;halo.material.opacity=.75*t/.24}if(t===0)this.flashes.delete(id);else this.flashes.set(id,t)}}
  follow(ball:XYZ,dt:number,state:string,ballMode:'floor'|'rail'='floor',focus:'launcher'|'cave'|null=null){
   if(this.inspect)return;
   const rail=ballMode==='rail'&&state==='playing';
@@ -259,10 +263,8 @@ export class TableView {
  }
 
  render(){this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
-  if(this.automaticQuality&&this.frames.length>=60&&now-this.qualityClock>2000){this.qualityClock=now;const sorted=this.frames.slice(-60).sort((a,b)=>a-b),median=sorted[30],ratio=this.renderer.getPixelRatio();if(median>24&&ratio>1){this.renderer.setPixelRatio(Math.max(1,ratio-.1));this.resize();this.frames=[]}
-   else if(median>24&&this.composer.renderTarget1.samples>0){this.composer.renderTarget1.samples=this.composer.renderTarget2.samples=0;this.composer.renderTarget1.dispose();this.composer.renderTarget2.dispose();this.fxaa.enabled=true;this.frames=[]}
-   else if(median<17&&this.composer.renderTarget1.samples===0){this.composer.renderTarget1.samples=this.composer.renderTarget2.samples=2;this.composer.renderTarget1.dispose();this.composer.renderTarget2.dispose();this.fxaa.enabled=false;this.frames=[]}}
+
  }
- metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.automaticQuality,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:this.automaticQuality?'baked floor + broad keys':'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
+ metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:false,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
 }
 type EntityLike={role:string};
