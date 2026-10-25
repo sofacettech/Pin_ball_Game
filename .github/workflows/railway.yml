@@ -250,5 +250,41 @@ jobs:
           MEDIA_CDN_BASE_URL: https://media.sofacet.com
         run: node scripts/browser-journey-flow.mjs
 
+  game-startup:
+    name: Chromium game startup and first Play
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Build the game under test
+        run: node scripts/build-game.mjs
+      - name: Install isolated game browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/game-check" playwright@1.63.0
+          "$RUNNER_TEMP/game-check/node_modules/.bin/playwright" install chromium
+      - name: Fetch startup comparison baseline
+        run: git fetch --depth 1 origin 533fb037ae6ce0eaabd4f873d2a83e015370f72b
+      - name: Verify handoff, rendering and first Play
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/game-check/node_modules/playwright
+          SOFACET_GAME_BASELINE_REF: 533fb037ae6ce0eaabd4f873d2a83e015370f72b
+          SOFACET_GAME_STARTUP_OUTPUT: ${{ runner.temp }}/game-startup.json
+        run: node scripts/browser-game-startup.mjs
+      - name: Upload game startup measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-startup-chromium
+          path: ${{ runner.temp }}/game-startup*
+          if-no-files-found: warn
+          retention-days: 14
+
 # Railway deploys main through its GitHub repository integration.
 # Keep this workflow limited to validation so Wait for CI can complete.
