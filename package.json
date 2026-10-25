@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs",
+    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs && node scripts/build-entrance.mjs",
     "build:membership": "node scripts/build-membership.mjs",
     "test:membership": "node --test tests/membership.test.mjs",
     "test:frontend": "node --test tests/frontend.test.mjs",
@@ -16,7 +16,8 @@
     "test:frames": "node --test tests/frame-cache.test.mjs",
     "build:about": "node scripts/build-about.mjs",
     "smoke": "node scripts/smoke-test.mjs",
-    "build:account": "node scripts/build-account.mjs"
+    "build:account": "node scripts/build-account.mjs",
+    "build:entrance": "node scripts/build-entrance.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@types/three": "0.186.0",
+    "esbuild-wasm": "0.25.11",
     "typescript": "7.0.2",
     "vite": "8.3.2"
   },

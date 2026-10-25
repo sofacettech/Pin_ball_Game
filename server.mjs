@@ -107,7 +107,7 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','entrance-3d.html','play.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
@@ -117,7 +117,7 @@ const server=createServer(async(request,response)=>{
   if(path==='/api/media-config'&&request.method==='GET')return json(response,200,{baseURL:process.env.MEDIA_CDN_BASE_URL||''});
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
-  const relative=path==='/'?'index.html':path.slice(1),parts=relative.split('/');
+  const relative=path==='/'?'index.html':/^\/entrance-3d\/?$/.test(path)?'entrance-3d.html':path.slice(1),parts=relative.split('/');
   if(parts.some(p=>!p||p.startsWith('.')||p.includes('\\'))||!(publicFiles.has(relative)||publicDirectories.has(parts[0])&&parts.length>1))fail(404,'File not found.');
   const target=resolve(root,relative);
   if(!target.startsWith(root+sep))fail(403,'Forbidden.');
