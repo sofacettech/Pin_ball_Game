@@ -6,7 +6,7 @@ import {withGameLoader} from '../scripts/game-loader-shell.mjs';
 
 // Exercise the actual Canvas controller's integrator without a browser or GPU.
 const source=readFileSync(new URL('../assets/game-loader.js',import.meta.url),'utf8');
-test('approved ball loader is used in generated pages instead of the excluded statement transition',()=>{
+test('generated pages retain the ball and initially hidden story text',()=>{
  const shell=withGameLoader('<html><head></head><body></body></html>',{game:true,entry:'./assets/game.js'});
  assert.match(shell,/<canvas aria-hidden="true"><\/canvas>/);
  assert.match(shell,/data-game-entry="\.\/assets\/game.js"/);
@@ -15,8 +15,9 @@ test('approved ball loader is used in generated pages instead of the excluded st
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8');
   const loader=html.match(/<!-- game-loader-body -->([\s\S]*?)<!-- \/game-loader-body -->/)?.[1];
   assert.ok(loader?.includes('<canvas aria-hidden="true"></canvas>'),file);
-  assert.ok(!html.includes('loading-statement'),file);
+  assert.match(loader,/class="loading-statement"[^>]*hidden/,file);
  }
+ assert.match(readFileSync(new URL('../sequence.js',import.meta.url),'utf8'),/game\.src = '\.\/play\.html\?from=chess'/);
 });
 const integrator=source.slice(source.indexOf('function advance(dt)'),source.indexOf('function tick(now)'));
 function simulation(initial={}){
@@ -40,4 +41,59 @@ test('corner contacts reflect both axes once, with exact edge positions',()=>{
 test('trail records the reflection vertex instead of cutting across a bounce',()=>{
  const motion=simulation({width:100,height:100,radius:10,x:85,y:50,vx:40,vy:20});motion.step(.25);
  const {points,x,vx}=motion.state();assert.equal(points.length,2);assert.equal(points[0].x,90);assert.equal(points[0].y,52.5);assert.equal(x,85);assert.equal(vx,-40);
+});
+
+function loader({story=true,reduced=false,embedded=false,fontReady=Promise.resolve()}={}){
+ const animations=[],timers=new Map();let id=0;
+ const element=()=>({hidden:false,dataset:{},style:{setProperty(){}},children:[],firstChild:{textContent:''},setAttribute(name,value){this[name]=value},removeAttribute(name){delete this[name]},getBoundingClientRect:()=>({width:1440,height:720,bottom:90}),replaceChildren(...children){this.children=children},get textContent(){return this.children.map(child=>child.textContent).join('')},set textContent(value){this.children=[{textContent:value}]}});
+ const root=element(),stage=element(),statement=element(),phrase=element(),error=element(),status=element(),retry=element(),canvas=element(),body=element();
+ body.hasAttribute=name=>name==='data-game-loading';stage.inert=true;stage.dataset.ready='false';canvas.getContext=()=>null;
+ phrase.animate=(frames,options)=>{const animation={frames,options,playState:'running',pause(){this.playState='paused'},play(){this.playState='running'},cancel(){this.playState='idle'},finish(){this.playState='finished';this.onfinish?.()}};animations.push(animation);return animation};
+ const nodes={canvas,'.loading-statement':statement,'.loading-phrase':phrase,'.game-loading-error':error,'[role="status"]':status,'[data-game-retry]':retry};root.querySelector=selector=>nodes[selector];
+ const document=new EventTarget(),window=new EventTarget(),motion=new EventTarget();document.body=body;document.hidden=false;document.fonts={load:()=>fontReady};motion.matches=reduced;
+ document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:''}}}[id]);
+ document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];document.createTextNode=textContent=>({textContent});document.createElement=element;
+ const context={window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL,matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,cancelAnimationFrame(){},setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
+ vm.runInNewContext(source,context);
+ return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,document,motion,timers,flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
+}
+const fontLoaded=()=>new Promise(resolve=>setImmediate(resolve));
+test('chess arrival shows each approved message once and waits for both story and table',async()=>{
+ const view=loader();await fontLoaded();
+ assert.equal(view.phrase.textContent,'Your points could become something precious');
+ view.api.ready();assert.equal(view.stage.inert,true);assert.equal(view.root.hidden,false);
+ view.animations[0].finish();assert.equal(view.phrase.textContent,'Every 10 points gets you ₹1 closer to your first diamond.');
+ assert.deepEqual(view.phrase.children.filter(child=>child.className==='loading-value').map(child=>child.textContent),['10','₹1']);
+ assert.equal(view.animations[0].playState,'idle');assert.equal(view.animations[0].frames.at(-1).opacity,0);
+ view.animations[1].finish();assert.equal(view.phrase.textContent,'Play well. Save your points. Shine later.');assert.equal(view.stage.inert,true);
+ view.animations[2].finish();assert.equal(view.stage.inert,false);assert.equal(view.root.dataset.state,'leaving');
+ view.flushFade();assert.equal(view.root.hidden,true);assert.equal(view.animations.length,3);
+});
+test('last message stays visible while the table is still loading and never restarts on resume',async()=>{
+ const view=loader();await fontLoaded();view.animations[0].finish();view.animations[1].finish();view.animations[2].finish();
+ assert.equal(view.root.hidden,false);assert.equal(view.stage.inert,true);
+ view.api.setActive(false);view.api.setActive(true);assert.notEqual(view.animations[2].playState,'running');
+ view.api.ready();view.flushFade();assert.equal(view.root.hidden,true);
+});
+test('direct game and reduced-motion navigation do not wait for the story',async()=>{
+ for(const options of [{story:false},{reduced:true}]){
+  const view=loader(options);await fontLoaded();assert.equal(view.animations.length,0);assert.equal(view.statement.hidden,options.story===false);
+  view.api.ready();view.flushFade();assert.equal(view.stage.inert,false);assert.equal(view.root.hidden,true);
+ }
+});
+test('story pauses when hidden and respects a reduced-motion preference change',async()=>{
+ const view=loader({embedded:true});await fontLoaded();assert.equal(view.animations[0].playState,'paused');
+ view.api.setActive(true);assert.equal(view.animations[0].playState,'running');
+ view.document.hidden=true;view.document.dispatchEvent(new Event('visibilitychange'));assert.equal(view.animations[0].playState,'paused');
+ view.document.hidden=false;view.document.dispatchEvent(new Event('visibilitychange'));assert.equal(view.animations[0].playState,'running');
+ view.api.ready();view.motion.matches=true;view.motion.dispatchEvent(new Event('change'));view.flushFade();assert.equal(view.root.hidden,true);
+});
+test('failure, cancellation and retry clean up story animation and stale font callbacks',async()=>{
+ let resolveFont;const view=loader({fontReady:new Promise(resolve=>resolveFont=resolve)});
+ view.api.cancel();resolveFont();await fontLoaded();assert.equal(view.animations.length,0);assert.equal(view.root.hidden,true);
+ view.api.show();await fontLoaded();assert.equal(view.animations.length,1);
+ view.api.fail();assert.equal(view.animations[0].playState,'idle');assert.equal(view.error.hidden,false);assert.equal(view.statement.hidden,true);
+ view.api.ready();assert.notEqual(view.root.dataset.state,'leaving');
+ view.api.show();await fontLoaded();assert.equal(view.error.hidden,true);assert.equal(view.statement.dataset.statement,'0');
+ view.stage.dataset.ready='true';view.api.cancel();assert.equal(view.stage.inert,false);assert.equal(view.root.hidden,true);
 });

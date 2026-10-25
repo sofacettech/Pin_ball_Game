@@ -6,12 +6,38 @@
  const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
  const status=root.querySelector('[role="status"]'),error=root.querySelector('.game-loading-error');
  const gamePage=document.body.hasAttribute('data-game-loading');
+ const story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
+ const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
+ const messages=['Your points could become something precious','Every 10 points gets you ₹1 closer to your first diamond.','Play well. Save your points. Shine later.'];
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let width=1,height=1,radius=9,x=0,y=0,vx=0,vy=0,time=0,last=0,frame=0,fade=0,delay=0;
  let active=false,failed=false,parentVisible=parent===window,events,observer;
  let points=[],impacts=[],blocked=[];
- const stop=()=>{cancelAnimationFrame(frame);frame=0;last=0};
- function cleanup(){stop();events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
+ let textAnimation,statementIndex=0,textRun=0,storyDone=true,readyPending=false;
+ const stop=()=>{cancelAnimationFrame(frame);frame=0;last=0;textAnimation?.pause()};
+ function cleanup(){stop();textAnimation?.cancel();textAnimation=null;textRun++;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
+ function renderStatement(){
+  statement.dataset.statement=String(statementIndex);
+  phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1)/).map(part=>{
+   if(part!=='10'&&part!=='₹1')return document.createTextNode(part);
+   const value=document.createElement('span');value.className='loading-value';value.textContent=part;return value;
+  }));
+ }
+ function animateStatement(){
+  if(!active||failed||storyDone||motion.matches)return;
+  renderStatement();
+  const final=statementIndex===messages.length-1,duration=final?3500:4300;
+  // Replace the copy only after fade-out; the final line waits visibly for readiness.
+  const frames=[{opacity:0,transform:'translateY(10px)',offset:0},{opacity:1,transform:'translateY(0)',offset:900/duration},{opacity:1,transform:'translateY(0)',offset:3500/duration}];
+  if(!final)frames.push({opacity:0,transform:'translateY(-10px)',offset:1});
+  textAnimation=phrase.animate(frames,{duration,easing:'cubic-bezier(.65,0,.35,1)',fill:'both'});
+  textAnimation.onfinish=()=>{
+   if(!active||failed)return;
+   if(final){storyDone=true;if(readyPending)finishReady()}
+   else{textAnimation.cancel();statementIndex++;animateStatement()}
+  };
+  if(document.hidden||!parentVisible)textAnimation.pause();
+ }
  function measure(){
   const anchors=gamePage?document.querySelectorAll('.navbar-backdrop,.nav-trim,#game-header .site-brand,#nav-toggle'):document.querySelectorAll('.site-brand,[data-menu-toggle]');
   let top=0;
@@ -63,32 +89,48 @@
   points=points.filter(p=>time-p.t<=2).slice(-240);impacts=impacts.filter(p=>time-p.t<.42).slice(-8);
  }
  function tick(now){frame=0;if(!active||failed||document.hidden||!parentVisible||motion.matches)return;advance(last?Math.min((now-last)/1000,.05):0);last=now;draw();frame=requestAnimationFrame(tick)}
- function resume(){stop();if(active&&!failed&&!root.hidden){measure();draw();if(!document.hidden&&parentVisible&&!motion.matches)frame=requestAnimationFrame(tick)}}
+ function resume(){stop();if(active&&!failed&&!root.hidden){measure();draw();if(!document.hidden&&parentVisible){if(!storyDone)textAnimation?.play();if(!motion.matches)frame=requestAnimationFrame(tick)}}}
  function listen(){
   events=new AbortController();const signal=events.signal;
   addEventListener('resize',resume,{signal});visualViewport?.addEventListener('resize',resume,{signal});
   document.addEventListener('visibilitychange',()=>document.hidden?stop():resume(),{signal});
-  motion.addEventListener('change',()=>{points=[];impacts=[];resume()},{signal});
+  motion.addEventListener('change',()=>{
+   points=[];impacts=[];
+   if(story&&motion.matches){textAnimation?.cancel();textAnimation=null;textRun++;storyDone=true;renderStatement();phrase.style.opacity='1';phrase.style.transform='none';if(readyPending){finishReady();return}}
+   resume();
+  },{signal});
   observer=new ResizeObserver(()=>{measure();if(motion.matches)draw()});
   for(const element of document.querySelectorAll('#game-header,.navbar-backdrop,.site-brand,[data-menu-toggle]'))observer.observe(element);
  }
  function show(){
   if(active&&!failed)return;
   clearTimeout(fade);cleanup();active=true;failed=false;root.hidden=false;delete root.dataset.state;error.hidden=true;
+  statementIndex=0;storyDone=!story||motion.matches;readyPending=false;statement.hidden=!story;
+  if(story){
+   root.dataset.story='';phrase.style.opacity=motion.matches?'1':'0';phrase.style.transform='none';renderStatement();
+   const run=textRun;
+   document.fonts.load('400 16px Biarty').catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
+  }
   status.firstChild.textContent='Preparing your table. ';
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;
   listen();measure();draw();resume();
   delay=setTimeout(()=>{if(active&&!failed)status.firstChild.textContent='Still preparing your game. Please wait. '},20000);
  }
- function hide(){clearTimeout(fade);cleanup();root.hidden=true;active=false;delete root.dataset.state;for(const [element,inert] of blocked)element.inert=inert;blocked=[];if(gamePage&&document.getElementById('stage')?.dataset.ready==='true')document.body.removeAttribute('data-game-loading')}
+ function hide(){clearTimeout(fade);cleanup();root.hidden=true;active=false;delete root.dataset.state;for(const [element,inert] of blocked)element.inert=inert;blocked=[];const stage=document.getElementById('stage');if(gamePage&&stage?.dataset.ready==='true'){stage.inert=false;document.body.removeAttribute('data-game-loading')}}
  function ready(){
   if(failed)return;
+  readyPending=true;
+  if(story&&!storyDone&&!motion.matches)return;
+  finishReady();
+ }
+ function finishReady(){
+  if(story){phrase.style.opacity='1';phrase.style.transform='none'}
   cleanup();active=false;const stage=document.getElementById('stage');if(stage){stage.inert=false;stage.dataset.ready='true';stage.setAttribute('aria-busy','false')}
   blocked=[];root.dataset.state='leaving';
-  fade=setTimeout(()=>{root.hidden=true;document.body.removeAttribute('data-game-loading')},motion.matches?0:200);
+  fade=setTimeout(()=>{root.hidden=true;document.body.removeAttribute('data-game-loading')},motion.matches?0:story?800:200);
  }
  function fail(){
-  if(root.hidden)show();failed=true;cleanup();active=false;error.hidden=false;root.dataset.state='error';document.getElementById('stage')?.setAttribute('aria-busy','false');
+  if(root.hidden)show();failed=true;cleanup();active=false;statement.hidden=true;error.hidden=false;root.dataset.state='error';document.getElementById('stage')?.setAttribute('aria-busy','false');
  }
  const style=document.getElementById('game-entry-style');
  const stylesReady=style?.dataset.failed?Promise.reject(Error('Game styles unavailable')):!style||style.sheet?Promise.resolve():new Promise((resolve,reject)=>{style.addEventListener('load',resolve,{once:true});style.addEventListener('error',()=>{fail();reject(Error('Game styles unavailable'))},{once:true})});

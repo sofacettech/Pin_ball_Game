@@ -195,7 +195,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }
 
   function preloadGame() {
-    if (!game.getAttribute('src')) game.src = './play.html';
+    if (!game.getAttribute('src')) game.src = './play.html?from=chess';
   }
   function setGameVisibility(visible) {
     if (gameVisible === visible) return;
