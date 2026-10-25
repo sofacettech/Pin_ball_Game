@@ -45,7 +45,7 @@ function App() {
   return brandText(<>
     <a className="skip-link" href="#faq-content">Skip to questions</a>
     <div className="page enhanced">
-      <header className="masthead"><a className="faq-brand site-brand" href="/" aria-label="SOFACET home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"/></a><div className="breadcrumb">How points work / FAQ</div></header>
+      <header className="masthead"><a className="faq-brand site-brand" href="/" target="_top" aria-label="SOFACET home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"/></a><div className="breadcrumb">How points work / FAQ</div></header>
       <main>
         <section className="hero" aria-labelledby="page-title"><h1 id="page-title">Good questions.<em>Clear answers.</em></h1><p className="intro"><BrandText>A little more about the game, your points and everything SO/FACET.</BrandText></p></section>
         <div className="faq-layout" id="faq-content" tabIndex={-1}>

@@ -13,3 +13,10 @@ export function maskedPhone(value){
  const phone=parsePhoneNumberFromString(value||'');
  return phone?'+'+phone.countryCallingCode+' ••••••'+phone.nationalNumber.slice(-4):'';
 }
+export function phoneParts(value,fallback='IN'){
+ try{
+  const phone=parsePhoneNumberFromString(value||'',fallback);
+  if(phone)return{country:phone.country||fallback,nationalNumber:phone.nationalNumber,formatted:phone.formatInternational()};
+ }catch{}
+ return{country:fallback,nationalNumber:value||'',formatted:value||''};
+}

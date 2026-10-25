@@ -11,7 +11,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult)=>
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
  const dialog=$<HTMLDialogElement>('post-game-rewards'),header=document.querySelector<HTMLElement>('body > header')!,toggle=$('nav-toggle');
  const views={result:$('rewards-result'),leave:$('rewards-leave'),exit:$('rewards-exit')};
- let result:CompletedGameResult|null=null,discarded=false,current:keyof typeof views='result',destination='/index.html#experience';
+ let result:CompletedGameResult|null=null,discarded=false,current:keyof typeof views='result',destination='/';
  const unsaved=()=>!!result&&result.points>=10&&!discarded;
  const placeFloor=()=>{const actions=views[current].querySelector<HTMLElement>('.rewards-actions')!;if(dialog.open)dialog.style.setProperty('--rewards-floor-top',actions.offsetTop+actions.offsetHeight+12+'px')};
  const resize=new ResizeObserver(placeFloor);
@@ -25,7 +25,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult)=>
  function register(){if(result){dialog.close();onRegister(result)}}
  function replay(){discarded=true;dialog.close();onRetry()}
  function world(){discarded=true;window.top!.location.assign(destination)}
- function leave(href='/index.html#experience'){
+ function leave(href='/'){
   destination=href;
   if(!unsaved()){world();return}
   const copy=leaveCopy(result!.points);$('rewards-leave-title').textContent=copy.title;$('rewards-leave-copy').textContent=copy.support;setView('leave');
@@ -62,6 +62,6 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult)=>
    if(low)dialog.setAttribute('aria-describedby','rewards-score rewards-low-copy');
   },
   discard(){discarded=true;result=null},
-  clear(){dialog.close();result=null;discarded=false;destination='/index.html#experience'},
+  clear(){dialog.close();result=null;discarded=false;destination='/'},
  };
 }

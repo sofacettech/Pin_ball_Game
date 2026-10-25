@@ -99,6 +99,7 @@ body[data-loading] #story-copy{visibility:hidden}
 @media(prefers-reduced-motion:reduce){#scroll-cue,.story-line,.story-line h1,.story-line h2,.story-line p{transition:none}}
 [hidden],#scene-frame [hidden]{display:none!important}
 .wordmark{text-shadow:0 1px 12px #0008;pointer-events:none}
+a.wordmark.site-brand{pointer-events:auto}
 .site-navigation{gap:16px}
 .site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 Acumin,Arial,sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sound-text{display:grid;overflow:hidden;padding:2px 0}
