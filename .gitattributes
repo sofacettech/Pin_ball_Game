@@ -1,2 +1,2 @@
 assets/sofacet-experience.mp4 filter=lfs diff=lfs merge=lfs -text
-/assets/*.json text eol=lf
+/assets/collider-entities.json text eol=lf
