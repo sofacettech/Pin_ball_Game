@@ -2,7 +2,7 @@ import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-8
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 
-export async function createFrameSource(video,index,indexURL,captureNativeFrame,onPlaybackReady,{renderer='auto'}={}){
+export async function createFrameSource(video,index,indexURL,captureNativeFrame,onPlaybackReady,{renderer='auto',diagnostics=false}={}){
  prepareInlineVideo(video);
  video.crossOrigin='anonymous';
  let url=new URL(index.source,indexURL);
@@ -34,8 +34,8 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
  if(requestedRenderer==='worker'){
   try{
    if(!index.codec)throw new DOMException('A frame index is required','NotSupportedError');
-   const {createWorkerFrameDecoder}=await import('./worker-frame-decoder.js?v=frames-bd85372ede42');
-   workerDecoder=await createWorkerFrameDecoder(config,{fps:index.fps,maxPending:4});
+   const {createWorkerFrameDecoder}=await import('./worker-frame-decoder.js?v=frames-5740f20ba5e4');
+   workerDecoder=await createWorkerFrameDecoder(config,{fps:index.fps,maxPending:4,diagnostics});
    mode='worker';fallbackReason=null;
   }catch(error){workerFailure={name:error.name,message:error.message};fallbackReason='worker-unavailable';preferNative=true}
  }
@@ -337,7 +337,7 @@ export async function createFrameSource(video,index,indexURL,captureNativeFrame,
   for(let i=0;i<(ranges?.length||0);i++)if(ranges.start(i)<=.05&&ranges.end(i)>0)return ranges.end(i);
   return 0;
  }
- return{load,loadFrames,activate:activateNative,get decodeConcurrency(){return mode==='worker'?4:1},get playbackBlocked(){return nativeBlocked},frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
+ return{load,loadFrames,markDrawn:diagnostics?image=>workerDecoder?.markDrawn(image):undefined,activate:activateNative,get decodeConcurrency(){return mode==='worker'?4:1},get playbackBlocked(){return nativeBlocked},frameBytes:frame=>mode==='video'?0:index.frames[frame][1],decodedFrameBytes:index.width*index.height*4,decode,fallback,
   retarget(frame,presented,desired=frame){
    // Finish useful progress, but cancel a seek that would overshoot the new
    // target after a reversal instead of making the finger wait for it.

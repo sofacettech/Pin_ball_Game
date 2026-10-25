@@ -4,10 +4,11 @@ const cancelled=()=>namedError('Frame decoding cancelled','AbortError');
 
 // Returned ImageBitmaps belong to the caller and do not retain codec surfaces.
 // Message timestamps identify requests; source indices identify journey frames.
-export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,WorkerClass=globalThis.Worker,startupTimeout=5000,decodeTimeout=8000}={}){
+export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,WorkerClass=globalThis.Worker,startupTimeout=5000,decodeTimeout=8000,diagnostics=false}={}){
  if(!Number.isFinite(fps)||fps<=0||!Number.isSafeInteger(maxPending)||maxPending<1||maxPending>4||!Number.isFinite(startupTimeout)||startupTimeout<=0||!Number.isFinite(decodeTimeout)||decodeTimeout<=0)throw new RangeError('Invalid worker decoder limits');
  if(typeof WorkerClass!=='function')throw namedError('Module workers are unavailable','NotSupportedError');
- const started=performance.now(),worker=new WorkerClass(new URL('./frame-decoder-worker.js?v=frames-ba9f4c7055b9',import.meta.url),{type:'module',name:'sofacet-frame-decoder'});
+ const timing=diagnostics?(await import('./frame-timing.js?v=frames-b8f641307d70')).createFrameTimingRecorder():null;
+ const started=performance.now(),worker=new WorkerClass(new URL('./frame-decoder-worker.js?v=frames-090389d5d911',import.meta.url),{type:'module',name:'sofacet-frame-decoder'});
  const jobs=new Map(),duration=Math.max(1,Math.round(1e6/fps));
  const counters={workerRequests:0,workerCompleted:0,workerCancelled:0,workerTimeouts:0,workerPeakPending:0,workerDecodeMs:0,workerDecodeTotalMs:0,workerStartupMs:0,workerFlushes:0,workerResets:0,workerHardwarePreference:null,workerOutputKind:null,workerBitmapCopies:0,workerBitmapCopyMs:0,workerBitmapCopyMaxMs:0};
  let nextId=0,destroyed=false,failure,startupTimer,resolveStartup,rejectStartup;
@@ -38,10 +39,11 @@ export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,Worke
    const message=colourMismatch(config.colorSpace,{colorSpace:data.sourceColorSpace});image.close();fail(namedError(message));return;
   }
   release(job);counters.workerCompleted++;counters.workerDecodeMs=performance.now()-job.started;counters.workerDecodeTotalMs+=counters.workerDecodeMs;
+  timing?.received(image,job.started,data.timing);
   job.resolve(image);
  });
  startupTimer=setTimeout(()=>{counters.workerTimeouts++;fail(namedError('Worker decoder startup timed out','TimeoutError'))},startupTimeout);
- post({type:'init',config,fps,maxPending});
+ post({type:'init',config,fps,maxPending,diagnostics});
  await startup;
  return{
   decode(frame,bytes,signal){
@@ -70,6 +72,7 @@ export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,Worke
     post({type:'decode',id,frame,timestamp,duration,bytes:copy},[copy]);
    });
   },
+  markDrawn(image){timing?.drawn(image)},
   suspend(){
    if(destroyed||failure)return;
    // The reset acknowledgment closes codec resources and any transferred
@@ -86,6 +89,6 @@ export async function createWorkerFrameDecoder(config,{fps=60,maxPending=4,Worke
    for(const job of jobs.values()){release(job);if(!job.cancelled)counters.workerCancelled++;job.reject(cancelled())}
    worker.terminate();
   },
-  get stats(){return{...counters,workerPending:jobs.size,workerReady:!destroyed&&!failure,workerFailure:failure?.name??null}}
+  get stats(){return{...counters,...timing?.stats,workerPending:jobs.size,workerReady:!destroyed&&!failure,workerFailure:failure?.name??null}}
  };
 }

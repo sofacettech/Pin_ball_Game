@@ -1,20 +1,22 @@
-const VERSION = 'scroll-debug-5';
+const VERSION = 'scroll-debug-6';
 const boundedPush = (values, value, limit) => { values.push(value); if (values.length > limit) values.shift(); };
 const round = value => Math.round(value * 10) / 10;
 const p95 = values => [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * .95) - 1)] || 0;
 
-// Capture only scalar pipeline evidence at the existing 500ms boundary. Source
-// stats contain URLs and larger objects that do not belong in every sample.
+// Capture scalar evidence every 500ms and at meaningful stall boundaries.
+// Source stats contain URLs and larger objects that do not belong in samples.
 const pipelineNumbers = ['target', 'direction', 'decoded', 'decodedBytes', 'compressed', 'compressedBytes',
   'network', 'networkRequests', 'networkFrames', 'networkBytes', 'diskHits', 'decoding', 'pending', 'queued',
   'decodeMs', 'workerRequests', 'workerCompleted', 'workerTimeouts', 'workerDecodeTotalMs',
   'workerBitmapCopies', 'workerBitmapCopyMs', 'workerBitmapCopyMaxMs', 'canvasDrawCount', 'canvasDrawMs',
   'canvasDrawMaxMs', 'fallbacks', 'bufferAheadFrames', 'bufferAheadSeconds', 'bufferRequiredFrames',
-  'bufferPacingScale', 'bufferPacingSpeed'];
+  'bufferPacingScale', 'bufferPacingSpeed', 'targetDecodeAgeMs', 'targetDecodedAgeMs', 'newestReadyFrame', 'newestReadyAgeMs',
+  'workerDrawnOutputs', 'workerUndrawnOutputs'];
 const pipelineSnapshot = (stats = {}) => ({
   ...Object.fromEntries(['mode', 'renderer', 'requestedRenderer'].map(key => [key, typeof stats[key] === 'string' ? stats[key].slice(0, 64) : null])),
   ...Object.fromEntries(pipelineNumbers.map(key => [key, Number.isFinite(stats[key]) ? stats[key] : null])),
-  bufferPacingLimited: typeof stats.bufferPacingLimited === 'boolean' ? stats.bufferPacingLimited : null,
+  ...Object.fromEntries(['bufferPacingLimited', 'targetCompressedReady', 'targetDecodedReady', 'targetDecodePending']
+    .map(key => [key, typeof stats[key] === 'boolean' ? stats[key] : null])),
 });
 const copySample = sample => ({...sample, ...(sample.pipeline ? {pipeline: {...sample.pipeline}} : {})});
 
@@ -110,7 +112,8 @@ export function createPagePauseObserver({Observer = globalThis.PerformanceObserv
 
 // A four-frame jump is one update. Idle and hidden time are not stalls.
 export function createPerformanceRecorder() {
-  let previous, lastScroll = -Infinity, active = false, progressAt, stalled = false;
+  let previous, lastScroll = -Infinity, active = false, progressAt;
+  let waiting, episode, latestPipeline, latestPipelineAt;
   let windowAt, pageTicks = 0, updates = 0, activeMs = 0, nativeUpdates = 0;
   let worstPageGapMs = 0, worstJourneyGapMs = 0, worstLagFrames = 0, stalls = 0, totalUpdates = 0;
   let nativeMediaTime = null, nativeFrameIdentity;
@@ -118,7 +121,26 @@ export function createPerformanceRecorder() {
   let compositionAdvances = 0, unobservedCompositionFrames = 0, worstCallbackGapMs = 0;
   let lastCallbackAt, lastCompositionCount;
   const recentCallbacks = [];
-  const pageGaps = [], journeyGaps = [], history = [], recentPagePauses = [];
+  const pageGaps = [], journeyGaps = [], history = [], recentPagePauses = [], recentJourneyStalls = [];
+  const copyEvidence = evidence => evidence ? {...evidence, pipeline: evidence.pipeline ? {...evidence.pipeline} : null} : null;
+  const copyEpisode = value => ({...value, start: copyEvidence(value.start), detected: copyEvidence(value.detected), end: copyEvidence(value.end)});
+  function evidence(now, state) {
+    return {atMs: round(now), desiredFrame: state.desiredFrame, displayedFrame: state.displayedFrame,
+      wantedFrame: Number.isFinite(state.wantedFrame) ? state.wantedFrame : null,
+      direction: Math.sign(state.desiredFrame - state.displayedFrame),
+      outstandingMovement: ['idle', 'journey'].includes(state.phase) && !state.game && state.desiredFrame !== state.displayedFrame,
+      lastScrollAtMs: Number.isFinite(lastScroll) ? round(lastScroll) : null,
+      pipelineSampledAtMs: latestPipelineAt === undefined ? null : round(latestPipelineAt),
+      pipelineAgeMs: latestPipelineAt === undefined ? null : round(Math.max(0, now - latestPipelineAt)),
+      pipeline: latestPipeline || null};
+  }
+  function closeEpisode(now, state, outcome) {
+    if (episode) {
+      episode.endTime = round(now); episode.durationMs = round(now - waiting.startTime);
+      episode.end = evidence(now, state); episode.outcome = outcome;
+    }
+    waiting = episode = undefined;
+  }
   let current = {pageFps: null, journeyUpdatesPerSecond: null, nativeUpdatesPerSecond: null};
   return {
     sample(now, state, readPipeline) {
@@ -127,7 +149,30 @@ export function createPerformanceRecorder() {
       const elapsed = previous ? now - previous.now : 0;
       if (previous && state.scrollY !== previous.scrollY) lastScroll = now;
       const eligible = ['idle', 'journey'].includes(state.phase) && !state.game;
-      const nextActive = eligible && (state.desiredFrame !== state.displayedFrame || now - lastScroll < 180);
+      const outstanding = eligible && state.desiredFrame !== state.displayedFrame;
+      const nextActive = eligible && (outstanding || now - lastScroll < 180);
+      const direction = Math.sign(state.desiredFrame - state.displayedFrame);
+      const changed = previous && state.displayedFrame !== previous.displayedFrame;
+      const readCurrentPipeline = () => {
+        if (readPipeline && latestPipelineAt !== now) {
+          latestPipeline = pipelineSnapshot(readPipeline()); latestPipelineAt = now;
+        }
+        return latestPipeline;
+      };
+      if (waiting) {
+        const waitMs = now - waiting.startTime;
+        if (waitMs >= 100 && !episode) {
+          readCurrentPipeline(); stalls++;
+          episode = {startTime: round(waiting.startTime), detectedAt: round(now), endTime: null,
+            durationMs: round(waitMs), outcome: 'pending', start: waiting.start, detected: evidence(now, state), end: null};
+          boundedPush(recentJourneyStalls, episode, 20);
+        }
+        if (episode) episode.durationMs = round(waitMs);
+        const outcome = changed ? 'progress' : !eligible ? 'inactive' : !outstanding ? 'settled'
+          : direction !== waiting.direction ? 'reversal' : null;
+        if (outcome) { if (episode) readCurrentPipeline(); closeEpisode(now, state, outcome); }
+      }
+      if (outstanding && !waiting) waiting = {startTime: now, direction, start: evidence(now, state)};
       if (elapsed > 0) {
         pageTicks++; boundedPush(pageGaps, elapsed, 600);
         worstPageGapMs = Math.max(worstPageGapMs, elapsed);
@@ -136,15 +181,14 @@ export function createPerformanceRecorder() {
           phaseBefore: previous.phase, phaseAfter: state.phase, gameBefore: !!previous.game, gameAfter: !!state.game,
         }, 20);
       }
-      if (nextActive && !active) { progressAt = now; stalled = false; }
+      if (nextActive && !active) progressAt = now;
       if (active && elapsed > 0) {
         activeMs += elapsed;
         const gap = now - progressAt;
         worstJourneyGapMs = Math.max(worstJourneyGapMs, gap);
-        if (gap >= 100 && !stalled) { stalls++; stalled = true; }
         if (state.displayedFrame !== previous.displayedFrame) {
           updates++; totalUpdates++; boundedPush(journeyGaps, gap, 600);
-          progressAt = now; stalled = false;
+          progressAt = now;
         }
       }
       active = nextActive;
@@ -163,7 +207,7 @@ export function createPerformanceRecorder() {
         lagSeconds: state.fps > 0 ? round(Math.abs(state.desiredFrame - state.displayedFrame) / state.fps) : null,
         worstLagSeconds: state.fps > 0 ? round(worstLagFrames / state.fps) : null,
         stalls, totalUpdates, sampledAtMs: round(now),
-        ...(readPipeline ? {pipeline: pipelineSnapshot(readPipeline())} : {}),
+        ...(readPipeline ? {pipeline: {...readCurrentPipeline()}} : {}),
       };
       boundedPush(history, {atMs: round(now), ...current}, 120);
       windowAt = now; pageTicks = updates = activeMs = nativeUpdates = 0;
@@ -191,12 +235,15 @@ export function createPerformanceRecorder() {
       nativeFrameIdentity = identity; nativeMediaTime = mediaTime;
     },
     suspend() {
+      if (previous) closeEpisode(previous.now, previous, 'suspended');
+      waiting = episode = undefined;
       previous = undefined; windowAt = undefined; lastScroll = -Infinity; active = false;
       pageTicks = updates = activeMs = nativeUpdates = 0;
       lastCallbackAt = lastCompositionCount = undefined;
     },
     report() { return {
       current: copySample(current), recentSamples: history.map(copySample), recentPagePauses: recentPagePauses.map(pause => ({...pause})),
+      recentJourneyStalls: recentJourneyStalls.map(copyEpisode),
       nativeCallbacks: {supported: callbackSupported, callbackCount: callbackSupported === true ? callbackCount : null,
         compositionCounterStatus: compositionCounterSeen ? 'available' : callbackCount ? 'unavailable' : 'not-observed',
         observedCompositionAdvances: compositionCounterSeen ? compositionAdvances : null,
@@ -226,7 +273,13 @@ export function createPerformanceOverlay(sequence, renderer) {
     toggle.setAttribute('aria-label', expanded ? 'Close debug' : 'Open debug');
     toggle.setAttribute('aria-expanded', String(expanded));
   }
-  function setExpanded(value) { expanded = value; content.hidden = !value; updateToggle(); }
+  function setExpanded(value) {
+    expanded = value; content.hidden = !value; updateToggle();
+    if (value) {
+      const frozen = paused && latestReport;
+      renderPanel(frozen ? frozen.current : recorder.report().current, frozen ? frozen.sequence : readState(), frozen ? frozen.sequence.stats : sequence.stats);
+    }
+  }
   const title = document.createElement('strong'); title.textContent = 'SCROLL DEBUG · LIVE';
   const output = document.createElement('pre');
   output.style.cssText = 'margin:6px 0;white-space:pre-wrap;font:inherit;color:inherit';
@@ -234,7 +287,7 @@ export function createPerformanceOverlay(sequence, renderer) {
   const controls = document.createElement('div'); controls.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
   const message = document.createElement('div'); message.setAttribute('role', 'status');
   message.style.cssText = 'margin-top:6px;font-size:11px;color:#ccd1de';
-  message.textContent = 'Page FPS ≠ journey updates. Stalls = gaps ≥100ms while moving. Reset after the intro.';
+  message.textContent = 'Page FPS ≠ journey updates. Stalls = ≥100ms waiting for requested movement. Reset after the intro.';
   content.append(title, output, controls, message); panel.append(content, toggle); document.body.append(panel);
   const events = new AbortController(), video = document.querySelector('#journey'), frame = document.querySelector('#journey-frame');
   let recorder = createPerformanceRecorder(), request = 0, videoRequest = 0, paused = false, destroyed = false;
@@ -247,6 +300,7 @@ export function createPerformanceOverlay(sequence, renderer) {
   const build = new URL(import.meta.url).searchParams.get('v') || VERSION;
   function readState() {
     return {phase: sequence.phase, desiredFrame: sequence.desiredFrame, displayedFrame: sequence.displayedFrame,
+      wantedFrame: Number.isFinite(sequence.wantedFrame) ? sequence.wantedFrame : null,
       fps: sourceFps, scrollY, game: document.body.dataset.game === 'visible',
       native: video?.classList.contains('native-renderer') === true && frame?.hidden === true,
       videoCallbacks: typeof video?.requestVideoFrameCallback === 'function'};
@@ -265,7 +319,7 @@ export function createPerformanceOverlay(sequence, renderer) {
         averageSeekMs: stats.nativeSeeks > 0 ? round(stats.nativeSeekMs / stats.nativeSeeks) : null,
         ...playbackQualitySummary(quality, baselineQuality)},
       graphics: {buffer: [renderer.domElement.width, renderer.domElement.height], draws: renderer.info.render.frame},
-      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Lag seconds is source-video distance from the scroll target, not elapsed catch-up time. Native updates count distinct source frames reported by compositor callbacks; repeated callbacks for the same frame do not increase the rate. Browser drop counters may omit seek stalls; no-frames means they have supplied no frame evidence since Reset. Native video downloads are not included in JavaScript network counters. nativeSeekTiming accumulates successful completed seeks since page load: forward/backward movement is separate from settled confirmation; totalMs/count gives the average, maxMs the worst, and overBudget counts durations above 33.33ms. Failed/cancelled seeks are excluded and Reset does not clear source totals. bufferedAheadSeconds measures native data ahead of the playhead; bufferedSeconds measures the range starting at zero. latencyMs is the last completed cache presentation timing, not current scroll lag. Rates are sampled every 500ms; sequence and nativeVideo are refreshed when exported. P95 covers the latest 600 gaps; worst values persist until Reset. Samples are bounded to 120. Each pipeline snapshot is read at the same 500ms boundary: network/decoding/pending/queued and decoded/compressed counts describe current work and cache occupancy, while networkBytes/networkFrames/networkRequests/diskHits and worker/decode/copy/draw totals accumulate since page load and are not cleared by Reset. Compare adjacent pipeline snapshots to identify progress; a final idle queue does not describe earlier stalls. Missing pipeline metrics are null, not zero; no media URLs are retained in pipeline history. bufferAheadFrames counts contiguous available frames in the current travel direction, and bufferAheadSeconds expresses that distance in source-video seconds. bufferRequiredFrames is the recovery watermark. bufferPacingScale is the configured pacing fraction from 0 to 1, bufferPacingLimited marks intentional buffer pacing, and bufferPacingSpeed is the configured source-frames-per-second cap, not measured display FPS. These fields do not change recorded update rates, gaps or stalls. Page pauses retain the latest 20 visible paint gaps of at least 100ms with phase/game state before and after. Main-thread observers retain the latest 20 browser-reported long tasks/animation frames; unsupported APIs report null counts, not zero stalls. Observer startTime and page-pause startTime use the same performance clock. Script attribution is browser-limited, includes at most 5 scripts per frame, and removes URL credentials, queries and fragments. Hidden and paused time is excluded from page/observer measurements. Worker renderer counters describe transferred decoded frames, not compositor presentation. canvasDrawCount and canvasDrawMs measure successful canvas draw submissions and CPU submission time; canvasPresentedFrame is the source index of the last submission, not independent proof of display. Worker decode timing includes message transfer and decoder waiting. Decoded memory is an RGBA-equivalent estimate and excludes browser decoder/GPU allocations. requestedRenderer records the selected experiment and workerFailure explains a fallback. No report is uploaded automatically.',
+      notes: 'Page FPS measures requestAnimationFrame callbacks. Journey updates count selected-frame changes, not skipped source frames. Lag seconds is source-video distance from the scroll target, not elapsed catch-up time. Native updates count distinct source frames reported by compositor callbacks; repeated callbacks for the same frame do not increase the rate. Browser drop counters may omit seek stalls; no-frames means they have supplied no frame evidence since Reset. Native video downloads are not included in JavaScript network counters. nativeSeekTiming accumulates successful completed seeks since page load: forward/backward movement is separate from settled confirmation; totalMs/count gives the average, maxMs the worst, and overBudget counts durations above 33.33ms. Failed/cancelled seeks are excluded and Reset does not clear source totals. bufferedAheadSeconds measures native data ahead of the playhead; bufferedSeconds measures the range starting at zero. latencyMs is the last completed cache presentation timing, not current scroll lag. Rates are sampled every 500ms; sequence and nativeVideo are refreshed when exported. P95 covers the latest 600 gaps; worst values persist until Reset. Update-gap metrics retain the 180ms scroll activity grace and can include settled gesture pauses; stall counts require outstanding desired-frame movement. recentJourneyStalls retains the latest 20 no-progress episodes of at least 100ms, with observed start/detection/end states. An episode ends on progress, cancellation/settling, reversal, inactivity or suspension. Start pipeline evidence is the latest available snapshot with its age; detection/end snapshots are refreshed when supported. A pending episode has no endTime. Timing is observation-based, not proof of physical display. Samples are bounded to 120. Regular pipeline snapshots are read at the same 500ms boundary, with additional snapshots at stall detection/recovery: network/decoding/pending/queued and decoded/compressed counts describe current work and cache occupancy, while networkBytes/networkFrames/networkRequests/diskHits and worker/decode/copy/draw totals accumulate since page load and are not cleared by Reset. Compare adjacent pipeline snapshots to identify progress; a final idle queue does not describe earlier stalls. Missing pipeline metrics are null, not zero; no media URLs are retained in pipeline history. bufferAheadFrames counts contiguous available frames in the current travel direction, and bufferAheadSeconds expresses that distance in source-video seconds. bufferRequiredFrames is the recovery watermark. bufferPacingScale is the configured pacing fraction from 0 to 1, bufferPacingLimited marks intentional buffer pacing, and bufferPacingSpeed is the configured source-frames-per-second cap, not measured display FPS. These fields do not change recorded update rates, gaps or stalls. Page pauses retain the latest 20 visible paint gaps of at least 100ms with phase/game state before and after. Main-thread observers retain the latest 20 browser-reported long tasks/animation frames; unsupported APIs report null counts, not zero stalls. Observer startTime and page-pause startTime use the same performance clock. Script attribution is browser-limited, includes at most 5 scripts per frame, and removes URL credentials, queries and fragments. Hidden and paused time is excluded from page/observer measurements. Worker renderer counters describe transferred decoded frames, not compositor presentation. canvasDrawCount and canvasDrawMs measure successful canvas draw submissions and CPU submission time; canvasPresentedFrame is the source index of the last submission, not independent proof of display. Worker decode timing includes message transfer and decoder waiting. Optional workerFrameTimings stage summaries report lifetime count/mean/max and p95 over the latest 120 samples per stage; these debug-only summaries are not physical display FPS. receiptToDraw and requestToDraw end at the first canvas draw submission and include deliberate lookahead/history residence; they do not measure main-thread work or GPU completion. workerUndrawnOutputs includes current lookahead and discarded outputs, not a measure of waste. Decoded memory is an RGBA-equivalent estimate and excludes browser decoder/GPU allocations. requestedRenderer records the selected experiment and workerFailure explains a fallback. No report is uploaded automatically.',
     };
   }
   function button(label, action) {
@@ -307,22 +361,26 @@ export function createPerformanceOverlay(sequence, renderer) {
     if (paused) { paused = false; pause.textContent = 'Pause'; title.textContent = 'SCROLL DEBUG · LIVE'; updateToggle(); start(); }
   });
   button('Close', () => { setExpanded(false); toggle.focus(); });
+  function renderPanel(sample, state, s) {
+    if (!expanded) return;
+    const quality = playbackQualitySummary(video?.getVideoPlaybackQuality?.(), baselineQuality);
+    const drops = quality.browserCounterStatus === 'available' ? `${quality.browserDroppedFrames}/${quality.browserTotalFrames}` : `n/a (${quality.browserCounterStatus})`;
+    const seekAverage = timing => timing?.count > 0 ? `${round(timing.totalMs / timing.count)}ms` : 'n/a';
+    const decode = s.mode === 'video'
+      ? s.nativeSeekTiming ? `Seek avg forward ${seekAverage(s.nativeSeekTiming.forward)} / reverse ${seekAverage(s.nativeSeekTiming.backward)}` : `Seek avg ${s.nativeSeeks > 0 ? round(s.nativeSeekMs / s.nativeSeeks) : 'n/a'}ms`
+      : `Decode ${round(s.decodeMs || 0)}ms`;
+    const buffer = s.mode === 'video' ? `Video buffered ahead ${round(s.bufferedAheadSeconds || 0)}s` : `Buffer ${s.decoded}/${s.settings.decoded} · ${round((s.compressedBytes || 0) / 1048576)}MiB`;
+    const bufferPace = bufferPacingSummary(s);
+    const lagFrames = Math.abs(state.desiredFrame - state.displayedFrame);
+    const lagSeconds = state.fps > 0 ? round(lagFrames / state.fps) : sample.lagSeconds;
+    output.textContent = `Page FPS ${sample.pageFps ?? 'measuring'} · ${state.phase}\nJourney ${sample.journeyUpdatesPerSecond ?? 'idle'} updates/s\nNative ${sample.nativeUpdatesPerSecond ?? 'n/a'} frames/s · ${s.renderer}\nFrame ${state.displayedFrame} → ${state.desiredFrame}\nLag ${lagFrames}f (${lagSeconds ?? '?'}s) · worst ${sample.worstLagFrames ?? '—'}f\nGap p95: page ${sample.pageP95GapMs ?? '—'}ms / journey ${sample.journeyP95GapMs ?? '—'}ms\nWorst: page ${sample.worstPageGapMs ?? '—'}ms / journey ${sample.worstJourneyGapMs ?? '—'}ms\nStalls ≥100ms: ${sample.stalls ?? 0}\n${decode} · pending ${s.pending}\n${buffer}${bufferPace ? '\n' + bufferPace : ''}\nBrowser drops ${drops} · ${s.fallbackReason || s.mode}\n${s.nativePlaybackBlocked ? 'Playback blocked: tap the scene to retry' : s.lastError ? s.lastError.name + ': ' + s.lastError.message : 'No frame errors'}\n${VERSION}`;
+  }
   function tick(now) {
     if (destroyed || paused || document.hidden) return;
     const state = readState();
     let stats;
     const sample = recorder.sample(now, state, () => (stats = sequence.stats));
-    if (sample) {
-      const s = stats, quality = playbackQualitySummary(video?.getVideoPlaybackQuality?.(), baselineQuality);
-      const drops = quality.browserCounterStatus === 'available' ? `${quality.browserDroppedFrames}/${quality.browserTotalFrames}` : `n/a (${quality.browserCounterStatus})`;
-      const seekAverage = timing => timing?.count > 0 ? `${round(timing.totalMs / timing.count)}ms` : 'n/a';
-      const decode = s.mode === 'video'
-        ? s.nativeSeekTiming ? `Seek avg forward ${seekAverage(s.nativeSeekTiming.forward)} / reverse ${seekAverage(s.nativeSeekTiming.backward)}` : `Seek avg ${s.nativeSeeks > 0 ? round(s.nativeSeekMs / s.nativeSeeks) : 'n/a'}ms`
-        : `Decode ${round(s.decodeMs || 0)}ms`;
-      const buffer = s.mode === 'video' ? `Video buffered ahead ${round(s.bufferedAheadSeconds || 0)}s` : `Buffer ${s.decoded}/${s.settings.decoded} · ${round((s.compressedBytes || 0) / 1048576)}MiB`;
-      const bufferPace = bufferPacingSummary(sample.pipeline);
-      output.textContent = `Page FPS ${sample.pageFps} · ${state.phase}\nJourney ${sample.journeyUpdatesPerSecond ?? 'idle'} updates/s\nNative ${sample.nativeUpdatesPerSecond ?? 'n/a'} frames/s · ${s.renderer}\nFrame ${state.displayedFrame} → ${state.desiredFrame}\nLag ${sample.lagFrames}f (${sample.lagSeconds ?? '?'}s) · worst ${sample.worstLagFrames}f\nGap p95: page ${sample.pageP95GapMs}ms / journey ${sample.journeyP95GapMs}ms\nWorst: page ${sample.worstPageGapMs}ms / journey ${sample.worstJourneyGapMs}ms\nStalls ≥100ms: ${sample.stalls}\n${decode} · pending ${s.pending}\n${buffer}${bufferPace ? '\n' + bufferPace : ''}\nBrowser drops ${drops} · ${s.fallbackReason || s.mode}\n${s.nativePlaybackBlocked ? 'Playback blocked: tap the scene to retry' : s.lastError ? s.lastError.name + ': ' + s.lastError.message : 'No frame errors'}\n${VERSION}`;
-    }
+    if (sample && expanded) renderPanel(sample, state, stats);
     request = requestAnimationFrame(tick);
   }
   function presented(now, metadata) {

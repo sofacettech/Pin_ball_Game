@@ -1,8 +1,8 @@
-import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=meter-4e09c8fb';
+import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=frames-0a4ad7e720f8';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-06241f194c1d';
-import { createFrameSource } from './assets/frame-source.js?v=frames-5e14aac089b1';
-import { createFrameCache } from './assets/frame-cache.js?v=frames-e50d5678e968';
+import { createFrameSource } from './assets/frame-source.js?v=frames-46b022ece4b8';
+import { createFrameCache } from './assets/frame-cache.js?v=frames-c452ffd64863';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-fcf79e1ee64b';
 import { createBufferPacingController, getBufferPacingLimits } from './assets/buffer-pacing.js?v=frames-22288daf15bd';
 import { createNativeFrameScheduler } from './assets/native-frame-scheduler.js?v=frames-52d03cbc9f75';
@@ -39,6 +39,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     const started=performance.now();
     context.drawImage(image, 0, 0, frame.width, frame.height);
     const elapsed=performance.now()-started;
+    source.markDrawn?.(image);
     canvasDrawCount++;canvasDrawMs+=elapsed;canvasDrawMaxMs=Math.max(canvasDrawMaxMs,elapsed);canvasPresentedFrame=index;
   }
   const updateCopy = await createLandingCopy();
@@ -94,7 +95,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     resumeJourney.hidden = true;
     cache.retry();
     requestFrame();
-  },{renderer:new URLSearchParams(location.search).get('renderer')||'worker'});
+  },{renderer:new URLSearchParams(location.search).get('renderer')||'worker',diagnostics:new URLSearchParams(location.search).has('perf')});
   const pacer = createFramePacer();
   const nativePacer = createFramePacer({responsive: true});
   const workerPacer = createFramePacer({responsive: true});
@@ -376,10 +377,11 @@ export async function createSequence(setInteractive, requestFrame, media) {
     },
     get phase() { return phase; },
     get desiredFrame() { return desiredFrame; },
+    get wantedFrame() { return wantedFrame; },
     get displayedFrame() { return displayedFrame; },
     get seeking() { return displayedFrame !== desiredFrame; },
     get interactive() { return interactive; },
-    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...bufferMetrics,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
+    get stats() { return {canvasDrawCount,canvasDrawMs,canvasDrawMaxMs,canvasPresentedFrame,...cache.frameStatus(wantedFrame,performance.now(),{}),...bufferMetrics,...cache.stats,...nativeScheduler.stats,preparation:cache.preparation,sourceWidth:index.width,sourceHeight:index.height,sourceFrames:index.frameCount,fps:index.fps}; },
     destroy,
     frameCount, travel,
   };
