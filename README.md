@@ -52,7 +52,10 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 - The queen impact at source frame 2164 hands directly into the game. Skip to Game bypasses the journey.
 - The game-loading screen keeps our approved bouncing ball and trail. Arrival from the chess room (`play.html?from=chess`) shows the three approved statements one at a time, using regular condensed Acumin in sentence case, 1.6 line spacing and purple `10`/`₹1` highlights. Slow fades and readable pauses keep each statement separate before the next starts. The table opens after the final statement and actual game readiness. Reduced motion uses static text and opens as soon as the table is ready. Direct game navigation keeps its existing loading behavior.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
+- Rewards and confirmation screens use the SO/ UNLOCKED and SO/ SAVED copy, with Play again as the replay action. THE FIRST CUTS is explained in the FAQ; score sharing and its selectable fallback keep the same reward rules.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
+- The table includes two decorative diamonds on open cradles. Positive scoring turns them gently; reduced motion keeps them still. These decorations have no collision bodies. Full-resolution rendering uses the authored lights and glass materials on desktop and mobile.
+- Triangle housings and their luminous strips count one scoring hit until the ball separates. Sliding along the same triangle cannot repeatedly earn points; a fresh hit after separation still scores normally.
 - Phone and tablet layouts flip between Hold to launch and the live scorecard as the ball launches and returns. Desktop retains the keyboard instructions and flip card, with a Hold button below the card. Only one paddle accepts input at a time; the held paddle keeps priority until released. Sound controls respect browser activation requirements.
 - Membership Back returns to the landing experience without replaying the intro loader. Registration steps still move back within the form.
 - The About page uses the approved Explore layout with scroll reveals and a keyboard-accessible collection gallery. The shared navbar and current-page menu behavior apply there as well.
@@ -77,7 +80,7 @@ Scoring is shared between the client simulation and server replay verification. 
 
 `GET /api/player` supplies the current player's authoritative state using an HttpOnly session cookie. Membership recognition currently applies to that browser session; cross-device login is a separate backend requirement.
 
-The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
+The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The shared simulation is now replay version 20. Deploy the frontend and verification service together; sessions started on an older version must start a fresh game after updating. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
 
 All writes require JSON and the configured exact Origin. Keep the frontend and API on the same origin unless the session and origin model is deliberately updated.
 
