@@ -126,15 +126,16 @@ export function createSiteSound() {
       const previous = lastFrame, now = performance.now(); lastFrame = frame;
       if (frame < CHESS_HIT_FRAME - 12) hitArmed = true;
       if (previous < CHESS_HIT_FRAME && frame >= CHESS_HIT_FRAME && hitArmed) { hitArmed = false; impact(); }
-      clearTimeout(stopTimer);
-      moving = frame < CHESS_HIT_FRAME && previous < CHESS_HIT_FRAME;
+      moving = false;
       if (context && audible()) {
+        clearTimeout(stopTimer);
+        moving = frame < CHESS_HIT_FRAME && previous < CHESS_HIT_FRAME;
         const speed = Math.abs(frame - previous) / Math.max(1, (now - lastMove) * .06);
         fade(rollingGain, moving ? .7 * Math.min(.2, .09 + speed * .06) : 0, .035);
         if (!duckTimer) musicLevel();
+        stopTimer = setTimeout(stopRolling, 130);
       }
       lastMove = now;
-      stopTimer = setTimeout(stopRolling, 130);
     },
     visibility() { stopRolling(); if (document.hidden) update(); else if (enabled && context) unlock(); },
     save() { try { if (music.readyState && music.currentTime >= 52) sessionStorage.setItem('sofacet-site-music', String(music.currentTime)); sessionStorage.setItem('sofacet-site-sound-active', enabled && unlocked ? 'on' : 'off'); } catch {} },

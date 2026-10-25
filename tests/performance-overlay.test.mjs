@@ -266,7 +266,7 @@ test('pipeline history distinguishes data waiting from decoding and keeps indepe
   let reads = 0;
   const read = () => { reads++; return stats; };
   recorder.sample(0, state(), read);recorder.sample(499, state(), read);
-  assert.equal(reads, 0, 'Pipeline metrics must not be read on each paint');
+  assert.equal(reads, 1, 'A stall detection captures one extra snapshot, not one per paint');
   recorder.sample(500, state(), read);
   Object.assign(stats, {network:0, networkFrames:28, networkBytes:2100000, compressed:24,
     compressedBytes:1800000, decoding:4, pending:0, workerRequests:8});
@@ -275,7 +275,7 @@ test('pipeline history distinguishes data waiting from decoding and keeps indepe
     workerDecodeTotalMs:40, workerBitmapCopyMs:4, canvasDrawCount:5});
   recorder.sample(1500, state({displayedFrame:100}), read);
   const report = recorder.report(), [waiting, decoding, ready] = report.recentSamples.map(row => row.pipeline);
-  assert.equal(reads, 3);
+  assert.equal(reads, 4, 'Recovery at the regular sample boundary reuses that snapshot');
   assert.deepEqual([waiting.network, waiting.decoding, waiting.compressed, waiting.workerCompleted], [2, 0, 0, 4]);
   assert.deepEqual([decoding.network, decoding.decoding, decoding.compressed, decoding.workerCompleted], [0, 4, 24, 4]);
   assert.deepEqual([ready.decoding, ready.workerCompleted, ready.workerBitmapCopies, ready.canvasDrawCount], [0, 8, 8, 5]);
@@ -294,7 +294,7 @@ test('pipeline history distinguishes data waiting from decoding and keeps indepe
 test('pipeline capture retains only 120 samples at the existing half-second cadence', () => {
   const recorder = createPerformanceRecorder();let reads = 0;
   const read = () => ({mode:'worker', target:++reads, networkBytes:reads * 1000});
-  for (let time = 0; time <= 120000; time += 10) recorder.sample(time, state(), read);
+  for (let time = 0; time <= 120000; time += 10) recorder.sample(time, state({desiredFrame:0}), read);
   const report = recorder.report();
   assert.equal(reads, 240);assert.equal(report.recentSamples.length, 120);
   assert.equal(report.recentSamples[0].atMs, 60500);
@@ -302,9 +302,9 @@ test('pipeline capture retains only 120 samples at the existing half-second cade
   assert.equal(report.recentSamples.at(-1).pipeline.target, 240);
   assert.equal(report.recentSamples.at(-1).pipeline.networkBytes, 240000);
   assert.equal(report.current.pipeline.workerCompleted, null);
-  recorder.suspend();recorder.sample(1000000, state(), read);recorder.sample(1000499, state(), read);
+  recorder.suspend();recorder.sample(1000000, state({desiredFrame:0}), read);recorder.sample(1000499, state({desiredFrame:0}), read);
   assert.equal(reads, 240, 'Resuming after hidden time must start a fresh sample window');
-  recorder.sample(1000500, state(), read);assert.equal(reads, 241);
+  recorder.sample(1000500, state({desiredFrame:0}), read);assert.equal(reads, 241);
   assert.equal(recorder.report().recentSamples.length, 120);
 });
 
@@ -326,7 +326,7 @@ test('buffer pacing history retains optional scalars at the existing cadence wit
   let reads = 0;
   const read = () => { reads++; return stats; };
   for (let time = 0; time < 500; time += 10) recorder.sample(time, state(), read);
-  assert.equal(reads, 0);
+  assert.equal(reads, 1, 'Only the first genuine stall boundary adds a snapshot before 500ms');
   recorder.sample(500, state(), read);
   const limited = recorder.report().current;
   assert.deepEqual(Object.fromEntries(Object.keys(stats).map(key => [key, limited.pipeline[key]])), stats);
@@ -335,7 +335,7 @@ test('buffer pacing history retains optional scalars at the existing cadence wit
     bufferPacingLimited:false, bufferPacingSpeed:60});
   recorder.sample(1000, state({displayedFrame:4}), read);
   const report = recorder.report();
-  assert.equal(reads, 2);
+  assert.equal(reads, 3, 'Stall detection plus two regular boundaries; recovery shares its regular read');
   assert.equal(report.recentSamples[0].pipeline.bufferPacingLimited, true);
   assert.equal(report.current.pipeline.bufferPacingLimited, false, 'Full pace is available evidence, not null');
   assert.equal(report.current.pipeline.bufferPacingSpeed, 60);
@@ -358,4 +358,168 @@ test('compact buffer pacing text distinguishes configured slowdown from actual u
   assert.equal(bufferPacingSummary({bufferPacingScale:.5}), 'Buffer pace 0.50× · ahead ?/?f');
   assert.equal(bufferPacingSummary(), null);
   assert.equal(bufferPacingSummary({bufferPacingScale:NaN}), null);
+});
+
+test('settled gesture grace does not invent a stall or erase raw update-gap evidence', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state({desiredFrame:0}));
+  recorder.sample(16, state({desiredFrame:4, displayedFrame:4, scrollY:32}));
+  for (let time = 32; time <= 600; time += 16) recorder.sample(time, state({desiredFrame:4, displayedFrame:4, scrollY:32}));
+  const report = recorder.report();
+  assert.equal(report.current.stalls, 0);
+  assert.deepEqual(report.recentJourneyStalls, []);
+  assert.ok(report.current.worstJourneyGapMs >= 180, 'Existing raw gaps remain visible; only the misleading stall classification changes');
+});
+
+test('a genuine pending wait records onset, fresh detection and recovery with readiness evidence', () => {
+  const recorder = createPerformanceRecorder();
+  const pipeline = {mode:'worker', target:12, targetCompressedReady:true, targetDecodedReady:false,
+    targetDecodePending:true, targetDecodeAgeMs:112, targetDecodedAgeMs:null, newestReadyFrame:10, newestReadyAgeMs:120,
+    workerDrawnOutputs:10, workerUndrawnOutputs:4, privateURL:'https://private.example/?secret'};
+  let reads = 0;
+  const read = () => { reads++; return pipeline; };
+  recorder.sample(0, state({desiredFrame:0}), read);
+  recorder.sample(500, state({desiredFrame:0}), read);
+  recorder.sample(520, state({desiredFrame:20, wantedFrame:12, displayedFrame:10, scrollY:160}), read);
+  recorder.sample(600, state({desiredFrame:22, wantedFrame:12, displayedFrame:10, scrollY:176}), read);
+  assert.equal(reads, 1, 'Starting/continuing short waits reuses the last snapshot');
+  recorder.sample(632, state({desiredFrame:22, wantedFrame:12, displayedFrame:10, scrollY:176}), read);
+  let episode = recorder.report().recentJourneyStalls[0];
+  assert.equal(reads, 2);
+  assert.equal(episode.startTime, 520); assert.equal(episode.detectedAt, 632);
+  assert.equal(episode.endTime, null); assert.equal(episode.outcome, 'pending');
+  assert.equal(episode.start.wantedFrame, 12); assert.equal(episode.start.pipelineAgeMs, 20);
+  assert.equal(episode.detected.pipelineAgeMs, 0); assert.equal(episode.detected.outstandingMovement, true);
+  assert.equal(episode.detected.pipeline.targetDecodePending, true);
+  assert.equal(episode.detected.pipeline.targetDecodeAgeMs, 112);
+  assert.equal(episode.detected.pipeline.targetDecodedReady, false, 'False readiness is evidence, not missing data');
+  Object.assign(pipeline, {targetDecodedReady:true, targetDecodePending:false, targetDecodeAgeMs:null, targetDecodedAgeMs:2});
+  recorder.sample(648, state({desiredFrame:12, wantedFrame:12, displayedFrame:12, scrollY:96}), read);
+  episode = recorder.report().recentJourneyStalls[0];
+  assert.equal(reads, 3); assert.equal(episode.durationMs, 128);
+  assert.equal(episode.endTime, 648); assert.equal(episode.outcome, 'progress');
+  assert.equal(episode.end.outstandingMovement, false); assert.equal(episode.end.pipeline.targetDecodedReady, true);
+  assert.equal(episode.end.pipeline.targetDecodeAgeMs, null);
+  assert.equal(episode.end.pipeline.targetDecodedAgeMs, 2);
+  assert.ok(!JSON.stringify(episode).includes('private'));
+  episode.start.pipeline.target = -1; episode.detected.pipeline.targetDecodeAgeMs = -1;
+  assert.equal(recorder.report().recentJourneyStalls[0].start.pipeline.target, 12);
+  assert.equal(recorder.report().recentJourneyStalls[0].detected.pipeline.targetDecodeAgeMs, 112);
+  recorder.sample(1100, state({desiredFrame:12, displayedFrame:12, scrollY:96}), read);
+  assert.equal(recorder.report().current.stalls, 1, 'The settled activity tail must not add a second stall');
+});
+
+test('pending movement survives deliberate slow pacing and closes cleanly on reversal or suspension', () => {
+  const recorder = createPerformanceRecorder();
+  const read = () => ({bufferPacingScale:.75, bufferPacingLimited:true});
+  recorder.sample(0, state({desiredFrame:100, displayedFrame:50, wantedFrame:51}), read);
+  recorder.sample(120, state({desiredFrame:100, displayedFrame:50, wantedFrame:51}), read);
+  recorder.sample(150, state({desiredFrame:0, displayedFrame:50, wantedFrame:49}), read);
+  recorder.sample(270, state({desiredFrame:0, displayedFrame:50, wantedFrame:49}), read);
+  recorder.suspend();
+  let episodes = recorder.report().recentJourneyStalls;
+  assert.deepEqual(episodes.map(row => [row.startTime, row.endTime, row.outcome]), [[0,150,'reversal'], [150,270,'suspended']]);
+  assert.equal(episodes[1].start.direction, -1); assert.equal(episodes[1].detected.pipeline.bufferPacingScale, .75);
+  recorder.sample(100000, state({desiredFrame:0, displayedFrame:50}), read);
+  recorder.sample(100080, state({desiredFrame:0, displayedFrame:0}), read);
+  recorder.sample(100500, state({desiredFrame:0, displayedFrame:0}), read);
+  episodes = recorder.report().recentJourneyStalls;
+  assert.equal(episodes.length, 2, 'Hidden time and the fresh short recovery are not part of an earlier wait');
+  assert.equal(recorder.report().current.stalls, 2);
+  assert.ok(episodes.every(row => row.durationMs <= 150));
+});
+
+test('stall episodes are bounded, distinguish cancelled demand and keep missing evidence unavailable', () => {
+  const recorder = createPerformanceRecorder();
+  for (let i = 0; i < 25; i++) {
+    const at = i * 300;
+    recorder.sample(at, state());
+    recorder.sample(at + 110, state());
+    recorder.sample(at + 120, state({desiredFrame:0}));
+  }
+  const episodes = recorder.report().recentJourneyStalls;
+  assert.equal(episodes.length, 20);
+  assert.equal(episodes[0].startTime, 1500);
+  assert.ok(episodes.every(row => row.outcome === 'settled' && row.durationMs === 120));
+  assert.equal(episodes[0].start.pipeline, null);
+  assert.equal(episodes[0].start.pipelineAgeMs, null);
+  assert.equal(episodes[0].start.wantedFrame, null);
+  assert.equal(episodes[0].end.outstandingMovement, false);
+});
+
+// Exercise the actual panel without a browser: stats can be sampled while the
+// details are closed, but neither formatting-only properties nor the <pre>
+// should be touched until the user opens it.
+test('collapsed debug keeps recording without formatting or writing text and refreshes on open', async () => {
+  const original = new Map();
+  const install = (key, value) => { original.set(key, Object.getOwnPropertyDescriptor(globalThis, key)); Object.defineProperty(globalThis, key, {value, writable:true, configurable:true}); };
+  const elements = [], pending = new Map(); let id = 0, copied, statsReads = 0, formattingReads = 0;
+  class Element {
+    constructor(tag) { this.tag = tag; this.children = []; this.style = {}; this.attributes = {}; this.listeners = {}; this.textWrites = 0; elements.push(this); }
+    set textContent(value) { this.text = value; this.textWrites++; }
+    get textContent() { return this.text; }
+    setAttribute(name, value) { this.attributes[name] = value; }
+    append(...values) { this.children.push(...values); }
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+    click() { return this.listeners.click?.(); }
+    focus() {}
+    remove() {}
+  }
+  const body = new Element('body'); body.dataset = {};
+  let dispose;
+  try {
+    install('location', {search:'?perf=1'});
+    install('document', {body, hidden:false, createElement:tag => new Element(tag), querySelector:() => null, addEventListener() {}});
+    install('window', {addEventListener() {}});
+    install('navigator', {userAgent:'test', clipboard:{writeText:async value => { copied = value; }}});
+    install('scrollY', 0); install('innerWidth', 800); install('innerHeight', 600); install('devicePixelRatio', 1);
+    install('requestAnimationFrame', callback => { pending.set(++id, callback); return id; });
+    install('cancelAnimationFrame', handle => pending.delete(handle));
+    const stats = {fps:60, mode:'worker', renderer:'worker-webcodecs', decoded:4, pending:0, compressedBytes:1000,
+      get settings() { formattingReads++; return {decoded:4}; }};
+    const sequence = {phase:'journey', desiredFrame:0, displayedFrame:0, wantedFrame:0, frameCount:100,
+      get stats() { statsReads++; return stats; }};
+    dispose = createPerformanceOverlay(sequence, {domElement:{width:800, height:600}, info:{render:{frame:0}}});
+    const output = elements.find(element => element.tag === 'pre');
+    const toggle = elements.find(element => element.attributes['aria-controls'] === 'scroll-debug-content');
+    const tick = time => { const [handle, callback] = pending.entries().next().value; pending.delete(handle); callback(time); };
+    tick(0); tick(250); tick(500);
+    assert.equal(statsReads, 2, 'Initial fps plus one half-second pipeline snapshot');
+    assert.equal(formattingReads, 0); assert.equal(output.textWrites, 1);
+    sequence.desiredFrame = 10; sequence.displayedFrame = 7; sequence.wantedFrame = 8;
+    toggle.click();
+    assert.equal(output.textWrites, 2); assert.equal(formattingReads, 1);
+    assert.match(output.textContent, /Frame 7 → 10/, 'Opening reads the current frame immediately, without waiting for a sample');
+    toggle.click();
+    tick(750); tick(1000);
+    assert.equal(formattingReads, 1); assert.equal(output.textWrites, 2);
+    await elements.find(element => element.textContent === 'Copy report').click();
+    const report = JSON.parse(copied);
+    assert.equal(report.recentSamples.length, 2);
+    assert.equal(report.sequence.wantedFrame, 8);
+    assert.equal(report.current.stalls, 1, 'Closing the details keeps true wait recording active');
+    dispose(); dispose = undefined;
+  } finally {
+    dispose?.();
+    for (const [key, descriptor] of original) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+    }
+  }
+});
+
+test('an 80ms outstanding wait cannot become a stall during hidden or paused time', () => {
+  const recorder = createPerformanceRecorder();
+  recorder.sample(0, state());
+  recorder.sample(80, state());
+  recorder.suspend();
+  recorder.sample(1080, state());
+  recorder.sample(1160, state({displayedFrame:100}));
+  recorder.suspend();
+  recorder.sample(5000, state({desiredFrame:200, displayedFrame:100}));
+  recorder.sample(5080, state({desiredFrame:200, displayedFrame:200}));
+  recorder.sample(5500, state({desiredFrame:200, displayedFrame:200}));
+  const report = recorder.report();
+  assert.equal(report.current.stalls, 0);
+  assert.deepEqual(report.recentJourneyStalls, []);
+  assert.equal(report.current.worstJourneyGapMs, 80, 'Only observed pending intervals affect the gap maximum after each fresh baseline');
 });

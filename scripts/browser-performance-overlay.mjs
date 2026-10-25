@@ -40,15 +40,20 @@ try {
     await page.mouse.wheel(0, 400);
   }
   await page.waitForFunction(() => scrollY > 0);
+  const collapsedText = await panel.locator('pre').textContent();
+  await page.waitForFunction(() => window.sequence.displayedFrame >= 12);
+  assert.equal(await panel.locator('pre').textContent(), collapsedText, 'Collapsed recording does not format or rewrite hidden details');
+  await toggle.tap();
   await page.waitForFunction(() => document.querySelector('#scroll-debug pre')?.textContent.includes('Worst:'));
   await page.waitForFunction(() => /Stalls ≥100ms: [1-9]/.test(document.querySelector('#scroll-debug pre').textContent));
-  await toggle.tap();
   await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
   const beforeClose = JSON.parse(await page.evaluate(() => window.copied));
   assert.ok(beforeClose.current.totalUpdates > 0, 'Recording starts while collapsed');
   await panel.getByRole('button', {name:'Close', exact:true}).tap();
   assert.equal(await panel.locator('pre').isVisible(), false);
+  const closedText = await panel.locator('pre').textContent();
   await page.waitForTimeout(1100);
+  assert.equal(await panel.locator('pre').textContent(), closedText, 'Closing stops text updates while capture continues');
   await toggle.tap();
   await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
   const afterClose = JSON.parse(await page.evaluate(() => window.copied));
@@ -63,6 +68,9 @@ try {
   const report = JSON.parse(await page.evaluate(() => window.copied));
   assert.ok(report.current.pageFps > report.current.journeyUpdatesPerSecond * 2, 'RAF and sequence update rate are distinct');
   assert.ok(report.current.stalls > 0);
+  assert.ok(report.recentJourneyStalls.length > 0 && report.recentJourneyStalls.length <= 20);
+  assert.ok(report.recentJourneyStalls.every(episode => episode.start.outstandingMovement && episode.durationMs >= 100));
+  assert.ok(report.recentJourneyStalls.some(episode => episode.outcome === 'progress'), 'Recovered waits retain their exact episode evidence');
   assert.equal(report.device.viewport[0], page.viewportSize().width);
   assert.equal(report.paused, true);
   assert.equal(report.current.pipeline.mode, 'video');
@@ -73,11 +81,11 @@ try {
   await panel.getByRole('button', {name:'Save report', exact:true}).tap();
   const download = await downloadPromise;
   assert.equal(download.suggestedFilename(), 'sofacet-scroll-debug.json');
-  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-5');
+  assert.equal(JSON.parse(await readFile(await download.path(), 'utf8')).version, 'scroll-debug-6');
   await page.evaluate(() => { window.rejectCopy = true; });
   await panel.getByRole('button', {name:'Copy report', exact:true}).tap();
   await panel.getByRole('textbox', {name:'Performance report to copy'}).waitFor({state:'visible'});
-  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-5');
+  assert.equal(JSON.parse(await panel.locator('textarea').inputValue()).version, 'scroll-debug-6');
   await panel.getByRole('button', {name:'Reset', exact:true}).tap();
   assert.ok((await panel.locator('strong').textContent()).includes('LIVE'));
   if (process.env.SOFACET_DEBUG_SCREENSHOT) await page.screenshot({path:process.env.SOFACET_DEBUG_SCREENSHOT});

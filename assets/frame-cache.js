@@ -8,6 +8,7 @@ export const FRAME_CACHE_DEFAULTS = {
 export function createFrameCache({count, source, onReady, onError, canConfirm, config = {}}) {
   const settings = {...FRAME_CACHE_DEFAULTS, ...config};
   const compressed = new Map(), decoded = new Map(), active = new Set(), loading = new Set(), failures = new Map(), decodeJobs = new Map();
+  const decodedAt = new WeakMap();
   for (const name of Object.keys(FRAME_CACHE_DEFAULTS)) {
     if (!Number.isSafeInteger(settings[name]) || settings[name] < (name === 'behind' || name === 'ahead' ? 0 : 1)) {
       throw RangeError('Invalid frame cache setting: ' + name);
@@ -15,7 +16,8 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   }
   let target = 0, lead = 0, presented = 0, direction = 1, order = [], ranks = new Map(), timer, progressPin;
   let suspended = false, destroyed = false, bytes = 0, reserved = 0, requestedAt = 0, generation = 0, lastError = null;
-  const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, decodeCancelled: 0, peakDecoded: 0, peakDecoding: 0, peakDecodedAndPending: 0, peakNetwork: 0, latencyMs: 0};
+  let plannedTarget, plannedLead, plannedDirection, newestReadyFrame = null, newestReadyAt = null;
+  const counters = {hits: 0, decodedTotal: 0, evictions: 0, cancelled: 0, decodeCancelled: 0, peakDecoded: 0, peakDecoding: 0, peakDecodedAndPending: 0, peakNetwork: 0, latencyMs: 0, planBuilds: 0, planReuses: 0};
   const valid = frame => frame >= 0 && frame < count;
   const estimate = frame => source.frameBytes?.(frame) ?? 256 * 1024;
   const advances = frame => frame > Math.min(presented, target) && frame < Math.max(presented, target);
@@ -33,6 +35,12 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
   }
 
   function plan() {
+    // Presentation can advance while a useful pending target stays unchanged.
+    // Its compressed download order depends only on these three values.
+    if (target === plannedTarget && lead === plannedLead && direction === plannedDirection) {
+      counters.planReuses++; return;
+    }
+    plannedTarget = target; plannedLead = lead; plannedDirection = direction; counters.planBuilds++;
     const result = new Set([target]);
     const add = frame => { if (valid(frame) && result.size < settings.prefetch) result.add(frame); };
     // Keep the destination available for large jumps, then buffer in travel order.
@@ -126,7 +134,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       for (const job of active) job.controller.abort();
       cancelDecodes();
       for (const image of decoded.values()) image.close();
-      decoded.clear(); compressed.clear(); bytes = 0; failures.clear();
+      decoded.clear(); compressed.clear(); bytes = 0; failures.clear(); newestReadyFrame = newestReadyAt = null;
       onReady(); arm(); return;
     }
     failures.set(frame, Date.now() + 1000);
@@ -259,7 +267,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       // Retained images and pending decoder outputs share the same budget.
       // Close a replaceable image before starting work that can allocate one.
       if (!reserveDecodeSlot(next, warm)) return;
-      const controller = new AbortController(), job = {controller}, epoch = generation;
+      const controller = new AbortController(), job = {controller, started: performance.now()}, epoch = generation;
       decodeJobs.set(next, job);
       counters.peakDecoding = Math.max(counters.peakDecoding, decodeJobs.size);
       counters.peakDecodedAndPending = Math.max(counters.peakDecodedAndPending, decoded.size + decodeJobs.size);
@@ -273,6 +281,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       Promise.resolve(work).then(image => {
         release();
         if (destroyed || suspended || controller.signal.aborted || epoch !== generation || !useful(next)) { image.close(); return; }
+        newestReadyFrame = next; newestReadyAt = performance.now(); decodedAt.set(image, newestReadyAt);
         if (image.transient) {
           for (const retained of decoded.values()) retained.close();
           decoded.clear();
@@ -364,6 +373,21 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       }
       return {available, remaining};
     },
+    // Fill caller-owned storage for diagnostics without cloning cache/source
+    // stats. Arrival timestamps use weak keys so evicted bitmaps stay collectible.
+    frameStatus(frame, now = performance.now(), out = {}) {
+      if (!Number.isInteger(frame) || !valid(frame) || !Number.isFinite(now)) throw RangeError('Invalid frame status query');
+      const active = !suspended && !destroyed, image = active ? decoded.get(frame) : undefined;
+      const job = active ? decodeJobs.get(frame) : undefined, arrived = image ? decodedAt.get(image) : undefined;
+      out.targetCompressedReady = active && compressed.get(frame) != null;
+      out.targetDecodedReady = !!image;
+      out.targetDecodedAgeMs = arrived === undefined ? null : Math.max(0, now - arrived);
+      out.targetDecodePending = !!job;
+      out.targetDecodeAgeMs = job ? Math.max(0, now - job.started) : null;
+      out.newestReadyFrame = newestReadyFrame;
+      out.newestReadyAgeMs = newestReadyAt === null ? null : Math.max(0, now - newestReadyAt);
+      return out;
+    },
     get: frame => decoded.get(frame),
     closest(frame, previous) {
       let best;
@@ -384,7 +408,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
       };
     },
     suspend() {
-      suspended = true; generation++; clearTimeout(timer);
+      suspended = true; generation++; clearTimeout(timer); newestReadyFrame = newestReadyAt = null;
       for (const job of active) job.controller.abort();
       cancelDecodes();
       for (const image of decoded.values()) image.close();
@@ -393,7 +417,7 @@ export function createFrameCache({count, source, onReady, onError, canConfirm, c
     },
     resume() { if (!destroyed) { suspended = false; pump(); arm(); } },
     destroy() {
-      destroyed = true; generation++; clearTimeout(timer);
+      destroyed = true; generation++; clearTimeout(timer); newestReadyFrame = newestReadyAt = null;
       for (const job of active) job.controller.abort();
       cancelDecodes();
       for (const image of decoded.values()) image.close();

@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { loadSofacetBall, loadSofacetReflections, loadSofacetLighting } from './sofacet-ball.js';
 import { createPlateHover } from './plate-hover.js?v=frames-46f0ceb7b395';
 import { matchRenderedAppearance } from './reference-appearance.js?v=frames-ca6277e4770f';
-import { createSequence } from './sequence.js?v=frames-2b1d4c2699f0';
+import { createSequence } from './sequence.js?v=frames-1722b851d333';
 import { framePlacement } from './frame-placement.js';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
 import { createScrollCue } from './assets/landing-copy.js?v=text-only-4a34a8dc';
-import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-9c5137db699f';
+import { createPerformanceOverlay } from './assets/performance-overlay.js?v=frames-d52ec8d8faf0';
 
 import { prepareMedia } from './assets/media-delivery.js?v=frames-dc4a9c95ed77';
 
@@ -71,6 +71,7 @@ async function main() {
   let viewportHeight = 0;
   let drawingWidth = 0, drawingHeight = 0;
   let placement;
+  let placedFrame, placedWidth, placedHeight, placedCover, placedReducedMotion;
   let contextLost = false;
   const events = new AbortController();
   function requestFrame() {
@@ -106,11 +107,14 @@ async function main() {
   }, {signal: events.signal});
   function placeStage() {
     const sourceFrame = sequence?.phase === 'journey' ? 240 + sequence.displayedFrame : sequence && sequence.phase !== 'opening' ? 240 : Math.min(240, opening.currentTime * 60);
+    const cover = coverViewport.matches, reduced = reducedMotion.matches;
+    // Worker waits and hover animation can repaint without moving the source frame.
+    if (sourceFrame === placedFrame && viewportWidth === placedWidth && viewportHeight === placedHeight && cover === placedCover && reduced === placedReducedMotion) return;
     const index = Math.floor(sourceFrame);
     const next = framing.points[Math.min(index + 1, 2229)];
     const point = framing.points[index].map((v, i) => v + (next[i] - v) * (sourceFrame - index));
     updateScrollCue(sourceFrame, point);
-    const nextPlacement = framePlacement(viewportWidth, viewportHeight, point, coverViewport.matches);
+    const nextPlacement = framePlacement(viewportWidth, viewportHeight, point, cover);
     if (!placement || nextPlacement.width !== placement.width || nextPlacement.height !== placement.height) {
       stage.style.width = `${nextPlacement.width}px`;
       stage.style.height = `${nextPlacement.height}px`;
@@ -120,6 +124,8 @@ async function main() {
       drawDirty = true;
     }
     placement = nextPlacement;
+    placedFrame = sourceFrame; placedWidth = viewportWidth; placedHeight = viewportHeight;
+    placedCover = cover; placedReducedMotion = reduced;
   }
   function resize() {
     const available = stage.parentElement.getBoundingClientRect();
@@ -140,6 +146,7 @@ async function main() {
   const observer = new ResizeObserver(resize);
   observer.observe(stage.parentElement);
   coverViewport.addEventListener('change', resize, {signal: events.signal});
+  reducedMotion.addEventListener('change', requestFrame, {signal: events.signal});
   opening.addEventListener('seeked', requestFrame, {signal: events.signal});
   resize();
   sequence = await createSequence(enabled => {
