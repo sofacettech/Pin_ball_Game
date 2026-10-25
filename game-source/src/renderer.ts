@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
-import {EXRLoader} from 'three/addons/loaders/EXRLoader.js';
+import {loadFloorTexture} from './floor-texture';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
@@ -103,9 +103,17 @@ export class TableView {
   const lighting:SourceLighting=await json('/assets/table-lighting.json');
   if(lighting.source_sha256!==manifest.source_sha256||!Number.isFinite(lighting.exposure))throw new Error('The lighting does not match the current table.');
   this.sourceExposure=2**lighting.exposure;
-  const [environment,appearance]=await Promise.all([new HDRLoader().loadAsync('/assets/table-reflections-reference.hdr'),new EXRLoader().loadAsync('/assets/table-floor-reference.exr')]);
+  const pmrem=new THREE.PMREMGenerator(this.renderer);
+  // Start this shader while the lighting textures are in flight, so its first
+  // use need not wait for compilation in the same task as texture processing.
+  const previousTarget=this.renderer.getRenderTarget();
+  try{this.renderer.setRenderTarget(this.composer.readBuffer);pmrem.compileEquirectangularShader()}
+  finally{this.renderer.setRenderTarget(previousTarget)}
+  const [environment,appearance]=await Promise.all([new HDRLoader().loadAsync('/assets/table-reflections-reference.hdr'),loadFloorTexture('/assets/table-floor-reference.exr')]);
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   environment.mapping=THREE.EquirectangularReflectionMapping;
-  const pmrem=new THREE.PMREMGenerator(this.renderer);this.scene.environment=pmrem.fromEquirectangular(environment).texture;this.scene.environmentIntensity=ROOM_LIGHT_FACTOR;environment.dispose();
+  this.scene.environment=pmrem.fromEquirectangular(environment).texture;this.scene.environmentIntensity=ROOM_LIGHT_FACTOR;environment.dispose();
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   appearance.flipY=true;appearance.generateMipmaps=true;appearance.minFilter=THREE.LinearMipmapLinearFilter;appearance.anisotropy=Math.min(4,this.renderer.capabilities.getMaxAnisotropy());
   const floorMaterial=new THREE.MeshBasicMaterial({map:appearance});floorMaterial.name='Blender stationary floor appearance';
   // Three detached lamp reflections are baked into the floor; fill only their footprints from neighbouring floor pixels.
@@ -136,7 +144,10 @@ export class TableView {
    else for(const texture of [mat.map,mat.roughnessMap,mat.normalMap])if(texture)texture.anisotropy=Math.min(4,this.renderer.capabilities.getMaxAnisotropy());
   });
   // Keep the ball's neutral silver reflections independent of table lighting.
-  const room=new RoomEnvironment(),chrome=pmrem.fromScene(room,.04).texture;room.dispose();pmrem.dispose();
+  const room=new RoomEnvironment();
+  await this.compileScene(room,new THREE.PerspectiveCamera(90,1,.1,100));
+  const chrome=pmrem.fromScene(room,.04).texture;room.dispose();pmrem.dispose();
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
   for(const root of this.groups.get('ball_main')||[])root.traverse(obj=>{
    if(!(obj instanceof THREE.Mesh))return;
    const brighten=(original:THREE.MeshStandardMaterial)=>{const mat=original.clone();mat.envMap=chrome;mat.envMapIntensity=1.1;this.teleportEffect.attach(mat,manifest.ball_diameter);
@@ -193,7 +204,18 @@ export class TableView {
    full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
    const fast=full.clone();fast.name=full.name;fast.transmission=.94;fast.clearcoat=.6;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
   await new Promise<void>(resolve=>setTimeout(resolve,0));
-  this.overviewBatch=batchOverview(this.scene);this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
+  this.overviewBatch=batchOverview(this.scene);this.updateLightingQuality();this.setReference(0);this.resize();
+  await this.compileScene(this.scene,this.activeCamera);
+  await new Promise<void>(resolve=>setTimeout(resolve,0));
+  this.render();progress(100,'Table ready.');
+ }
+ private async compileScene(scene:THREE.Scene,camera:THREE.Camera){
+  // Match the offscreen linear target used by the composer/PMREM; compiling
+  // against the screen would prepare a different tone-mapping shader variant.
+  const target=this.renderer.getRenderTarget();let ready:Promise<unknown>;
+  try{this.renderer.setRenderTarget(this.composer.readBuffer);ready=this.renderer.compileAsync(scene,camera)}
+  finally{this.renderer.setRenderTarget(target)}
+  await ready;
  }
  setReference(index:number){
   this.needsRender=true;

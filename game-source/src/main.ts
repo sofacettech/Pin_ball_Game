@@ -131,7 +131,11 @@ function updateSoundSettings(){$('volume-value').textContent=Math.round(sound.vo
 $('sound').onclick=()=>{sound.setMuted(!sound.muted);updateSoundSettings()};
 $<HTMLInputElement>('volume').oninput=event=>{sound.setVolume(Number((event.target as HTMLInputElement).value));sound.unlock();updateSoundSettings()};
 $('start').onclick=async()=>{if(!loaded||starting)return;sound.unlock();sound.setMusic(false);starting=true;if(inspecting)toggleInspection();clearKeys();holdCharge=false;physics.setPaused(true);sync();
- try{const seed=await leaderboard.start(),fresh=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,physicsAssets.obstacles);const old=physics;physics=fresh;old.dispose();bindFeedback();completedRunRecorded=false;physics.start(seed);rewards.clear();if(!phone)scorecard.showScore(true);view.resetFeedback();accumulator=0;lastFrame=0;view.setReference(0);view.resize();canvas.focus();sound.play('start');sound.setMusic(true,1.5)}
+ try{const seed=await leaderboard.start();
+  // The preview world has never stepped. Reuse it for the first game; later
+  // games still get a fresh world so replay verification starts identically.
+  if(physics.active){const fresh=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,physicsAssets.obstacles);const old=physics;physics=fresh;old.dispose();bindFeedback()}
+  completedRunRecorded=false;physics.start(seed);rewards.clear();if(!phone)scorecard.showScore(true);view.resetFeedback();accumulator=0;lastFrame=0;view.setReference(0);view.resize();canvas.focus();sound.play('start');sound.setMusic(true,1.5)}
  catch(error){loaded=false;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error);$('action').hidden=true}
  finally{starting=false;if(loaded)sync()}
 };

@@ -30,6 +30,15 @@ jobs:
       - run: npm ci
       - run: git lfs fsck
       - run: npm run build
+      - name: Preserve compiled game for browser profiling
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-game
+          path: |
+            play.html
+            assets/sofacet-game-*
+            assets/floor-texture.worker-*
+          retention-days: 7
       - run: node --test --test-concurrency=1 tests/*.test.mjs
       - run: npm run smoke
 

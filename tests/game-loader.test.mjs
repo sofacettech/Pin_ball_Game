@@ -43,19 +43,23 @@ test('trail records the reflection vertex instead of cutting across a bounce',()
  const {points,x,vx}=motion.state();assert.equal(points.length,2);assert.equal(points[0].x,90);assert.equal(points[0].y,52.5);assert.equal(x,85);assert.equal(vx,-40);
 });
 
-function loader({story=true,reduced=false,embedded=false,fontReady=Promise.resolve()}={}){
- const animations=[],timers=new Map();let id=0;
+function loader({story=true,reduced=false,embedded=false,hidden=false,entry='',fontReady=Promise.resolve()}={}){
+ const animations=[],timers=new Map(),frames=new Map(),imports=[];let id=0,now=0;
  const element=()=>({hidden:false,dataset:{},style:{setProperty(){}},children:[],firstChild:{textContent:''},setAttribute(name,value){this[name]=value},removeAttribute(name){delete this[name]},getBoundingClientRect:()=>({width:1440,height:720,bottom:90}),replaceChildren(...children){this.children=children},get textContent(){return this.children.map(child=>child.textContent).join('')},set textContent(value){this.children=[{textContent:value}]}});
  const root=element(),stage=element(),statement=element(),phrase=element(),error=element(),status=element(),retry=element(),canvas=element(),body=element();
  body.hasAttribute=name=>name==='data-game-loading';stage.inert=true;stage.dataset.ready='false';canvas.getContext=()=>null;
  phrase.animate=(frames,options)=>{const animation={frames,options,playState:'running',pause(){this.playState='paused'},play(){this.playState='running'},cancel(){this.playState='idle'},finish(){this.playState='finished';this.onfinish?.()}};animations.push(animation);return animation};
  const nodes={canvas,'.loading-statement':statement,'.loading-phrase':phrase,'.game-loading-error':error,'[role="status"]':status,'[data-game-retry]':retry};root.querySelector=selector=>nodes[selector];
- const document=new EventTarget(),window=new EventTarget(),motion=new EventTarget();document.body=body;document.hidden=false;document.fonts={load:()=>fontReady};motion.matches=reduced;
- document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:''}}}[id]);
+ const document=new EventTarget(),window=new EventTarget(),motion=new EventTarget();document.body=body;document.hidden=hidden;document.fonts={load:()=>fontReady};motion.matches=reduced;
+ document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:entry}}}[id]);
  document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];document.createTextNode=textContent=>({textContent});document.createElement=element;
- const context={window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL,matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,cancelAnimationFrame(){},setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
- vm.runInNewContext(source,context);
- return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,document,motion,timers,flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
+ const context={window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL:class extends URL{constructor(input,base){super(input,base);if(input===entry)imports.push(this.href)}},matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:callback=>{const key=++id;frames.set(key,callback);return key},cancelAnimationFrame:key=>frames.delete(key),setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
+ new vm.Script(source,{importModuleDynamically:vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER}).runInNewContext(context);
+ return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,document,window,motion,timers,imports,
+  visibility(visible,{origin='http://localhost',source=context.parent}={}){window.dispatchEvent(Object.assign(new Event('message'),{origin,source,data:{type:'sofacet:experience-visibility',visible}}))},
+  flushFrame(){const batch=[...frames.values()];frames.clear();now+=1000/60;for(const callback of batch)callback(now)},
+  flushTasks(){for(const [key,timer]of [...timers])if(timer.duration===0){timers.delete(key);timer.callback()}},
+  flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
 }
 const fontLoaded=()=>new Promise(resolve=>setImmediate(resolve));
 test('chess arrival shows each approved message once and waits for both story and table',async()=>{
@@ -96,4 +100,41 @@ test('failure, cancellation and retry clean up story animation and stale font ca
  view.api.ready();assert.notEqual(view.root.dataset.state,'leaving');
  view.api.show();await fontLoaded();assert.equal(view.error.hidden,true);assert.equal(view.statement.dataset.statement,'0');
  view.stage.dataset.ready='true';view.api.cancel();assert.equal(view.stage.inert,false);assert.equal(view.root.hidden,true);
+});
+
+const gameEntry='data:text/javascript,export default 1';
+test('embedded game imports only after genuine visibility, a shell paint, and the following task',()=>{
+ const view=loader({embedded:true,reduced:true,entry:gameEntry});
+ view.flushFrame();view.flushTasks();assert.equal(view.imports.length,0);
+ view.visibility(true,{origin:'https://other.example'});view.visibility(true,{source:{}});
+ view.flushFrame();view.flushTasks();assert.equal(view.imports.length,0);
+ view.visibility(true);view.visibility(true);view.flushTasks();assert.equal(view.imports.length,0);
+ view.flushFrame();assert.equal(view.imports.length,0);
+ view.flushTasks();assert.deepEqual(view.imports,[gameEntry]);
+ view.visibility(false);view.visibility(true);view.flushFrame();view.flushTasks();assert.equal(view.imports.length,1);
+});
+test('hidden documents defer import and reversal cancels both scheduling boundaries',()=>{
+ const view=loader({embedded:true,reduced:true,hidden:true,entry:gameEntry});
+ view.visibility(true);view.flushFrame();view.flushTasks();assert.equal(view.imports.length,0);
+ view.document.hidden=false;view.document.dispatchEvent(new Event('visibilitychange'));
+ view.visibility(false);view.flushFrame();view.flushTasks();assert.equal(view.imports.length,0);
+ view.visibility(true);view.flushFrame();view.visibility(false);view.flushTasks();assert.equal(view.imports.length,0);
+ view.visibility(true);view.flushFrame();view.document.hidden=true;view.document.dispatchEvent(new Event('visibilitychange'));view.flushTasks();assert.equal(view.imports.length,0);
+ view.document.hidden=false;view.document.dispatchEvent(new Event('visibilitychange'));view.flushTasks();assert.equal(view.imports.length,0);
+ view.flushFrame();view.flushTasks();assert.equal(view.imports.length,1);
+});
+test('cancellation, failure, and pagehide prevent a queued import until an explicit resume',()=>{
+ for(const action of ['cancel','fail','pagehide']){
+  const view=loader({embedded:true,reduced:true,entry:gameEntry});view.visibility(true);view.flushFrame();
+  if(action==='pagehide')view.window.dispatchEvent(new Event('pagehide'));else view.api[action]();
+  view.flushTasks();view.visibility(true);view.flushFrame();view.flushTasks();assert.equal(view.imports.length,0,action);
+  if(action==='pagehide')view.window.dispatchEvent(Object.assign(new Event('pageshow'),{persisted:true}));else view.api.show();
+  view.flushTasks();assert.equal(view.imports.length,0,action);
+  view.flushFrame();view.flushTasks();assert.equal(view.imports.length,1,action);
+ }
+});
+test('standalone startup still imports after its first visible shell paint',()=>{
+ const view=loader({story:false,reduced:true,entry:gameEntry});
+ view.flushTasks();assert.equal(view.imports.length,0);view.flushFrame();assert.equal(view.imports.length,0);
+ view.flushTasks();assert.equal(view.imports.length,1);
 });
