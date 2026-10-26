@@ -107,7 +107,7 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','play.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','play.html','launching-soon.html','first-cuts-confirmation.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{

@@ -44,6 +44,9 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 .game-loading-screen .loading-statement[hidden]{display:none}
 .loading-phrase{display:block;opacity:0}
 .loading-value{color:#c9a0ff;white-space:nowrap}
+.loading-pink{color:#ff5ebc}
+.loading-green{color:#bfff00}
+.loading-cyan{color:#00d5ff}
 @media(max-width:1024px),(any-pointer:coarse){.game-loading-screen .loading-statement{font-size:clamp(32px,4.4vw,48px)}}
 @media(max-width:600px) and (orientation:portrait){.game-loading-screen .loading-statement{font-size:clamp(26px,7vw,32px)}}
 @media(max-height:500px) and (orientation:landscape){.game-loading-screen .loading-statement{font-size:clamp(24px,3.2vw,36px)}}
@@ -73,12 +76,17 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
-</style><link rel="preload" href="/assets/game-loader.js?v=9175f13fc71e" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=9175f13fc71e" defer data-game-entry="./assets/sofacet-game-BqOS17qc.js" onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
+:root #game-header .site-nav{gap:16px}
+:root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
+@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:11px}}
+@media(max-width:360px){:root #game-header .site-nav{gap:4px}:root #game-header .skip-game{padding-inline:10px}}
+</style><link rel="preload" href="/assets/game-loader.js?v=01c0603476b2" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=01c0603476b2" defer data-game-entry="./assets/sofacet-game-BqOS17qc.js" onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
 <body data-game-loading>
  <header id="game-header">
   <div class="navbar-backdrop" aria-hidden="true"><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></div>
   <a class="site-brand" href="/" target="_top" aria-label="So/Facet pinball home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
   <nav class="site-nav" id="site-navigation" aria-label="Game controls">
+   <a id="skip-game" class="skip-game" href="/launching-soon.html?nav=game" target="_top">Skip game</a>
    <button id="nav-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="nav-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
    <div id="nav-panel" class="menu-panel" data-menu-panel aria-label="Game navigation" aria-hidden="true" inert>
     <div id="navbar-extras" class="navbar-extras"><button id="member" data-menu-close class="menu-item" type="button" hidden>Leaderboard</button><button id="pause" data-menu-close class="menu-item" type="button" disabled>Pause</button></div>

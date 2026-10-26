@@ -8,6 +8,9 @@
 .game-loading-screen .loading-statement[hidden]{display:none}
 .loading-phrase{display:block;opacity:0}
 .loading-value{color:#c9a0ff;white-space:nowrap}
+.loading-pink{color:#ff5ebc}
+.loading-green{color:#bfff00}
+.loading-cyan{color:#00d5ff}
 @media(max-width:1024px),(any-pointer:coarse){.game-loading-screen .loading-statement{font-size:clamp(32px,4.4vw,48px)}}
 @media(max-width:600px) and (orientation:portrait){.game-loading-screen .loading-statement{font-size:clamp(26px,7vw,32px)}}
 @media(max-height:500px) and (orientation:landscape){.game-loading-screen .loading-statement{font-size:clamp(24px,3.2vw,36px)}}
