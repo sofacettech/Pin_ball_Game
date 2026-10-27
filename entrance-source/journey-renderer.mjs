@@ -6,6 +6,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { entranceRenderPolicy } from './render-policy.mjs';
+import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createExteriorLook } from './exterior-look.mjs';
 import { createInteriorLook } from './interior-look.mjs';
 import { createChessLook } from './chess-look.mjs';
@@ -13,8 +17,10 @@ import { createCinematicPass, matchExteriorPalette } from './cinematic-look.mjs'
 
 export async function createJourneyRenderer({stage,pixelRatio=()=>Math.min(2,devicePixelRatio),cinematicEnabled=()=>true,onStatus=()=>{},onRender=()=>{},profile=false,performanceMode=false,renderView=()=>null}){
 const base='/assets/entrance-3d/';
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-const chosenPixelRatio=()=>Math.min(2,Math.max(.5,pixelRatio()));
+const policy=entranceRenderPolicy({quality:performanceMode?new URLSearchParams(location.search).get('quality'):'reference',
+  userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints});
+const renderer=new THREE.WebGLRenderer({antialias:policy.canvasAntialias,powerPreference:'high-performance'});
+const chosenPixelRatio=()=>Math.min(policy.maxPixelRatio,Math.max(.5,pixelRatio()));
 renderer.setPixelRatio(chosenPixelRatio());renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 renderer.transmissionResolutionScale=performanceMode?.5:1;
@@ -27,14 +33,18 @@ const ambient=new THREE.HemisphereLight(0xb9ceff,0x11091d,.3);scene.add(ambient)
 const sun=new THREE.DirectionalLight(0xfff7e7,1.25);sun.position.set(-10,50,35);scene.add(sun);
 const fill=new THREE.DirectionalLight(0x9872ff,1.5);fill.position.set(30,10,-10);scene.add(fill);
 const camera=new THREE.PerspectiveCamera(45,16/9,.05,5000);
-const exterior=createExteriorLook(scene,renderer,{captureReflection,performanceMode});
-const interior=createInteriorLook(scene,renderer,{reflectionPass:exterior.reflectionPass,captureReflection,performanceMode});
-const chess=createChessLook(scene,renderer,{performanceMode});
-const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:Math.min(performanceMode?2:4,renderer.capabilities.maxSamples)}));composer.addPass(new RenderPass(scene,camera));
+const exterior=createExteriorLook(scene,renderer,{captureReflection,performanceMode,reflectionSamples:policy.reflectionSamples,reflectionWidth:policy.exteriorReflectionWidth});
+const interior=createInteriorLook(scene,renderer,{reflectionPass:exterior.reflectionPass,captureReflection,performanceMode,reflectionWidth:policy.chamberReflectionWidth});
+const chess=createChessLook(scene,renderer,{captureReflection,performanceMode,reflectionSamples:policy.reflectionSamples,reflectionScale:policy.chessReflectionScale});
+const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:Math.min(policy.mainSamples,renderer.capabilities.maxSamples)}));composer.addPass(new RenderPass(scene,camera));
 composer.addPass(new UnrealBloomPass(new THREE.Vector2(1024,576),.035,.05,2.2));
 // Blend subpixel neon edges after bloom, in linear color before display output.
 if(!performanceMode)composer.addPass(new SMAAPass());
 const cinematic=createCinematicPass();composer.addPass(cinematic);
+// FXAA runs on the final display colours and avoids resolving multisampled
+// HDR buffers on Apple mobile GPUs. Preserve bloom and the approved grade.
+const fxaa=policy.mobile?new ShaderPass(FXAAShader):null;
+if(fxaa)composer.addPass(fxaa);
 renderer.info.autoReset=false;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
@@ -42,6 +52,7 @@ const metadata=await fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch
 let model,mixer,actions=[],frame=240,preparing=false,loadID=0,suspended=false,disposed=false;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
+const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
 let reflectionBindings=[],reflectionMaterials=new Map();
 let lastReflectionFrame=null,entryReflectionTurn=0;
 const q0=new THREE.Quaternion(),q1=new THREE.Quaternion();
@@ -50,16 +61,20 @@ function prepareStableLighting(){
   if(!performanceMode)return;
   // Keep the same light slots across rooms. Zero-intensity lights skip their
   // BRDF work instead of changing the shader layout at the doorway.
-  const lighting=THREE.ShaderChunk.lights_fragment_begin
-    .replaceAll('RE_Direct( directLight,','if ( directLight.visible ) RE_Direct( directLight,')
-    .replaceAll('RE_Direct_RectArea( rectAreaLight,','if ( any( greaterThan( rectAreaLight.color, vec3( 0.0 ) ) ) ) RE_Direct_RectArea( rectAreaLight,');
   const done=new Set();
   model.traverse(object=>{
     for(const material of object.material?(Array.isArray(object.material)?object.material:[object.material]):[]){
       if(!material.isMeshStandardMaterial||done.has(material))continue;done.add(material);
       const compile=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
-      material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_begin>',lighting);};
-      material.customProgramCacheKey=()=>key()+'-stable-light-slots';material.needsUpdate=true;
+      material.onBeforeCompile=shader=>{
+        compile(shader);
+        // Some facade/water hooks already expanded this chunk. Apply guards
+        // after those hooks too, so inactive room lights do no BRDF work.
+        shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_begin>',THREE.ShaderChunk.lights_fragment_begin)
+          .replaceAll('RE_Direct( directLight,','if ( directLight.visible ) RE_Direct( directLight,')
+          .replaceAll('RE_Direct_RectArea( rectAreaLight,','if ( any( greaterThan( rectAreaLight.color, vec3( 0.0 ) ) ) ) RE_Direct_RectArea( rectAreaLight,');
+      };
+      material.customProgramCacheKey=()=>key()+'-stable-light-slots-v2';material.needsUpdate=true;
     }
   });
 }
@@ -105,7 +120,7 @@ function pollTimers(){
   for(let i=pendingTimers.length-1;i>=0;i--){const item=pendingTimers[i];if(disjoint||gl.getQueryParameter(item.query,gl.QUERY_RESULT_AVAILABLE)){if(!disjoint)item.timings['gpu_'+item.name]=gl.getQueryParameter(item.query,gl.QUERY_RESULT)/1e6;gl.deleteQuery(item.query);pendingTimers.splice(i,1);}}
 }
 
-function resize(){const rect=stage.getBoundingClientRect();renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;requestRender();}
+function resize(){const rect=stage.getBoundingClientRect();renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;requestRender();}
 const observer=new ResizeObserver(resize);observer.observe(stage);
 
 function sampleCamera(at){
@@ -124,6 +139,12 @@ function batchBall(){
     const group=groups.get(object.material)??[];group.push(object);groups.set(object.material,group);
   });
   for(const [material,objects] of groups){
+    if(batchingMode==='portable'){
+      const portable=createAnimatedMeshBatch(objects,material);
+      objects.forEach(object=>{object.visible=false;});
+      model.add(portable.mesh);ballBatches.push({portable});
+      continue;
+    }
     const geometries=[...new Set(objects.map(o=>o.geometry))];
     const batch=new THREE.BatchedMesh(objects.length,geometries.reduce((n,g)=>n+g.attributes.position.count,0),geometries.reduce((n,g)=>n+g.index.count,0),material);
     batch.name='Animated ball facet batch';batch.frustumCulled=false;batch.sortObjects=false;
@@ -145,7 +166,10 @@ const batchInverse=new THREE.Matrix4(),batchMatrix=new THREE.Matrix4();
 function updateBallBatches(){
   if(!ballBatches.length)return;
   model.updateMatrixWorld(true);batchInverse.copy(model.matrixWorld).invert();
-  for(const {batch,instances} of ballBatches)for(const {object,id} of instances)batch.setMatrixAt(id,batchMatrix.multiplyMatrices(batchInverse,object.matrixWorld));
+  for(const {batch,instances,portable} of ballBatches){
+    if(portable){portable.update(batchInverse);continue;}
+    for(const {object,id} of instances)batch.setMatrixAt(id,batchMatrix.multiplyMatrices(batchInverse,object.matrixWorld));
+  }
 }
 function render(){
   renderRequested=0;if(!model||preparing||suspended||disposed)return;
@@ -182,7 +206,7 @@ function setFrame(value){frame=THREE.MathUtils.clamp(value,240,2164);requestRend
 function renderAt(value){if(renderRequested)cancelAnimationFrame(renderRequested);frame=THREE.MathUtils.clamp(value,240,2164);render();}
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
-  for(const {batch} of ballBatches)batch.dispose();ballBatches=[];
+  for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
   for(const material of reflectionMaterials.values())material.dispose();reflectionMaterials.clear();reflectionBindings=[];
   lastReflectionFrame=null;entryReflectionTurn=0;
   const geometries=new Set(),materials=new Set(),textures=new Set();
@@ -227,6 +251,6 @@ function dispose(){
   env.dispose();for(const pass of composer.passes)pass.dispose?.();composer.dispose();
   renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
 }
-return {setFrame,renderAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,
+return {setFrame,renderAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,policy,batchingMode,
   get model(){return model;},get mixer(){return mixer;},get frame(){return frame;}};
 }

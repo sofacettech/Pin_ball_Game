@@ -5,7 +5,7 @@ import { createChamberReflections } from './chamber-reflections.mjs';
 const sourceLights=await fetch('/assets/entrance-3d/interior-lights.json').then(r=>r.json());
 const roomMaterial=/Polished steel|Reflective floor|Panel joint shadow|Pitted architectural concrete|Arch borders|Arch entry|architectural blocks|Layered violet|Mannequin body|Earrings|Necklace|Ring|Purple |Purple •|Veins •|Pattern •|Lime •|Outer arch edge|Exterior boxes/;
 
-export function createInteriorLook(scene,renderer,{reflectionPass,captureReflection=draw=>draw(),performanceMode=false}){
+export function createInteriorLook(scene,renderer,{reflectionPass,captureReflection=draw=>draw(),performanceMode=false,reflectionWidth=512}){
   const localStrength={value:0};
   const ballStrength={value:0};
   const localReflections=createChamberReflections(sourceLights,localStrength,{ballStrength});
@@ -41,7 +41,7 @@ export function createInteriorLook(scene,renderer,{reflectionPass,captureReflect
   const environment=pmrem.fromScene(environmentScene,.06,.1,250);
   environment.texture.userData.journeyShared=true;
   pmrem.dispose();environmentScene.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
-  const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:512,textureHeight:512,clipBias:.003,multisample:0});
+  const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:reflectionWidth,textureHeight:reflectionWidth,clipBias:.003,multisample:0});
   mirror.rotation.x=-Math.PI/2;mirror.position.y=4.05;mirror.updateMatrixWorld(true);
   mirror.getRenderTarget().texture.generateMipmaps=true;
   mirror.getRenderTarget().texture.minFilter=THREE.LinearMipmapLinearFilter;
