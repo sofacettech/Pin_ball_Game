@@ -19,6 +19,19 @@ test('the held paddle keeps priority across keyboard/touch combinations; release
  }
 });
 
+test('mouse, touch and pen use the same left/right zones demonstrated by the guide',()=>{
+ for(const pointerType of ['mouse','touch','pen']){
+  const canvas=new Element(),launch=new Element();let enabled=true;
+  const input=connectTouchControls(canvas,launch,()=>enabled,()=>{},()=>{});
+  send(canvas,'pointerdown',{pointerId:1,pointerType,button:0,clientX:80});assert.equal(input.state.left,true);assert.equal(input.state.right,false);
+  send(canvas,'pointerup',{pointerId:1});assert.equal(input.state.left,false);
+  send(canvas,'pointerdown',{pointerId:2,pointerType,button:0,clientX:320});assert.equal(input.state.right,true);
+  send(canvas,'pointercancel',{pointerId:2});assert.equal(input.state.right,false);
+  send(canvas,'pointerdown',{pointerId:3,pointerType,button:2,clientX:80});assert.equal(input.state.left,false);
+  enabled=false;send(canvas,'pointerdown',{pointerId:4,pointerType,button:0,clientX:80});assert.equal(input.state.left,false);
+ }
+});
+
 test('launch hold releases on pointer/keyboard release, cancellation, blur and clearing',()=>{
  const canvas=new Element(),launch=new Element();let enabled=true,starts=0;
  const touch=connectTouchControls(canvas,launch,()=>enabled,()=>starts++,()=>{});
