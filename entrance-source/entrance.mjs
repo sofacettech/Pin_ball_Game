@@ -9,7 +9,9 @@ const $=id=>document.getElementById(id);
 const firstFrame=240,lastFrame=CHESS_HIT_FRAME,travel=(lastFrame-firstFrame)*8;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
-const performanceMode=new URLSearchParams(location.search).get('quality')!=='reference';
+const parameters=new URLSearchParams(location.search);
+const performanceMode=parameters.get('quality')!=='reference';
+const showPerformance=parameters.has('perf')||location.pathname.startsWith('/entrance-3d');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
@@ -17,26 +19,38 @@ let phase='loading',openingPlayback,finishLoading,gameLoader,gameReadyObserver;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView,gameTimeout;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
-const performancePanel=createFrameRatePanel({label:'Live 3D',travel,minimumFPS:45,
-  compareURL:'/?perf#experience',compareLabel:'Video FPS ↗',
+const performancePanel=showPerformance?createFrameRatePanel({label:'Live 3D',travel,minimumFPS:45,
+  compareURL:'/video?perf#experience',compareLabel:'Video FPS ↗',
   getState:()=>{
     const renderer=journey?.renderer,canvas=renderer?.domElement;
     return {ready,game:gameRequested,frame,seeking:Math.abs(target-frame)>.15,
       details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draws · ${(renderer.info.render.triangles/1e6).toFixed(2)}M triangles`:''};
   },
-});
+}):{record(){},destroy(){}};
 
 async function loadMainPresentation(){
-  const response=await fetch('/index.html',{cache:'no-cache'});
+  const response=await fetch('/video',{cache:'no-cache'});
   if(!response.ok)throw Error('Main page presentation unavailable');
   const source=new DOMParser().parseFromString(await response.text(),'text/html');
   const sourceBase=new URL('/',location.href);
   const loader=source.querySelector('#site-loader'),copy=source.querySelector('#story-copy');
   const intro=source.querySelector('script[src*="assets/loading/intro.js"]');
   const gameScreen=source.querySelector('#game-loading-screen'),gameStyle=source.querySelector('#game-loader-critical'),enter=source.querySelector('#enter');
-  if(!loader||!copy||!intro||!gameScreen||!gameStyle||!enter)throw Error('Main page presentation is incomplete');
+  const controller=source.querySelector('#game-loader-controller');
+  const navigation=source.querySelector('header.site-navigation'),brand=source.querySelector('.site-brand');
+  const navigationModule=source.querySelector('script[src*="navigation.js"]');
+  if(!loader||!copy||!intro||!gameScreen||!gameStyle||!enter||!controller||!navigation||!brand||!navigationModule)throw Error('Main page presentation is incomplete');
   // Reuse the deployed video entrance's copy, fonts and loading presentation.
-  for(const fragment of [loader,copy,enter])for(const element of fragment.querySelectorAll('[src]'))element.setAttribute('src',new URL(element.getAttribute('src'),sourceBase).href);
+  for(const fragment of [loader,copy,enter,navigation,brand]){
+    for(const element of [fragment,...fragment.querySelectorAll('[src],[href]')])for(const attribute of ['src','href'])if(element.hasAttribute(attribute))element.setAttribute(attribute,new URL(element.getAttribute(attribute),sourceBase).href);
+  }
+  navigation.querySelector('.play-now').id='skip-game';
+  const sharedNavigation=document.importNode(navigation,true);
+  // Move the live sound control with its gesture listeners into the shared nav.
+  const sound=$('site-sound');if(sound)sharedNavigation.prepend(sound);
+  document.querySelector('header.site-navigation').replaceWith(sharedNavigation);
+  document.querySelector('.site-brand').replaceWith(document.importNode(brand,true));
+  $('skip-game').addEventListener('click',event=>{event.preventDefault();enterGame();});
   document.body.prepend(document.importNode(loader,true));
   $('story-copy').replaceWith(document.importNode(copy,true));
   $('enter').replaceWith(document.importNode(enter,true));
@@ -52,7 +66,7 @@ async function loadMainPresentation(){
     document.head.insertBefore(shared,document.querySelector('link[data-entrance-style]'));
   }));
   const introModule=import(new URL(intro.getAttribute('src'),sourceBase).href);
-  const [module]=await Promise.all([introModule,import('./main-game-loader.mjs'),...styles]);
+  const [module]=await Promise.all([introModule,import(new URL(controller.getAttribute('src'),sourceBase).href),import(new URL(navigationModule.getAttribute('src'),sourceBase).href),...styles]);
   finishLoading=module.finishLoading;
   gameLoader=window.sofacetGameLoader;
 }
@@ -123,7 +137,6 @@ game.addEventListener('load',()=>{
   gameReadyObserver=new MutationObserver(check);
   gameReadyObserver.observe(gameStage,{attributes:true,attributeFilter:['data-ready','aria-busy']});check();
 });
-$('skip-game').addEventListener('click',event=>{event.preventDefault();enterGame();});
 $('scroll-hint').addEventListener('click',()=>{siteSound.unlock();window.scrollTo({top:window.scrollY+innerHeight*.8,behavior:reduced.matches?'instant':'smooth'});});
 
 function tick(now){

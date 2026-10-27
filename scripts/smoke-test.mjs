@@ -23,19 +23,23 @@ try{
   await setTimeout(1000);
  }
  assert.ok(healthy,'Health check did not become ready.');
- for(const path of ['/','/play.html','/entrance-3d','/entrance-3d/']){
+ for(const path of ['/','/index.html','/play.html','/entrance-3d','/entrance-3d/','/video','/video/','/launching-soon.html','/first-cuts-confirmation.html']){
   const res=await request(path);
   assert.equal(res.status,200,path);
   const html=await res.text();
   assert.match(html,/<html/i,path);
-  if(path.startsWith('/entrance-3d')){
-   assert.match(html,/id="scene-frame"/,'3D route serves its own entrance');
+  if(path==='/'||path==='/index.html'||path.startsWith('/entrance-3d')){
+   assert.match(html,/\/assets\/entrance-3d\//,'Default route serves the Three.js entrance');
    assert.doesNotMatch(html,/node_modules|\/work\/|\/experiments\//,'3D route uses deployable assets only');
-  }else if(path==='/')assert.doesNotMatch(html,/\/assets\/entrance-3d\//,'Video entrance does not download the 3D experiment');
+  }else if(path.startsWith('/video')){
+   assert.match(html,/<base href="\/">/,'Video aliases resolve relative assets from the site root');
+   assert.match(html,/id="story-copy"/,'Shared video presentation remains available');
+   assert.doesNotMatch(html,/\/assets\/entrance-3d\//,'Video comparison does not download the 3D world');
+  }
   const resources=[...html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)].map(match=>match[1]);
   for(const resource of resources){
    if(/^https?:\/\//.test(resource))continue;
-   const asset=await request(new URL(resource,new URL(path,origin)).pathname,{method:'HEAD'});
+   const asset=await request(new URL(resource,origin).pathname,{method:'HEAD'});
    assert.equal(asset.status,200,resource);
   }
  }

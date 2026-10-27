@@ -211,7 +211,7 @@ try{
   page.on('pageerror',error=>errors.push(error.message));page.on('requestfailed',request=>networkFailures.push({url:request.url(),error:request.failure()?.errorText}));
   await page.addInitScript(installInstrumentation,{disableWorker:Boolean(spec.disableWorker)});
   try{
-   const pageURL=new URL(url);pageURL.searchParams.set('perf','1');
+   const pageURL=new URL(url);if(pageURL.pathname==='/')pageURL.pathname='/video';pageURL.searchParams.set('perf','1');
    if(defaultSelection)pageURL.searchParams.delete('renderer');else pageURL.searchParams.set('renderer',spec.renderer);
    await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});

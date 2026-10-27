@@ -1,10 +1,16 @@
 import {build} from 'esbuild-wasm';
+import {withGameLoader} from './game-loader-shell.mjs';
 import {createHash} from 'node:crypto';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {basename,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
+// Refresh the shared loader's CSS and content hash on non-Vite pages too.
+for(const page of ['index.html','privacy.html','launching-soon.html','first-cuts-confirmation.html']){
+  const file=resolve(root,page);
+  await writeFile(file,withGameLoader(await readFile(file,'utf8')));
+}
 const output=resolve(root,'assets/entrance-3d');
 await mkdir(output,{recursive:true});
 // Only this route imports the Three.js bundle. Shared presentation modules stay

@@ -42,7 +42,7 @@ try{
  // Keep request interception and HTTP cache policy identical in both arms.
  // Playwright disables HTTP cache whenever routing is enabled.
  await page.route('**/*',async route=>{
-  const path=new URL(route.request().url()).pathname,body=assets.get(path==='/'?'/index.html':path);
+  const path=new URL(route.request().url()).pathname,body=assets.get(path==='/video'?'/index.html':path);
   if(body)await route.fulfill({status:200,body,contentType:path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html'});
   else await route.continue();
  });
@@ -105,7 +105,7 @@ try{
    window.cadenceSeeks.push({...activeSeek});activeSeek=undefined;
   },true);
  });
- await page.goto(url+'/?renderer=native',{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/video?renderer=native',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
  await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
@@ -182,7 +182,7 @@ try{
  if(process.env.SOFACET_CADENCE_SCREENSHOT){
   // Capture proof after timing is complete so the debug overlay does not
   // change the baseline/current benchmark's measurement conditions.
-  await page.goto(url+'/?perf=1',{waitUntil:'domcontentloaded'});
+  await page.goto(url+'/video?perf=1',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
   if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
   await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});

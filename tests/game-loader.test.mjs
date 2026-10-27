@@ -43,17 +43,18 @@ test('trail records the reflection vertex instead of cutting across a bounce',()
  const {points,x,vx}=motion.state();assert.equal(points.length,2);assert.equal(points[0].x,90);assert.equal(points[0].y,52.5);assert.equal(x,85);assert.equal(vx,-40);
 });
 
-function loader({story=true,reduced=false,embedded=false,fontReady=Promise.resolve()}={}){
+function loader({story=true,reduced=false,embedded=false,managed=false,fontReady=Promise.resolve()}={}){
  const animations=[],timers=new Map();let id=0;
  const element=()=>({hidden:false,dataset:{},style:{setProperty(){}},children:[],firstChild:{textContent:''},setAttribute(name,value){this[name]=value},removeAttribute(name){delete this[name]},getBoundingClientRect:()=>({width:1440,height:720,bottom:90}),replaceChildren(...children){this.children=children},get textContent(){return this.children.map(child=>child.textContent).join('')},set textContent(value){this.children=[{textContent:value}]}});
  const root=element(),stage=element(),statement=element(),phrase=element(),error=element(),status=element(),retry=element(),canvas=element(),body=element();
- body.hasAttribute=name=>name==='data-game-loading';stage.inert=true;stage.dataset.ready='false';canvas.getContext=()=>null;
+ body.hasAttribute=name=>!managed&&name==='data-game-loading';
+ const rootEvents=new EventTarget();root.addEventListener=rootEvents.addEventListener.bind(rootEvents);root.dispatchEvent=rootEvents.dispatchEvent.bind(rootEvents);root.hasAttribute=name=>managed&&name==='data-managed';stage.inert=true;stage.dataset.ready='false';canvas.getContext=()=>null;
  phrase.animate=(frames,options)=>{const animation={frames,options,playState:'running',pause(){this.playState='paused'},play(){this.playState='running'},cancel(){this.playState='idle'},finish(){this.playState='finished';this.onfinish?.()}};animations.push(animation);return animation};
  const nodes={canvas,'.loading-statement':statement,'.loading-phrase':phrase,'.game-loading-error':error,'[role="status"]':status,'[data-game-retry]':retry};root.querySelector=selector=>nodes[selector];
  const document=new EventTarget(),window=new EventTarget(),motion=new EventTarget();document.body=body;document.hidden=false;document.fonts={load:()=>fontReady};motion.matches=reduced;
  document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:''}}}[id]);
  document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];document.createTextNode=textContent=>({textContent});document.createElement=element;
- const context={window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL,matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,cancelAnimationFrame(){},setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
+ const context={CustomEvent,window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL,matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,cancelAnimationFrame(){},setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
  vm.runInNewContext(source,context);
  return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,document,motion,timers,flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
 }
@@ -99,4 +100,20 @@ test('failure, cancellation and retry clean up story animation and stale font ca
  view.api.ready();assert.notEqual(view.root.dataset.state,'leaving');
  view.api.show();await fontLoaded();assert.equal(view.error.hidden,true);assert.equal(view.statement.dataset.statement,'0');
  view.stage.dataset.ready='true';view.api.cancel();assert.equal(view.stage.inert,false);assert.equal(view.root.hidden,true);
+});
+
+// The Three.js parent uses this same controller while the child loads without
+// a second story. Handoff must occur only when both the copy and game finish.
+test('managed entrance uses the current shared story and signals one game handoff',async()=>{
+ const view=loader({managed:true,story:false});let handoffs=0;
+ view.root.addEventListener('sofacet:game-loader-ready',()=>handoffs++);
+ assert.equal(view.animations.length,0);
+ view.api.show({story:true});await fontLoaded();view.api.ready();
+ assert.equal(handoffs,0);
+ const messages=[];
+ while(handoffs===0&&messages.length<5){messages.push(view.phrase.textContent);view.animations.at(-1).finish()}
+ assert.equal(messages.length,4);
+ assert.equal(messages[1],'Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.');
+ assert.match(messages[3],/Cyan.*take points away/);
+ assert.equal(handoffs,1);view.flushFade();assert.equal(view.root.hidden,true);
 });

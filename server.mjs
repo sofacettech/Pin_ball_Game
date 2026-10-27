@@ -117,7 +117,7 @@ const server=createServer(async(request,response)=>{
   if(path==='/api/media-config'&&request.method==='GET')return json(response,200,{baseURL:process.env.MEDIA_CDN_BASE_URL||''});
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
-  const relative=path==='/'?'index.html':/^\/entrance-3d\/?$/.test(path)?'entrance-3d.html':path.slice(1),parts=relative.split('/');
+  const relative=path==='/'||path==='/index.html'||/^\/entrance-3d\/?$/.test(path)?'entrance-3d.html':/^\/video\/?$/.test(path)?'index.html':path.slice(1),parts=relative.split('/');
   if(parts.some(p=>!p||p.startsWith('.')||p.includes('\\'))||!(publicFiles.has(relative)||publicDirectories.has(parts[0])&&parts.length>1))fail(404,'File not found.');
   const target=resolve(root,relative);
   if(!target.startsWith(root+sep))fail(403,'Forbidden.');

@@ -44,7 +44,7 @@ try{
  }
  assert.ok(ready,'Probe server must start');browser=await browserType.launch();
  const context=await browser.newContext({...devices[engine==='webkit'?'iPhone 13':'Pixel 7']}),page=await context.newPage();
- await page.goto(url+'/?renderer=native',{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/video?renderer=native',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
  await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:60000});await page.touchscreen.tap(195,422);

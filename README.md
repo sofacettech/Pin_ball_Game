@@ -16,7 +16,7 @@ npm run build
 npm start
 ```
 
-Open `http://127.0.0.1:8766/`. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
+Open `http://127.0.0.1:8766/` for the default Three.js entrance. `/entrance-3d` is an alias with the FPS panel; `/?perf` enables it on the default page. The original video remains at `/video`. Both reuse the same approved story markup, fonts, navigation, opening animation and game loader, so edits to those shared sources apply to both. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
 For ZIP downloads, skip the two `git lfs` commands above. If the archive contains a Git LFS pointer instead of the full video, `npm run build` downloads the approved video and verifies its size and SHA-256 before using it. Internet access to the public media mirror is required for that first build; an already materialized video is reused.
 
@@ -31,7 +31,8 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 
 | Location | Responsibility |
 | --- | --- |
-| `index.html`, `style.css`, `viewer.js`, `sequence.js` | Landing experience, scroll sequence and game handoff |
+| `entrance-source/`, `entrance-3d.html`, `assets/entrance-3d/` | Default Three.js journey, camera/light data and game handoff |
+| `index.html`, `style.css`, `viewer.js`, `sequence.js` | Shared presentation source and video comparison at `/video` |
 | `assets/landing-copy.js`, `assets/kinetic-copy.js` | Configurable story copy, frame ranges and masked text transitions |
 | `navigation.js`, `assets/navigation.css` | Shared brand placement, hamburger and navigation drawer |
 | `game-source/` | Three.js table, Rapier physics, controls, scorecard, leaderboard and rewards screen |

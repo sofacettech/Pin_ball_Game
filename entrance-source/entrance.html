@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>SOFACET · 3D entrance test</title>
-  <meta name="robots" content="noindex">
+  <title>SOFACET — Enter the world</title>
+  <base href="/">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" data-entrance-style href="__ENTRANCE_CSS__">
@@ -16,14 +16,14 @@
       <div id="scene-frame" aria-hidden="true"></div>
       <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SOFACET fragmented ball assembling"></video></div>
     </div>
-    <!-- The deployed video entrance supplies the copy and loaders. -->
+    <!-- Both entrances share the approved presentation from /video. -->
     <div id="story-copy" aria-label="The SOFACET story"></div>
     <div class="wordmark brand-logo site-brand"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></div>
     <header class="site-navigation site-nav">
       <a id="skip-game" class="play-now" href="/play.html">Skip to Game</a>
       <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
-          <a class="menu-item" href="/membership.html" target="_top">Account</a>
+          <a class="menu-item" href="/account.html" target="_top" data-account-link>My Account</a>
           <a class="menu-item" href="/about.html" target="_top">About</a>
           <a class="menu-item" href="/faq.html" target="_top">FAQs</a>
           <a class="menu-item" href="/privacy.html" target="_top">Privacy Policies</a>
@@ -42,7 +42,6 @@
   <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#world-loading{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script type="module" src="/navigation.js"></script>
   <script type="module" src="__ENTRANCE_JS__"></script>
 </body>
 </html>

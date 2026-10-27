@@ -47,7 +47,7 @@ try{
    return play.call(this);
   };
  });
- await page.goto(url+'/?renderer=native',{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/video?renderer=native',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(
   document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden||!document.querySelector('#journey-resume').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').tap();
