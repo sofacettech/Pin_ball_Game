@@ -39,8 +39,9 @@ jobs:
       fail-fast: false
       matrix:
         browser: [webkit, chromium]
-    # Both engines need a native GPU for the HDR scene and reflection targets.
-    runs-on: macos-26
+    # Retain macOS browser coverage without the capacity-constrained ARM pool.
+    # Hosted-runner timing remains diagnostic, not an iPhone performance claim.
+    runs-on: macos-26-intel
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -93,7 +94,7 @@ jobs:
       matrix:
         include:
           - browser: webkit
-            os: macos-26 # Native Apple GPU for WebGL; avoid the constrained macOS 15 pool.
+            os: macos-26-intel
           - browser: chromium
             os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
@@ -142,7 +143,7 @@ jobs:
           - browser: chromium
             os: ubuntu-24.04
           - browser: webkit
-            os: macos-26
+            os: macos-26-intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 8
     env:
@@ -199,7 +200,7 @@ jobs:
           - browser: chromium
             os: ubuntu-24.04
           - browser: webkit
-            os: macos-26
+            os: macos-26-intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 12
     steps:
@@ -269,7 +270,7 @@ jobs:
             os: ubuntu-24.04
           - browser: webkit
             device: mobile
-            os: macos-26
+            os: macos-26-intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
