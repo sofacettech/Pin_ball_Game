@@ -16,6 +16,7 @@ import {formatPoints} from './player-copy';
 
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const stage=$('stage'),viewport=$('viewport'),canvas=$<HTMLCanvasElement>('game');
+const mobileLives=$('mobile-lives'),lifeHearts=mobileLives.querySelectorAll<HTMLImageElement>('img');
 const scorecardPanel=$('scorecard-panel'),scorecard=connectFlipScorecard($<HTMLButtonElement>('flip-card'),$('card-score'),$('card-best'));
 scorecard.update(0,null);
 const view=new TableView(canvas,viewport);let inspecting=false,loaded=false,physics:PinballPhysics;
@@ -88,6 +89,11 @@ const applyInspectionLayout=()=>{if(!inspecting){viewport.style.width='';viewpor
 let completedRunRecorded=false;
 function sync(){
  const p=physics.pose();
+ mobileLives.hidden=!physics.active||inspecting||p.state==='finished';
+ if(mobileLives.dataset.lives!==String(p.lives)){
+  mobileLives.dataset.lives=String(p.lives);mobileLives.setAttribute('aria-label',p.lives+' '+(p.lives===1?'life':'lives')+' remaining');
+  lifeHearts.forEach((heart,index)=>{heart.hidden=index>=p.lives});
+ }
  applyNavigationLayout();stage.classList.toggle('showing-play',!physics.active||p.state==='finished');
  sound.setMusic(physics.active&&!p.paused&&p.state!=='finished'&&!registration.open&&!leaderboard.dialog.open);
  $('resume').textContent=physics.active&&p.state!=='finished'?'Resume game':'Back to game';

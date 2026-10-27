@@ -82,6 +82,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 - The table includes two decorative diamonds on open cradles. Positive scoring turns them gently; reduced motion keeps them still. These decorations have no collision bodies. Full-resolution rendering uses the authored lights and glass materials on desktop and mobile.
 - Triangle housings and their luminous strips count one scoring hit until the ball separates. Sliding along the same triangle cannot repeatedly earn points; a fresh hit after separation still scores normally.
 - Phone and tablet layouts flip between Hold to launch and the live scorecard as the ball launches and returns. Desktop retains the keyboard instructions and flip card, with a Hold button below the card. Only one paddle accepts input at a time; the held paddle keeps priority until released. Sound controls respect browser activation requirements.
+- Phone gameplay shows diamond-heart life indicators that track the remaining balls. They stay hidden before play, after the game ends and in table inspection; desktop presentation is unchanged.
 - Membership Back returns to the landing experience without replaying the intro loader. Registration steps still move back within the form.
 - The About page uses the approved Explore layout with scroll reveals and a keyboard-accessible collection gallery. The shared navbar and current-page menu behavior apply there as well.
 - Game rewards display `pts`; the conversion remains **10 points = ₹1**.
@@ -93,9 +94,11 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 | Ring block | +50 |
 | Cyan bumper | −500 |
 | Neon green bumper | +500 |
-| Drum base bumper | +250 |
+| Drum base bumper | +200 |
 | Launcher | 0 |
-| Cave | +700 |
+| Cave | +400 |
+
+The score cannot fall below zero. A negative bumper deducts up to 500 points from the current total without carrying a negative balance into later hits.
 
 Scoring is shared between the client simulation and server replay verification. Keep replay versions, collision data and simulation parameters in sync when changing gameplay.
 
@@ -105,7 +108,7 @@ Scoring is shared between the client simulation and server replay verification. 
 
 `GET /api/player` supplies the current player's authoritative state using an HttpOnly session cookie. Membership recognition currently applies to that browser session; cross-device login is a separate backend requirement.
 
-The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The shared simulation is now replay version 20. Deploy the frontend and verification service together; sessions started on an older version must start a fresh game after updating. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
+The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The shared simulation is now replay version 23. Deploy the frontend and verification service together; sessions started on an older version must start a fresh game after updating. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
 
 All writes require JSON and the configured exact Origin. Keep the frontend and API on the same origin unless the session and origin model is deliberately updated.
 
