@@ -1,3 +1,4 @@
+import {presentationReady, modelDownload, setStartupStatus, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js';
 import { prepareMedia } from '/assets/media-delivery.js?v=frames-dc4a9c95ed77';
 import { connectOpeningVideo } from '/assets/video-playback.js?v=entrance-opening-1';
@@ -15,7 +16,8 @@ const showPerformance=parameters.has('perf')||location.pathname.startsWith('/ent
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
-let phase='loading',openingPlayback,finishLoading,gameLoader,gameReadyObserver;
+let phase='loading',openingPlayback,gameLoader,gameReadyObserver;
+let sceneReady=false,openingFinished=false,startupFailed=false;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
@@ -29,46 +31,15 @@ const performancePanel=showPerformance?createFrameRatePanel({label:'Live 3D',tra
 }):{record(){},destroy(){}};
 
 async function loadMainPresentation(){
-  const response=await fetch('/video',{cache:'no-cache'});
-  if(!response.ok)throw Error('Main page presentation unavailable');
-  const source=new DOMParser().parseFromString(await response.text(),'text/html');
-  const sourceBase=new URL('/',location.href);
-  const loader=source.querySelector('#site-loader'),copy=source.querySelector('#story-copy');
-  const intro=source.querySelector('script[src*="assets/loading/intro.js"]');
-  const gameScreen=source.querySelector('#game-loading-screen'),gameStyle=source.querySelector('#game-loader-critical'),enter=source.querySelector('#enter');
-  const controller=source.querySelector('#game-loader-controller');
-  const navigation=source.querySelector('header.site-navigation'),brand=source.querySelector('.site-brand');
-  const navigationModule=source.querySelector('script[src*="navigation.js"]');
-  if(!loader||!copy||!intro||!gameScreen||!gameStyle||!enter||!controller||!navigation||!brand||!navigationModule)throw Error('Main page presentation is incomplete');
-  // Reuse the deployed video entrance's copy, fonts and loading presentation.
-  for(const fragment of [loader,copy,enter,navigation,brand]){
-    for(const element of [fragment,...fragment.querySelectorAll('[src],[href]')])for(const attribute of ['src','href'])if(element.hasAttribute(attribute))element.setAttribute(attribute,new URL(element.getAttribute(attribute),sourceBase).href);
-  }
-  navigation.querySelector('.play-now').id='skip-game';
-  const sharedNavigation=document.importNode(navigation,true);
-  // Move the live sound control with its gesture listeners into the shared nav.
-  const sound=$('site-sound');if(sound)sharedNavigation.prepend(sound);
-  document.querySelector('header.site-navigation').replaceWith(sharedNavigation);
-  document.querySelector('.site-brand').replaceWith(document.importNode(brand,true));
-  $('skip-game').addEventListener('click',event=>{event.preventDefault();enterGame();});
-  document.body.prepend(document.importNode(loader,true));
-  $('story-copy').replaceWith(document.importNode(copy,true));
-  $('enter').replaceWith(document.importNode(enter,true));
-  document.head.append(document.importNode(gameStyle,true));
-  const gameOverlay=document.importNode(gameScreen,true);gameOverlay.setAttribute('data-managed','');
-  document.body.append(gameOverlay);gameOverlay.addEventListener('sofacet:game-loader-ready',showGame);
-  if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','');
-  const styles=[...source.querySelectorAll('link[rel="stylesheet"]')].map(link=>new Promise((resolve,reject)=>{
-    const href=new URL(link.getAttribute('href'),sourceBase).href;
-    if([...document.styleSheets].some(sheet=>sheet.href===href)){resolve();return;}
-    const shared=document.createElement('link');shared.rel='stylesheet';shared.href=href;
-    shared.onload=resolve;shared.onerror=()=>reject(Error('Main page styles unavailable'));
-    document.head.insertBefore(shared,document.querySelector('link[data-entrance-style]'));
-  }));
-  const introModule=import(new URL(intro.getAttribute('src'),sourceBase).href);
-  const [module]=await Promise.all([introModule,import(new URL(controller.getAttribute('src'),sourceBase).href),import(new URL(navigationModule.getAttribute('src'),sourceBase).href),...styles]);
-  finishLoading=module.finishLoading;
+  // All markup and styles come from index.html at build time. Imports reuse the
+  // same controllers as /video, without fetching and parsing that page again.
+  await Promise.all([
+    import(new URL($('game-loader-controller').getAttribute('src'),document.baseURI).href),
+    import(new URL($('entrance-navigation-controller').getAttribute('src'),document.baseURI).href),
+  ]);
   gameLoader=window.sofacetGameLoader;
+  $('game-loading-screen').addEventListener('sofacet:game-loader-ready',showGame);
+  $('skip-game').addEventListener('click',event=>{event.preventDefault();enterGame();});
 }
 function placementAt(at,rect){
   const index=Math.floor(at),next=Math.min(index+1,framing.points.length-1);
@@ -89,7 +60,10 @@ function placeStage(){
   }
 }
 function finishOpening(){
-  if(gameRequested)return;
+  if(gameRequested||startupFailed)return;
+  openingFinished=true;
+  if(!sceneReady){phase='buffering';document.body.dataset.phase=phase;$('journey-preparation').hidden=false;return;}
+  $('journey-preparation').hidden=true;
   openingPlayback?.destroy();opening.removeAttribute('src');opening.load();openingStage.remove();
   phase='idle';document.body.dataset.phase=phase;ready=true;
   updateCopy(firstFrame);placeStage();journey.resize();syncScroll();
@@ -110,7 +84,7 @@ function showGame(){
   setTimeout(()=>{journey?.dispose();journey=null;},350);
 }
 function enterGame({fromChess=false}={}){
-  if(gameRequested)return;gameRequested=true;
+  if(gameRequested)return;gameRequested=true;cancelStartup();
   cancelAnimationFrame(raf);raf=0;journey?.suspend();siteSound.handoff();
   openingPlayback?.destroy();opening.removeAttribute('src');opening.load();
   // Keep game work after the 3D loop stops. The origin/main loader covers real
@@ -175,29 +149,43 @@ window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(ga
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
 
 try{
-  await loadMainPresentation();
-  const [renderModule,points,copy]=await Promise.all([
-    import('./journey-renderer.mjs'),
-    fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}),
-    createLandingCopy(),
-    prepareMedia(opening),
-  ]);
-  framing=points;updateCopy=copy;placeStage();
-  journey=await renderModule.createJourneyRenderer({stage,
-    profile:new URLSearchParams(location.search).has('profile'),
-    performanceMode,renderView:()=>performanceMode?renderView:null,
-    pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
-    onStatus:message=>{if(message)$('world-status').textContent=message;},
-    onRender:()=>{if(ready)performancePanel.record();},
-  });
-  openingPlayback=connectOpeningVideo(opening,$('enter'),finishOpening,requestTick);
-  await journey.loadVariant('compact');
-  await finishLoading();
-  siteSound.setActive(!gameRequested);
-  if(gameRequested){journey?.dispose();journey=null;}
-  else{phase='opening';updateCopy(0);placeStage();openingPlayback.start(reduced.matches);}
+  const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
+  // The opening is usable while the model downloads. Keep its final frame and
+  // a live progress indicator until the scene's actual GPU preparation is done.
+  const openingReady=(async()=>{
+    await loadMainPresentation();
+    const [copy]=await Promise.all([createLandingCopy(),prepareMedia(opening),pointsReady]);
+    updateCopy=copy;
+    await presentationReady;
+    if(gameRequested||startupFailed)return;
+    phase='opening';document.body.dataset.phase=phase;updateCopy(0);placeStage();
+    openingPlayback=connectOpeningVideo(opening,$('enter'),finishOpening,requestTick);
+    siteSound.setActive(true);openingPlayback.start(reduced.matches);
+  })();
+  const scenePrepared=(async()=>{
+    const renderModule=await import('./journey-renderer.mjs');
+    await pointsReady;
+    if(gameRequested||startupFailed)return;
+    journey=await renderModule.createJourneyRenderer({stage,
+      profile:parameters.has('profile'),performanceMode,renderView:()=>performanceMode?renderView:null,
+      pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
+      onStatus:message=>{if(message)setStartupStatus(message);},
+      onRender:()=>{if(ready)performancePanel.record();},
+    });
+    if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
+    await journey.loadVariant('compact',{download:modelDownload});
+    if(gameRequested||startupFailed){journey?.dispose();journey=null;return;}
+    sceneReady=true;
+    $('scene-loading-status').hidden=true;
+    if(openingFinished)finishOpening();
+  })();
+  await Promise.all([openingReady,scenePrepared]);
 }catch(error){
-  await finishLoading?.();document.body.dataset.error='';
-  console.error(error);$('world-status').textContent='The 3D world could not load.';$('loading-fallback').hidden=false;
+  startupFailed=true;cancelStartup();
   journey?.dispose();journey=null;
+  if(!gameRequested){
+    openingPlayback?.destroy();
+    await presentationReady;document.body.dataset.error='';
+    console.error(error);setStartupStatus('The 3D world could not load.');$('loading-fallback').hidden=false;
+  }
 }

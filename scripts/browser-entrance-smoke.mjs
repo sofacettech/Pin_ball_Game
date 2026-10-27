@@ -104,7 +104,9 @@ try {
           return true;
         });
       }
-      await page.waitForFunction(() => window.entrancePreview?.ready, {}, {timeout: 30000});
+      // The opening now runs during the download and shader warm-up. Keep the
+      // same scene-readiness budget even when the opening finishes first.
+      await page.waitForFunction(() => window.entrancePreview?.ready, {}, {timeout: 120000});
       result.initial = await readState(page);
       assert.equal(result.initial.quality?.mobile, true, 'iPhone must select mobile quality without a URL override');
       assert.equal(result.initial.batching, 'portable', 'iPhone must use extension-independent batching');

@@ -20,7 +20,7 @@ function entrance(){
   show(){this.shown++},fail(){this.failed=true;this.failures++},
   ready(){this.readyCalls++;if(!this.failed)context.showGame()},
  };
- const context={game,gameLoader:loader,main:{setAttribute(){}},
+ const context={cancelStartup(){},game,gameLoader:loader,main:{setAttribute(){}},
   document:{body:{dataset:{},setAttribute(){}}},location:{origin:'http://localhost'},
   siteSound:{handoff(){},save(){}},opening:{removeAttribute(){},load(){}},
   journey:{suspend(){},dispose(){}},

@@ -5,43 +5,451 @@
   <title>SOFACET — Enter the world</title>
   <base href="/">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" data-entrance-style href="/assets/entrance-3d/entrance-f049952a8456.css">
-  <link rel="preload" href="/assets/fonts/AcuminVariableConcept.otf" as="font" type="font/otf" crossorigin>
+  <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
+  <style data-shared-style="./style.css?v=frames-21a0b5f24689">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* Shared viewport anchors: page content and menu length cannot move the navbar. */
+:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
+:root .site-brand{position:fixed;z-index:4;top:calc(var(--site-brand-top) + env(safe-area-inset-top,0px));left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));display:block;width:var(--site-brand-width);height:auto;margin:0;padding:0;line-height:0;flex:none;color:#fff;text-decoration:none}
+:root .site-brand img{display:block;width:100%;height:auto}
+:root .site-nav{position:fixed;z-index:40;top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));right:calc(var(--site-nav-right) + env(safe-area-inset-right,0px));left:auto;display:flex;align-items:center;justify-content:flex-end;width:auto;height:44px;min-height:0;margin:0;padding:0;border:0;background:transparent;font-family:Acumin,Arial,sans-serif;font-style:normal;font-variation-settings:"slnt" 0}
+@media(max-width:600px){:root{--site-brand-left:20px;--site-brand-top:21px;--site-brand-width:118px;--site-nav-top:7px;--site-nav-right:12px}}
+body[data-menu-open]{overflow:hidden}
+.menu-toggle{position:relative;z-index:3;display:grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.menu-toggle:hover,.menu-toggle[aria-expanded="true"]{background:transparent;color:#fff}
+.hamburger-lines{display:grid;gap:5px;width:24px;transition:transform .65s cubic-bezier(.22,1,.36,1)}
+.hamburger-lines span{display:block;width:24px;height:1px;background:currentColor;transition:transform .65s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+.menu-toggle[aria-expanded="true"] .hamburger-lines{transform:rotate(90deg)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(2){opacity:0;transform:scaleX(0)}
+.menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.menu-panel{position:fixed;inset:0 0 0 auto;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(420px,100vw);height:100vh;height:100dvh;max-height:none;margin:0;padding:calc(112px + env(safe-area-inset-top,0px)) max(36px,env(safe-area-inset-right,0px)) calc(36px + env(safe-area-inset-bottom,0px)) 36px;border:0;border-left:1px solid #ffffff18;border-radius:0;background:#0b0e18;color:#fff;box-shadow:none;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;visibility:hidden;pointer-events:none;transform:translateX(100%);transition:transform .7s cubic-bezier(.22,1,.36,1),visibility 0s .7s;text-align:left}
+.menu-panel[data-open]{visibility:visible;pointer-events:auto;transform:translateX(0);transition-delay:0s}
+.menu-panel .menu-item{opacity:0;transform:translateX(40px);transition:transform .8s cubic-bezier(.16,1,.3,1),opacity .6s ease;transition-delay:0s}
+.menu-panel[data-open] .menu-item{opacity:1;transform:translateX(0);transition-delay:calc(.12s + var(--menu-order,0)*.07s)}
+.menu-panel a{display:block;margin:0;padding:14px 0;border:0;border-radius:0;color:#fff;background:transparent;font-size:var(--site-menu-size);font-weight:400;line-height:1.2;letter-spacing:-.02em;text-decoration:none}
+.menu-panel a:hover{color:#fff;opacity:.7}
+.menu-panel[data-open] a[aria-current="page"]{opacity:.45;cursor:default}
+.menu-backdrop{position:fixed;inset:0;z-index:1;background:#0007;opacity:0;visibility:hidden;pointer-events:none;touch-action:none;transition:opacity .5s ease,visibility 0s .7s}
+body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
+.menu-toggle:focus-visible,.menu-panel :is(a,button):focus-visible{outline:1px solid #fff;outline-offset:5px}
+@media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:28px}}
+@media(max-height:500px) and (orientation:landscape){.menu-panel{padding-top:76px;padding-bottom:20px;gap:0}}
+@media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
+@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
+.brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+:root #game-header .site-nav{gap:16px}
+:root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
+@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:11px}}
+@media(max-width:360px){:root #game-header .site-nav{gap:4px}:root #game-header .skip-game{padding-inline:10px}}
+
+:root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
+@font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:italic;font-display:swap}
+@font-face{font-family:Biarty;src:url('./assets/fonts/sofacet-biarty-regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+*{box-sizing:border-box}
+html{overscroll-behavior:none;scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{margin:0}
+body[data-phase]{font-family:Acumin,Arial,sans-serif}
+body:is([data-phase="opening"],[data-phase="buffering"],[data-phase="settling"]){overflow:hidden}
+body:is([data-phase="buffering"],[data-phase="settling"]) :is(#story-copy,#scroll-cue,#status){visibility:hidden}
+body:is([data-phase="buffering"],[data-phase="settling"]) #story-copy{opacity:0}
+#journey-preparation{position:absolute;z-index:4;left:6.5%;top:38%;width:min(30vw,440px);color:#f6f2ff;text-shadow:0 2px 24px #0009}
+#journey-preparation[hidden]{display:none}
+#journey-preparation h2{font-size:clamp(28px,3vw,52px);font-weight:600;line-height:1.08;letter-spacing:-.025em;margin:0 0 24px;text-wrap:balance;min-height:2.16em}
+#journey-preparation p{font-size:14px;line-height:1.5;max-width:30ch;margin:0 0 16px}
+#preparation-progress{display:block;width:160px;height:3px;border:0;appearance:none;background:#ffffff30;color:#e8fd00}
+#preparation-progress::-webkit-progress-bar{background:#ffffff30}
+#preparation-progress::-webkit-progress-value{background:#e8fd00}
+#preparation-progress::-moz-progress-bar{background:#e8fd00}
+#preparation-retry{margin-top:24px;padding:10px 0;background:transparent;border:0;border-bottom:1px solid #f6f2ff;color:inherit;font:inherit;cursor:pointer}
+#preparation-retry:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+@media(max-width:1024px),(any-pointer:coarse){#journey-preparation{left:24px;right:24px;top:auto;bottom:max(14%,80px);width:auto;text-align:center}#journey-preparation h2{font-size:clamp(26px,7vw,38px);min-height:0;margin-bottom:16px}#journey-preparation p{margin-inline:auto}#preparation-progress{margin-inline:auto}}
+main{position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#scene-viewport{position:absolute;inset:0;overflow:hidden}
+/* Browser chrome may resize the controls, but must not rescale the video mid-swipe. */
+@media(any-pointer:coarse){#scene-viewport{bottom:auto;height:100vh;height:100lvh}}
+#scene-frame{position:absolute;left:0;top:0;width:100%;aspect-ratio:16/9;isolation:isolate}
+#scene-frame img,#scene-frame canvas,#opening{position:absolute;inset:0;display:block;width:100%;height:100%}
+#scene-frame img{pointer-events:none;user-select:none;object-fit:contain}
+#ball-canvas{touch-action:pan-y}
+body:not([data-phase="idle"]) #ball-canvas{pointer-events:none}
+#hold-frame{z-index:1}
+#journey-frame{z-index:2;pointer-events:none}
+/* Keep the native decoder in layout so Safari can produce frames for the canvas. */
+#journey{position:fixed;left:0;top:0;width:1px;height:1px;opacity:.001;pointer-events:none}
+#scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:1;object-fit:contain;aspect-ratio:16/9}
+body[data-phase="journey"] #journey.native-renderer{opacity:1}
+#opening{z-index:3;object-fit:contain;pointer-events:none}
+#scroll-cue{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;fill:#fff;font-family:Acumin,Arial,sans-serif;font-size:28px;font-weight:500;letter-spacing:2.2px;text-shadow:0 1px 5px #000b;opacity:0;transition:opacity .16s linear}
+#story-copy{position:absolute;inset:0;z-index:3;pointer-events:none;color:#fff;font-family:Biarty,Acumin,Arial,sans-serif}
+body[data-loading] #story-copy{visibility:hidden}
+.story-line{position:absolute;width:min(33vw,550px);visibility:hidden;text-wrap:balance;text-shadow:0 1px 8px #0005}
+.story-line h1,.story-line h2{margin:0;font-size:clamp(24px,2.15vw,46px);font-weight:400;font-style:normal;font-variation-settings:normal;line-height:1.06;letter-spacing:-.025em}
+.story-line p{color:#c6df44;text-transform:uppercase;margin:20px 0 0;font-size:clamp(16px,1.28vw,24px);font-weight:400;font-style:normal;font-variation-settings:"slnt" 0;line-height:1.4;letter-spacing:.005em}
+#story-copy .kinetic-line-mask{overflow:hidden!important;padding:.14em .08em;margin:-.14em -.08em}
+#story-copy .kinetic-ready{display:grid}
+#story-copy .kinetic-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+#story-copy .kinetic-line{transform-origin:center center}
+.story-outside{left:8.5%;top:16.5%;width:25%;max-width:none}
+.story-text-line{display:block;white-space:nowrap}
+.story-approach p,.story-finale p{white-space:nowrap}
+.story-approach{right:5.5%;bottom:17%;width:min(32vw,530px)}
+.story-butterflies{right:9.5%;top:16.5%;width:28%;text-align:right}
+.story-choice{left:13.7%;top:33.5%;width:25%}
+.story-choice p{margin-top:.7em;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.04;letter-spacing:0}
+.story-rules,.story-finale{left:6.5%;top:33%;width:min(33vw,550px)}
+.story-finale{left:auto;right:5.5%;top:43%;width:min(19vw,370px)}
+@media(max-width:1024px),(any-pointer:coarse){
+  .story-line{left:7%;right:auto;top:calc(15% + env(safe-area-inset-top,0px));bottom:auto;width:86%;max-width:540px}
+  .story-line h1,.story-line h2{font-size:clamp(24px,3.1vw,34px)}
+  .story-line p{margin-top:14px;font-size:clamp(16px,2.2vw,21px);max-width:420px}
+  .story-butterflies{left:auto;right:8.5%;width:75%;top:18%}
+  .story-choice{left:13.7%;top:33.5%;width:75%}
+  .story-choice p{font-size:clamp(11px,1.4vw,15px);margin-top:.7em;line-height:1.04}
+}
+@media(max-width:600px) and (orientation:portrait){
+  .story-line{left:7%;width:86%;top:calc(14% + env(safe-area-inset-top,0px))}
+  .story-line h1,.story-line h2{font-size:clamp(21px,5.2vw,29px);line-height:1.06}
+  .story-line p{margin-top:12px;font-size:16px;line-height:1.35}
+  .story-butterflies{left:auto;right:8.5%;top:18%;width:83%}
+  .story-butterflies h2{font-size:clamp(19px,4.8vw,27px)}
+  .story-choice p{font-size:11px;margin-top:.7em;line-height:1.04}
+}
+@media(max-height:500px) and (orientation:landscape){
+  .story-line{left:6%;top:25%;width:35%}
+  .story-outside{left:8.5%;top:16.5%;width:30%}
+  .story-butterflies{left:auto;right:9.5%;top:16.5%;width:35%}
+  .story-choice{left:13.7%;right:auto;top:33.5%;width:30%}
+  .story-approach{left:auto;right:5%;top:auto;bottom:16%}
+  .story-line h1,.story-line h2{font-size:clamp(18px,2.15vw,27px)}
+  .story-line p{font-size:14px;margin-top:10px}
+}
+.story-opening{inset:0;width:auto;max-width:none;--opening-left:14.15%;--opening-top:24%;--opening-label-size:clamp(18px,1.35vw,30px);--opening-wordmark-width:20.5vw;--opening-line-gap:clamp(5px,.42vw,9px)}
+.story-opening h1{position:absolute;inset:0}
+.opening-welcome,.opening-brand{position:absolute;display:block;left:var(--opening-left);right:auto;white-space:nowrap;line-height:1.08}
+.opening-welcome{top:var(--opening-top);width:var(--opening-wordmark-width);font-size:var(--opening-label-size)}
+.opening-brand{top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap));width:var(--opening-wordmark-width)}
+.story-opening p{position:absolute;left:var(--opening-left);right:auto;top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap)*2 + var(--opening-wordmark-width)*278/2048);width:var(--opening-wordmark-width);max-width:none;margin:0;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.05;letter-spacing:0}
+@media(max-width:1024px),(any-pointer:coarse){
+  .story-opening{--opening-left:9%;--opening-top:19%;--opening-label-size:clamp(20px,3vw,28px);--opening-wordmark-width:clamp(200px,35vw,300px);--opening-line-gap:7px}
+  .story-opening p{font-size:clamp(11px,1.4vw,15px)}
+}
+@media(max-height:500px) and (orientation:landscape){
+  .story-opening{--opening-left:14.15%;--opening-top:24%;--opening-label-size:clamp(16px,1.35vw,22px);--opening-wordmark-width:20.5vw;--opening-line-gap:4px}
+  .story-opening p{font-size:clamp(10px,.92vw,14px)}
+}
+@media(prefers-reduced-motion:reduce){#scroll-cue,.story-line,.story-line h1,.story-line h2,.story-line p{transition:none}}
+[hidden],#scene-frame [hidden]{display:none!important}
+.wordmark{text-shadow:0 1px 12px #0008;pointer-events:none}
+a.wordmark.site-brand{pointer-events:auto}
+.site-navigation{gap:16px}
+.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 Acumin,Arial,sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sound-text{display:grid;overflow:hidden;padding:2px 0}
+.sound-state{grid-area:1/1;justify-self:end;white-space:nowrap}
+.sound-char{display:inline-block;white-space:pre;transform:translateY(110%);opacity:0}
+.site-sound:not([data-on="true"]) .sound-state[data-state="false"] .sound-char,.site-sound[data-on="true"] .sound-state[data-state="true"] .sound-char{transform:none;opacity:1}
+.sound-bars{display:flex;align-items:center;gap:4px;height:16px}
+.sound-bars span{display:block;width:1px;height:16px;background:currentColor;transform:scaleY(.2);transform-origin:center}
+.site-sound[data-on="true"] .sound-bars span{animation:sound-meter .86s ease-in-out infinite alternate}
+.site-sound[data-on="true"] .sound-bars span:nth-child(2){animation-delay:-.36s;animation-duration:.7s}
+.site-sound[data-on="true"] .sound-bars span:nth-child(3){animation-delay:-.64s;animation-duration:1.02s}
+@keyframes sound-meter{0%{transform:scaleY(.2)}30%{transform:scaleY(.7)}60%{transform:scaleY(.35)}100%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.site-sound[data-on="true"] .sound-bars span{animation:none;transform:scaleY(.7)}.site-sound[data-on="true"] .sound-bars span:nth-child(2){transform:scaleY(.4)}.site-sound[data-on="true"] .sound-bars span:nth-child(3){transform:scaleY(1)}}
+.site-sound:focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+.play-now{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.035em;transition:background .18s,color .18s}
+.play-now:hover{background:#e8fd00;border-color:#e8fd00}
+.site-navigation a:focus-visible,.info-page a:focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+#status{position:absolute;inset:46% 20px auto;margin:0;text-align:center;font-size:12px;letter-spacing:.08em;color:#e2d8f5;pointer-events:none}
+#status.error{color:#ffb3b3}
+#journey-resume{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);min-height:44px;max-width:calc(100% - 40px);padding:12px 20px;border:1px solid #ffffff80;border-radius:999px;background:#101020ee;color:#fff;font:inherit;font-size:14px;cursor:pointer;pointer-events:auto}
+#journey-resume:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+#enter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:16px 22px;border:1px solid #ffffff80;border-radius:0;background:#101020dd;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+#enter span[aria-hidden="true"]{margin-left:24px}
+#enter:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+#progress{position:absolute;bottom:env(safe-area-inset-bottom,0px);left:0;height:2px;width:100%;background:#e8fd00;transform:scaleX(0);transform-origin:left;pointer-events:none}
+#game-page{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;z-index:11;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .22s ease-out}
+main>#story-copy,main>.wordmark,main>.site-navigation,main>#progress{transition:opacity .12s ease-out}
+body[data-game="visible"]{overflow:hidden}
+body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events:auto}
+body[data-game="visible"] :is(#story-copy,main>.wordmark,main>.site-navigation,#progress){opacity:0}
+@media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,main>.site-navigation,main>#progress{transition:none}}
+#scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
+@media(any-pointer:coarse){#scroll-space{height:calc(100vh + var(--travel));height:calc(100lvh + var(--travel))}}
+noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
+@media(max-width:600px){.site-navigation{gap:6px}.play-now{padding:0 12px;font-size:11px}}
+@media(max-width:360px){.site-navigation{gap:4px}.play-now{padding-inline:10px}}
+@media(prefers-reduced-motion:reduce){.play-now{transition:none}}
+.info-page{min-height:100vh;min-height:100dvh;background:#0b1022}
+.info-page .wordmark{pointer-events:auto;color:inherit;text-decoration:none}
+.info-page .back-link{position:absolute;top:28px;right:32px;color:#d4cfe0;font-size:12px;text-decoration:none}
+.info-page .info-content{position:static;display:block;width:min(680px,100%);margin:0 auto;padding:clamp(150px,25vh,260px) 24px 80px;overflow:visible}
+.info-content h1{font-size:clamp(36px,7vw,64px);font-weight:500;letter-spacing:-.04em;margin:0 0 28px}
+.info-content p{max-width:520px;color:#c4bfd0;font-size:16px;line-height:1.8;margin:0}
+
+/* Keep text and controls away from iPhone landscape cutouts. */
+@media(orientation:landscape) and (any-pointer:coarse){
+ .story-line:not(.story-opening){margin-left:env(safe-area-inset-left,0px);margin-right:env(safe-area-inset-right,0px)}
+}
+.info-page .info-content{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media(max-width:600px){.info-page .info-content{padding-top:max(110px,var(--site-header-clearance))}.info-content h1{font-size:clamp(32px,8vw,44px);line-height:1.1}}
+
+/* Keep the complete wordmark intact inside its animated mask. */
+#story-copy .opening-brand .kinetic-line-mask{display:block;padding:0;margin:0}
+#story-copy .opening-wordmark{display:block;line-height:0}
+#story-copy .opening-wordmark img{position:static;inset:auto;display:block;width:100%;height:auto}
+</style>
+<style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
+[data-skip-intro] #site-loader{display:none}
+#site-loader{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 52%,#020402,#000100 44%);color-scheme:dark;opacity:1;transition:opacity .45s ease}
+#site-loader.leaving{opacity:0;pointer-events:none}
+#loading-stage{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none}
+#site-loader #scene{display:block;position:absolute;width:100%;height:100%;left:50%;top:50%;transform:translate(-50%,-50%);visibility:hidden}
+#loading-stage[data-phase] #scene{visibility:visible}
+#loading-stage:focus-visible::after{content:'';position:absolute;inset:8px;border:1px solid #b9cd4550;pointer-events:none}
+#loading-instructions{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:700px){#site-loader #scene{width:max(100vw,950px)}}
+@media(prefers-reduced-motion:reduce){#site-loader{transition:none}#site-loader #scanner{display:none}}
+</style>
+<style data-shared-style="./assets/brand-text.css?v=f87558ca6205">.inline-brand{display:inline-block;position:relative;white-space:nowrap;vertical-align:baseline;font:inherit;letter-spacing:inherit;text-transform:inherit}
+.inline-brand__size{visibility:hidden}
+.inline-brand>img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:contain;pointer-events:none}
+@media print{.inline-brand>img{filter:brightness(0)}}
+</style>
+
+  <style data-entrance-style>:root{--travel:15392px}
+body[data-loading]{overflow:hidden}
+#scene-frame{will-change:transform}
+#scene-frame canvas{display:block;width:100%;height:100%}
+#opening-frame{position:absolute;left:0;top:0;aspect-ratio:16/9;z-index:1;pointer-events:none}
+#opening-frame #opening{width:100%;height:100%;object-fit:contain}
+body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel,body[data-phase="opening"] #scroll-hint{visibility:hidden}
+#enter{z-index:5}
+#world-loading{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:#080b15;transition:opacity .4s ease,visibility .4s;color:#cbc4dc;font-size:13px;letter-spacing:.035em}
+#world-loading p{margin:0}
+#world-loading a{color:#fff;text-underline-offset:5px}
+body:not([data-loading]) #world-loading{opacity:0;visibility:hidden;pointer-events:none}
+body[data-error] #world-loading{opacity:1;visibility:visible;pointer-events:auto}
+#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 13px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
+#scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
+body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
+body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}
+body[data-game="visible"] #entrance{visibility:hidden}
+@media(max-width:600px){#scroll-hint{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:none;font-size:12px;gap:12px}}
+@media(prefers-reduced-motion:reduce){#world-loading,#scroll-hint{transition:none}}
+
+/* Visible in the first HTML response, before fonts or scene scripts arrive. */
+.startup-feedback{position:absolute;left:24px;right:24px;bottom:max(9vh,32px);z-index:2;display:grid;justify-items:center;gap:14px;color:#cbd0bf;font:14px/1.5 Arial,sans-serif;text-align:center}
+.startup-feedback p{margin:0}
+.startup-feedback a{color:#fff;text-underline-offset:4px;padding:8px}
+[data-scene-progress]{width:min(240px,65vw);height:3px;accent-color:#b9cd45}
+#journey-preparation{z-index:6}
+#journey-preparation a{color:#fff;font:14px/1.5 Acumin,Arial,sans-serif;text-underline-offset:4px}
+body[data-game-loading] #journey-preparation{display:none}
+body[data-phase="buffering"] #scroll-hint{visibility:hidden}
+#scene-loading-status{position:absolute;z-index:6;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;gap:10px;justify-items:center;max-width:90vw;padding:12px 20px;border-radius:12px;background:#080b15c9;color:#fff;font:13px/1.4 Arial,sans-serif;text-align:center}
+body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-status,body[data-phase="buffering"] #scene-loading-status{visibility:hidden}
+</style>
   <link rel="preload" href="/assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
-</head>
+<!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
+.game-loading-screen[hidden]{display:none!important}
+.game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
+.game-loading-screen canvas{display:block;width:100%;height:100%;background:radial-gradient(circle at 62% 60%,#fff 0 8px,#ffffff38 10px,transparent 23px)}
+@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+.game-loading-screen[data-story]{transition-duration:.8s}
+.game-loading-screen .loading-statement{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(84vw,1150px);margin:0;color:#fff;font:400 clamp(32px,4.4vw,72px)/1.6 Acumin,Arial,sans-serif;font-stretch:75%;font-variation-settings:"wght" 400,"wdth" 75,"slnt" 0;font-synthesis:none;letter-spacing:-.015em;text-transform:none;text-align:center;text-wrap:balance;pointer-events:none}
+.game-loading-screen .loading-statement[hidden]{display:none}
+.loading-phrase{display:block;opacity:0}
+.loading-value{color:#c9a0ff;white-space:nowrap}
+.loading-pink{color:#ff5ebc}
+.loading-green{color:#bfff00}
+.loading-cyan{color:#00d5ff}
+@media(max-width:1024px),(any-pointer:coarse){.game-loading-screen .loading-statement{font-size:clamp(32px,4.4vw,48px)}}
+@media(max-width:600px) and (orientation:portrait){.game-loading-screen .loading-statement{font-size:clamp(26px,7vw,32px)}}
+@media(max-height:500px) and (orientation:landscape){.game-loading-screen .loading-statement{font-size:clamp(24px,3.2vw,36px)}}
+.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-loading-error{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:#08060c;color:#f6f2ff;font:16px/1.5 Arial,sans-serif;text-align:center}
+.game-loading-error[hidden]{display:none!important}
+.game-loading-error p{max-width:32em;margin:0}
+.game-loading-error button{min-height:44px;padding:10px 24px;border:1px solid #bfff00;border-radius:6px;background:#bfff00;color:#121700;font:600 16px/1.4 Arial,sans-serif;cursor:pointer}
+.game-loading-error button:focus-visible{outline:2px solid #fff;outline-offset:5px}
+body[data-game-loading]{margin:0;background:#08060c;overflow:hidden;--nav-height:90px;--nav-gap:var(--nav-height)}
+body[data-game-loading] #stage{pointer-events:none}
+#stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
+body[data-game-loading] #game-header{position:fixed;inset:0 0 auto;height:0;z-index:40}
+body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);background:#07060d;transform:none!important}
+body[data-game-loading] .nav-trim{position:absolute;bottom:-2px;left:0;width:100%;height:27px;overflow:visible;pointer-events:none}
+body[data-game-loading] .nav-trim path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+body[data-game-loading] .trim-shadow{stroke:#9905ef;stroke-width:7;opacity:.22;filter:blur(4px)}
+body[data-game-loading] .trim-violet{stroke:#aa0cff;stroke-width:2}
+body[data-game-loading] .trim-green{stroke:#afff39;stroke-width:3;filter:drop-shadow(0 0 4px #80e426)}
+body[data-game-loading] .site-brand{position:absolute;z-index:4;top:calc(25px + env(safe-area-inset-top,0px));left:calc(32px + env(safe-area-inset-left,0px));width:160px;line-height:0}
+body[data-game-loading] .site-brand img{display:block;width:100%;height:auto}
+body[data-game-loading] .site-nav{position:absolute;z-index:40;top:calc(14px + env(safe-area-inset-top,0px));right:calc(24px + env(safe-area-inset-right,0px));height:44px}
+body[data-game-loading] .menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}
+body[data-game-loading] .hamburger-lines{display:grid;gap:5px;width:24px}
+body[data-game-loading] .hamburger-lines span{display:block;width:24px;height:1px;background:currentColor}
+body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-events:none}
+@media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
+@media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
+@media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
+</style><link rel="preload" href="/assets/game-loader.js?v=907a9c6ec897" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=907a9c6ec897" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
 <body data-phase="opening" data-loading>
+  <div id="site-loader" role="region" aria-label="Loading SOFACET">
+    <div id="loading-stage" tabindex="0" aria-label="SOFACET logo reveal" aria-describedby="loading-instructions">
+      <p id="loading-instructions">SOFACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
+      <audio id="introAudio" src="./assets/loading/sofacet-intro-audio.m4a" preload="auto" aria-hidden="true"></audio>
+    <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3648 2160" aria-hidden="true">
+      <defs>
+
+        <path id="mark" fill-rule="evenodd" d="M60 0H284L344 60V275H229L286 177H198L172 117L145 177H58L115 275H0V60ZM92 59L58 93V117H286V93L252 59Z"/>
+        <linearGradient id="lime" x1="0" y1="0" x2=".25" y2="1">
+          <stop stop-color="#b5ca42"/><stop offset=".5" stop-color="#bbcf47"/><stop offset="1" stop-color="#b9cd45"/>
+        </linearGradient>
+        <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#13180b"/><stop offset=".32" stop-color="#060904"/>
+          <stop offset=".55" stop-color="#1b200f"/><stop offset=".72" stop-color="#050703"/><stop offset="1" stop-color="#0e1107"/>
+        </linearGradient>
+        <radialGradient id="ambient">
+          <stop stop-color="#323b1d" stop-opacity=".34"/><stop offset=".42" stop-color="#151e0f" stop-opacity=".18"/>
+          <stop offset="1" stop-color="#000100" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="floorSheen">
+          <stop stop-color="#6a7735" stop-opacity=".16"/><stop offset=".5" stop-color="#27331c" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#000100" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="reflectionFade" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="white" stop-opacity=".21"/><stop offset=".25" stop-color="white" stop-opacity=".065"/>
+          <stop offset=".7" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="sideFade">
+          <stop stop-color="black"/><stop offset=".3" stop-color="white" stop-opacity=".5"/>
+          <stop offset=".5" stop-color="white"/><stop offset=".7" stop-color="white" stop-opacity=".5"/><stop offset="1" stop-color="black"/>
+        </linearGradient>
+        <linearGradient id="beamInk" x1="0" y1="1" x2="1" y2="0">
+          <stop stop-color="#a6b941" stop-opacity="0"/><stop offset=".17" stop-color="#d3df88"/>
+          <stop offset=".8" stop-color="#c4d16b"/><stop offset="1" stop-color="#a6b941" stop-opacity="0"/>
+        </linearGradient>
+        <pattern id="hatching" width="11" height="12" patternUnits="userSpaceOnUse">
+          <path d="M1 9L6 3" fill="none" stroke="#b9cd62" stroke-width="1.6" stroke-linecap="square"/>
+        </pattern>
+        <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/></filter>
+        <filter id="bloom" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="16"/></filter>
+        <filter id="beamBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+        <clipPath id="topReveal"><path id="revealEdge" d="M0 0H344V275H0Z"/></clipPath>
+        <clipPath id="scanReveal"><path id="scanArea" d="M0 0H344V275H0Z"/></clipPath>
+        <mask id="floorMask" maskUnits="userSpaceOnUse" x="1300" y="1225" width="1050" height="195">
+          <rect x="1300" y="1225" width="1050" height="195" fill="url(#reflectionFade)"/>
+        </mask>
+        <mask id="sidesMask" maskUnits="userSpaceOnUse" x="1370" y="880" width="906" height="345">
+          <rect x="1370" y="880" width="906" height="345" fill="url(#sideFade)"/>
+        </mask>
+        <clipPath id="lightBounds"><rect x="1368" y="825" width="912" height="515"/></clipPath>
+        <g id="litMark">
+          <use href="#mark" fill="url(#metal)" opacity=".3"/>
+          <g clip-path="url(#topReveal)">
+            <use id="texture" href="#mark" fill="url(#hatching)" opacity=".68"/>
+          </g>
+          <g clip-path="url(#scanReveal)">
+            <use href="#mark" fill="url(#lime)"/>
+            <use href="#mark" fill="none" stroke="#d2e183" stroke-width=".65" opacity=".36"/>
+          </g>
+        </g>
+      </defs>
+      <rect width="3648" height="2160" fill="#000100"/>
+      <g id="atmosphere">
+        <ellipse cx="1824" cy="1073" rx="660" ry="360" fill="url(#ambient)"/>
+        <path d="M1372 1225H2276V1375H1372Z" fill="#10180d" opacity=".16"/>
+        <ellipse cx="1824" cy="1226" rx="480" ry="116" fill="url(#floorSheen)"/>
+        <path d="M1372 1225H2276" stroke="#485139" stroke-width="1" opacity=".1"/>
+      </g>
+
+      <g id="sideReflections" mask="url(#sidesMask)" opacity=".055">
+        <use href="#litMark" transform="translate(1568 943) scale(-1 1)"/>
+        <use href="#litMark" transform="translate(2424 943) scale(-1 1)"/>
+      </g>
+      <g id="groundReflection" mask="url(#floorMask)" filter="url(#soft)">
+        <use href="#litMark" transform="translate(1652 1420) scale(1 -.69)"/>
+      </g>
+      <use id="logoBloom" href="#mark" transform="translate(1652 943)" fill="#b9cd45" filter="url(#bloom)" opacity=".025"/>
+      <use href="#litMark" transform="translate(1652 943)"/>
+      <g id="scanner" clip-path="url(#lightBounds)" opacity="0">
+        <g id="lightReflection" opacity=".13" filter="url(#beamBlur)" stroke="#8c9a48" stroke-width="8">
+          <path id="reflectedBeamA"/><path id="reflectedBeamB"/>
+        </g>
+        <g fill="none" stroke="url(#beamInk)" stroke-width="1.8">
+          <path id="beamA"/><path id="beamB"/>
+        </g>
+      </g>
+    </svg>
+    </div>
+  <div class="startup-feedback"><p data-scene-status role="status">Opening the world…</p><progress data-scene-progress max="100" aria-label="World download"></progress><a href="/play.html">Skip to Game ↗</a></div></div>
+  <script type="module" src="/assets/entrance-3d/entry-MSDWOV7H.js"></script>
   <main id="entrance" aria-label="Explore the SOFACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
       <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SOFACET fragmented ball assembling"></video></div>
     </div>
-    <!-- Both entrances share the approved presentation from /video. -->
-    <div id="story-copy" aria-label="The SOFACET story"></div>
-    <div class="wordmark brand-logo site-brand"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></div>
+    <div id="story-copy" aria-label="The SOFACET story">
+      <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
+        <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/FACET</span></span></h1>
+        <p><span class="story-text-line">Lab-grown diamonds,</span> <span class="story-text-line">redefined.</span></p>
+      </section>
+      <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
+        <h2><span class="story-text-line">For years,</span> <span class="story-text-line">diamonds came</span> <span class="story-text-line">with rules/</span></h2>
+      </section>
+      <section class="story-line story-approach" data-from="516" data-until="951" aria-hidden="true">
+        <h2><span class="story-text-line">So we</span> <span class="story-text-line">built a world without</span> <span class="story-text-line">them/</span></h2>
+        <p>Step inside.</p>
+      </section>
+      <section class="story-line story-butterflies" data-from="951" data-until="1301" aria-hidden="true">
+        <h2><span class="story-text-line">Here, diamonds come</span> <span class="story-text-line">in shapes that mean</span> <span class="story-text-line">something/</span></h2>
+      </section>
+      <section class="story-line story-choice" data-from="1301" data-until="1630" aria-hidden="true">
+        <h2><span class="story-text-line">And you're</span> <span class="story-text-line">the one who</span> <span class="story-text-line">chooses/</span></h2>
+        <p><span class="story-text-line">No special</span> <span class="story-text-line">occasion</span> <span class="story-text-line">needed.</span> <span class="story-text-line">Just you,</span> <span class="story-text-line">today.</span></p>
+      </section>
+      <section class="story-line story-rules" data-from="1630" data-until="2049" aria-hidden="true">
+        <h2><span class="story-text-line">Your rules/</span> <span class="story-text-line">Your shape/</span> <span class="story-text-line">Your diamond/</span></h2>
+      </section>
+      <section class="story-line story-finale" data-from="2049" aria-hidden="true">
+        <h2><span class="story-text-line">So,</span> <span class="story-text-line">what's yours/</span></h2>
+        <p>Play to find out.</p>
+      </section>
+    </div>
+    <a class="wordmark brand-logo site-brand" href="/" target="_top" aria-label="SOFACET home"><img src="./assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
     <header class="site-navigation site-nav">
-      <a id="skip-game" class="play-now" href="/play.html">Skip to Game</a>
+      <a id="skip-game" class="play-now" href="./play.html">Skip to Game</a>
       <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
-          <a class="menu-item" href="/account.html" target="_top" data-account-link>My Account</a>
-          <a class="menu-item" href="/about.html" target="_top">About</a>
-          <a class="menu-item" href="/faq.html" target="_top">FAQs</a>
-          <a class="menu-item" href="/privacy.html" target="_top">Privacy Policies</a>
+          <a class="menu-item" href="./account.html" target="_top" data-account-link>My Account</a>
+          <a class="menu-item" href="./about.html" target="_top">About</a>
+          <a class="menu-item" href="./faq.html" target="_top">FAQs</a>
+          <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
     </header>
-
-    <button id="enter" type="button" hidden>Enter SOFACET <span aria-hidden="true">→</span></button>
+    <button id="enter" hidden>Enter <span class="inline-brand"><span class="inline-brand__size" aria-hidden="true">SOFACET</span><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></span> <span aria-hidden="true">↗</span></button>
+    <div id="scene-loading-status"><span data-scene-status role="status">Loading the world…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
+    <section id="journey-preparation" aria-label="Preparing your journey" hidden>
+      <h2>A world taking shape.</h2>
+      <p id="preparation-status" data-scene-status role="status">Loading the world…</p>
+      <progress data-scene-progress max="100" aria-label="World download"></progress>
+      <a href="/play.html">Continue to the game ↗</a>
+    </section>
     <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
     <div id="progress" aria-hidden="true"></div>
   </main>
   <div id="world-loading" role="status" aria-live="polite">
     <img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="200" height="28">
-    <p id="world-status">Loading the world…</p>
+    <p id="world-status" data-scene-status>Loading the world…</p>
     <a id="loading-fallback" href="/play.html" hidden>Continue to the game ↗</a>
   </div>
   <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#world-loading{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script type="module" src="/assets/entrance-3d/entry-24D7AHOV.js"></script>
-</body>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
+  <script type="module" src="/assets/entrance-3d/entry-CQ4E6BK4.js"></script>
+<!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

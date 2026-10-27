@@ -46,3 +46,6 @@ __pycache__/
 /white_logo.svg
 /sounds/game-over.mp3
 /sounds/victory.mp3
+
+# Generated HTTP compression for the entrance model.
+assets/entrance-3d/*.glb.br

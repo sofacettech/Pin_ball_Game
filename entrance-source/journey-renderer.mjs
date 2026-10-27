@@ -48,7 +48,7 @@ if(fxaa)composer.addPass(fxaa);
 renderer.info.autoReset=false;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
-const metadata=await fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+const metadataPromise=fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 let model,mixer,actions=[],frame=240,preparing=false,loadID=0,suspended=false,disposed=false;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
@@ -214,13 +214,14 @@ function disposeModel(){
   geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>{t.source?.data?.close?.();t.dispose();});
   model=null;
 }
-async function loadVariant(name){
+async function loadVariant(name,{download}={}){
   if(!['compact','baseline'].includes(name))throw Error('Unknown model');
   const id=++loadID;preparing=true;disposeModel();onStatus('Loading the world…');
   const start=performance.now();
   try{
-    const response=await fetch(base+'journey-'+name+'.glb');if(!response.ok)throw Error('Export not available: '+response.status);
-    const bytes=await response.arrayBuffer();const gltf=await loader.parseAsync(bytes,base);if(id!==loadID)return;
+    const bytes=await (download||fetch(base+'journey-'+name+'.glb').then(response=>{if(!response.ok)throw Error('Export not available: '+response.status);return response.arrayBuffer();}));
+    if(id!==loadID||disposed)return;
+    const gltf=await loader.parseAsync(bytes,base);if(id!==loadID||disposed)return;
     model=gltf.scene;scene.add(model);const look=exterior.install(model);interior.install(model);chess.install(model);mixer=new THREE.AnimationMixer(model);actions=gltf.animations.map(clip=>{const a=mixer.clipAction(clip);a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play();return a;});
     matchExteriorPalette(model);
     prepareStableLighting();
@@ -234,6 +235,7 @@ async function loadVariant(name){
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       renderer.setRenderTarget(composer.renderTarget1);
       await renderer.compileAsync(scene,camera);
+      if(id!==loadID||disposed)return;
       renderer.setRenderTarget(null);
       interior.capture(camera);chess.capture(camera,warmFrame);composer.render();
     }
@@ -241,12 +243,12 @@ async function loadVariant(name){
     gl.finish();
     modelBytes=bytes.byteLength;loadMs=performance.now()-start;
     preparing=false;render();onStatus('');
-    return {ready:true,variant:name,bytes:modelBytes,loadMs,animations:gltf.animations.length,metadata:metadata[name],look};
+    return {ready:true,variant:name,bytes:modelBytes,loadMs,animations:gltf.animations.length,metadata:(await metadataPromise)[name],look};
   }catch(error){preparing=false;renderer.setRenderTarget(null);throw error;}
 }
 function suspend(value=true){suspended=value;if(renderRequested)cancelAnimationFrame(renderRequested);renderRequested=0;if(!value)requestRender();}
 function dispose(){
-  if(disposed)return;disposed=true;suspend();observer.disconnect();disposeModel();
+  if(disposed)return;disposed=true;loadID++;suspend();observer.disconnect();disposeModel();
   for(const item of pendingTimers)gl.deleteQuery(item.query);pendingTimers.length=0;
   env.dispose();for(const pass of composer.passes)pass.dispose?.();composer.dispose();
   renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
