@@ -64,7 +64,8 @@ export function mountReveal(stage, onComplete = () => {}) {
 
   function tick(now) {
     if (!start) start = now - elapsed * 1000;
-    const clock = !audio.paused && !audio.ended ? audio.currentTime : (now - start) / 1000;
+    // Audio buffering must not freeze the visual reveal on a cold connection.
+    const clock = (now - start) / 1000;
     elapsed = Math.min(6, clock);
     render(elapsed);
     frame = elapsed < 6 ? requestAnimationFrame(tick) : 0;
