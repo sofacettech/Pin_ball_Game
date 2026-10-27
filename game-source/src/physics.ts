@@ -23,7 +23,7 @@ const PADDLE_HOLD_TICKS=Math.round(PADDLE_HOLD_SECONDS/DT);
 export const RING_SCORE=50;
 export const TRIANGLE_SCORE=100;
 export const LAUNCHER_SCORE=0;
-export const CAVE_SCORE=700;
+export const CAVE_SCORE=400;
 export const CAVE_CHARGE_SECONDS=1;
 export const CAVE_RELEASE_SPEED=1.5; // Fixed fast release, independent of entry speed.
 export const BUMPER_REBOUND_MULTIPLIER=1.10;
@@ -96,7 +96,7 @@ export class PinballPhysics {
   for(const [side,list] of triangleIndices.entries())this.triangleBodies.set(side,{id:side===0?'triangle_left':'triangle_right',shape:outline(list.flatMap(i=>Array.from(vertices.slice(i*3,i*3+3))))});
   for(const o of obstacles){
    const hull=RAPIER.ColliderDesc.convexHull(new Float32Array(o.hull_world));if(!hull)throw new Error('Invalid obstacle hull: '+o.id);
-   const expected=o.id.startsWith('bumper_neutral_')?TRIANGLE_SCORE:o.role==='bumper_plus'?500:o.role==='drum_base_bumper'?250:o.role==='bumper_minus'?-500:0;
+   const expected=o.id.startsWith('bumper_neutral_')?TRIANGLE_SCORE:o.role==='bumper_plus'?500:o.role==='drum_base_bumper'?200:o.role==='bumper_minus'?-500:0;
    if(o.score_delta!==expected)throw new Error('Invalid bumper score: '+o.id);
    hull.setFriction(.12).setRestitution(.7).setCollisionGroups(0x00020001).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
    if(o.role==='drum_base_bumper')hull.setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min);
@@ -536,7 +536,7 @@ export class PinballPhysics {
   else if(!triangle&&this.time-(this.lastBump.get(handle)??-Infinity)<.08)return;
   if(triangle&&!this.triangleContact(obstacle.id.includes('_left_')?'triangle_left':'triangle_right'))return;
   const delta=ring?RING_SCORE:obstacle.score_delta;
-  this.lastBump.set(handle,this.time);this.score+=delta;this.hits++;this.lastHit={id:obstacle.id,delta,speedBefore,speedAfter:target,normal,rapidRebound};this.onHit?.(obstacle.id,delta);
+  this.lastBump.set(handle,this.time);this.score=Math.max(0,this.score+delta);this.hits++;this.lastHit={id:obstacle.id,delta,speedBefore,speedAfter:target,normal,rapidRebound};this.onHit?.(obstacle.id,delta);
  }
  private blockedFloorReturn(p:XYZ,r:number){
   const size=this.manifest.ball_diameter*2,x0=Math.floor((p[0]-r)/size),x1=Math.floor((p[0]+r)/size),z0=Math.floor((p[2]-r)/size),z1=Math.floor((p[2]+r)/size);

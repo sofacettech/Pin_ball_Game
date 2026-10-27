@@ -1,6 +1,6 @@
 {
   "asset_checksums": {
-    "collider-entities.json": "4970a36d4d1705bdd2d2bde62f2ac4490251759ba88495e0667e8ef769105969",
+    "collider-entities.json": "a1f4530918513c8d2c0068861a6ce4036a19b5988b2bb8c2729fe9a9c239cbec",
     "collision-indices.bin": "e5156d0b1c69c10aa46d1a7fb4c89aab09cdc0b80bb8e2b2c696017c85e7a9c5",
     "collision-vertices.bin": "3329d7cb9364406e8e5aeb0590345e8b169116b0be0d79ebb430b8f140b0f56c",
     "facet-table.glb": "d2cdf251fddc2b406e47b49f2d27ea1c5b7ac3614c70b627159f10c9c8e47e81",
@@ -28802,7 +28802,7 @@
         10.732540130615234,
         0.10999999940395355
       ],
-      "score_delta": 250,
+      "score_delta": 200,
       "details": {
         "user_confirmed_bumper": true,
         "colliders_created": false,
@@ -28845,7 +28845,7 @@
         10.732540130615234,
         0.10999999940395355
       ],
-      "score_delta": 250,
+      "score_delta": 200,
       "details": {
         "user_confirmed_bumper": true,
         "colliders_created": false,

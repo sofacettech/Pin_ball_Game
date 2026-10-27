@@ -99,6 +99,7 @@ async function api(request,response,path){
   const pending=inflight.get(match[1]);if(pending&&pending.hash!==hash)fail(409,'This game is already being verified with different controls.');
   if(pending){await pending.promise;return json(response,200,{...result(),replayed:true})}
   const promise=verifyGame(game.seed,data.inputs).then(verified=>{
+   if(!Number.isSafeInteger(verified.score)||verified.score<0)fail(400,'The verified score is invalid. Please play again.');
    commit(()=>{const currentGame=store.games[match[1]],currentPlayer=store.players[id];if(!currentGame||!currentPlayer)fail(410,'This game session expired. Please play again.');currentGame.score=verified.score;currentGame.verified=true;currentGame.replayHash=hash;currentGame.finishedAt=Date.now();if(!currentPlayer.bestVerified||verified.score>currentPlayer.best){currentPlayer.best=verified.score;currentPlayer.bestAt=currentGame.finishedAt;currentPlayer.bestVerified=true}});
   });
   inflight.set(match[1],{hash,promise});try{await promise;return json(response,200,{...result(),replayed:false})}finally{inflight.delete(match[1])}
