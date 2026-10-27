@@ -6,7 +6,7 @@ const panel = document.querySelector('[data-menu-panel]');
 // Preserve the game menu across its linked pages; normal website visits keep the site menu.
 const accountFlow = ['/account.html', '/membership.html'].includes(location.pathname);
 const gamePage = !!document.querySelector('#game-header');
-const gameAccount = ['/account.html', '/membership.html', '/about.html', '/faq.html', '/privacy.html'].includes(location.pathname) && new URLSearchParams(location.search).get('nav') === 'game';
+const gameAccount = ['/account.html', '/membership.html', '/about.html', '/faq.html', '/privacy.html', '/launching-soon.html', '/first-cuts-confirmation.html'].includes(location.pathname) && new URLSearchParams(location.search).get('nav') === 'game';
 if (gameAccount) {
   panel.setAttribute('aria-label', 'Game navigation');
   const items = [

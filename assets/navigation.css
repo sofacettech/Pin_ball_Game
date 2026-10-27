@@ -31,3 +31,7 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
 .brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
 .brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+:root #game-header .site-nav{gap:16px}
+:root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
+@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:11px}}
+@media(max-width:360px){:root #game-header .site-nav{gap:4px}:root #game-header .skip-game{padding-inline:10px}}

@@ -5,10 +5,12 @@ import {request, pendingResult} from './api.js';
 import {countries, normalisePhone, phoneCountry, maskedPhone} from './phone.js';
 import {splitPlayerName,publicPlayerName,validPlayerName,leaveCopy,exitCopy} from '../../game-source/src/player-copy.ts';
 import {BrandText} from '../../assets/brand-text.jsx';
-import {accountHref,accountSignInHref,readPreviewAccount} from '../../shared/account-session.js';
+import {accountHref,accountSignInHref,readPreviewAccount,accountNavigationHref} from '../../shared/account-session.js';
 import './style.css';
 
 const embedded = window.parent !== window;
+const firstCutsJoin = new URLSearchParams(location.search).get('from')==='first-cuts';
+const firstCutsConfirmationHref = accountNavigationHref('/first-cuts-confirmation.html');
 const numbers = new Intl.NumberFormat('en-IN');
 const money = value => '₹' + numbers.format(Math.floor(value / 10)) + (value % 10 ? '.' + value % 10 : '');
 const post = data => { if (embedded) window.parent.postMessage(data, location.origin); };
@@ -144,7 +146,7 @@ function App() {
       const result=await request('/api/membership',{name:details.name.trim(),leaderboardName:suggestName(details.name),email:details.email.trim(),termsAccepted:details.termsAccepted,marketingConsent:details.marketingConsent,phoneNumber:normalisePhone(identity.phone,identity.country),verificationToken:token,...(pending?.gameId?{gameId:pending.gameId}:{})},signal);
       if(result.success!==true||result.player?.member!==true||pending&&result.pointsSaved!==true||!Number.isSafeInteger(result.savedPoints)||result.savedPoints<0||!Number.isSafeInteger(result.remainingPoints)||result.remainingPoints<0)throw new Error('Your points haven’t been confirmed as saved. Please try again.');
       pendingRef.current=null;setSaved(result);setStage('success');setResendAt(0);post({type:'contest-registration:complete',player:result.player});
-      if(!embedded)location.replace('/play.html#leaderboard');
+      if(!embedded)location.replace(firstCutsJoin&&!pending?firstCutsConfirmationHref:'/play.html#leaderboard');
     });
   }
   const replay=()=>{if(embedded)post({type:'sofacet:membership-replay'});else location.assign('/play.html')};
