@@ -44,6 +44,9 @@ try {
     const result = {name, pageErrors: [], shaderErrors: [], consoleErrors: [], failedRequests: [], frames: [], screenshots: []};
     report.cases.push(result);
     browser = await browserType.launch({
+      // The macOS runner has a Metal device. Headless Chromium otherwise forces
+      // software rendering and can stall while preparing this production scene.
+      ...(engine === 'chromium' && process.platform === 'darwin' ? {args: ['--enable-gpu']} : {}),
       ...(process.env.SOFACET_BROWSER_EXECUTABLE ? {executablePath: process.env.SOFACET_BROWSER_EXECUTABLE} : {}),
     });
     const context = await browser.newContext({...devices['iPhone 13']});
@@ -71,6 +74,18 @@ try {
       result.screenshots.push(path);
     };
     try {
+      result.graphics = await page.evaluate(() => {
+        const gl = document.createElement('canvas').getContext('webgl2');
+        if (!gl) return {available: false, reason: 'WebGL2 context creation failed'};
+        const debug = gl.getExtension('WEBGL_debug_renderer_info');
+        const precision = gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT);
+        return {available: !gl.isContextLost() && precision !== null,
+          vendor: gl.getParameter(debug?.UNMASKED_VENDOR_WEBGL ?? gl.VENDOR),
+          renderer: gl.getParameter(debug?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER),
+          highFloatPrecision: precision?.precision ?? null, contextLost: gl.isContextLost()};
+      });
+      console.log(JSON.stringify({case: name, graphics: result.graphics}));
+      assert.ok(result.graphics.available, 'The browser runner must provide a working WebGL2 context before loading the scene');
       const response = await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 120000});
       assert.equal(response?.status(), 200, 'The release entrance must load');
       result.modules = await page.locator('script[type="module"][src]').evaluateAll(elements => elements.map(element => element.src));
@@ -137,6 +152,8 @@ try {
       result.passed = false;
       result.error = error.stack || String(error);
       result.failureState = await readState(page).catch(() => null);
+      console.error(JSON.stringify({case: name, graphics: result.graphics, failureState: result.failureState,
+        pageErrors: result.pageErrors, consoleErrors: result.consoleErrors, failedRequests: result.failedRequests}));
       await screenshot('failure').catch(() => {});
       throw error;
     } finally {
