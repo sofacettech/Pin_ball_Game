@@ -62,17 +62,20 @@ test('chess arrival shows each approved message once and waits for both story an
  const view=loader();await fontLoaded();
  assert.equal(view.phrase.textContent,'Your points could become something precious');
  view.api.ready();assert.equal(view.stage.inert,true);assert.equal(view.root.hidden,false);
- view.animations[0].finish();assert.equal(view.phrase.textContent,'Every 10 points gets you ₹1 closer to your first diamond.');
+ view.animations[0].finish();assert.equal(view.phrase.textContent,'Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.');
  assert.deepEqual(view.phrase.children.filter(child=>child.className==='loading-value').map(child=>child.textContent),['10','₹1']);
+ assert.equal(view.phrase.children.find(child=>child.className==='brand-word')?.textContent,'SO/ FACET');
  assert.equal(view.animations[0].playState,'idle');assert.equal(view.animations[0].frames.at(-1).opacity,0);
  view.animations[1].finish();assert.equal(view.phrase.textContent,'Play well. Save your points. Shine later.');assert.equal(view.stage.inert,true);
- view.animations[2].finish();assert.equal(view.stage.inert,false);assert.equal(view.root.dataset.state,'leaving');
- view.flushFade();assert.equal(view.root.hidden,true);assert.equal(view.animations.length,3);
+ view.animations[2].finish();assert.equal(view.phrase.textContent,'Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.');assert.equal(view.stage.inert,true);
+ assert.deepEqual(view.phrase.children.filter(child=>child.className).map(child=>[child.textContent,child.className]),[['Pink','loading-pink'],['neon-green','loading-green'],['Cyan','loading-cyan']]);
+ view.animations[3].finish();assert.equal(view.stage.inert,false);assert.equal(view.root.dataset.state,'leaving');
+ view.flushFade();assert.equal(view.root.hidden,true);assert.equal(view.animations.length,4);
 });
 test('last message stays visible while the table is still loading and never restarts on resume',async()=>{
- const view=loader();await fontLoaded();view.animations[0].finish();view.animations[1].finish();view.animations[2].finish();
+ const view=loader();await fontLoaded();view.animations[0].finish();view.animations[1].finish();view.animations[2].finish();view.animations[3].finish();
  assert.equal(view.root.hidden,false);assert.equal(view.stage.inert,true);
- view.api.setActive(false);view.api.setActive(true);assert.notEqual(view.animations[2].playState,'running');
+ view.api.setActive(false);view.api.setActive(true);assert.notEqual(view.animations[3].playState,'running');
  view.api.ready();view.flushFade();assert.equal(view.root.hidden,true);
 });
 test('direct game and reduced-motion navigation do not wait for the story',async()=>{

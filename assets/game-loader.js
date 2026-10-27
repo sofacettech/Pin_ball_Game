@@ -8,7 +8,7 @@
  const gamePage=document.body.hasAttribute('data-game-loading');
  const story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
  const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
- const messages=['Your points could become something precious','Every 10 points gets you ₹1 closer to your first diamond.','Play well. Save your points. Shine later.'];
+ const messages=['Your points could become something precious','Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.','Play well. Save your points. Shine later.','Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.'];
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let width=1,height=1,radius=9,x=0,y=0,vx=0,vy=0,time=0,last=0,frame=0,fade=0,delay=0;
  let active=false,failed=false,parentVisible=parent===window,events,observer;
@@ -18,9 +18,10 @@
  function cleanup(){stop();textAnimation?.cancel();textAnimation=null;textRun++;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
  function renderStatement(){
   statement.dataset.statement=String(statementIndex);
-  phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1)/).map(part=>{
-   if(part!=='10'&&part!=='₹1')return document.createTextNode(part);
-   const value=document.createElement('span');value.className='loading-value';value.textContent=part;return value;
+  const classes={'10':'loading-value','₹1':'loading-value','SO/ FACET':'brand-word',Pink:'loading-pink','neon-green':'loading-green',Cyan:'loading-cyan'};
+  phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1|SO\/ FACET|Pink|neon-green|Cyan)/).map(part=>{
+   if(!classes[part])return document.createTextNode(part);
+   const value=document.createElement('span');value.className=classes[part];value.textContent=part;return value;
   }));
  }
  function animateStatement(){
@@ -109,7 +110,7 @@
   if(story){
    root.dataset.story='';phrase.style.opacity=motion.matches?'1':'0';phrase.style.transform='none';renderStatement();
    const run=textRun;
-   document.fonts.load('400 16px Biarty').catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
+   Promise.all(['Acumin','SOFacetWordmark'].map(font=>document.fonts.load('400 16px '+font))).catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
   }
   status.firstChild.textContent='Preparing your table. ';
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;

@@ -26,7 +26,7 @@ button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent
 button { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .65; }
 a { color: inherit; text-underline-offset: 3px; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .share-copy:focus-visible {
   outline: 2px solid var(--lime);
   outline-offset: 5px;
 }
@@ -70,6 +70,7 @@ input::selection { background: #b286d5; color: #140c20; }
 .field-error:not(:empty) { margin-top: 5px; }
 .front-copy { color: var(--lavender); margin: 0; font-size: calc(22 * var(--u)); font-weight: 350; line-height: 1.6; }
 .front-copy .existing-member-link { color: var(--lime); display: table; min-height: 0; margin-bottom: 8px; padding: 0; font-size: max(14px, .85em); line-height: 1.4; }
+.front-form .consents { margin-top: 0; }
 .front-actions { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: calc(17 * var(--u)); padding-top: calc(10 * var(--u)); }
 .crystal-button, .secondary-button { display: flex; align-items: center; justify-content: center; min-height: 48px; height: calc(86 * var(--u)); padding: 0 calc(23 * var(--u)); gap: calc(23 * var(--u)); border-radius: 7px; font-size: calc(29 * var(--u)); line-height: 1.2; font-weight: 450; letter-spacing: 0; }
 .crystal-button { position: relative; isolation: isolate; overflow: hidden; border: 1px solid #e5ffb3; background: var(--lime); color: #152004; box-shadow: inset 0 0 0 2px #edffd47a, 0 0 22px #c0f05233; transition: background-color .15s ease, box-shadow .15s ease; }
@@ -146,21 +147,21 @@ dialog { width: min(480px, calc(100vw - 32px)); max-height: 85svh; overflow: aut
 dialog::backdrop { background: #090410c9; }
 dialog h2 { font: 400 34px/1.15 var(--serif); margin: 0 0 16px; }
 dialog p { color: var(--lavender); font-size: 16px; line-height: 1.6; margin: 0 0 20px; }
-dialog textarea { display: block; resize: vertical; width: 100%; min-height: 130px; padding: 12px; border: 1px solid #9172ac; border-radius: 6px; background: #140c20; color: var(--white); font-size: 15px; line-height: 1.5; margin-bottom: 18px; }
+dialog .share-copy { display: block; resize: vertical; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; width: 100%; min-height: 130px; padding: 12px; border: 1px solid #9172ac; border-radius: 6px; background: #140c20; color: var(--white); font-size: 15px; line-height: 1.5; margin-bottom: 18px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; }
 dialog button { min-height: 44px; padding: 10px 18px; border: 1px solid #b596d0; border-radius: 7px; background: #43285d; color: var(--white); font-size: 14px; }
 dialog .dialog-primary { background: var(--lime); color: #152004; border-color: var(--lime); }
 @media (min-width: 1101px) {
   :root { --desktop-scale: min(calc(100vw / 1132), calc(100dvh / 715)); --u: calc(.713745583 * var(--desktop-scale)); }
-  .membership-page { height: 100dvh; min-height: 0; padding: calc(24 * var(--desktop-scale)) calc(51 * var(--desktop-scale)); display: flex; align-items: center; }
-  .membership-layout { height: auto; max-height: 100%; max-width: calc(1030 * var(--desktop-scale)); grid-template-columns: minmax(0, 600fr) minmax(0, 390fr); gap: calc(40 * var(--desktop-scale)); }
+  .membership-page { min-height: 100dvh; padding: max(100px, calc(76 * var(--desktop-scale))) calc(51 * var(--desktop-scale)) max(28px, calc(24 * var(--desktop-scale))); display: flex; align-items: center; }
+  .membership-layout { height: auto; max-width: calc(1030 * var(--desktop-scale)); grid-template-columns: minmax(0, 600fr) minmax(0, 390fr); gap: calc(40 * var(--desktop-scale)); }
   .left-column { display: flex; flex-direction: column; min-height: 0; }
   .heading-stage { flex: none; margin-bottom: calc(16 * var(--desktop-scale)); }
   .heading h1, .heading h2 { font-size: calc(67 * var(--desktop-scale)); letter-spacing: calc(-3.5 * var(--desktop-scale)); }
   .eyebrow { font-size: calc(12 * var(--desktop-scale)); letter-spacing: calc(5.4 * var(--desktop-scale)); margin-bottom: calc(6 * var(--desktop-scale)); }
   .card-perspective { flex: none; }
   .card-front, .is-flipped .card-back { position: relative; }
-  .front-form { padding: calc(40 * var(--desktop-scale)) calc(37 * var(--desktop-scale)); gap: calc(22 * var(--desktop-scale)); }
+  .front-form { padding: clamp(24px, calc(26 * var(--desktop-scale)), 34px) calc(37 * var(--desktop-scale)); gap: clamp(14px, calc(14 * var(--desktop-scale)), 20px); }
   .front-field { min-height: 0; }
   .front-copy { font-size: calc(16 * var(--desktop-scale)); line-height: 1.6; }
   .front-form .field input { min-height: 0; font-size: calc(18 * var(--desktop-scale)); padding: calc(9 * var(--desktop-scale)) 0 calc(13 * var(--desktop-scale)); }

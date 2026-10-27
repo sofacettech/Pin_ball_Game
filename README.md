@@ -50,9 +50,13 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 
 - The landing reveal leads into the interactive scroll journey. Story text is tied to its approved frame ranges. The welcome copy stays visible until scrolling starts, fades out over one second and returns when the player scrolls back to the starting position. Reduced-motion mode switches immediately.
 - The queen impact at source frame 2164 hands directly into the game. Skip to Game bypasses the journey.
-- The game-loading screen keeps our approved bouncing ball and trail. Arrival from the chess room (`play.html?from=chess`) shows the three approved statements one at a time, using Biarty Regular, 1.45 line spacing and purple `10`/`₹1` highlights. Slow fades and readable pauses keep each statement separate before the next starts. The table opens after the final statement and actual game readiness. Reduced motion uses static text and opens as soon as the table is ready. Direct game navigation keeps its existing loading behavior.
+- The game-loading screen keeps our approved bouncing ball and trail. Arrival from the chess room (`play.html?from=chess`) shows four statements one at a time, using regular condensed Acumin in sentence case, 1.6 line spacing and purple `10`/`₹1` highlights. The final statement explains scoring, with pink, neon-green and cyan text matching the table elements. Slow fades and readable pauses keep each statement separate before the next starts. The table opens after the final statement and actual game readiness. Reduced motion uses static text and opens as soon as the table is ready. Direct game navigation keeps its existing loading behavior.
+- Skip game opens `launching-soon.html`. Join THE FIRST CUTS opens the existing React registration with `from=first-cuts`; successful standalone registration without a pending score opens `first-cuts-confirmation.html`. Registration that saves a game score still goes to the leaderboard. Both paths use the same membership and OTP APIs; no separate mailing-list endpoint is connected.
 - Navigation uses the same brand anchors and drawer across pages. Settings and profile open inside that drawer. The active page is unavailable in its own menu.
+- Rewards and confirmation screens use the SO/ UNLOCKED and SO/ SAVED copy, with Play again as the replay action. THE FIRST CUTS is explained in the FAQ; score sharing and its selectable fallback keep the same reward rules.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
+- The table includes two decorative diamonds on open cradles. Positive scoring turns them gently; reduced motion keeps them still. These decorations have no collision bodies. Full-resolution rendering uses the authored lights and glass materials on desktop and mobile.
+- Triangle housings and their luminous strips count one scoring hit until the ball separates. Sliding along the same triangle cannot repeatedly earn points; a fresh hit after separation still scores normally.
 - Phone and tablet layouts flip between Hold to launch and the live scorecard as the ball launches and returns. Desktop retains the keyboard instructions and flip card, with a Hold button below the card. Only one paddle accepts input at a time; the held paddle keeps priority until released. Sound controls respect browser activation requirements.
 - Membership Back returns to the landing experience without replaying the intro loader. Registration steps still move back within the form.
 - The About page uses the approved Explore layout with scroll reveals and a keyboard-accessible collection gallery. The shared navbar and current-page menu behavior apply there as well.
@@ -77,7 +81,7 @@ Scoring is shared between the client simulation and server replay verification. 
 
 `GET /api/player` supplies the current player's authoritative state using an HttpOnly session cookie. Membership recognition currently applies to that browser session; cross-device login is a separate backend requirement.
 
-The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
+The client starts a game with `POST /api/games/start`, then submits its replay version and packed control inputs to `POST /api/games/:id/finish`. The shared simulation is now replay version 20. Deploy the frontend and verification service together; sessions started on an older version must start a fresh game after updating. The server replays those controls against the shared simulation and records the score. Do not accept client-supplied scores or redeemable reward amounts.
 
 All writes require JSON and the configured exact Origin. Keep the frontend and API on the same origin unless the session and origin model is deliberately updated.
 
@@ -88,7 +92,7 @@ All writes require JSON and the configured exact Origin. Keep the frontend and A
 | `GET /api/membership/config` | Public OTP availability, approved policy URLs and `pointsPerRupee: 10` |
 | `POST /api/membership/otp/request` | `{phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}` |
 | `POST /api/membership/otp/verify` | `{phoneNumber, otp, challengeId}` → `{verified, verificationToken}` |
-| `POST /api/membership` | `{name, leaderboardName, email, dateOfBirth, city, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
+| `POST /api/membership` | `{name, leaderboardName, email, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
 | `POST /api/membership/rewards` | Existing member sends `{gameId}` → `{success, pointsSaved, savedPoints, bestPoints, remainingPoints}` |
 | `GET /api/leaderboard` | Member-only game ranking with `entries` and `me` |
 | `GET /api/rewards/leaderboard` | Member-only external rewards ranking; requires rewards configuration |
@@ -191,7 +195,7 @@ Before collecting memberships publicly, finish SMS and approved policies, test t
 
 `account-source/` is the React sign-in and points page. The shared navigation links **My Account** to `account.html`; registration remains a separate flow for saving a new player's score. The existing brand artwork and navbar anchors are reused. Written brand names use the supplied wordmark font without changing surrounding typography.
 
-I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Registration also includes Indian city suggestions while retaining the existing city field contract.
+I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Sign-up collects full name, mobile number and email on one screen, with the existing 18+ / policy declaration and optional launch-update consent. “Save my points” goes directly to SMS confirmation. Date of birth and city are no longer collected; the server still validates those fields if an older client supplies them. The initial public leaderboard name is derived from the full name, and the existing account/profile name-editing flow remains available.
 
 An existing member session can read `GET /api/account`: `{name, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
 

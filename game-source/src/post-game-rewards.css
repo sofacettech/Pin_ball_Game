@@ -64,3 +64,9 @@
 .reward-flow .rewards-actions{width:100%;margin-top:36px;grid-template-columns:1fr 1fr}
 .flow-signoff{margin:34px 0 0;font-size:14px;color:#c9b6d7}
 @media(max-width:700px){.reward-flow .rewards-actions{grid-template-columns:1fr}.reward-flow h1{font-size:38px}.reward-flow{padding-block:40px 70px}}
+
+/* Copy above the existing result heading, aligned with that heading. */
+.rewards-intro{margin:0 0 12px 6.3%;text-align:left}
+.rewards-intro .flow-eyebrow{margin-bottom:8px}
+.rewards-unlocked-copy{margin:0;font-size:clamp(18px,1.45vw,24px);font-weight:300;line-height:1.4}
+@media(max-width:700px){.rewards-intro{margin-left:0}}

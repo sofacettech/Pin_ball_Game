@@ -65,7 +65,7 @@ export class PinballPhysics {
  private launchCharge=0;private springReturnTime=0;private springReturnPeak=0;private springReturnX=0;
  private drainZ:number;private drainWidth:number;
  private bumperOutlines=new Map<number,Outline>();
- private triangleBodies=new Map<number,{id:string;shape:Outline}>();private lastTriangleHit=new Map<string,number>();
+ private triangleBodies=new Map<number,{id:string;shape:Outline}>();private touchingTriangles=new Set<string>();
  private pocketBlockers:(Outline&{id:string;exit:[XYZ,XYZ];rebound?:XYZ})[]=[];private postPocketRebounds=new Set<string>();private drainTransfer:{from:XYZ;elapsed:number;duration:number}|null=null;
  private lastReboundTime=-Infinity;private rapidReboundUntil=-Infinity;private reboundTicks=new Map<number|string,number>();
  private cave:CaveCharge|null=null;private caveArmed=true;private launchBoostSpeed=0;private launchBoostUntil=-Infinity;caveEntries=0;
@@ -156,8 +156,8 @@ export class PinballPhysics {
   }
  }
  static async create(manifest:Manifest,vertices:Float32Array,indices:Uint32Array,obstacles:Obstacle[]){await RAPIER.init();return new PinballPhysics(manifest,vertices,indices,obstacles)}
- start(seed?:number){this.random=seed===undefined?Math.random:seededRandom(seed);this.targets.random=this.random;this.caveEntries=0;this.lastTriangleHit.clear();this.postPocketRebounds.clear();this.drainTransfer=null;this.recoveries=0;this.pendingFloorReturn=false;this.rail=null;this.pendingRail=false;this.railCollected=0;this.railRequired=3+Math.floor(this.random()*3);this.railTrips=0;this.transportGeneration++;this.active=true;this.paused=false;this.state='launcher';this.lives=3;this.charge=0;this.springCompression=0;this.score=0;this.hits=0;this.lastHit=null;this.ballMode='floor';this.launches=0;this.drains=0;this.laneExited=false;this.falling=false;this.springReturnTime=0;this.time=0;this.resetTimer=0;this.spaceMustRelease=true;this.lastBump.clear();this.touching.clear();this.park();this.targetPasses=0;this.targets.reset(this.spawn);for(const p of this.paddles){p.angle=0;p.omega=0;p.held=false;p.holdTicks=0;p.body.setRotation({x:0,y:0,z:0,w:1},true);p.body.setNextKinematicRotation({x:0,y:0,z:0,w:1})}}
- park(){this.caveRestTime=0;this.cave=null;this.caveArmed=true;this.launchBoostUntil=-Infinity;this.ball.resetForces(true);this.ball.setGravityScale(1,true);this.resetRebounds();this.postPocketRebounds.clear();this.launchCharge=0;this.drainTransfer=null;this.lastSupported=[...this.spawn];this.ballMode='floor';this.rail=null;this.pendingRail=false;this.falling=false;this.tableLocked=false;this.laneExited=false;this.ballCollider.setEnabled(true);this.ball.setAdditionalMass(0,true);this.ball.setEnabledTranslations(true,true,true,true);this.ball.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);this.ball.setTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]},true);this.ball.setNextKinematicTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]});this.ball.setLinvel({x:0,y:0,z:0},true);this.ball.setAngvel({x:0,y:0,z:0},true);this.ball.setRotation({x:0,y:0,z:0,w:1},true)}
+ start(seed?:number){this.random=seed===undefined?Math.random:seededRandom(seed);this.targets.random=this.random;this.caveEntries=0;this.touchingTriangles.clear();this.postPocketRebounds.clear();this.drainTransfer=null;this.recoveries=0;this.pendingFloorReturn=false;this.rail=null;this.pendingRail=false;this.railCollected=0;this.railRequired=3+Math.floor(this.random()*3);this.railTrips=0;this.transportGeneration++;this.active=true;this.paused=false;this.state='launcher';this.lives=3;this.charge=0;this.springCompression=0;this.score=0;this.hits=0;this.lastHit=null;this.ballMode='floor';this.launches=0;this.drains=0;this.laneExited=false;this.falling=false;this.springReturnTime=0;this.time=0;this.resetTimer=0;this.spaceMustRelease=true;this.lastBump.clear();this.touching.clear();this.park();this.targetPasses=0;this.targets.reset(this.spawn);for(const p of this.paddles){p.angle=0;p.omega=0;p.held=false;p.holdTicks=0;p.body.setRotation({x:0,y:0,z:0,w:1},true);p.body.setNextKinematicRotation({x:0,y:0,z:0,w:1})}}
+ park(){this.touchingTriangles.clear();this.caveRestTime=0;this.cave=null;this.caveArmed=true;this.launchBoostUntil=-Infinity;this.ball.resetForces(true);this.ball.setGravityScale(1,true);this.resetRebounds();this.postPocketRebounds.clear();this.launchCharge=0;this.drainTransfer=null;this.lastSupported=[...this.spawn];this.ballMode='floor';this.rail=null;this.pendingRail=false;this.falling=false;this.tableLocked=false;this.laneExited=false;this.ballCollider.setEnabled(true);this.ball.setAdditionalMass(0,true);this.ball.setEnabledTranslations(true,true,true,true);this.ball.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased,true);this.ball.setTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]},true);this.ball.setNextKinematicTranslation({x:this.spawn[0],y:this.spawn[1],z:this.spawn[2]});this.ball.setLinvel({x:0,y:0,z:0},true);this.ball.setAngvel({x:0,y:0,z:0},true);this.ball.setRotation({x:0,y:0,z:0,w:1},true)}
  setPaused(value:boolean){this.paused=value}
  launch(){if(this.state!=='launcher'&&this.state!=='charging')return;
   this.launchCharge=this.charge;
@@ -193,6 +193,8 @@ export class PinballPhysics {
   const ringPosition=this.ball.translation();
   for(const handle of this.touching)if(!overlapCircle(this.bumperOutlines.get(handle)!,[ringPosition.x,ringPosition.y,ringPosition.z],this.manifest.ball_diameter/2+.0003))this.touching.delete(handle);
   for(let step=0;step<SUBSTEPS;step++){
+   // Re-arm only after leaving the housing and its luminous strips.
+   this.rearmTriangleContacts();
    const dt=DT/SUBSTEPS,motionDt=dt*BALL_MOTION_RATE;
    const sweptPaddles=this.paddles.map(paddle=>{
     const pressed=paddle.id==='flipper_left'?input.left:input.right,held=pressed&&paddle.holdTicks<=PADDLE_HOLD_TICKS,target=held?paddle.up:0,old=paddle.angle;
@@ -393,7 +395,19 @@ export class PinballPhysics {
   this.ball.setLinvel({x,y:0,z},true);this.limitSpeed();
  }
  private resetRebounds(){this.lastReboundTime=-Infinity;this.rapidReboundUntil=-Infinity;this.reboundTicks.clear()}
- private triangleContact(id:string){if(this.time-(this.lastTriangleHit.get(id)??-Infinity)<.08)return false;this.lastTriangleHit.set(id,this.time);return true}
+ private rearmTriangleContacts(){
+  if(!this.touchingTriangles.size)return;
+  if(this.ballMode!=='floor'||this.falling){this.touchingTriangles.clear();return}
+  const q=this.ball.translation(),p:XYZ=[q.x,q.y,q.z],radius=this.manifest.ball_diameter/2+.0003;
+  for(const id of this.touchingTriangles){
+   const body=this.triangleBodies.get(id==='triangle_left'?0:1)!;
+   if(overlapCircle(body.shape,p,radius))continue;
+   let touchingStrip=false;
+   for(const [handle,obstacle] of this.bumpers)if(obstacle.id.startsWith('bumper_neutral_'+id.slice(9)+'_')&&overlapCircle(this.bumperOutlines.get(handle)!,p,radius)){touchingStrip=true;break}
+   if(!touchingStrip)this.touchingTriangles.delete(id);
+  }
+ }
+ private triangleContact(id:string){if(this.touchingTriangles.has(id))return false;this.touchingTriangles.add(id);return true}
  private rapidRebound(){return this.ballMode==='floor'&&this.laneExited&&this.time<this.rapidReboundUntil}
  private noteRebound(key:number|string){
   if(this.ballMode!=='floor'||!this.laneExited)return false;
@@ -517,10 +531,10 @@ export class PinballPhysics {
    if(!repeated){const impact=BUMPER_IMPACT_MULTIPLIER*(obstacle.role==='drum_base_bumper'?DRUM_IMPACT_MULTIPLIER:1)*(obstacle.id==='post_08'?CAVE_POST_REBOUND_MULTIPLIER:1);x*=impact;y*=impact;z*=impact;target*=impact}
    this.ball.setLinvel({x,y,z},true);
   }
-  const ring=obstacle.id.startsWith('ring_');
+  const ring=obstacle.id.startsWith('ring_'),triangle=obstacle.id.startsWith('bumper_neutral_');
   if(ring){if(this.touching.has(handle))return;this.touching.add(handle)}
-  else if(this.time-(this.lastBump.get(handle)??-Infinity)<.08)return;
-  if(obstacle.id.startsWith('bumper_neutral_')&&!this.triangleContact(obstacle.id.includes('_left_')?'triangle_left':'triangle_right'))return;
+  else if(!triangle&&this.time-(this.lastBump.get(handle)??-Infinity)<.08)return;
+  if(triangle&&!this.triangleContact(obstacle.id.includes('_left_')?'triangle_left':'triangle_right'))return;
   const delta=ring?RING_SCORE:obstacle.score_delta;
   this.lastBump.set(handle,this.time);this.score+=delta;this.hits++;this.lastHit={id:obstacle.id,delta,speedBefore,speedAfter:target,normal,rapidRebound};this.onHit?.(obstacle.id,delta);
  }

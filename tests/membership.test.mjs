@@ -72,6 +72,19 @@ test('membership without a completed game never invents reward credits',async()=
  const result=await f.api('/api/membership',payload,'one');assert.equal(result.pointsSaved,false);assert.equal(result.player.member,true);assert.equal(f.calls.length,0);
 });
 
+test('single-screen sign-up accepts only the collected details and preserves consent, OTP and reward checks',async()=>{
+ const f=setup(),verificationToken=await verified(f),{dateOfBirth,city,...details}=valid,payload={...details,verificationToken};
+ for(const change of [{termsAccepted:false},{marketingConsent:null},{email:''},{verificationToken:'invalid'},{points:999999}])await assert.rejects(f.api('/api/membership',{...payload,...change},'one'),status(change.verificationToken?401:400));
+ assert.equal(f.store.players.one.profile,undefined);assert.equal(f.calls.length,0);
+ const result=await f.api('/api/membership',payload,'one');
+ assert.equal(result.player.member,true);assert.equal(result.savedPoints,3200);assert.equal(f.calls[0].points,320);
+ assert.equal(f.store.players.one.profile.email,valid.email);assert.equal(f.store.players.one.profile.marketingConsent,false);
+ assert.equal('birthDate' in f.store.players.one.profile,false);assert.equal('city' in f.store.players.one.profile,false);
+ f.store.players.one.profile.birthDate='1990-01-01';f.store.players.one.profile.city='Delhi';
+ await f.api('/api/membership',payload,'one');assert.equal(f.calls.length,1);
+ assert.equal(f.store.players.one.profile.birthDate,'1990-01-01');assert.equal(f.store.players.one.profile.city,'Delhi');
+});
+
 test('registered sessions save verified later games without registering or requesting OTP again',async()=>{
  const f=setup({provider:{request:null,verify:null}});f.store.players.one.profile={customerId:'cus_test',phone:valid.phoneNumber};
  const first=await f.api('/api/membership/rewards',{gameId},'one');assert.equal(first.pointsSaved,true);assert.equal(first.savedPoints,3200);assert.equal(f.calls.length,1);

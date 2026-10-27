@@ -96,9 +96,14 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       if (!data || typeof data !== 'object' || Object.keys(data).some(key => !['name','leaderboardName','email','dateOfBirth','city','termsAccepted','marketingConsent','phoneNumber','verificationToken','gameId'].includes(key))) fail(400, 'Please submit membership details and the game ID only.');
       const normalized = phone(data.phoneNumber), proof = proofs.get(data.verificationToken);
       if (!proof || proof.player !== id || proof.phone !== normalized || proof.expiresAt < Date.now()) fail(401, 'Please verify your phone number again.');
-      const profile = { name: text(data.name, 80, 'your name'), leaderboardName: text(data.leaderboardName, 30, 'your leaderboard name'), city: text(data.city, 100, 'your city') };
+      const profile = { name: text(data.name, 80, 'your name'), leaderboardName: text(data.leaderboardName, 30, 'your leaderboard name') };
+      if (data.city !== undefined) profile.city = text(data.city, 100, 'your city');
       if (typeof data.email !== 'string' || data.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) fail(400, 'Please enter a valid email address.');
-      if (typeof data.dateOfBirth !== 'string' || !isAdult(data.dateOfBirth)) fail(400, 'You must be at least 18 years old to participate.');
+      // The single-screen form uses the required 18+ declaration; validate dates from older clients when supplied.
+      if (data.dateOfBirth !== undefined) {
+        if (typeof data.dateOfBirth !== 'string' || !isAdult(data.dateOfBirth)) fail(400, 'You must be at least 18 years old to participate.');
+        profile.birthDate = data.dateOfBirth;
+      }
       if (data.termsAccepted !== true || typeof data.marketingConsent !== 'boolean') fail(400, 'Please accept the terms and check your contact preferences.');
       const policy = policies(); if (!policy.terms || !policy.privacy) fail(503, 'Membership terms are not available yet. Please try again later.');
       if (data.gameId !== undefined) {
@@ -110,7 +115,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       if (data.gameId && getStore().games[data.gameId].rewardCustomer && getStore().games[data.gameId].rewardCustomer !== customer.customer_id) fail(409, 'This game has already been saved to another membership.');
       commit(() => {
         const player = getStore().players[id]; player.name = profile.leaderboardName;
-        player.profile = { ...profile, customerId: customer.customer_id, phone: normalized, email: data.email.trim(), birthDate: data.dateOfBirth, memberConsent: true, contestConsent: true, marketingConsent: data.marketingConsent, termsUrl: policy.terms, privacyUrl: policy.privacy, registeredAt: new Date().toISOString() };
+        player.profile = { ...player.profile, ...profile, customerId: customer.customer_id, phone: normalized, email: data.email.trim(), memberConsent: true, contestConsent: true, marketingConsent: data.marketingConsent, termsUrl: policy.terms, privacyUrl: policy.privacy, registeredAt: new Date().toISOString() };
       });
       const reward = data.gameId ? await saveReward(customer.customer_id, normalized, data.gameId, id) : { pointsSaved: false, savedPoints: 0, bestPoints: 0, remainingPoints: 0 };
       return { success: true, player: publicPlayer(getStore().players[id]), ...reward };
