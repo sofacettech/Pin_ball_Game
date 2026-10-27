@@ -16,7 +16,7 @@ const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
 let phase='loading',openingPlayback,finishLoading,gameLoader,gameReadyObserver;
-let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView,gameTimeout;
+let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
 const performancePanel=showPerformance?createFrameRatePanel({label:'Live 3D',travel,minimumFPS:45,
@@ -101,7 +101,7 @@ function gameVisibility(visible){
 function loadGame(){if(!game.getAttribute('src'))game.src='/play.html';}
 function showGame(){
   if(!gameLoaded||!gameRequested||gameVisible)return;
-  clearTimeout(gameTimeout);gameVisible=true;
+  gameVisible=true;
   document.body.dataset.game='visible';
   main.inert=true;main.setAttribute('aria-hidden','true');game.inert=false;game.removeAttribute('aria-hidden');
   siteSound.handoff();siteSound.save();journey?.suspend();
@@ -117,9 +117,8 @@ function enterGame({fromChess=false}={}){
   // game readiness, including its reward-copy sequence after the chess room.
   main.inert=true;document.body.setAttribute('data-game-loading','');
   gameLoader.show({story:fromChess});loadGame();
-  gameTimeout=setTimeout(()=>{
-    if(!gameLoaded)gameLoader.fail();
-  },45000);
+  // A cold mobile download can legitimately exceed 45 seconds. The shared
+  // loader already explains the wait; only an actual child failure is fatal.
   if(gameLoaded)gameLoader.ready();
 }
 game.addEventListener('load',()=>{
@@ -129,9 +128,9 @@ game.addEventListener('load',()=>{
   if(!gameStage){gameLoader.fail();return;}
   const check=()=>{
     if(gameStage.dataset.ready==='true'){
-      gameLoaded=true;clearTimeout(gameTimeout);gameReadyObserver?.disconnect();gameLoader.ready();
+      gameLoaded=true;gameReadyObserver?.disconnect();gameLoader.ready();
     }else if(gameStage.getAttribute('aria-busy')==='false'){
-      clearTimeout(gameTimeout);gameReadyObserver?.disconnect();gameLoader.fail();
+      gameReadyObserver?.disconnect();gameLoader.fail();
     }
   };
   gameReadyObserver=new MutationObserver(check);
@@ -170,7 +169,7 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
-window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);clearTimeout(gameTimeout);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();performancePanel.destroy();}});
+window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();performancePanel.destroy();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
