@@ -45,6 +45,12 @@ async function api(request,response,path){
  rateLimit(request);
  if(path==='/api/internal/rewards/award'&&request.method==='POST'){trusted(request);const data=await body(request);data.phone=phone(data.phone);return json(response,200,await awardPoints(data))}
  if(request.method==='POST')sameOrigin(request);
+ if(path==='/api/game-load-failure'&&request.method==='POST'){
+  const data=await body(request,512);
+  if(!data||!['module','styles','table','collision','physics','first-frame'].includes(data.phase)||!['memory','graphics','wasm','asset','runtime'].includes(data.code)||typeof data.embedded!=='boolean'||Object.keys(data).some(key=>!['phase','code','embedded'].includes(key)))fail(400,'Invalid startup report.');
+  console.warn(JSON.stringify({event:'game-load-failure',phase:data.phase,code:data.code,embedded:data.embedded}));
+  return json(response,202,{received:true});
+ }
  const [id,p]=player(request,response);
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
  if(path==='/api/account'&&request.method==='GET'){

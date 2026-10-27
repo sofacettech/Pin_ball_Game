@@ -44,7 +44,7 @@ test('trail records the reflection vertex instead of cutting across a bounce',()
 });
 
 function loader({story=true,reduced=false,embedded=false,managed=false,fontReady=Promise.resolve()}={}){
- const animations=[],timers=new Map();let id=0;
+ const animations=[],reports=[],timers=new Map();let id=0;
  const element=()=>({hidden:false,dataset:{},style:{setProperty(){}},children:[],firstChild:{textContent:''},setAttribute(name,value){this[name]=value},removeAttribute(name){delete this[name]},getBoundingClientRect:()=>({width:1440,height:720,bottom:90}),replaceChildren(...children){this.children=children},get textContent(){return this.children.map(child=>child.textContent).join('')},set textContent(value){this.children=[{textContent:value}]}});
  const root=element(),stage=element(),statement=element(),phrase=element(),error=element(),status=element(),retry=element(),canvas=element(),body=element();
  body.hasAttribute=name=>!managed&&name==='data-game-loading';
@@ -55,8 +55,9 @@ function loader({story=true,reduced=false,embedded=false,managed=false,fontReady
  document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:''}}}[id]);
  document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];document.createTextNode=textContent=>({textContent});document.createElement=element;
  const context={CustomEvent,window,document,parent:embedded?{}:window,location:{search:story?'?from=chess':'',origin:'http://localhost',href:'http://localhost/play.html'},URLSearchParams,URL,matchMedia:()=>motion,AbortController,ResizeObserver:class{observe(){}disconnect(){}},devicePixelRatio:1,visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,cancelAnimationFrame(){},setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key)};
+ context.fetch=async(url,options)=>{reports.push({url,...options})};
  vm.runInNewContext(source,context);
- return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,document,motion,timers,flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
+ return{api:window.sofacetGameLoader,root,stage,statement,phrase,error,animations,reports,document,motion,timers,flushFade(){for(const [key,timer]of timers)if(timer.duration<=800){timers.delete(key);timer.callback()}}};
 }
 const fontLoaded=()=>new Promise(resolve=>setImmediate(resolve));
 test('chess arrival shows each approved message once and waits for both story and table',async()=>{
@@ -116,4 +117,14 @@ test('managed entrance uses the current shared story and signals one game handof
  assert.equal(messages[1],'Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.');
  assert.match(messages[3],/Cyan.*take points away/);
  assert.equal(handoffs,1);view.flushFade();assert.equal(view.root.hidden,true);
+});
+
+test('startup errors retain a failure stage and report categories once without error text',()=>{
+ for(const [message,code] of [['Out of memory allocating a buffer','memory'],['WebGL context lost','graphics'],['WebAssembly.RuntimeError: unreachable','wasm'],['Failed to fetch https://host/private?token=secret','asset'],['Unexpected type','runtime']]){
+  const view=loader({embedded:true});view.api.fail(Error(message),'physics');view.api.fail(Error('duplicate'),'module');
+  assert.equal(view.root.dataset.errorCode,code);assert.equal(view.root.dataset.errorPhase,'physics');
+  assert.equal(view.reports.length,1);assert.equal(view.reports[0].url,'/api/game-load-failure');
+  assert.deepEqual(JSON.parse(view.reports[0].body),{phase:'physics',code,embedded:true});
+  assert.equal(view.reports[0].credentials,'omit');assert.equal(view.reports[0].keepalive,true);
+ }
 });

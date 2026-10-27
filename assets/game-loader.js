@@ -133,12 +133,20 @@
   root.dispatchEvent(new CustomEvent('sofacet:game-loader-ready'));
   fade=setTimeout(()=>{root.hidden=true;document.body.removeAttribute('data-game-loading')},motion.matches?0:story?800:200);
  }
- function fail(){
+ function fail(reason,phase='module'){
+  if(failed)return;
+  const message=String(reason?.message||reason||'Unknown startup failure');
+  const code=/memory|allocation|array buffer|out of bounds/i.test(message)?'memory':/webgl|context lost|gpu/i.test(message)?'graphics':/wasm|webassembly|unreachable/i.test(message)?'wasm':/fetch|network|load|asset|http/i.test(message)?'asset':'runtime';
+  console.error('[SOFACET game startup]',phase,code,reason);
+  root.dataset.errorCode=code;root.dataset.errorPhase=phase;
+  // Send only bounded categories to our own logs: no player, URL, or error text.
+  if(gamePage)try{void fetch('/api/game-load-failure',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'omit',keepalive:true,
+   body:JSON.stringify({phase,code,embedded:parent!==window})}).catch(()=>{})}catch{}
   if(root.hidden)show();failed=true;cleanup();active=false;statement.hidden=true;error.hidden=false;root.dataset.state='error';document.getElementById('stage')?.setAttribute('aria-busy','false');
  }
  const style=document.getElementById('game-entry-style');
- const stylesReady=style?.dataset.failed?Promise.reject(Error('Game styles unavailable')):!style||style.sheet?Promise.resolve():new Promise((resolve,reject)=>{style.addEventListener('load',resolve,{once:true});style.addEventListener('error',()=>{fail();reject(Error('Game styles unavailable'))},{once:true})});
- stylesReady.catch(fail);
+ const stylesReady=style?.dataset.failed?Promise.reject(Error('Game styles unavailable')):!style||style.sheet?Promise.resolve():new Promise((resolve,reject)=>{style.addEventListener('load',resolve,{once:true});style.addEventListener('error',()=>reject(Error('Game styles unavailable')),{once:true})});
+ stylesReady.catch(error=>fail(error,'styles'));
  window.sofacetGameLoader={show,ready,fail,cancel:hide,stylesReady,isActive:()=>parentVisible,setActive(value){parentVisible=value;value?resume():stop()}};
  root.querySelector('[data-game-retry]').onclick=()=>location.reload();
  document.addEventListener('click',event=>{

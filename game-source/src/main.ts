@@ -156,16 +156,22 @@ function pauseOnFocusLoss(){clearKeys();if(loaded&&physics.active&&physics.state
 addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilitychange',()=>{syncLoadingAnimation();if(document.hidden){pauseOnFocusLoss();cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0}else requestGameFrame()});
 window.addEventListener('resize',()=>{clearKeys();applyDeviceView();applyInspectionLayout()});
 function bindFeedback(){caveEjecting=false;physics.onHit=(id,delta)=>{view.hit(id);if(delta>0)view.scoreDiamonds();sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>{view.scoreDiamonds();sound.play('collect')};physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
-async function start(){try{
+async function start(){let phase='styles';try{
  await window.sofacetGameLoader?.stylesReady;
+ phase='table';
  await view.load((_value,label)=>{$('loading-detail').textContent=label});
+ phase='collision';
  $('loading-detail').textContent='Preparing ball and paddle movement…';
  const fetchAsset=async(name:string)=>{const response=await fetch('/assets/'+name+'?v='+(view.manifest.asset_checksums[name]||view.manifest.asset_revision));if(!response.ok)throw new Error('Missing physics asset: '+name);return response};
  const [vertices,indices,obstacles]=await Promise.all([fetchAsset('collision-vertices.bin').then(r=>r.arrayBuffer()),fetchAsset('collision-indices.bin').then(r=>r.arrayBuffer()),fetchAsset('collider-entities.json').then(r=>r.json())]);
  await new Promise<void>(resolve=>setTimeout(resolve,0));
+ phase='physics';
  physicsAssets={vertices:new Float32Array(vertices),indices:new Uint32Array(indices),obstacles};physics=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,obstacles);bindFeedback();
- loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();stage.dataset.ready='true';stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.ready();requestGameFrame();
- }catch(error){stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.fail();$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
+ phase='first-frame';
+ loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();
+ if(view.renderer.getContext().isContextLost())throw new Error('WebGL context lost during game startup');
+ stage.dataset.ready='true';stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.ready();requestGameFrame();
+ }catch(error){loaded=false;window.sofacetGameLoader?.fail(error,phase);stage.setAttribute('aria-busy','false');$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
 function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!physics.paused)accumulator+=delta;else accumulator=0;
  while(accumulator>=DT){const controls=input(),launches=physics.launches;
   if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
