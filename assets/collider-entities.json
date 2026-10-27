@@ -27947,7 +27947,7 @@
       0.0003270539457327377,
       -0.3623703209727778
     ],
-    "score_delta": 250,
+    "score_delta": 200,
     "response": "powered_floor_impact; drum_top_and_rail_support_remain_unpowered"
   },
   {
@@ -28037,7 +28037,7 @@
       8.757777880176642e-05,
       -0.4174167705790549
     ],
-    "score_delta": 250,
+    "score_delta": 200,
     "response": "powered_floor_impact; drum_top_and_rail_support_remain_unpowered"
   },
   {
