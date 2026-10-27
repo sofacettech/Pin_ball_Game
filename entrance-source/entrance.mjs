@@ -17,6 +17,7 @@ const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
 let phase='loading',openingPlayback,gameLoader,gameReadyObserver;
+let gameRecovering=false;
 let sceneReady=false,openingFinished=false,startupFailed=false;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
@@ -73,6 +74,13 @@ function gameVisibility(visible){
 }
 // This parent owns the reward story; the hidden game must not wait on a second story.
 function loadGame(){if(!game.getAttribute('src'))game.src='/play.html';}
+function recoverGame(){
+  if(gameRecovering||gameVisible)return;
+  gameRecovering=true;gameReadyObserver?.disconnect();
+  // A fresh document releases both scenes and a partially initialized game.
+  // The standalone loader has no route back here, so recovery cannot loop.
+  location.replace('/play.html?recovery=entrance');
+}
 function showGame(){
   if(!gameLoaded||!gameRequested||gameVisible)return;
   gameVisible=true;
@@ -80,8 +88,6 @@ function showGame(){
   main.inert=true;main.setAttribute('aria-hidden','true');game.inert=false;game.removeAttribute('aria-hidden');
   siteSound.handoff();siteSound.save();journey?.suspend();
   gameVisibility(!document.hidden);game.focus();
-  // The last journey frame stays behind the crossfade, then release its GPU context.
-  setTimeout(()=>{journey?.dispose();journey=null;},350);
 }
 function enterGame({fromChess=false}={}){
   if(gameRequested)return;gameRequested=true;cancelStartup();
@@ -90,7 +96,11 @@ function enterGame({fromChess=false}={}){
   // Keep game work after the 3D loop stops. The origin/main loader covers real
   // game readiness, including its reward-copy sequence after the chess room.
   main.inert=true;document.body.setAttribute('data-game-loading','');
-  gameLoader.show({story:fromChess});loadGame();
+  gameLoader.show({story:fromChess});
+  // The opaque Canvas loader now covers the chess frame. Free its geometry,
+  // reflection targets and WebGL context before allocating the pinball table.
+  journey?.dispose();journey=null;
+  loadGame();
   // A cold mobile download can legitimately exceed 45 seconds. The shared
   // loader already explains the wait; only an actual child failure is fatal.
   if(gameLoaded)gameLoader.ready();
@@ -99,12 +109,12 @@ game.addEventListener('load',()=>{
   if(!game.getAttribute('src'))return;
   gameVisibility(false);gameReadyObserver?.disconnect();
   const gameStage=game.contentDocument?.getElementById('stage');
-  if(!gameStage){gameLoader.fail();return;}
+  if(!gameStage){recoverGame();return;}
   const check=()=>{
     if(gameStage.dataset.ready==='true'){
       gameLoaded=true;gameReadyObserver?.disconnect();gameLoader.ready();
     }else if(gameStage.getAttribute('aria-busy')==='false'){
-      gameReadyObserver?.disconnect();gameLoader.fail();
+      recoverGame();
     }
   };
   gameReadyObserver=new MutationObserver(check);

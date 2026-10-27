@@ -9,29 +9,31 @@ const source=readFileSync(new URL('../entrance-source/entrance.mjs',import.meta.
 const handoff=source.slice(source.indexOf('function gameVisibility('),source.indexOf("$('scroll-hint').addEventListener"));
 
 function entrance(){
- const timers=new Map();let now=0,id=0,observer;
+ const timers=new Map(),events=[],redirects=[];let now=0,id=0,observer;
  const stage={dataset:{ready:'false'},busy:'true',getAttribute(){return this.busy}};
  const game=new EventTarget();
  game.getAttribute=()=>game.src;
+ let gameSource;
+ Object.defineProperty(game,'src',{get:()=>gameSource,set(value){gameSource=value;events.push('load-game')}});
  game.contentDocument={getElementById:()=>stage};
  game.contentWindow={postMessage(){}};
  game.removeAttribute=()=>{};game.focus=()=>{};
  const loader={failed:false,shown:0,failures:0,readyCalls:0,
-  show(){this.shown++},fail(){this.failed=true;this.failures++},
+  show(){this.shown++;events.push('show-loader')},fail(){this.failed=true;this.failures++},
   ready(){this.readyCalls++;if(!this.failed)context.showGame()},
  };
  const context={cancelStartup(){},game,gameLoader:loader,main:{setAttribute(){}},
-  document:{body:{dataset:{},setAttribute(){}}},location:{origin:'http://localhost'},
+  document:{body:{dataset:{},setAttribute(){}}},location:{origin:'http://localhost',replace:url=>redirects.push(url)},
   siteSound:{handoff(){},save(){}},opening:{removeAttribute(){},load(){}},
-  journey:{suspend(){},dispose(){}},
+  journey:{suspend(){},dispose(){events.push('dispose-journey')}},
   MutationObserver:class{constructor(callback){this.callback=callback;observer=this}observe(){}disconnect(){this.disconnected=true}},
   cancelAnimationFrame(){},
   setTimeout(callback,ms){const key=++id;timers.set(key,{callback,at:now+ms});return key},
   clearTimeout(key){timers.delete(key)},
  };
- vm.runInNewContext(`let gameRequested=false,gameLoaded=false,gameVisible=false,raf=0,openingPlayback,gameReadyObserver;${handoff};this.state=()=>({gameRequested,gameLoaded,gameVisible});`,context);
- return{context,loader,stage,game,
-  enter(){context.enterGame()},
+ vm.runInNewContext(`let gameRequested=false,gameLoaded=false,gameVisible=false,gameRecovering=false,raf=0,openingPlayback,gameReadyObserver;${handoff};this.state=()=>({gameRequested,gameLoaded,gameVisible});`,context);
+ return{context,loader,stage,game,events,redirects,
+  enter(options){context.enterGame(options)},
   frameLoaded(){game.dispatchEvent(new Event('load'))},
   ready(){stage.dataset.ready='true';stage.busy='false';observer.callback()},
   fail(){stage.busy='false';observer.callback()},
@@ -51,7 +53,7 @@ test('a cold download lasting over 45 seconds still hands off when ready',()=>{
  assert.equal(view.context.state().gameVisible,true);
  assert.equal(view.context.document.body.dataset.game,'visible');
  view.advance(350);
- assert.equal(view.context.journey,null,'Release the entrance renderer after handoff');
+ assert.equal(view.context.journey,null);
 });
 
 test('a delayed iframe document can load after the former deadline',()=>{
@@ -61,15 +63,24 @@ test('a delayed iframe document can load after the former deadline',()=>{
  assert.equal(view.context.state().gameVisible,true);
 });
 
-test('actual child initialization failures still show the retry screen',()=>{
+test('chess handoff releases the entrance before allocating the game',()=>{
+ const view=entrance();view.enter({fromChess:true});
+ assert.deepEqual(view.events,['show-loader','dispose-journey','load-game']);
+ assert.equal(view.context.journey,null,'No concurrent entrance and table GPU allocations');
+ view.enter();assert.equal(view.events.length,3,'Repeated input cannot allocate twice');
+});
+
+test('child initialization failures recover once in a fresh standalone game document',()=>{
  const view=entrance();view.enter();view.frameLoaded();view.fail();
- assert.equal(view.loader.failures,1);
+ view.fail();
+ assert.deepEqual(view.redirects,['/play.html?recovery=entrance']);
+ assert.equal(view.loader.failures,0,'Do not strand the visitor behind the parent error screen');
  assert.equal(view.context.state().gameVisible,false);
  assert.equal(view.loader.readyCalls,0);
 });
 
 test('an iframe response without the game stage is an actual failure',()=>{
  const view=entrance();view.enter();view.game.contentDocument=null;view.frameLoaded();
- assert.equal(view.loader.failures,1);
+ assert.deepEqual(view.redirects,['/play.html?recovery=entrance']);
  assert.equal(view.context.state().gameVisible,false);
 });
