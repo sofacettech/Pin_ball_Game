@@ -415,6 +415,9 @@ body.handheld #stage.has-scorecard{padding-top:var(--site-header-clearance)}
 @media(prefers-reduced-motion:reduce){body.handheld .side-panel .card-inner,body.handheld #stage #scorecard-panel #touch-launch{transition:none}}
 body.handheld #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#171022;box-shadow:inset 0 0 0 1px var(--card-lime)}
 
+/* A first-time player needs only Play. Keep the guide's reserved space while practising. */
+body:not(.practising-controls) #stage.has-scorecard .side-panel.play-only{height:auto;align-self:center}
+
 /* Mobile life indicators use one shared raster sprite, outside the WebGL scene. */
 #mobile-lives{display:none;position:fixed;top:calc(var(--site-header-clearance) - 10px);left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));z-index:5;align-items:center;gap:8px;pointer-events:none;user-select:none}
 body.phone-layout #mobile-lives{display:flex}

@@ -69,9 +69,20 @@ const keyboardPaddle=(side:'left'|'right')=>side==='left'?keys.has('KeyA')||keys
 const touchInput=matchMedia('(any-pointer: coarse)');
 const primaryTouch=matchMedia('(pointer: coarse)');let phone=false;
 const mobileView=()=>completeViewOnly(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches)||matchMedia('(max-width:1024px)').matches;
-function applyScoreboardLayout(){const mobile=mobileView();scorecard.setPhoneStage(mobile);if(mobile)scorecard.showScore(!loaded||!physics.active||physics.state==='playing'||physics.state==='finished');const visible=!inspecting;if(scorecardPanel.hidden===!visible)return;scorecardPanel.hidden=!visible;stage.classList.toggle('has-scorecard',visible);view.resize()}
+function applyScoreboardLayout(){
+ const mobile=mobileView();scorecard.setPhoneStage(mobile);scorecard.setPregame(!loaded||!physics.active);
+ if(mobile)scorecard.showScore(!loaded||!physics.active||physics.state==='playing'||physics.state==='finished');
+ const playOnly=scorecard.hidden,visible=!inspecting;
+ const changed=scorecardPanel.hidden===visible||scorecardPanel.classList.contains('play-only')!==playOnly;
+ const label=playOnly?'Play pinball':mobile?'Scoreboard':'How to play and scoreboard';
+ if(!changed&&scorecardPanel.getAttribute('aria-label')===label)return;
+ scorecardPanel.classList.toggle('play-only',playOnly);$('flip-hint').hidden=playOnly;
+ scorecardPanel.setAttribute('aria-label',label);
+ scorecardPanel.hidden=!visible;stage.classList.toggle('has-scorecard',visible);
+ if(changed)view.resize();
+}
 function applyNavigationLayout(){const compact=phone||loaded&&physics.active&&physics.state!=='finished'&&!inspecting;document.body.classList.toggle('compact-navigation',compact);view.setPhonePlay(phone&&loaded&&physics.active&&physics.state!=='finished'&&!inspecting&&!tutorial?.active)}
-function applyDeviceView(){const mobile=mobileView();phone=phoneDevice(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches,Math.min(screen.width,screen.height))||matchMedia('(max-width: 740px) and (orientation: portrait)').matches;document.body.classList.toggle('handheld',mobile);document.body.classList.toggle('phone-layout',phone);scorecardPanel.setAttribute('aria-label',mobile?'Scoreboard':'How to play and scoreboard');view.setHandheld(mobile);applyScoreboardLayout();applyNavigationLayout()}
+function applyDeviceView(){const mobile=mobileView();phone=phoneDevice(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches,Math.min(screen.width,screen.height))||matchMedia('(max-width: 740px) and (orientation: portrait)').matches;document.body.classList.toggle('handheld',mobile);document.body.classList.toggle('phone-layout',phone);view.setHandheld(mobile);applyScoreboardLayout();applyNavigationLayout()}
 applyDeviceView();primaryTouch.addEventListener('change',applyDeviceView);
 const canTouch=(control:'paddle'|'launch')=>loaded&&!starting&&!tutorial?.active&&!inspecting&&!physics.paused&&physics.state!=='finished'&&menu.hidden&&!registration.open&&!rewards.dialog.open&&!leaderboard.dialog.open&&(control==='paddle'||physics.active&&(physics.state==='launcher'||physics.state==='charging'));
 function paddleInput(state=touch.state){activePaddle=selectPaddle(keyboardPaddle('left')||state.left,keyboardPaddle('right')||state.right,activePaddle);return{left:activePaddle==='left',right:activePaddle==='right'}}

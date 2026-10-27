@@ -2,7 +2,12 @@ const format=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 
 export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,best:HTMLElement){
  const front=button.querySelector<HTMLElement>('.front')!,back=button.querySelector<HTMLElement>('.back')!;
- let previousScore:number|undefined,previousBest:number|null|undefined,phone=false,visible:boolean|undefined;
+ let previousScore:number|undefined,previousBest:number|null|undefined,phone=false,pregame=false,visible:boolean|undefined;
+ function applyPregame(){
+  // Null means no completed, verified run; a saved zero is still a returning player.
+  button.hidden=pregame&&previousBest==null;
+  if(pregame&&!button.hidden)showScore(true);
+ }
  function showScore(show:boolean){
   if(visible===show)return;visible=show;
   button.classList.toggle('flipped',show);
@@ -15,7 +20,10 @@ export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,
  }
  button.addEventListener('click',()=>{if(!phone)showScore(!button.classList.contains('flipped'))});
  showScore(false);
- return {showScore,setPhoneStage(mobile:boolean){
+ return {showScore,get hidden(){return button.hidden===true},setPregame(waiting:boolean){
+  if(pregame===waiting)return;
+  pregame=waiting;applyPregame();
+ },setPhoneStage(mobile:boolean){
   if(phone===mobile)return;
   phone=mobile;visible=undefined;button.tabIndex=phone?-1:0;
   button.setAttribute('role',phone?'group':'button');
@@ -27,6 +35,6 @@ export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,
   best.setAttribute('aria-label',personalBest===null?'No saved score available':`Highest score: ${best.textContent}`);
   const characters=Math.max(score.textContent.length,best.textContent.length);
   button.style.setProperty('--score-size',Math.min(76,420/characters)+'px');
-  previousScore=current;previousBest=personalBest;
+  previousScore=current;previousBest=personalBest;applyPregame();
  }};
 }
