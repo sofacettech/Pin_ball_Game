@@ -1,0 +1,14 @@
+{
+  "compact": {
+    "bytes": 10076816,
+    "instancedTriangles": 1367562,
+    "storedTriangles": 1350476,
+    "meshNodes": 203,
+    "primitives": 286,
+    "materials": 101,
+    "textures": 12,
+    "textureBytes": 132166,
+    "animations": 1,
+    "animationChannels": 296
+  }
+}

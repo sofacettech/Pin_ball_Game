@@ -23,18 +23,33 @@ try{
   await setTimeout(1000);
  }
  assert.ok(healthy,'Health check did not become ready.');
- for(const path of ['/','/play.html']){
+ for(const path of ['/','/index.html','/play.html','/entrance-3d','/entrance-3d/','/video','/video/','/launching-soon.html','/first-cuts-confirmation.html']){
   const res=await request(path);
   assert.equal(res.status,200,path);
   const html=await res.text();
   assert.match(html,/<html/i,path);
+  if(path==='/'||path==='/index.html'||path.startsWith('/entrance-3d')){
+   assert.match(html,/\/assets\/entrance-3d\//,'Default route serves the Three.js entrance');
+   assert.doesNotMatch(html,/node_modules|\/work\/|\/experiments\//,'3D route uses deployable assets only');
+  }else if(path.startsWith('/video')){
+   assert.match(html,/<base href="\/">/,'Video aliases resolve relative assets from the site root');
+   assert.match(html,/id="story-copy"/,'Shared video presentation remains available');
+   assert.doesNotMatch(html,/\/assets\/entrance-3d\//,'Video comparison does not download the 3D world');
+  }
   const resources=[...html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)].map(match=>match[1]);
   for(const resource of resources){
    if(/^https?:\/\//.test(resource))continue;
-   const asset=await request(new URL(resource,new URL(path,origin)).pathname,{method:'HEAD'});
+   const asset=await request(new URL(resource,origin).pathname,{method:'HEAD'});
    assert.equal(asset.status,200,resource);
   }
  }
+ const model=await request('/assets/entrance-3d/journey-compact.glb',{headers:{Range:'bytes=0-11'}});
+ assert.equal(model.status,206,'3D model byte-range support');
+ assert.equal(model.headers.get('content-type'),'model/gltf-binary');
+ const glb=new DataView(await model.arrayBuffer());
+ assert.equal(glb.getUint32(0,true),0x46546c67,'3D model is a real GLB');
+ assert.equal(glb.getUint32(4,true),2,'GLB version');
+ assert.equal(model.headers.get('content-range'),`bytes 0-11/${glb.getUint32(8,true)}`);
  const video=await request('/assets/sofacet-experience.mp4',{headers:{Range:'bytes=0-31'}});
  assert.equal(video.status,206,'Video byte-range support');
  assert.match(video.headers.get('content-type'),/^video\/mp4/);
@@ -58,7 +73,7 @@ try{
    }
   }
  }
- for(const path of ['/.env','/data/players.json','/server.mjs'])assert.equal((await request(path)).status,404,path);
+ for(const path of ['/.env','/data/players.json','/server.mjs','/entrance-source/entrance.mjs','/work/threejs-scene/journey-compact.glb'])assert.equal((await request(path)).status,404,path);
  if(!remote){
   const player=await request('/api/player');
   assert.equal(player.status,200);

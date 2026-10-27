@@ -80,12 +80,12 @@ try{
   // the same runner. Renderer entry modules and the pacer come from the baseline.
   if(baseline)await page.route('**/*',async route=>{
    const path=new URL(route.request().url()).pathname;
-   const body=previous?previousAssets.get(path==='/'?'/index.html':path):undefined;
+   const body=previous?previousAssets.get(path==='/video'?'/index.html':path):undefined;
    if(body)await route.fulfill({status:200,body,contentType:path.endsWith('.js')?'text/javascript':'text/html'});
    else await route.continue();
   });
   try{
-   const pageURL=new URL(url);if(native)pageURL.searchParams.set('renderer','native');
+   const pageURL=new URL(url);if(pageURL.pathname==='/')pageURL.pathname='/video';if(native)pageURL.searchParams.set('renderer','native');
    await page.goto(pageURL.href,{waitUntil:'domcontentloaded'});
    // Autoplay denial must offer an actionable control, including reduced-power browsers.
    await page.waitForFunction(()=>window.sofacetPreview&&(

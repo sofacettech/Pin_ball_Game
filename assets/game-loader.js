@@ -6,7 +6,7 @@
  const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
  const status=root.querySelector('[role="status"]'),error=root.querySelector('.game-loading-error');
  const gamePage=document.body.hasAttribute('data-game-loading');
- const story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
+ let story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
  const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
  const messages=['Your points could become something precious','Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.','Play well. Save your points. Shine later.','Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.'];
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -103,8 +103,10 @@
   observer=new ResizeObserver(()=>{measure();if(motion.matches)draw()});
   for(const element of document.querySelectorAll('#game-header,.navbar-backdrop,.site-brand,[data-menu-toggle]'))observer.observe(element);
  }
- function show(){
+ function show(options={}){
   if(active&&!failed)return;
+  // A parent entrance can own the same story while its game iframe loads.
+  story=options.story??story;
   clearTimeout(fade);cleanup();active=true;failed=false;root.hidden=false;delete root.dataset.state;error.hidden=true;
   statementIndex=0;storyDone=!story||motion.matches;readyPending=false;statement.hidden=!story;
   if(story){
@@ -128,6 +130,7 @@
   if(story){phrase.style.opacity='1';phrase.style.transform='none'}
   cleanup();active=false;const stage=document.getElementById('stage');if(stage){stage.inert=false;stage.dataset.ready='true';stage.setAttribute('aria-busy','false')}
   blocked=[];root.dataset.state='leaving';
+  root.dispatchEvent(new CustomEvent('sofacet:game-loader-ready'));
   fade=setTimeout(()=>{root.hidden=true;document.body.removeAttribute('data-game-loading')},motion.matches?0:story?800:200);
  }
  function fail(){
@@ -139,6 +142,7 @@
  window.sofacetGameLoader={show,ready,fail,cancel:hide,stylesReady,isActive:()=>parentVisible,setActive(value){parentVisible=value;value?resume():stop()}};
  root.querySelector('[data-game-retry]').onclick=()=>location.reload();
  document.addEventListener('click',event=>{
+  if(root.hasAttribute('data-managed'))return;
   if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.defaultPrevented)return;
   const link=event.target.closest?.('a[href]');if(!link||link.target==='_blank'||link.hasAttribute('download'))return;
   const url=new URL(link.href,location.href);if(url.origin!==location.origin||url.pathname!=='/play.html')return;

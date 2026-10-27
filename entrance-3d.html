@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>SOFACET — Enter the world</title>
+  <base href="/">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" data-entrance-style href="/assets/entrance-3d/entrance-f049952a8456.css">
+  <link rel="preload" href="/assets/fonts/AcuminVariableConcept.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preload" href="/assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
+</head>
+<body data-phase="opening" data-loading>
+  <main id="entrance" aria-label="Explore the SOFACET world" inert aria-hidden="true">
+    <div id="scene-viewport">
+      <div id="scene-frame" aria-hidden="true"></div>
+      <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SOFACET fragmented ball assembling"></video></div>
+    </div>
+    <!-- Both entrances share the approved presentation from /video. -->
+    <div id="story-copy" aria-label="The SOFACET story"></div>
+    <div class="wordmark brand-logo site-brand"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></div>
+    <header class="site-navigation site-nav">
+      <a id="skip-game" class="play-now" href="/play.html">Skip to Game</a>
+      <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
+      <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
+          <a class="menu-item" href="/account.html" target="_top" data-account-link>My Account</a>
+          <a class="menu-item" href="/about.html" target="_top">About</a>
+          <a class="menu-item" href="/faq.html" target="_top">FAQs</a>
+          <a class="menu-item" href="/privacy.html" target="_top">Privacy Policies</a>
+        </nav>
+    </header>
+
+    <button id="enter" type="button" hidden>Enter SOFACET <span aria-hidden="true">→</span></button>
+    <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
+    <div id="progress" aria-hidden="true"></div>
+  </main>
+  <div id="world-loading" role="status" aria-live="polite">
+    <img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="200" height="28">
+    <p id="world-status">Loading the world…</p>
+    <a id="loading-fallback" href="/play.html" hidden>Continue to the game ↗</a>
+  </div>
+  <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
+  <div id="scroll-space" aria-hidden="true"></div>
+  <noscript><style>#world-loading{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
+  <script type="module" src="/assets/entrance-3d/entry-4VM22JFJ.js"></script>
+</body>
+</html>

@@ -36,7 +36,7 @@ try{
  page.on('response',response=>{
   if(response.url().includes('/videos/'))requests.push({url:response.url(),status:response.status()});
  });
- await page.goto(url+(forceNative?'/?renderer=native':''),{waitUntil:'domcontentloaded'});
+ await page.goto(url+'/video'+(forceNative?'?renderer=native':''),{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.sofacetPreview&&(document.body.dataset.phase==='idle'||!document.querySelector('#enter').hidden),{},{timeout:60000});
  if(await page.locator('#enter').isVisible())await page.locator('#enter').click();
  await page.waitForFunction(()=>document.body.dataset.phase==='idle',{},{timeout:30000});
