@@ -32,14 +32,9 @@
     <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
     <div id="progress" aria-hidden="true"></div>
   </main>
-  <div id="world-loading" role="status" aria-live="polite">
-    <img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="200" height="28">
-    <p id="world-status" data-scene-status>Loading the world…</p>
-    <a id="loading-fallback" href="/play.html" hidden>Continue to the game ↗</a>
-  </div>
   <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
-  <noscript><style>#world-loading{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
+  <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   __SHARED_NAVIGATION_MODULE__
   <script type="module" src="__ENTRANCE_JS__"></script>
 </body>

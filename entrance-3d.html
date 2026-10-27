@@ -227,18 +227,13 @@ body[data-loading]{overflow:hidden}
 #opening-frame #opening{width:100%;height:100%;object-fit:contain}
 body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel,body[data-phase="opening"] #scroll-hint{visibility:hidden}
 #enter{z-index:5}
-#world-loading{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:#080b15;transition:opacity .4s ease,visibility .4s;color:#cbc4dc;font-size:13px;letter-spacing:.035em}
-#world-loading p{margin:0}
-#world-loading a{color:#fff;text-underline-offset:5px}
-body:not([data-loading]) #world-loading{opacity:0;visibility:hidden;pointer-events:none}
-body[data-error] #world-loading{opacity:1;visibility:visible;pointer-events:auto}
 #scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 13px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
 body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}
 body[data-game="visible"] #entrance{visibility:hidden}
 @media(max-width:600px){#scroll-hint{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:none;font-size:12px;gap:12px}}
-@media(prefers-reduced-motion:reduce){#world-loading,#scroll-hint{transition:none}}
+@media(prefers-reduced-motion:reduce){#scroll-hint{transition:none}}
 
 /* Visible in the first HTML response, before fonts or scene scripts arrive. */
 .startup-feedback{position:absolute;left:24px;right:24px;bottom:max(9vh,32px);z-index:2;display:grid;justify-items:center;gap:14px;color:#cbd0bf;font:14px/1.5 Arial,sans-serif;text-align:center}
@@ -441,15 +436,10 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
     <div id="progress" aria-hidden="true"></div>
   </main>
-  <div id="world-loading" role="status" aria-live="polite">
-    <img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="200" height="28">
-    <p id="world-status" data-scene-status>Loading the world…</p>
-    <a id="loading-fallback" href="/play.html" hidden>Continue to the game ↗</a>
-  </div>
   <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
-  <noscript><style>#world-loading{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
+  <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
-  <script type="module" src="/assets/entrance-3d/entry-CQ4E6BK4.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-BJHY6ORR.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

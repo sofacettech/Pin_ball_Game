@@ -185,7 +185,13 @@ try{
   journey?.dispose();journey=null;
   if(!gameRequested){
     openingPlayback?.destroy();
-    await presentationReady;document.body.dataset.error='';
-    console.error(error);setStartupStatus('The 3D world could not load.');$('loading-fallback').hidden=false;
+    document.body.dataset.error='';console.error(error);
+    await presentationReady;
+    // The entrance is optional. Recover through the normal game loader instead
+    // of stopping visitors on a separate error screen that needs another tap.
+    if(!gameRequested){
+      if(gameLoader)enterGame();
+      else location.replace('/play.html');
+    }
   }
 }

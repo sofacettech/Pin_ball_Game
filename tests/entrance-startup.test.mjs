@@ -53,13 +53,14 @@ const startup=source.slice(source.lastIndexOf('\ntry{')).replace("import('./jour
 const opening=source.slice(source.indexOf('function finishOpening(){'),source.indexOf('function gameVisibility('));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
 async function startupFixture(){
- const model=deferred(),nodes=new Map();let started=0,removed=0,disposed=0,aborted=0;
+ const model=deferred(),nodes=new Map();let started=0,removed=0,disposed=0,aborted=0,handoffs=0,redirect;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},load(){},remove(){removed++}});
  const renderer={loadVariant:()=>model.promise,resize(){},dispose(){disposed++}};
  const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
   $:id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
   document:{body:{dataset:{}}},fetch:async()=>({ok:true,json:async()=>({points:[]})}),
   gameRequested:false,startupFailed:false,sceneReady:false,openingFinished:false,ready:false,firstFrame:240,
+  gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
   presentationReady:Promise.resolve(),modelDownload:model.promise,
   loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},prepareMedia:async()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},
   cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
@@ -69,7 +70,7 @@ async function startupFixture(){
  vm.createContext(context);vm.runInContext(opening,context);
  const done=vm.runInContext('(async()=>{'+startup+'})()',context);
  await new Promise(resolve=>setImmediate(resolve));
- return{context,model,done,get started(){return started},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed}};
+ return{context,model,done,get started(){return started},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
 }
 
 test('the opening plays before scene readiness and holds its final frame until GPU preparation completes',async()=>{
@@ -85,7 +86,21 @@ test('skipping while a cold model loads releases its renderer without showing a 
  assert.equal(view.disposed,1);assert.equal(view.aborted,1);assert.equal(view.context.document.body.dataset.error,undefined);
 });
 
-test('a real scene failure leaves a usable direct-game fallback',async()=>{
+test('a real scene failure automatically opens the game without another user action',async()=>{
  const view=await startupFixture();view.model.reject(Error('Network disconnected'));await view.done;
- assert.equal(view.context.document.body.dataset.error,'');assert.equal(view.context.$('loading-fallback').hidden,false);assert.equal(view.disposed,1);
+ assert.equal(view.handoffs,1);assert.equal(view.redirect,undefined);assert.equal(view.disposed,1);
+ assert.equal(view.context.gameRequested,true);
+});
+
+test('failure before the shared game loader is available navigates directly to the game',async()=>{
+ const view=await startupFixture();view.context.gameLoader=undefined;
+ view.model.reject(Error('Presentation unavailable'));await view.done;
+ assert.equal(view.redirect,'/play.html');assert.equal(view.handoffs,0);assert.equal(view.disposed,1);
+});
+
+test('manual Skip to Game during recovery does not start a second handoff',async()=>{
+ const view=await startupFixture(),reveal=deferred();view.context.presentationReady=reveal.promise;
+ view.model.reject(Error('Renderer unavailable'));await new Promise(resolve=>setImmediate(resolve));
+ view.context.enterGame();reveal.resolve();await view.done;
+ assert.equal(view.handoffs,1);assert.equal(view.redirect,undefined);
 });
