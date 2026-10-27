@@ -1,7 +1,7 @@
 import './controls-tutorial.css';
 import {Box3, Vector3} from 'three';
 import type {TableView} from './renderer';
-import {TutorialState, hasPractised, rememberPractice} from './tutorial-state';
+import {TutorialState, createTutorialHistory} from './tutorial-state';
 import type {PracticeControl} from './tutorial-state';
 
 export function connectControlsTutorial(view: TableView, viewport: HTMLElement, panel: HTMLElement, onPress: (side: 'left' | 'right') => void) {
@@ -22,14 +22,13 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       <div class="practice-keys" aria-hidden="true"></div>
       <button type="button" class="practice-launch" data-control="launch" aria-label="Hold to charge, then release" aria-pressed="false" hidden><span>Hold to charge · release to launch</span><i></i></button>
       <p class="practice-feedback" role="status" aria-live="polite"></p>
-      <button type="button" class="practice-next" disabled>Try the highlighted side</button>
       <p class="practice-note">Just practice. Your three balls are waiting.</p>
     </section>`;
   document.body.append(dialog);
   const get = <T extends HTMLElement>(selector: string) => dialog.querySelector<T>(selector)!;
   const table = get('.practice-table'), card = get('.practice-card'), marker = get('.practice-marker');
   const title = get('#practice-title'), copy = get('#practice-copy'), keys = get('.practice-keys');
-  const feedback = get('.practice-feedback'), next = get<HTMLButtonElement>('.practice-next');
+  const feedback = get('.practice-feedback');
   const skip = get<HTMLButtonElement>('.practice-skip'), launch = get<HTMLButtonElement>('.practice-launch');
   const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('[data-control]')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -40,6 +39,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
   let afterClose: ((result: 'complete' | 'skip' | 'cancel') => void) | undefined;
   let storage: Storage | undefined;
   try { storage = window.localStorage; } catch { /* Storage is optional. */ }
+  const history = createTutorialHistory(storage);
 
   function refresh() {
     view.needsRender = true;
@@ -56,10 +56,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       step.classList.toggle('is-done', index < state.index);
       if (index === state.index) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current');
     });
-    feedback.textContent = state.held ? isLaunch ? 'Keep holding… then release.' : 'That’s it. Release to lower it.' : state.tried ? isLaunch ? 'Nice. You’re ready to play.' : 'Got it. One flipper at a time.' : isLaunch ? 'Try holding for a moment.' : 'Your turn — give it a tap.';
-    next.disabled = !state.tried || state.held;
-    next.textContent = !state.tried ? isLaunch ? 'Try the launcher first' : 'Try the highlighted side' : isLaunch ? 'Start game →' : state.index === 0 ? 'Next: right side →' : 'Next: launch →';
-    if (dialog.dataset.mode === 'replay' && isLaunch && state.tried) next.textContent = 'Back to game →';
+    feedback.textContent = state.held ? isLaunch ? 'Keep holding… then release.' : 'That’s it. Release to lower it.' : state.tried ? isLaunch ? dialog.dataset.mode === 'replay' ? 'Ready. Returning to your game…' : 'Ready. Starting your game…' : 'Got it. Moving on…' : isLaunch ? 'Try holding for a moment.' : 'Tap once to try it and move on.';
     if (dialog.open) layout();
   }
   function press(control: PracticeControl, token: string) {
@@ -78,7 +75,6 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
   function finish(result: 'complete' | 'skip' | 'cancel') {
     if (!dialog.open) return;
     release(input, true);
-    if (result !== 'cancel') rememberPractice(storage);
     dialog.close();
     document.body.classList.remove('practising-controls');
     view.needsRender = true;
@@ -102,6 +98,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
     button.addEventListener('click', event => {
       if (event.detail !== 0 || state.held) return;
       press(button.dataset.control as PracticeControl, 'assistive');
+      if (input !== 'assistive') return;
       if (state.control === 'launch') state.tick(.4);
       release('assistive');
     });
@@ -121,12 +118,6 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
     else if (!e.repeat) press(control, `key:${e.code}`);
   });
   dialog.addEventListener('cancel', event => { event.preventDefault(); finish('cancel'); });
-  next.onclick = () => {
-    if (!state.tried || state.held) return;
-    if (state.next()) { finish('complete'); return; }
-    elapsed = 0; amount = 0; tapUntil = 0; refresh();
-    buttons.find(button => button.dataset.control === state.control)?.focus({preventScroll: true});
-  };
   skip.onclick = () => finish('skip');
 
   function layout() {
@@ -146,7 +137,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
   resize.observe(viewport); resize.observe(panel); resize.observe(card);
   return {
     get active() { return dialog.open; },
-    get seen() { return hasPractised(storage); },
+    get seen() { return history.seen; },
     open(mode: 'onboarding' | 'replay', callback: (result: 'complete' | 'skip' | 'cancel') => void) {
       if (dialog.open) return;
       state = new TutorialState(); elapsed = 0; amount = 0; tapUntil = 0; input = null; afterClose = callback;
@@ -154,12 +145,20 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       get('.practice-note').textContent = mode === 'replay' ? 'Your game is paused. No points or lives used.' : 'Just practice. Your three balls are waiting.';
       document.body.classList.add('practising-controls');
       refresh(); dialog.showModal(); layout();
+      // Mark the first display, including users who dismiss or reload mid-guide.
+      history.markShown();
       buttons[0].focus({preventScroll: true});
     },
     cancelHold() { release(input, true); },
     update(delta: number) {
       if (!dialog.open) return;
-      elapsed += delta; state.tick(delta);
+      elapsed += delta;
+      const progress = state.tick(delta);
+      if (progress === 'complete') { finish('complete'); return; }
+      if (progress === 'advanced') {
+        elapsed = 0; amount = 0; tapUntil = 0; refresh();
+        buttons.find(button => button.dataset.control === state.control)?.focus({preventScroll: true});
+      }
       const demo = !reducedMotion.matches && !state.tried && !state.held;
       const wave = Math.max(0, Math.sin(elapsed * 3.2));
       const target = state.held ? state.control === 'launch' ? state.charge : 1 : elapsed < tapUntil ? 1 : demo ? wave * .8 : 0;

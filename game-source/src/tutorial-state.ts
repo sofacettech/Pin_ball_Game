@@ -8,15 +8,26 @@ export class TutorialState {
   held = false;
   charge = 0;
   tried = false;
+  private advanceIn = .4;
+  private complete = false;
   get control() { return steps[this.index]; }
   press(control: PracticeControl) {
-    if (control !== this.control || this.held) return false;
+    if (control !== this.control || this.held || this.tried || this.complete) return false;
     this.held = true;
     this.charge = 0;
     return true;
   }
-  tick(delta: number) {
-    if (this.held && this.control === 'launch') this.charge = Math.min(1, this.charge + Math.max(0, delta) / 1.1);
+  tick(delta: number): 'advanced' | 'complete' | null {
+    const dt = Math.max(0, delta);
+    if (this.held && this.control === 'launch') this.charge = Math.min(1, this.charge + dt / 1.1);
+    if (!this.tried || this.held || this.complete) return null;
+    this.advanceIn -= dt;
+    if (this.advanceIn > 0) return null;
+    if (this.index === steps.length - 1) { this.complete = true; return 'complete'; }
+    this.index++;
+    this.tried = false;
+    this.advanceIn = .4;
+    return 'advanced';
   }
   release(cancelled = false) {
     if (!this.held) return false;
@@ -26,13 +37,6 @@ export class TutorialState {
     this.tried ||= success;
     return success;
   }
-  next() {
-    if (!this.tried || this.held) return false;
-    if (this.index === steps.length - 1) return true;
-    this.index++;
-    this.tried = false;
-    return false;
-  }
 }
 
 export function hasPractised(storage: Pick<Storage, 'getItem'> | undefined) {
@@ -40,4 +44,12 @@ export function hasPractised(storage: Pick<Storage, 'getItem'> | undefined) {
 }
 export function rememberPractice(storage: Pick<Storage, 'setItem'> | undefined) {
   try { storage?.setItem(tutorialStorageKey, 'done'); } catch { /* Private browsing can deny storage. */ }
+}
+
+export function createTutorialHistory(storage: Pick<Storage, 'getItem' | 'setItem'> | undefined) {
+  let shown = hasPractised(storage);
+  return {
+    get seen() { return shown || hasPractised(storage); },
+    markShown() { shown = true; rememberPractice(storage); },
+  };
 }
