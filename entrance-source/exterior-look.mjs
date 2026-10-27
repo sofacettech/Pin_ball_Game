@@ -5,7 +5,7 @@ const sourceLights=await fetch('/assets/entrance-3d/exterior-lights.json').then(
 
 // Reconstruct the video's exterior lighting in realtime. The source geometry
 // stays on disk unchanged; reflections use the actual building, terrain and ball.
-export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(),performanceMode=false}={}){
+export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(),performanceMode=false,reflectionSamples=2,reflectionWidth=null}={}){
   RectAreaLightUniformsLib.init();
   const lights=new THREE.Group();scene.add(lights);
   const reflectionCards=new THREE.Group();reflectionCards.visible=false;scene.add(reflectionCards);
@@ -41,7 +41,7 @@ export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(
     lightMotion.push({light,card,samples:source.samples??[],sourceColor:color.clone(),roomColor,entryColor,cardRadiance:radiance*.45/(1+radiance*.12)});
   }
   // Match the camera aspect and antialias reflected silhouettes.
-  const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:768,textureHeight:432,clipBias:.003,multisample:2});
+  const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:reflectionWidth??768,textureHeight:Math.round((reflectionWidth??768)*9/16),clipBias:.003,multisample:reflectionSamples});
   const reflectionCamera=new THREE.PerspectiveCamera();
   const surfaceBounds=new THREE.Box3(),probeRay=new THREE.Raycaster();
   const probeNDC=new THREE.Vector2(),probePoint=new THREE.Vector3(),probeSurface=new THREE.Vector3();
@@ -383,8 +383,8 @@ export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(
     for(const u of uniforms)u.weight.value=u.strength*strength;
     if(strength<=0||!reflectiveMeshes.length||!refreshReflection)return;
     // The 1.5× / 2× quality controls also increase reflection resolution.
-    const reflectionWidth=renderer.getPixelRatio()>1?1024:768;
-    if(mirror.getRenderTarget().width!==reflectionWidth)mirror.getRenderTarget().setSize(reflectionWidth,Math.round(reflectionWidth/camera.aspect));
+    const width=reflectionWidth??(renderer.getPixelRatio()>1?1024:768);
+    if(mirror.getRenderTarget().width!==width)mirror.getRenderTarget().setSize(width,Math.round(width/camera.aspect));
     camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);
     const visibility=reflectionExcludedMeshes.map(o=>o.visible);
     reflectionExcludedMeshes.forEach(o=>{o.visible=false;});

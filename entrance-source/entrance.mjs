@@ -24,7 +24,7 @@ const performancePanel=showPerformance?createFrameRatePanel({label:'Live 3D',tra
   getState:()=>{
     const renderer=journey?.renderer,canvas=renderer?.domElement;
     return {ready,game:gameRequested,frame,seeking:Math.abs(target-frame)>.15,
-      details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draws · ${(renderer.info.render.triangles/1e6).toFixed(2)}M triangles`:''};
+      details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draws · ${(renderer.info.render.triangles/1e6).toFixed(2)}M triangles\n${journey.policy.name} · ${journey.batchingMode} batching`:''};
   },
 }):{record(){},destroy(){}};
 
@@ -173,7 +173,7 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);clearTimeout(gameTimeout);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();performancePanel.destroy();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
-window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;}};
+window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
 
 try{
   await loadMainPresentation();

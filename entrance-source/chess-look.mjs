@@ -3,7 +3,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 
 const isRoom=name=>name.includes(' | ')&&parseInt(name)>=1&&parseInt(name)<=14;
 
-export function createChessLook(scene,renderer,{performanceMode=false}={}){
+export function createChessLook(scene,renderer,{performanceMode=false,captureReflection=draw=>draw(),reflectionSamples=2,reflectionScale=1}={}){
   const strength={value:0},capturing={value:0};
   const lights=new THREE.Group();lights.name='Chess gallery blue softboxes';scene.add(lights);
   for(const [position,target,width,height,intensity] of [
@@ -37,7 +37,8 @@ export function createChessLook(scene,renderer,{performanceMode=false}={}){
   }
 
   function planar(meshes,point,normal,width,lod,weights,tint){
-    const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:width,textureHeight:Math.round(width*9/16),clipBias:.002,multisample:2});
+    const targetWidth=Math.max(1,Math.round(width*reflectionScale));
+    const mirror=new Reflector(new THREE.PlaneGeometry(1,1),{textureWidth:targetWidth,textureHeight:Math.max(1,Math.round(targetWidth*9/16)),clipBias:.002,multisample:reflectionSamples});
     mirror.position.copy(point);mirror.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),normal);mirror.updateMatrixWorld(true);
     mirror.getRenderTarget().texture.generateMipmaps=true;mirror.getRenderTarget().texture.minFilter=THREE.LinearMipmapLinearFilter;
     const matrix={value:new THREE.Matrix4()},inverse=mirror.matrixWorld.clone().invert();
@@ -196,7 +197,9 @@ export function createChessLook(scene,renderer,{performanceMode=false}={}){
         // rotate through one update per frame, retaining their capture matrix.
         if(!refreshAll&&index!==0&&index!==selectedWall)continue;
         const visibility=s.meshes.map(o=>o.visible);s.meshes.forEach(o=>{o.visible=false;});
-        try{s.mirror.onBeforeRender(renderer,scene,camera);s.matrix.value.copy(s.mirror.material.uniforms.textureMatrix.value).multiply(s.inverse);}
+        // Match the entrance mirrors: reflected glass should not trigger
+        // another transmission render of the entire world for every surface.
+        try{captureReflection(()=>s.mirror.onBeforeRender(renderer,scene,camera));s.matrix.value.copy(s.mirror.material.uniforms.textureMatrix.value).multiply(s.inverse);}
         finally{s.meshes.forEach((o,i)=>{o.visible=visibility[i];});}
       }
     }finally{capturing.value=0;}

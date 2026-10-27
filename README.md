@@ -18,6 +18,29 @@ npm start
 
 Open `http://127.0.0.1:8766/` for the default Three.js entrance. `/entrance-3d` is an alias with the FPS panel; `/?perf` enables it on the default page. The original video remains at `/video`. Both reuse the same approved story markup, fonts, navigation, opening animation and game loader, so edits to those shared sources apply to both. For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
+### iOS entrance rendering
+
+iPhone and iPad automatically use the mobile rendering profile. It caps the main buffer at 1× CSS resolution, applies FXAA after the existing HDR/bloom/colour pipeline, and uses smaller single-sample reflection targets. The original model, animation and camera framing are retained; fine edges and secondary reflections are softer. Android and desktop retain their existing resolution and antialiasing settings. `?quality=mobile` forces the mobile profile for comparison; `?quality=desktop` and `?quality=reference` retain comparison paths. Add `&perf` to display the profile, batching mode, buffer size and frame timings.
+
+The animated ball uses a single draw per material on mobile and wherever `WEBGL_multi_draw` is unavailable. Vertex transform IDs preserve all source facet geometry and animated transforms without Three's per-object multi-draw fallback. Gallery mirror captures now use the same simplified reflected-glass materials as the other mirrors, avoiding a separate full-scene transmission render inside each mirror. Inactive room lights also skip shading in the facade and water's custom shaders.
+
+On 27 October 2026, sequential 10-second full-journey checks at a 393 × 852 CSS viewport and DPR 3 on macOS browser runners measured:
+
+| Runner | Previous first / repeat average | Mobile first / repeat average | Previous slowest 1s, first / repeat | Mobile slowest 1s, first / repeat |
+| --- | --- | --- | --- | --- |
+| WebKit 26.6, Apple GPU | 42.5 / 45.0 FPS | 58.3 / 58.2 FPS | 18 / 29 FPS | 52 / 52 FPS |
+| Chromium, Apple M4 / ANGLE Metal | 43.4 / 44.2 FPS | 58.5 / 59.5 FPS | 23 / 27 FPS | 48 / 57 FPS |
+
+Both mobile-profile runs met the measured 45 FPS one-second-window floor, with no shader or JavaScript errors. These runners do **not** reproduce the reported physical iPhone 5–6 FPS, and their results are **not** iPhone certification. Both runners support multi-draw; they do not establish missing multi-draw as the cause on the reported devices. Before release, repeat `/?perf` → **Run 10s check** on the affected iPhone 15, 15 Pro and 16 Pro, including a repeat run, reverse scroll and orientation change. FPS counts submitted scene updates, not verified display scanout.
+
+Build the production entrance with `npm run build:entrance`. For repeatable browser checks against a running local server:
+
+```sh
+SOFACET_PLAYWRIGHT_PATH=/absolute/path/to/playwright SOFACET_BROWSER=webkit SOFACET_ENTRANCE_URL=http://127.0.0.1:8766 node scripts/browser-entrance-smoke.mjs
+```
+
+The smoke check uses an iPhone user agent to verify automatic profile selection, checks scrolling and shaders, and saves its measurements in `work/entrance-performance`. Set `SOFACET_MIN_FPS=45` to enforce the one-second-window floor on a controlled runner. A desktop viewport or iPhone user-agent emulation cannot substitute for the physical-device check.
+
 For ZIP downloads, skip the two `git lfs` commands above. If the archive contains a Git LFS pointer instead of the full video, `npm run build` downloads the approved video and verifies its size and SHA-256 before using it. Internet access to the public media mirror is required for that first build; an already materialized video is reused.
 
 ```sh
