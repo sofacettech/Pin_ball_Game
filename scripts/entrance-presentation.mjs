@@ -26,7 +26,7 @@ export function withEntrancePresentation(template, source) {
   for (const [key, selector] of Object.entries(sections)) {
     let html = fragment(source, selector);
     if (key === 'NAVIGATION') html = html.replace('class="play-now"', 'id="skip-game" class="play-now"');
-    if (key === 'LOADER') html = html.replace(/<\/div>\s*$/, `<div class="startup-feedback"><p data-scene-status role="status">Opening the world…</p><progress data-scene-progress max="100" aria-label="World download"></progress><a href="/play.html">Skip to Game ↗</a></div></div>`);
+    if (key === 'LOADER') html = html.replace(/<\/div>\s*$/, `<div class="startup-feedback"><p data-scene-status role="status">Opening the world…</p><progress data-scene-progress max="100" aria-label="World download"></progress></div></div>`);
     template = template.replace(`__SHARED_${key}__`, html);
   }
   const navigation = fragment(source, /<script\b[^>]*src="[^"]*navigation\.js/);
