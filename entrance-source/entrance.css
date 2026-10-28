@@ -17,10 +17,8 @@ body[data-game="visible"] #entrance{visibility:hidden}
 /* Visible in the first HTML response, before fonts or scene scripts arrive. */
 .startup-feedback{position:absolute;left:24px;right:24px;bottom:max(9vh,32px);z-index:2;display:grid;justify-items:center;gap:14px;color:#cbd0bf;font:14px/1.5 Arial,sans-serif;text-align:center}
 .startup-feedback p{margin:0}
-.startup-feedback a{color:#fff;text-underline-offset:4px;padding:8px}
 [data-scene-progress]{width:min(240px,65vw);height:3px;accent-color:#b9cd45}
 #journey-preparation{z-index:6}
-#journey-preparation a{color:#fff;font:14px/1.5 Acumin,Arial,sans-serif;text-underline-offset:4px}
 body[data-game-loading] #journey-preparation{display:none}
 body[data-phase="buffering"] #scroll-hint{visibility:hidden}
 #scene-loading-status{position:absolute;z-index:6;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;gap:10px;justify-items:center;max-width:90vw;padding:12px 20px;border-radius:12px;background:#080b15c9;color:#fff;font:13px/1.4 Arial,sans-serif;text-align:center}
