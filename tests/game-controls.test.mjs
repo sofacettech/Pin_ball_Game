@@ -19,6 +19,19 @@ test('the held paddle keeps priority across keyboard/touch combinations; release
  }
 });
 
+test('mouse, touch and pen use the same left/right zones demonstrated by the guide',()=>{
+ for(const pointerType of ['mouse','touch','pen']){
+  const canvas=new Element(),launch=new Element();let enabled=true;
+  const input=connectTouchControls(canvas,launch,()=>enabled,()=>{},()=>{});
+  send(canvas,'pointerdown',{pointerId:1,pointerType,button:0,clientX:80});assert.equal(input.state.left,true);assert.equal(input.state.right,false);
+  send(canvas,'pointerup',{pointerId:1});assert.equal(input.state.left,false);
+  send(canvas,'pointerdown',{pointerId:2,pointerType,button:0,clientX:320});assert.equal(input.state.right,true);
+  send(canvas,'pointercancel',{pointerId:2});assert.equal(input.state.right,false);
+  send(canvas,'pointerdown',{pointerId:3,pointerType,button:2,clientX:80});assert.equal(input.state.left,false);
+  enabled=false;send(canvas,'pointerdown',{pointerId:4,pointerType,button:0,clientX:80});assert.equal(input.state.left,false);
+ }
+});
+
 test('launch hold releases on pointer/keyboard release, cancellation, blur and clearing',()=>{
  const canvas=new Element(),launch=new Element();let enabled=true,starts=0;
  const touch=connectTouchControls(canvas,launch,()=>enabled,()=>starts++,()=>{});
@@ -45,4 +58,18 @@ test('phone card alternates launch and score without exposing desktop instructio
  panel.showScore(true);assert.equal(card.classes.has('flipped'),true);assert.equal(card.getAttribute('aria-hidden'),'false');assert.equal(back.inert,false);
  panel.update(450,1200);assert.equal(score.textContent,'450');assert.equal(best.textContent,'1,200');
  panel.setPhoneStage(false);send(card,'click');assert.equal(card.classes.has('flipped'),false);assert.equal(front.inert,false);assert.equal(card.getAttribute('aria-label'),'Show scoreboard');
+});
+
+test('pregame hides an empty scorecard, restores saved best scores, and shows live scores on the first run',()=>{
+ const card=new Element(),front=new Element(),back=new Element(),score=new Element(),best=new Element();front.id='instructions';back.id='scoreboard';card.querySelector=s=>s==='.front'?front:back;
+ const panel=connectFlipScorecard(card,score,best);
+ panel.setPregame(true);assert.equal(panel.hidden,true); // Player request still pending.
+ panel.update(0,null);assert.equal(panel.hidden,true);
+ panel.setPhoneStage(true);panel.showScore(true);assert.equal(panel.hidden,true);
+ panel.setPregame(false);assert.equal(panel.hidden,false); // First game, before any saved score.
+ panel.update(300,null);assert.equal(panel.hidden,false);assert.equal(score.textContent,'300');
+ panel.setPregame(true);assert.equal(panel.hidden,true);
+ panel.update(0,1200);assert.equal(panel.hidden,false);assert.equal(best.textContent,'1,200');assert.equal(card.classes.has('flipped'),true);
+ panel.setPhoneStage(false);panel.update(0,0);assert.equal(panel.hidden,false);assert.equal(best.textContent,'0');
+ panel.update(0,null);assert.equal(panel.hidden,true); // No saved score for the current player.
 });

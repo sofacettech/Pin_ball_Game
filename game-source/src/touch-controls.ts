@@ -11,8 +11,7 @@ export function connectTouchControls(canvas:HTMLElement,launch:HTMLButtonElement
  for(const element of [canvas,launch]){
   element.addEventListener('pointerdown',event=>{
    const e=event as PointerEvent,isLaunch=element===launch;
-   if(!enabled(isLaunch?'launch':'paddle')||!isLaunch&&e.pointerType!=='touch'&&e.pointerType!=='pen'||held.has(e.pointerId))return;
-   if(isLaunch&&e.button!==0)return;
+   if(!enabled(isLaunch?'launch':'paddle')||held.has(e.pointerId)||e.button!==0)return;
    e.preventDefault();const bounds=canvas.getBoundingClientRect();
    const control=isLaunch?'space':e.clientX<bounds.left+bounds.width/2?'left':'right';
    held.set(e.pointerId,{control,element});element.setPointerCapture(e.pointerId);if(isLaunch)onLaunch();update();

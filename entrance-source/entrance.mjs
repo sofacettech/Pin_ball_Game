@@ -12,7 +12,8 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
 const parameters=new URLSearchParams(location.search);
 const performanceMode=parameters.get('quality')!=='reference';
-const showPerformance=parameters.has('perf')||location.pathname.startsWith('/entrance-3d');
+// Diagnostics are opt-in on every route, including the /entrance-3d alias.
+const showPerformance=parameters.has('debug')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
