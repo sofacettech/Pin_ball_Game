@@ -23,7 +23,7 @@ export function connectMembership(options:Options){
   profile.setAttribute('aria-label',registered?'Profile for '+player!.display_name:'Profile');
   profile.title='Profile';
   $('profile-name').textContent=registered?player!.display_name:'Your profile';
-  setBrandText($('profile-status'),checking?'Checking your membership…':registered?'Your So/Facet membership is active.':guest?'Save your points and keep playing.':'We couldn’t load your membership. Please try again.');
+  setBrandText($('profile-status'),checking?'Checking your membership…':registered?'Your SO/FACET membership is active.':guest?'Save your points and keep playing.':'We couldn’t load your membership. Please try again.');
   profileRetry.hidden=checking||player!==null;
   edit.hidden=!registered;
   if(!registered){editing=false;editForm.hidden=true}

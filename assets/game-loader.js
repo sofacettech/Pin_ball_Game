@@ -8,7 +8,7 @@
  const gamePage=document.body.hasAttribute('data-game-loading');
  const story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
  const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
- const messages=['Your points could become something precious','Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.','Play well. Save your points. Shine later.','Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.'];
+ const messages=['Your points could become something precious','Every 10 points you score is ₹1 off SO/FACET diamond jewellery.','Play well. Save your points. Shine later.','Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.'];
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let width=1,height=1,radius=9,x=0,y=0,vx=0,vy=0,time=0,last=0,frame=0,fade=0,delay=0;
  let active=false,failed=false,parentVisible=parent===window,events,observer;
@@ -18,8 +18,8 @@
  function cleanup(){stop();textAnimation?.cancel();textAnimation=null;textRun++;events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay)}
  function renderStatement(){
   statement.dataset.statement=String(statementIndex);
-  const classes={'10':'loading-value','₹1':'loading-value','SO/ FACET':'brand-word',Pink:'loading-pink','neon-green':'loading-green',Cyan:'loading-cyan'};
-  phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1|SO\/ FACET|Pink|neon-green|Cyan)/).map(part=>{
+  const classes={'10':'loading-value','₹1':'loading-value','SO/FACET':'brand-word',Pink:'loading-pink','neon-green':'loading-green',Cyan:'loading-cyan'};
+  phrase.replaceChildren(...messages[statementIndex].split(/(10|₹1|SO\/FACET|Pink|neon-green|Cyan)/).map(part=>{
    if(!classes[part])return document.createTextNode(part);
    const value=document.createElement('span');value.className=classes[part];value.textContent=part;return value;
   }));

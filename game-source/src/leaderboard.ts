@@ -37,14 +37,14 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
  function paint(board:Board){
   const selected=visibleEntries(board.entries,board.me);rows.replaceChildren();
   document.getElementById('leaderboard-score-label')!.textContent=board.mode==='rewards'?'Rewards':'Score';
-  setBrandText(document.getElementById('leaderboard-caption')!,board.mode==='rewards'?'All-time SO/ FACET rewards':'Best pinball scores');
+  setBrandText(document.getElementById('leaderboard-caption')!,board.mode==='rewards'?'All-time SO/FACET rewards':'Best pinball scores');
   for(const entry of selected){const row=document.createElement('tr');if(entry.is_you){row.className='current-player';row.setAttribute('aria-label','Your position')}
    for(const [index,value] of [entry.rank===null?'—':String(entry.rank),entry.display_name,new Intl.NumberFormat('en-IN').format(entry.points)].entries()){
     const cell=document.createElement('td');cell.textContent=value;if(index===1&&entry.is_you){const you=document.createElement('span');you.className='you-label';you.textContent='You';cell.append(you)}row.append(cell);
    }rows.append(row);
   }
   if(!selected.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.className='board-empty';cell.textContent='No scores yet.';row.append(cell);rows.append(row)}
-  setBrandText(status,board.mode==='rewards'&&!board.me?'Your personal rewards rank requires an identified SO/ FACET customer session.':board.me?.rank&&board.me.rank>10?'Your row stays visible below the top nine.':'');
+  setBrandText(status,board.mode==='rewards'&&!board.me?'Your personal rewards rank requires an identified SO/FACET customer session.':board.me?.rank&&board.me.rank>10?'Your row stays visible below the top nine.':'');
  }
  async function submit(target:Run){
   if(target.submitted)return;

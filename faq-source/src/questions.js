@@ -6,7 +6,7 @@ export const sections = [
     "navTitle": "The basics",
     "questions": [
       {
-        "question": "What is So/Facet?",
+        "question": "What is SO/FACET?",
         "answer": [
           "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open soon."
         ]
@@ -20,7 +20,7 @@ export const sections = [
       {
         "question": "Are your diamonds certified?",
         "answer": [
-          "Yes. Every So/Facet diamond is IGI-certified."
+          "Yes. Every SO/FACET diamond is IGI-certified."
         ]
       },
       {
@@ -46,13 +46,13 @@ export const sections = [
       {
         "question": "How do I earn points?",
         "answer": [
-          "Play a round at the So/Facet table. The higher you score, the more you earn."
+          "Play a round at the SO/FACET table. The higher you score, the more you earn."
         ]
       },
       {
         "question": "What are my points worth?",
         "answer": [
-          "10 points = ₹1 off SO/ FACET diamond jewellery. Score 3,200 and that’s ₹320 off."
+          "10 points = ₹1 off SO/FACET diamond jewellery. Score 3,200 and that’s ₹320 off."
         ]
       },
       {

@@ -62,9 +62,9 @@ test('chess arrival shows each approved message once and waits for both story an
  const view=loader();await fontLoaded();
  assert.equal(view.phrase.textContent,'Your points could become something precious');
  view.api.ready();assert.equal(view.stage.inert,true);assert.equal(view.root.hidden,false);
- view.animations[0].finish();assert.equal(view.phrase.textContent,'Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.');
+ view.animations[0].finish();assert.equal(view.phrase.textContent,'Every 10 points you score is ₹1 off SO/FACET diamond jewellery.');
  assert.deepEqual(view.phrase.children.filter(child=>child.className==='loading-value').map(child=>child.textContent),['10','₹1']);
- assert.equal(view.phrase.children.find(child=>child.className==='brand-word')?.textContent,'SO/ FACET');
+ assert.equal(view.phrase.children.find(child=>child.className==='brand-word')?.textContent,'SO/FACET');
  assert.equal(view.animations[0].playState,'idle');assert.equal(view.animations[0].frames.at(-1).opacity,0);
  view.animations[1].finish();assert.equal(view.phrase.textContent,'Play well. Save your points. Shine later.');assert.equal(view.stage.inert,true);
  view.animations[2].finish();assert.equal(view.phrase.textContent,'Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.');assert.equal(view.stage.inert,true);
@@ -99,4 +99,13 @@ test('failure, cancellation and retry clean up story animation and stale font ca
  view.api.ready();assert.notEqual(view.root.dataset.state,'leaving');
  view.api.show();await fontLoaded();assert.equal(view.error.hidden,true);assert.equal(view.statement.dataset.statement,'0');
  view.stage.dataset.ready='true';view.api.cancel();assert.equal(view.stage.inert,false);assert.equal(view.root.hidden,true);
+});
+
+test('shared navigation stylesheet URLs are versioned even when the input has no query',()=>{
+ const plain=withGameLoader('<html><head><link rel="stylesheet" href="/assets/navigation.css"></head><body></body></html>');
+ const stale=withGameLoader('<html><head><link rel="stylesheet" href="/assets/navigation.css?v=old"></head><body></body></html>');
+ const version=plain.match(/href="(\/assets\/navigation\.css\?v=[a-f0-9]{12})"/)?.[1];
+ assert.ok(version,'Unversioned CSS must not reuse a cached font definition');
+ assert.ok(stale.includes('href="'+version+'"'),'A stale query must be replaced with the same current version');
+ assert.equal((withGameLoader(plain).match(/navigation\.css\?v=/g)||[]).length,1);
 });

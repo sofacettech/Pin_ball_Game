@@ -1,8 +1,9 @@
 import React from 'react';
+import {brandParts} from '../shared/brand-text.ts';
 import './brand-text.css';
 
-// Keep each name's existing text width and baseline while displaying the header artwork.
+// Use the logo typeface at the surrounding copy's existing font size.
 export function BrandText({children}) {
-  if(typeof children!=='string')return children;
-  return children.split(/(\bSO\/\s*FACET\b|\bSOFACET\b|\bSO FACET\b)/gi).map((part,index)=>index%2?<span className="inline-brand" key={index}><span className="inline-brand__size" aria-hidden="true">{part}</span><img src="/assets/sofacet-wordmark.svg" alt={part} width="2048" height="278"/></span>:part);
+ if(typeof children!=='string')return children;
+ return brandParts(children).map((part,index)=>part.brand?<span className="brand-word" key={index}>{part.text}</span>:part.text);
 }

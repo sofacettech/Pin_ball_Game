@@ -1,4 +1,4 @@
-@import url('./assets/navigation.css?v=current-8d2faf6d2270');
+@import url('./assets/navigation.css?v=slash-c187189484a2');
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:italic;font-display:swap}
@@ -155,3 +155,23 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 #story-copy .opening-brand .kinetic-line-mask{display:block;padding:0;margin:0}
 #story-copy .opening-wordmark{display:block;line-height:0}
 #story-copy .opening-wordmark img{position:static;inset:auto;display:block;width:100%;height:auto}
+
+/* Desktop links and the mobile Socials disclosure share the same profile links. */
+.social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}
+.social-profiles{display:flex;align-items:center;gap:24px}
+.social-links a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;text-decoration:none;font:400 18px/1.2 Biarty;font-synthesis:none;white-space:nowrap}
+.social-links a>svg{display:block;flex:none;width:19px;height:19px}
+.social-links a:hover{text-decoration:underline;text-underline-offset:4px}
+.social-trigger{display:none}
+.social-links :is(a,button):focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+body[data-loading] .social-links,body[data-game="visible"] .social-links{visibility:hidden;pointer-events:none}
+@media(max-width:600px){
+ .social-links{right:calc(16px + env(safe-area-inset-right,0px))}
+ .social-trigger{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-height:44px;padding:0;border:0;background:transparent;color:#fff;font:400 16px/1.2 Biarty;font-synthesis:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+ .social-trigger>svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5}
+ .social-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
+ .social-profiles{display:none;position:absolute;right:0;bottom:52px;flex-direction:column;align-items:stretch;gap:0;min-width:174px;padding:7px 13px;background:#100b1af2;border:1px solid #bda5d433;border-radius:8px;box-shadow:0 8px 22px #0006}
+ .social-links[data-open] .social-profiles{display:flex}
+ .social-profiles a{display:flex;gap:10px;font-size:16px}
+ .social-profiles a>svg{width:17px;height:17px}
+}
