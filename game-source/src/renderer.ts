@@ -3,6 +3,8 @@ import {fitOverview,OverviewFocus,overviewGeometryPoints} from './overview-camer
 import {CameraTransition} from './camera-transition';
 import {prepareGeometry,NeonMaterial,batchOverview} from './visual-quality';
 import type {GlowMaterial} from './visual-quality';
+import {AdaptiveResolution,gameRenderResolution} from './render-resolution';
+import type {GameQuality} from './render-resolution';
 import {TeleportEffect} from './teleport';
 import {Scoreboard} from './scoreboard';
 import {FloatingDiamonds} from './floating-diamonds';
@@ -46,13 +48,17 @@ export class TableView {
  private diamonds?:FloatingDiamonds;
  private caveGlow:{material:GlowMaterial;baseline:number}[]=[];
  private glassQuality=new Map<THREE.Mesh,{full:THREE.MeshPhysicalMaterial;fast:THREE.MeshStandardMaterial}>();
- constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement){
+ private resolution:AdaptiveResolution;
+ get quality(){return this.resolution.mode}
+ constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement,quality:GameQuality='auto'){
+  this.resolution=new AdaptiveResolution(quality);
+  const policy=gameRenderResolution(quality,this.resolution.level,viewport.clientWidth,viewport.clientHeight,devicePixelRatio);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.transmissionResolutionScale=1;this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
+  this.renderer.setPixelRatio(policy.pixelRatio);this.renderer.transmissionResolutionScale=policy.transmissionScale;this.renderer.toneMapping=THREE.LinearToneMapping;this.renderer.toneMappingExposure=2**-.65*1.05;
   this.renderer.info.autoReset=false;
   this.scene.background=new THREE.Color('#000');
-  const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:2});
-  this.composer=new EffectComposer(this.renderer,target);this.renderPass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=false;this.composer.addPass(this.fxaa);
+  const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:policy.samples});
+  this.composer=new EffectComposer(this.renderer,target);this.renderPass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=policy.samples===0;this.composer.addPass(this.fxaa);
   RectAreaLightUniformsLib.init();
   new ResizeObserver(()=>this.resize()).observe(viewport);
  }
@@ -210,13 +216,22 @@ export class TableView {
  }
  setHandheld(active:boolean){
   if(active===this.handheld)return;
-  this.handheld=active;this.updatePixelRatio();this.updateCameraLighting();this.resize();
+  this.handheld=active;this.updateCameraLighting();this.resize();
  }
- private updatePixelRatio(){
-  const requested=this.handheld?Math.max(devicePixelRatio,1.25):devicePixelRatio;
-  const limit=1.5;
-  this.renderer.setPixelRatio(Math.min(requested,limit));
+ private resizeDrawingBuffer(w=this.viewport.clientWidth,h=this.viewport.clientHeight){
+  if(!w||!h)return;
+  const policy=gameRenderResolution(this.quality,this.resolution.level,w,h,devicePixelRatio);
+  if(this.renderer.getPixelRatio()!==policy.pixelRatio)this.renderer.setPixelRatio(policy.pixelRatio);
+  this.renderer.transmissionResolutionScale=policy.transmissionScale;
+  for(const target of [this.composer.renderTarget1,this.composer.renderTarget2])if(target.samples!==policy.samples){target.samples=policy.samples;target.dispose()}
+  this.fxaa.enabled=policy.samples===0;
+  this.renderer.setSize(w,h,false);this.composer.setPixelRatio(policy.pixelRatio);this.composer.setSize(w,h);
+  this.fxaa.uniforms.resolution.value.set(1/(w*policy.pixelRatio),1/(h*policy.pixelRatio));
+  this.needsRender=true;
  }
+ setQuality(mode:GameQuality){this.resolution.setMode(mode);this.frames=[];this.last=performance.now();this.resizeDrawingBuffer()}
+ resetPerformanceSampling(){this.resolution.resetTiming()}
+ adaptResolution(now:number){if(this.resolution.sample(now))this.resizeDrawingBuffer()}
  setPhonePlay(active:boolean){
   if(active===this.phonePlay)return;
   if(!this.inspect&&!this.reduced){this.cameraTransition.begin(this.activeCamera,2.2);this.transitionExposure=this.renderer.toneMappingExposure}
@@ -224,8 +239,7 @@ export class TableView {
  }
  resize(){
   this.needsRender=true;const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;
-  this.renderer.setSize(w,h,false);this.composer.setPixelRatio(this.renderer.getPixelRatio());this.composer.setSize(w,h);
-  this.fxaa.uniforms.resolution.value.set(1/(w*this.renderer.getPixelRatio()),1/(h*this.renderer.getPixelRatio()));
+  this.resetPerformanceSampling();this.resizeDrawingBuffer(w,h);
   this.camera.aspect=w/h;this.camera.updateProjectionMatrix();if(this.overviewBounds.isEmpty())return;
   // Retain the playable span and the two ledge decorations in portrait play.
   const portrait=this.phonePlay&&w/h<.85,tilt=this.phonePlay?.8:.62;
@@ -265,6 +279,6 @@ export class TableView {
  render(){this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
 
  }
- metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:false,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
+ metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.quality==='auto',quality:this.quality,resolutionLevel:this.resolution.level,renderWidth:this.canvas.width,renderHeight:this.canvas.height,transmissionScale:this.renderer.transmissionResolutionScale,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
 }
 type EntityLike={role:string};
