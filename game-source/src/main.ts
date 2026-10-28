@@ -13,13 +13,17 @@ import {connectMembership} from './membership';
 import {connectPostGameRewards} from './post-game-rewards';
 import {formatPoints} from './player-copy';
 import {connectControlsTutorial} from './controls-tutorial';
+import {parseGameQuality,gameQualityStorageKey} from './render-resolution';
 
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const stage=$('stage'),viewport=$('viewport'),canvas=$<HTMLCanvasElement>('game');
 const mobileLives=$('mobile-lives'),lifeHearts=mobileLives.querySelectorAll<HTMLImageElement>('img');
 const scorecardPanel=$('scorecard-panel'),scorecard=connectFlipScorecard($<HTMLButtonElement>('flip-card'),$('card-score'),$('card-best'));
 scorecard.update(0,null);
-const view=new TableView(canvas,viewport);let inspecting=false,loaded=false,physics:PinballPhysics;
+const quality=$<HTMLSelectElement>('quality');
+try{quality.value=parseGameQuality(localStorage.getItem(gameQualityStorageKey))}catch{quality.value='auto'}
+const view=new TableView(canvas,viewport,parseGameQuality(quality.value));let inspecting=false,loaded=false,physics:PinballPhysics;
+quality.onchange=()=>{const mode=parseGameQuality(quality.value);view.setQuality(mode);try{localStorage.setItem(gameQualityStorageKey,mode)}catch{}requestGameFrame()};
 let tutorial:ReturnType<typeof connectControlsTutorial>|undefined;
 let physicsAssets:{vertices:Float32Array;indices:Uint32Array;obstacles:Obstacle[]},starting=false,highScore:number|null=null;
 const keys=new Set<string>(),sound=createGameSound();void sound.load();let accumulator=0,lastFrame=0,holdCharge=false;
@@ -29,7 +33,7 @@ syncLoadingAnimation();
 function requestGameFrame(){if(!animationFrame&&parentVisible&&!document.hidden)animationFrame=requestAnimationFrame(frame)}
 window.addEventListener('message',event=>{
  if(window.parent===window||event.source!==window.parent||event.origin!==location.origin||event.data?.type!=='sofacet:experience-visibility'||typeof event.data.visible!=='boolean')return;
- parentVisible=event.data.visible;cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0;accumulator=0;
+ parentVisible=event.data.visible;cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0;accumulator=0;view.resetPerformanceSampling();
  syncLoadingAnimation();
  if(parentVisible){view.needsRender=true;requestGameFrame()}
 });
@@ -178,7 +182,7 @@ addEventListener('keydown',event=>{
 });
 addEventListener('keyup',event=>{const wasHeld=keys.delete(event.code);if(wasHeld){const side=event.code==='KeyA'||event.code==='ArrowLeft'?'left':event.code==='KeyD'||event.code==='ArrowRight'?'right':null;if(side&&!keyboardPaddle(side)&&!touch.state[side])releasedPaddles[side]=true;updatePaddleSound()}if(playKeys.has(event.code)&&event.target===canvas)event.preventDefault()});
 function pauseOnFocusLoss(){clearKeys();tutorial?.cancelHold();if(loaded&&physics.active&&physics.state!=='finished')setGamePaused(true)}
-addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilitychange',()=>{syncLoadingAnimation();if(document.hidden){pauseOnFocusLoss();cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0}else requestGameFrame()});
+addEventListener('blur',pauseOnFocusLoss);document.addEventListener('visibilitychange',()=>{view.resetPerformanceSampling();syncLoadingAnimation();if(document.hidden){pauseOnFocusLoss();cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0}else requestGameFrame()});
 window.addEventListener('resize',()=>{clearKeys();tutorial?.cancelHold();applyDeviceView();applyInspectionLayout()});
 function bindFeedback(){caveEjecting=false;physics.onHit=(id,delta)=>{view.hit(id);if(delta>0)view.scoreDiamonds();sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>{view.scoreDiamonds();sound.play('collect')};physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
 async function start(){let phase='styles';try{
@@ -208,7 +212,7 @@ function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document
   const target:XYZ=p.state==='resetting'?[spawn[0]*s,spawn[2]*s,-spawn[1]*s]:p.position;const focus=p.cave?'cave':!p.laneExited&&['launcher','charging','spring_return','playing'].includes(p.state)?'launcher':null;view.follow(target,delta,p.state,p.ballMode,focus)}
  view.advanceCamera(delta);
  tutorial?.update(delta);
- if((physics.active&&!physics.paused&&p.state!=='finished')||view.needsRender)view.render();sync();if(inspecting){const m=view.metrics();$('metrics').textContent=`${Math.round(m.medianFrameMs)} ms/frame · ${m.drawCalls} draws`}requestGameFrame()
+ if((physics.active&&!physics.paused&&p.state!=='finished')||view.needsRender){view.adaptResolution(now);view.render()}else view.resetPerformanceSampling();sync();if(inspecting){const m=view.metrics();$('metrics').textContent=`${Math.round(m.medianFrameMs)} ms/frame · ${m.drawCalls} draws`}requestGameFrame()
 }
 if(import.meta.env.DEV||(new URLSearchParams(location.search)).has('review')){
  (window as any).__facet={ready:()=>loaded,view,inspect:(index:number)=>{if(!inspecting)toggleInspection();$<HTMLSelectElement>('view').value=String(index);view.setReference(index);applyInspectionLayout();updateOverlay()},metrics:()=>view.metrics(),pose:()=>physics.pose()};
