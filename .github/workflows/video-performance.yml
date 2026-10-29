@@ -1,0 +1,214 @@
+name: Video performance benchmarks
+
+# The production default is the Three.js entrance. Keep the older /video
+# performance experiments available on demand without running them on every PR.
+# Functional video recovery/debug checks remain in Site validation.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: video-performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  video:
+    name: ${{ matrix.browser }} mobile video performance
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: webkit
+            os: macos-15
+          - browser: chromium
+            os: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    # Historical video scroll pacing is an explicit benchmark, independent of the live 3D entrance.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
+          # Hosted runners already include browser system libraries. Avoid slow
+          # APT font downloads; keep Playwright's exact pinned browser binaries.
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Check mobile opening, fast swipes and scroll response
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_VIDEO_BASELINE: ce9a0aaa9a412b4a801f74e2e5cf2c8e9a960b99
+        run: |
+          git fetch --depth 1 https://github.com/sofacettech/Pin_ball_Game.git "$SOFACET_VIDEO_BASELINE"
+          node scripts/browser-video-smoke.mjs
+
+  cadence:
+    name: ${{ matrix.browser }} native 30fps cadence
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            os: ubuntu-24.04
+          - browser: webkit
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    env:
+      SOFACET_BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated cadence browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/cadence-check" playwright@1.63.0
+          "$RUNNER_TEMP/cadence-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Fetch the deployed cadence baseline
+        run: git fetch --depth 1 origin b31a17714f07fdcbac28e2f157b5f1e23446bbc8
+      - name: Measure deployed native cadence
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
+          SOFACET_CADENCE_REF: b31a17714f07fdcbac28e2f157b5f1e23446bbc8
+          SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-baseline.json
+        run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-baseline.log"
+      - name: Measure current native cadence
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/cadence-check/node_modules/playwright
+          SOFACET_CADENCE_OUTPUT: ${{ runner.temp }}/cadence-current.json
+          SOFACET_CADENCE_ENFORCE: '1'
+        run: node scripts/browser-native-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/cadence-current.log"
+      # Preserve both reports even when the current compositor cadence misses
+      # the 30fps goal. Historical baseline measurements remain informational.
+      - name: Upload native cadence measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-cadence-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/cadence-*.json
+            ${{ runner.temp }}/cadence-*.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  worker:
+    name: ${{ matrix.browser }} Full HD worker prototype
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            os: ubuntu-24.04
+          - browser: webkit
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated worker browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/worker-check" playwright@1.63.0
+          "$RUNNER_TEMP/worker-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Capture raw worker colour metadata and numerical pixel differences
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/worker-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_COLOUR_OUTPUT: ${{ runner.temp }}/worker-cadence-colour.json
+        run: node scripts/browser-worker-colour-probe.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence-colour.log"
+      - name: Upload numerical worker colour evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-colour-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/worker-cadence-colour.json
+            ${{ runner.temp }}/worker-cadence-colour.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Compare worker and native motion and verify fallback
+        shell: bash
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/worker-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_WORKER_OUTPUT: ${{ runner.temp }}/worker-cadence.json
+          SOFACET_WORKER_REQUIRE: '1'
+          SOFACET_WORKER_DEFAULT: '1'
+        run: node scripts/browser-worker-cadence.mjs 2>&1 | tee "$RUNNER_TEMP/worker-cadence.log"
+      - name: Upload worker comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-cadence-${{ matrix.browser }}
+          path: |
+            ${{ runner.temp }}/worker-cadence*
+          if-no-files-found: warn
+          retention-days: 14
+
+  journey:
+    name: ${{ matrix.browser }} ${{ matrix.device }} ${{ matrix.native && 'native' || 'default' }} full R2 journey
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            device: desktop
+            os: ubuntu-24.04
+          - browser: chromium
+            device: mobile
+            os: ubuntu-24.04
+          - browser: chromium
+            device: mobile
+            native: true
+            os: ubuntu-24.04
+          - browser: webkit
+            device: mobile
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-check" playwright@1.63.0
+          "$RUNNER_TEMP/browser-check/node_modules/.bin/playwright" install ${{ matrix.browser }}
+      - name: Check opening through uninterrupted full journey and game handoff
+        env:
+          SOFACET_PLAYWRIGHT_PATH: ${{ runner.temp }}/browser-check/node_modules/playwright
+          SOFACET_BROWSER: ${{ matrix.browser }}
+          SOFACET_DEVICE: ${{ matrix.device }}
+          SOFACET_FORCE_NATIVE: ${{ matrix.native && '1' || '0' }}
+          MEDIA_CDN_BASE_URL: https://media.sofacet.com
+        run: node scripts/browser-journey-flow.mjs
+

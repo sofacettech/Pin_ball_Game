@@ -1,12 +1,11 @@
-export type PracticeControl = 'left' | 'right' | 'launch';
-const steps: PracticeControl[] = ['left', 'right', 'launch'];
+export type PracticeControl = 'left' | 'right';
+const steps: PracticeControl[] = ['left', 'right'];
 export const tutorialStorageKey = 'sofacet.controls-practised.v1';
 
 /** Practice never advances the simulation or contributes inputs to a scored run. */
 export class TutorialState {
   index = 0;
   held = false;
-  charge = 0;
   tried = false;
   private advanceIn = .4;
   private complete = false;
@@ -14,12 +13,10 @@ export class TutorialState {
   press(control: PracticeControl) {
     if (control !== this.control || this.held || this.tried || this.complete) return false;
     this.held = true;
-    this.charge = 0;
     return true;
   }
   tick(delta: number): 'advanced' | 'complete' | null {
     const dt = Math.max(0, delta);
-    if (this.held && this.control === 'launch') this.charge = Math.min(1, this.charge + dt / 1.1);
     if (!this.tried || this.held || this.complete) return null;
     this.advanceIn -= dt;
     if (this.advanceIn > 0) return null;
@@ -31,9 +28,8 @@ export class TutorialState {
   }
   release(cancelled = false) {
     if (!this.held) return false;
-    const success = !cancelled && (this.control !== 'launch' || this.charge >= .25);
+    const success = !cancelled;
     this.held = false;
-    this.charge = 0;
     this.tried ||= success;
     return success;
   }

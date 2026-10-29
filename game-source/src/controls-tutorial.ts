@@ -17,10 +17,9 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
     <div class="practice-marker" aria-hidden="true"><span></span><i></i></div>
     <section class="practice-card">
       <div class="practice-topline"><span>QUICK PRACTICE</span><button type="button" class="practice-skip">Skip guide ↗</button></div>
-      <ol class="practice-steps" aria-label="Practice progress"><li>01</li><li>02</li><li>03</li></ol>
+      <ol class="practice-steps" aria-label="Practice progress"><li>01</li><li>02</li></ol>
       <h2 id="practice-title"></h2><p id="practice-copy"></p>
       <div class="practice-keys" aria-hidden="true"></div>
-      <button type="button" class="practice-launch" data-control="launch" aria-label="Hold to charge, then release" aria-pressed="false" hidden><span>Hold to charge · release to launch</span><i></i></button>
       <p class="practice-feedback" role="status" aria-live="polite"></p>
       <p class="practice-note">Just practice. Your three balls are waiting.</p>
     </section>`;
@@ -29,7 +28,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
   const table = get('.practice-table'), card = get('.practice-card'), marker = get('.practice-marker');
   const title = get('#practice-title'), copy = get('#practice-copy'), keys = get('.practice-keys');
   const feedback = get('.practice-feedback');
-  const skip = get<HTMLButtonElement>('.practice-skip'), launch = get<HTMLButtonElement>('.practice-launch');
+  const skip = get<HTMLButtonElement>('.practice-skip');
   const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('[data-control]')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const coarse = matchMedia('(any-pointer: coarse)');
@@ -43,33 +42,32 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
 
   function refresh() {
     view.needsRender = true;
-    const control = state.control, isLaunch = control === 'launch';
+    const control = state.control;
     dialog.dataset.step = control;
     dialog.dataset.tried = String(state.tried);
-    title.textContent = isLaunch ? 'Ready. Set. Launch.' : control === 'left' ? 'Left side. Your move.' : 'Now, the right side.';
-    copy.textContent = isLaunch ? 'Hold to pull back the spring. Release to send the ball into play.' : `Press the highlighted ${control} half and watch that flipper lift. Release to lower it.`;
-    keys.innerHTML = isLaunch ? '<kbd>SPACE</kbd><span>hold + release</span>' : control === 'left' ? '<kbd>A</kbd><span>or</span><kbd>←</kbd>' : '<kbd>D</kbd><span>or</span><kbd>→</kbd>';
+    title.textContent = control === 'left' ? 'Left side. Your move.' : 'Now, the right side.';
+    copy.textContent = `Press the highlighted ${control} half and watch that flipper lift. Release to lower it.`;
+    keys.innerHTML = control === 'left' ? '<kbd>A</kbd><span>or</span><kbd>←</kbd>' : '<kbd>D</kbd><span>or</span><kbd>→</kbd>';
     keys.hidden = coarse.matches;
-    launch.hidden = !isLaunch;
     buttons.forEach(button => { button.disabled = button.dataset.control !== control; button.setAttribute('aria-pressed', String(state.held && button.dataset.control === control)); });
     dialog.querySelectorAll('.practice-steps li').forEach((step, index) => {
       step.classList.toggle('is-done', index < state.index);
       if (index === state.index) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current');
     });
-    feedback.textContent = state.held ? isLaunch ? 'Keep holding… then release.' : 'That’s it. Release to lower it.' : state.tried ? isLaunch ? dialog.dataset.mode === 'replay' ? 'Ready. Returning to your game…' : 'Ready. Starting your game…' : 'Got it. Moving on…' : isLaunch ? 'Try holding for a moment.' : 'Tap once to try it and move on.';
+    feedback.textContent = state.held ? 'That’s it. Release to lower it.' : state.tried ? control === 'right' ? dialog.dataset.mode === 'replay' ? 'Ready. Returning to your game…' : 'Ready. Starting your game…' : 'Got it. Moving on…' : 'Tap once to try it and move on.';
     if (dialog.open) layout();
   }
   function press(control: PracticeControl, token: string) {
     if (!dialog.open || input !== null || !state.press(control)) return;
     input = token;
-    if (control !== 'launch') onPress(control);
+    onPress(control);
     refresh();
   }
   function release(token: string | null, cancelled = false) {
     if (token !== input) return;
     const succeeded = state.release(cancelled); input = null;
     // A quick tap still gives a visible full lift, even between two render frames.
-    tapUntil = succeeded && state.control !== 'launch' ? elapsed + .16 : 0;
+    tapUntil = succeeded ? elapsed + .16 : 0;
     if (dialog.open) refresh();
   }
   function finish(result: 'complete' | 'skip' | 'cancel') {
@@ -99,7 +97,6 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       if (event.detail !== 0 || state.held) return;
       press(button.dataset.control as PracticeControl, 'assistive');
       if (input !== 'assistive') return;
-      if (state.control === 'launch') state.tick(.4);
       release('assistive');
     });
   }
@@ -108,7 +105,6 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
     if (['KeyD', 'ArrowRight'].includes(event.code)) return 'right';
     const target = event.target as HTMLElement;
     if (['Space', 'Enter'].includes(event.code) && target.matches('[data-control]')) return target.dataset.control as PracticeControl;
-    if (event.code === 'Space' && !target.matches('button')) return 'launch';
   }
   for (const type of ['keydown', 'keyup']) dialog.addEventListener(type, event => {
     const e = event as KeyboardEvent, control = controlFor(e);
@@ -161,13 +157,11 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       }
       const demo = !reducedMotion.matches && !state.tried && !state.held;
       const wave = Math.max(0, Math.sin(elapsed * 3.2));
-      const target = state.held ? state.control === 'launch' ? state.charge : 1 : elapsed < tapUntil ? 1 : demo ? wave * .8 : 0;
+      const target = state.held ? 1 : elapsed < tapUntil ? 1 : demo ? wave * .8 : 0;
       const previousAmount = amount;
       amount = reducedMotion.matches ? target : amount + (target - amount) * (1 - Math.exp(-delta * 24));
       for (const paddle of view.manifest.calibration.paddles) view.updatePaddle(paddle.game_id, paddle.game_id === `flipper_${state.control}` ? paddle.up_angle_degrees * Math.PI / 180 * amount : 0);
-      view.updateSpring(state.control === 'launch' ? amount : 0);
-      launch.style.setProperty('--practice-charge', String(state.held ? state.charge : 0));
-      const id = state.control === 'launch' ? view.manifest.calibration.spring.render_groups[0] : `flipper_${state.control}`;
+      const id = `flipper_${state.control}`;
       const object = view.groups.get(id)?.[0];
       marker.hidden = !object;
       if (object) {
