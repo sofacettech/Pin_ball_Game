@@ -321,7 +321,7 @@ dialog .dialog-primary { background: var(--lime); color: #152004; border-color: 
 }
 
 /* Keep the site navbar clear while the reference card grows with its contents. */
-.membership-back{position:relative;z-index:5;display:grid;place-items:center;flex:none;width:44px;height:44px;margin:0 0 8px;padding:0;border:0;background:transparent;color:#fff}
+.membership-back{position:relative;z-index:1;display:grid;place-items:center;flex:none;width:44px;height:44px;margin:0 0 8px;padding:0;border:0;background:transparent;color:#fff}
 .membership-back svg{width:24px;height:24px;transform:rotate(180deg)}
 .membership-back:hover{opacity:.7}
 @media(min-width:1101px) and (min-aspect-ratio:17/10){.membership-back{position:absolute;left:calc(-72 * var(--desktop-scale));top:0;margin:0}}
@@ -360,3 +360,20 @@ dialog .dialog-primary { background: var(--lime); color: #152004; border-color: 
 .exit-actions{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:40px;padding-top:36px;border-top:1px solid #af88ca88}
 .exit-actions button{height:64px;font-size:21px}
 @media(max-width:600px){.membership-exit{margin-block:20px 40px}.membership-exit h1{font-size:43px}.exit-actions{grid-template-columns:1fr;gap:14px}.exit-actions button{font-size:18px;height:58px}.guest-notice{font-size:15px}}
+
+@media(max-width:600px){
+ .demo-note,.demo-disclaimer,.sign-off,.leaderboard-helper{font-size:13px}
+ .registration-progress,.step-eyebrow{font-size:11px}
+ .consent-row,.confirmation-error,.field-error,.back-form .field-error{font-size:14px}
+ .front-actions button{font-size:14px}
+}
+
+/* Keep the existing fixed navigation readable over the scrolling save form. */
+body::before{content:"";position:fixed;inset:0 0 auto;height:var(--site-header-clearance,90px);z-index:3;pointer-events:none;background:#130c1e}
+.pending-reward-summary{margin:16px 0 0;color:var(--lavender);font-size:clamp(14px,1.25vw,20px);line-height:1.5}
+@media(min-width:601px){.consent-row{font-size:max(14px,calc(17 * var(--u)))}}
+.sign-off{font-size:14px}
+.exit-updates{display:inline-flex;align-items:center;min-height:44px;margin-top:24px;color:var(--lavender);font-size:14px;line-height:1.5}
+.first-cut-join .membership-layout{display:block;max-width:760px}
+.first-cut-join .heading h1{white-space:normal;font-size:clamp(33px,6vw,72px)}
+.first-cut-join .front-actions{grid-template-columns:minmax(0,1fr)}

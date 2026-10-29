@@ -10,7 +10,7 @@ import {brandParts} from '../shared/brand-text.ts';
 
 test('brand font matches only written brand names, preserving surrounding copy and email addresses',()=>{
  const text='About SO/FACET. Your So / Facet points. SOFACET membership. hello@sofacet.com';
- const parts=brandParts(text);assert.equal(parts.map(p=>p.text).join(''),text);assert.deepEqual(parts.filter(p=>p.brand).map(p=>p.text),['SO/FACET','So / Facet','SOFACET']);
+ const parts=brandParts(text);assert.equal(parts.map(p=>p.text).join(''),'About SO/ FACET. Your SO/ FACET points. SO/ FACET membership. hello@sofacet.com');assert.deepEqual(parts.filter(p=>p.brand).map(p=>p.text),['SO/ FACET','SO/ FACET','SO/ FACET']);
  assert.equal(brandParts('Welcome back.')[0].brand,false);
 });
 test('account reads only the current member, uses confirmed credits, blocks pending actions and signs out without deleting records',async()=>{

@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>SOFACET — Enter the world</title>
+  <title>SO/ FACET — Enter the world</title>
   <base href="/">
-  <link rel="icon" href="data:,">
+
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=frames-21a0b5f24689">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+  <style data-shared-style="./style.css?v=frames-2d8ae0387039">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -38,11 +38,23 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
 @font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
 .brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
-.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:normal!important;font-weight:400!important;letter-spacing:0!important;font-variation-settings:normal!important;font-synthesis:none;line-height:inherit!important;color:inherit!important}
 :root #game-header .site-nav{gap:16px}
 :root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:36px;min-height:36px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
-@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:11px}}
+@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:14px}}
 @media(max-width:360px){:root #game-header .site-nav{gap:4px}:root #game-header .skip-game{padding-inline:10px}}
+
+@media(max-width:600px){
+ :root .site-nav .play-now{font-size:13px}
+}
+.menu-panel .menu-item:is(button){display:block;margin:0;padding:14px 0;border:0;border-radius:0;background:transparent;color:#fff;font:400 var(--site-menu-size)/1.2 Acumin,Arial,sans-serif;letter-spacing:-.02em;text-align:left;cursor:pointer}
+.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;color:#d9ed37;font-size:18px;text-align:center}
+.menu-small-links{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
+.menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:13px;letter-spacing:0}
+.menu-small-links [aria-disabled=true]{opacity:.6}
+.menu-panel .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#fff;opacity:.6}
+.social-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
+.menu-panel .brand-word{white-space:nowrap}
 
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
@@ -200,6 +212,22 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 #story-copy .opening-brand .kinetic-line-mask{display:block;padding:0;margin:0}
 #story-copy .opening-wordmark{display:block;line-height:0}
 #story-copy .opening-wordmark img{position:static;inset:auto;display:block;width:100%;height:auto}
+
+@media(max-width:600px){
+ .story-opening p{font-size:14px;letter-spacing:.05em}
+ .story-choice p{font-size:14px;letter-spacing:.05em}
+ .info-page .back-link,#enter{font-size:14px}
+ #status{font-size:13px}
+}
+
+.site-sound .sound-icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.site-sound[data-on="true"] .sound-off-icon,.site-sound:not([data-on="true"]) .sound-on-icon{display:none}
+
+/* Feathered contrast stays with the text, clear of the interactive world. */
+.story-butterflies,.story-rules,.story-finale{isolation:isolate}
+.story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
+.story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
+:root .site-nav .play-now{font-size:13px}
 </style>
 <style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
 [data-skip-intro] #site-loader{display:none}
@@ -225,14 +253,14 @@ body[data-loading]{overflow:hidden}
 #scene-frame canvas{display:block;width:100%;height:100%}
 #opening-frame{position:absolute;left:0;top:0;aspect-ratio:16/9;z-index:1;pointer-events:none}
 #opening-frame #opening{width:100%;height:100%;object-fit:contain}
-body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel,body[data-phase="opening"] #scroll-hint{visibility:hidden}
+body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel{visibility:hidden}
 #enter{z-index:5}
-#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 13px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
+#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
 body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}
 body[data-game="visible"] #entrance{visibility:hidden}
-@media(max-width:600px){#scroll-hint{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:none;font-size:12px;gap:12px}}
+@media(max-width:600px){#scroll-hint{left:50%;right:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:14px;gap:12px}}
 @media(prefers-reduced-motion:reduce){#scroll-hint{transition:none}}
 
 /* Visible in the first HTML response, before fonts or scene scripts arrive. */
@@ -244,9 +272,30 @@ body[data-game-loading] #journey-preparation{display:none}
 body[data-phase="buffering"] #scroll-hint{visibility:hidden}
 #scene-loading-status{position:absolute;z-index:6;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;gap:10px;justify-items:center;max-width:90vw;padding:12px 20px;border-radius:12px;background:#080b15c9;color:#fff;font:13px/1.4 Arial,sans-serif;text-align:center}
 body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-status,body[data-phase="buffering"] #scene-loading-status{visibility:hidden}
+
+body[data-loading] #scroll-hint{visibility:hidden}
+#scene-loading-status[data-ready]{bottom:calc(132px + env(safe-area-inset-bottom,0px));pointer-events:none}
+#scene-loading-status[data-ready] progress{display:none}
 </style>
   <link rel="preload" href="/assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
-<!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
+<!-- site-metadata -->
+<link rel="icon" href="/assets/sofacet-favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/sofacet-favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png" sizes="180x180">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SO/ FACET">
+<meta property="og:title" content="SO/ FACET. What's yours?">
+<meta property="og:description" content="Play pinball, score points, and save them for SO/ FACET lab-grown diamond jewellery.">
+<meta property="og:image" content="https://shopsofacet.com/assets/sofacet-share.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SO/ FACET. What's yours? Play pinball. Save your points.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SO/ FACET. What's yours?">
+<meta name="twitter:description" content="Play pinball, score points, and save them for SO/ FACET lab-grown diamond jewellery.">
+<meta name="twitter:image" content="https://shopsofacet.com/assets/sofacet-share.png">
+<!-- /site-metadata --><!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
 .game-loading-screen[hidden]{display:none!important}
 .game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
 .game-loading-screen canvas{display:block;width:100%;height:100%;background:radial-gradient(circle at 62% 60%,#fff 0 8px,#ffffff38 10px,transparent 23px)}
@@ -255,6 +304,7 @@ body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-
 .game-loading-screen .loading-statement{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(84vw,1150px);margin:0;color:#fff;font:400 clamp(32px,4.4vw,72px)/1.6 Acumin,Arial,sans-serif;font-stretch:75%;font-variation-settings:"wght" 400,"wdth" 75,"slnt" 0;font-synthesis:none;letter-spacing:-.015em;text-transform:none;text-align:center;text-wrap:balance;pointer-events:none}
 .game-loading-screen .loading-statement[hidden]{display:none}
 .loading-phrase{display:block;opacity:0}
+.loading-phrase .brand-word{white-space:nowrap}
 .loading-value{color:#c9a0ff;white-space:nowrap}
 .loading-pink{color:#ff5ebc}
 .loading-green{color:#bfff00}
@@ -288,11 +338,11 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
-</style><link rel="preload" href="/assets/game-loader.js?v=d69599dfe6a5" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=d69599dfe6a5" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
+</style><link rel="preload" href="/assets/game-loader.js?v=a5735df1a965" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=a5735df1a965" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
 <body data-phase="opening" data-loading>
-  <div id="site-loader" role="region" aria-label="Loading SOFACET">
-    <div id="loading-stage" tabindex="0" aria-label="SOFACET logo reveal" aria-describedby="loading-instructions">
-      <p id="loading-instructions">SOFACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
+  <div id="site-loader" role="region" aria-label="Loading SO/ FACET">
+    <div id="loading-stage" tabindex="0" aria-label="SO/ FACET logo reveal" aria-describedby="loading-instructions">
+      <p id="loading-instructions">SO/ FACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
       <audio id="introAudio" src="./assets/loading/sofacet-intro-audio.m4a" preload="auto" aria-hidden="true"></audio>
     <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3648 2160" aria-hidden="true">
       <defs>
@@ -378,16 +428,16 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
       </g>
     </svg>
     </div>
-  <div class="startup-feedback"><p data-scene-status role="status">Opening the world…</p><progress data-scene-progress max="100" aria-label="World download"></progress></div></div>
-  <script type="module" src="/assets/entrance-3d/entry-MSDWOV7H.js"></script>
-  <main id="entrance" aria-label="Explore the SOFACET world" inert aria-hidden="true">
+  <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress></div></div>
+  <script type="module" src="/assets/entrance-3d/entry-KE5UQHXN.js"></script>
+  <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
-      <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SOFACET fragmented ball assembling"></video></div>
+      <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SO/ FACET fragmented ball assembling"></video></div>
     </div>
-    <div id="story-copy" aria-label="The SOFACET story">
+    <div id="story-copy" aria-label="The SO/ FACET story">
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
-        <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/FACET</span></span></h1>
+        <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/ FACET</span></span></h1>
         <p><span class="story-text-line">Lab-grown diamonds,</span> <span class="story-text-line">redefined.</span></p>
       </section>
       <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
@@ -408,13 +458,13 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
         <h2><span class="story-text-line">Your rules/</span> <span class="story-text-line">Your shape/</span> <span class="story-text-line">Your diamond/</span></h2>
       </section>
       <section class="story-line story-finale" data-from="2049" aria-hidden="true">
-        <h2><span class="story-text-line">So,</span> <span class="story-text-line">what's yours/</span></h2>
-        <p>Play to find out.</p>
+        <h2><span class="story-text-line">So/</span> <span class="story-text-line">what's yours?</span></h2>
+        <p>Find out in a game of pinball.<br> Every 10 points is ₹1 off <span class="inline-brand"><span class="inline-brand__size" aria-hidden="true">SO/ FACET</span><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></span> diamond jewellery.</p>
       </section>
     </div>
-    <a class="wordmark brand-logo site-brand" href="/" target="_top" aria-label="SOFACET home"><img src="./assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
+    <a class="wordmark brand-logo site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="./assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></a>
     <header class="site-navigation site-nav">
-      <a id="skip-game" class="play-now" href="./play.html">Skip to Game</a>
+      <a id="skip-game" class="play-now" href="./play.html">Play Pinball</a>
       <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
           <a class="menu-item" href="./account.html" target="_top" data-account-link>My Account</a>
@@ -423,20 +473,20 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
           <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
     </header>
-    <button id="enter" hidden>Enter <span class="inline-brand"><span class="inline-brand__size" aria-hidden="true">SOFACET</span><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></span> <span aria-hidden="true">↗</span></button>
-    <div id="scene-loading-status"><span data-scene-status role="status">Loading the world…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
+    <button id="enter" hidden>Enter <span class="inline-brand"><span class="inline-brand__size" aria-hidden="true">SO/ FACET</span><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></span> <span aria-hidden="true">↗</span></button>
+    <div id="scene-loading-status"><span data-scene-status role="status">Growing the diamonds…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
     <section id="journey-preparation" aria-label="Preparing your journey" hidden>
       <h2>A world taking shape.</h2>
-      <p id="preparation-status" data-scene-status role="status">Loading the world…</p>
+      <p id="preparation-status" data-scene-status role="status">Growing the diamonds…</p>
       <progress data-scene-progress max="100" aria-label="World download"></progress>
     </section>
     <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
     <div id="progress" aria-hidden="true"></div>
   </main>
-  <iframe id="game-page" title="SOFACET pinball game" aria-hidden="true" inert></iframe>
+  <iframe id="game-page" title="SO/ FACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=current-a59dd882fea1"></script>
-  <script type="module" src="/assets/entrance-3d/entry-7JYUA4O5.js"></script>
-<!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-0bb7758dbd88"></script>
+  <script type="module" src="/assets/entrance-3d/entry-5BBV7XWU.js"></script>
+<!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

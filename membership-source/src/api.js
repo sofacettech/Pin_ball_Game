@@ -11,7 +11,7 @@ export async function request(path, body, signal) {
       body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal,
     });
     const result = await response.json().catch(() => null);
-    if (!response.ok || !result || typeof result !== 'object') throw new Error(result?.message || 'The service is unavailable. Please try again.');
+    if (!response.ok || !result || typeof result !== 'object') throw new Error((result?.message || 'The service is unavailable. Please try again.').replace(/\bmembership\b/gi,'account'));
     return result;
   } catch (error) {
     if (error.name === 'AbortError' && !signal?.aborted) throw new Error('The request timed out. Please try again.');

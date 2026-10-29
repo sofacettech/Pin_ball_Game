@@ -1,12 +1,14 @@
 import {finishLoading} from '../assets/loading/intro.js';
 import {downloadModel} from './download-model.mjs';
+import {createLoadingCopy} from './loading-copy.mjs';
 
 const controller = new AbortController();
-let lastStatus, lastProgress;
+let lastProgress;
+const loadingCopy=createLoadingCopy(message=>{for(const status of document.querySelectorAll('[data-scene-status]'))status.textContent=message});
+export const finishStartupStatus=()=>loadingCopy.ready();
 export function setStartupStatus(message, progress = null) {
-  if (message === lastStatus && progress === lastProgress) return;
-  lastStatus = message; lastProgress = progress;
-  for (const status of document.querySelectorAll('[data-scene-status]')) status.textContent = message;
+  if (progress === lastProgress) return;
+  lastProgress = progress;
   for (const bar of document.querySelectorAll('[data-scene-progress]')) {
     if (progress === null) bar.removeAttribute('value'); else bar.value = progress;
   }
@@ -20,4 +22,5 @@ export const modelDownload = downloadModel('/assets/entrance-3d/journey-compact.
 });
 // The renderer can attach later, after its own module has downloaded.
 modelDownload.catch(() => {});
-export function cancelStartup() { controller.abort(); }
+export function cancelStartup() { loadingCopy.cancel(); controller.abort(); }
+addEventListener('pagehide',event=>{if(!event.persisted)loadingCopy.cancel()});

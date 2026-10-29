@@ -7,7 +7,7 @@ export function accountNavigationHref(href,search=globalThis.location?.search||'
  const [path,query='']=href.split('?'),params=new URLSearchParams(query);params.set('nav','game');return path+'?'+params;
 }
 export const accountHref=accountNavigationHref('/account.html');
-export const accountSignInHref=accountNavigationHref('/account.html?view=signin&preview=1');
+export const accountSignInHref=accountNavigationHref('/account.html?view=signin');
 export const membershipHref=accountNavigationHref('/membership.html?from=account');
 export const previewCode='123456';
 export function readPreviewAccount(){

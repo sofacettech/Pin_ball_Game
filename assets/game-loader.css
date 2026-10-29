@@ -7,6 +7,7 @@
 .game-loading-screen .loading-statement{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(84vw,1150px);margin:0;color:#fff;font:400 clamp(32px,4.4vw,72px)/1.6 Acumin,Arial,sans-serif;font-stretch:75%;font-variation-settings:"wght" 400,"wdth" 75,"slnt" 0;font-synthesis:none;letter-spacing:-.015em;text-transform:none;text-align:center;text-wrap:balance;pointer-events:none}
 .game-loading-screen .loading-statement[hidden]{display:none}
 .loading-phrase{display:block;opacity:0}
+.loading-phrase .brand-word{white-space:nowrap}
 .loading-value{color:#c9a0ff;white-space:nowrap}
 .loading-pink{color:#ff5ebc}
 .loading-green{color:#bfff00}

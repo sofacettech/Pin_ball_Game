@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import {selectPaddle,connectTouchControls} from '../game-source/src/touch-controls.ts';
 import {connectFlipScorecard} from '../game-source/src/flip-scorecard.ts';
 
@@ -11,6 +13,22 @@ class Element extends EventTarget {
  getBoundingClientRect(){return {left:0,width:400}}
 }
 const send=(element,type,props={})=>{if(['pointerup','pointercancel','lostpointercapture'].includes(type))element.captured.delete(props.pointerId);return element.dispatchEvent(Object.assign(new Event(type,{cancelable:true}),props))};
+
+test('playback icons follow actual paused state and reject inactive, busy and finished controls',()=>{
+ const source=readFileSync(new URL('../game-source/src/main.ts',import.meta.url),'utf8');
+ const code=source.slice(source.indexOf('function syncPlaybackControls(){'),source.indexOf('\nfunction sync(){'));
+ const playbackControls={},pauseButton=new Element(),restartButton=new Element();
+ const context={playbackControls,pauseButton,restartButton,physics:{active:false,state:'launcher',paused:false},inspecting:false,starting:false};
+ const update=vm.runInNewContext(code+';syncPlaybackControls',context);
+ update();assert.equal(playbackControls.hidden,true);assert.equal(pauseButton.disabled,true);assert.equal(restartButton.disabled,true);
+ context.physics.active=true;update();assert.equal(playbackControls.hidden,false);assert.equal(pauseButton.disabled,false);assert.equal(restartButton.disabled,false);
+ assert.equal(pauseButton.getAttribute('aria-label'),'Pause game');assert.equal(pauseButton.classes.has('is-paused'),false);
+ context.physics.paused=true;update();assert.equal(pauseButton.getAttribute('aria-label'),'Resume game');assert.equal(pauseButton.getAttribute('aria-pressed'),'true');assert.equal(pauseButton.classes.has('is-paused'),true);
+ context.physics.paused=false;update();assert.equal(pauseButton.getAttribute('aria-label'),'Pause game');assert.equal(pauseButton.classes.has('is-paused'),false);
+ context.starting=true;update();assert.equal(pauseButton.disabled,true);assert.equal(restartButton.disabled,true);
+ context.starting=false;context.inspecting=true;update();assert.equal(playbackControls.hidden,true);
+ context.inspecting=false;context.physics.state='finished';update();assert.equal(playbackControls.hidden,true);assert.equal(pauseButton.disabled,true);assert.equal(restartButton.disabled,true);
+});
 
 test('the held paddle keeps priority across keyboard/touch combinations; release transfers control',()=>{
  let side=null;

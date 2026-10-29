@@ -15,6 +15,14 @@ import {formatPoints} from './player-copy';
 import {connectControlsTutorial} from './controls-tutorial';
 import {parseGameQuality,gameQualityStorageKey} from './render-resolution';
 
+if(import.meta.env.DEV){
+ const controls=document.createElement('section');controls.id='inspection';controls.hidden=true;
+ controls.innerHTML='<label>View <select id="view"><option>Gameplay area</option><option>Launcher</option><option>Rail</option><option>Scoreboard</option></select></label><label>Blender overlay <input id="overlay" type="range" min="0" max="100" value="0"></label><output id="metrics"></output>';
+ document.body.append(controls);
+ const reference=document.createElement('img');reference.id='reference';reference.alt='Blender reference';reference.hidden=true;
+ const label=document.createElement('span');label.className='compare-label';label.hidden=true;label.textContent='Blender reference';
+ document.getElementById('viewport')!.append(reference,label);
+}
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const stage=$('stage'),viewport=$('viewport'),canvas=$<HTMLCanvasElement>('game');
 const mobileLives=$('mobile-lives'),lifeHearts=mobileLives.querySelectorAll<HTMLImageElement>('img');
@@ -38,10 +46,11 @@ window.addEventListener('message',event=>{
  if(parentVisible){view.needsRender=true;requestGameFrame()}
 });
 const menu=$('game-menu'),settings=$<HTMLButtonElement>('settings'),navToggle=$<HTMLButtonElement>('nav-toggle');
+const playbackControls=$('gameplay-controls'),pauseButton=$<HTMLButtonElement>('pause'),restartButton=$<HTMLButtonElement>('restart');
 const howToPlay=$('how-to-play-toggle'),controlsGuide=$('how-to-play-controls');
 function closeSettings(){menu.hidden=true;settings.setAttribute('aria-expanded','false');howToPlay.setAttribute('aria-expanded','false');howToPlay.parentElement!.classList.remove('is-open');controlsGuide.inert=true}
 function closeNavigation(){if(navToggle.getAttribute('aria-expanded')==='true')navToggle.click()}
-new MutationObserver(()=>{if(navToggle.getAttribute('aria-expanded')!=='true'&&!menu.hidden){closeSettings();setGamePaused(false)}}).observe(navToggle,{attributes:true,attributeFilter:['aria-expanded']});
+new MutationObserver(()=>{if(navToggle.getAttribute('aria-expanded')==='true'&&!menu.hidden){closeSettings();setGamePaused(false)}}).observe(navToggle,{attributes:true,attributeFilter:['aria-expanded']});
 howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!=='true';howToPlay.setAttribute('aria-expanded',String(expanded));howToPlay.parentElement!.classList.toggle('is-open',expanded);controlsGuide.inert=!expanded};
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false,resumeAfterLeaderboard=false;
@@ -62,6 +71,7 @@ function showLeaderboard(){
  clearKeys();closeNavigation();closeSettings();rewards.dialog.close();
  if(!leaderboard.dialog.open){resumeAfterLeaderboard=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';if(resumeAfterLeaderboard)setGamePaused(true);leaderboard.show()}
 }
+$('rewards-leaderboard').onclick=showLeaderboard;
 function showResult(){
  void leaderboard.ready.then(()=>{if(!loaded||starting||physics.state!=='finished'||registration.open||leaderboard.dialog.open)return;if(membership?.isMember()===false)rewards.show(physics.score,leaderboard.gameId);else showLeaderboard()});
 }
@@ -115,6 +125,15 @@ $('practice-replay').onclick=()=>openPractice('replay');
 const applyInspectionLayout=()=>{if(!inspecting){viewport.style.width='';viewport.style.height=''}else{
  const ref=view.references[view.referenceIndex];const ratio=ref.resolution[0]/ref.resolution[1];const w=Math.min(stage.clientWidth,stage.clientHeight*ratio);viewport.style.width=w+'px';viewport.style.height=w/ratio+'px'}view.resize()};
 let completedRunRecorded=false;
+function syncPlaybackControls(){
+ const active=physics.active&&physics.state!=='finished'&&!inspecting;
+ playbackControls.hidden=!active;
+ pauseButton.disabled=restartButton.disabled=!active||starting;
+ const label=physics.paused?'Resume game':'Pause game';
+ pauseButton.setAttribute('aria-label',label);pauseButton.title=label;
+ pauseButton.setAttribute('aria-pressed',String(physics.paused));
+ pauseButton.classList.toggle('is-paused',physics.paused);
+}
 function sync(){
  const p=physics.pose();
  mobileLives.hidden=!physics.active||inspecting||p.state==='finished';
@@ -124,7 +143,6 @@ function sync(){
  }
  applyNavigationLayout();stage.classList.toggle('showing-play',!physics.active||p.state==='finished');
  sound.setMusic(physics.active&&!p.paused&&p.state!=='finished'&&!registration.open&&!leaderboard.dialog.open);
- $('resume').textContent=physics.active&&p.state!=='finished'?'Resume game':'Back to game';
  $('menu-description').textContent=physics.active&&p.state!=='finished'?'Game paused. Your progress is saved here.':'Game settings.';
  if(p.state==='finished'&&!completedRunRecorded){completedRunRecorded=true;
   clearKeys();holdCharge=false;showResult();
@@ -133,7 +151,7 @@ function sync(){
  if(view.scoreboard.update(p.score,highScore??0,p.lives))view.needsRender=true;
  scorecard.update(p.score,highScore);applyScoreboardLayout();
  $('charge-fill').style.transform='scaleX('+p.charge+')';document.querySelector('.charge')!.setAttribute('aria-valuenow',String(Math.round(p.charge*100)));
- $('pause').textContent=p.paused?'Resume':'Pause';$<HTMLButtonElement>('pause').disabled=!physics.active||p.state==='finished'||inspecting;
+ syncPlaybackControls();
  const launchReady=canTouch('launch'),mobile=mobileView(),showHold=mobile&&physics.active&&p.state!=='finished';
  if(!launchReady&&p.state==='playing'&&document.activeElement===launchButton)canvas.focus({preventScroll:true});
  launchButton.hidden=!(showHold||launchReady);launchButton.disabled=!launchReady;launchButton.inert=!launchReady;
@@ -141,23 +159,20 @@ function sync(){
  const scoreVisible=String(!mobile||p.state==='playing'||!physics.active||p.state==='finished');
  if(scorecardPanel.dataset.scoreVisible!==scoreVisible)scorecardPanel.dataset.scoreVisible=scoreVisible;
  stage.classList.toggle('launch-ready',launchReady);
- $<HTMLButtonElement>('restart').disabled=starting||inspecting||!physics.active||p.state==='finished';
  $('start').hidden=physics.active&&p.state!=='finished';$<HTMLButtonElement>('start').disabled=starting;$('start-label').textContent=starting?'Preparing…':physics.active?'Play again':'Play';
  $('action').hidden=!menu.hidden||mobile&&physics.active&&p.state!=='finished'||physics.active&&(p.state==='playing'||p.state==='draining'||p.state==='spring_return')&&!p.paused;
  $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table, ready to play.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Game paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Hold the launch button or Space to continue charging.':'Release the launch button or Space to launch.':'Hold the launch button or Space to charge.';
 }
 function toggleInspection(){if(!loaded)return;inspecting=!inspecting;clearKeys();if(physics.active&&physics.state!=='finished')physics.setPaused(true);
- document.body.classList.toggle('inspect-mode',inspecting);$('inspection').hidden=!inspecting;view.setInspect(inspecting);applyScoreboardLayout();applyInspectionLayout();updateOverlay();sync();if(!inspecting&&physics.state==='finished')showResult()}
-$<HTMLSelectElement>('view').onchange=e=>{view.setReference(Number((e.target as HTMLSelectElement).value));applyInspectionLayout();updateOverlay()};
+ document.body.classList.toggle('inspect-mode',inspecting);$('inspection').hidden=!inspecting;view.setInspect(inspecting);applyScoreboardLayout();applyInspectionLayout();if(import.meta.env.DEV)updateOverlay();sync();if(!inspecting&&physics.state==='finished')showResult()}
+if(import.meta.env.DEV)$<HTMLSelectElement>('view').onchange=e=>{view.setReference(Number((e.target as HTMLSelectElement).value));applyInspectionLayout();updateOverlay()};
 function updateOverlay(){const opacity=Number($<HTMLInputElement>('overlay').value)/100;const image=$<HTMLImageElement>('reference');image.src='/references/'+view.references[view.referenceIndex].file;image.hidden=!inspecting||!opacity;image.style.opacity=String(opacity);document.querySelector<HTMLElement>('.compare-label')!.hidden=!inspecting||!opacity}
-$<HTMLInputElement>('overlay').oninput=updateOverlay;
+if(import.meta.env.DEV)$<HTMLInputElement>('overlay').oninput=updateOverlay;
 function setGamePaused(value:boolean){if(!loaded||inspecting||tutorial?.active)return;clearKeys();accumulator=0;if(value)holdCharge=physics.state==='charging';else closeSettings();physics.setPaused(value);sync();if(!value)(rewards.dialog.open?navToggle:canvas).focus()}
 function togglePause(){if(!loaded||inspecting||!physics.active||physics.state==='finished')return;setGamePaused(!physics.paused)}
 $('pause').onclick=togglePause;
-settings.onclick=()=>{if(!menu.hidden){resumeGame();return}if(inspecting)toggleInspection();menu.hidden=false;settings.setAttribute('aria-expanded','true');setGamePaused(true);$('menu-title').focus({preventScroll:true});menu.scrollIntoView({block:'nearest'})};
+settings.onclick=()=>{if(!menu.hidden){resumeGame();return}closeNavigation();if(inspecting)toggleInspection();menu.hidden=false;settings.setAttribute('aria-expanded','true');setGamePaused(true);$('menu-title').focus({preventScroll:true})};
 function resumeGame(){closeSettings();closeNavigation();setGamePaused(false)}
-window.addEventListener('sofacet:back-to-game',resumeGame);
-$('resume').onclick=resumeGame;
 $('menu-close').onclick=resumeGame;
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu.hidden){event.preventDefault();event.stopPropagation();resumeGame()}});
 function updateSoundSettings(){$('volume-value').textContent=Math.round(sound.volume)+'%';$('sound-label').textContent=sound.muted?'Unmute':'Mute';$('sound').setAttribute('aria-pressed',String(sound.muted));$('sound').setAttribute('aria-label',sound.muted?'Unmute game sound':'Mute game sound')}
@@ -188,9 +203,9 @@ function bindFeedback(){caveEjecting=false;physics.onHit=(id,delta)=>{view.hit(i
 async function start(){let phase='styles';try{
  await window.sofacetGameLoader?.stylesReady;
  phase='table';
- await view.load((_value,label)=>{$('loading-detail').textContent=label});
+ await view.load(()=>{});
  phase='collision';
- $('loading-detail').textContent='Preparing ball and paddle movement…';
+ $('loading-detail').textContent='';
  const fetchAsset=async(name:string)=>{const response=await fetch('/assets/'+name+'?v='+(view.manifest.asset_checksums[name]||view.manifest.asset_revision));if(!response.ok)throw new Error('Missing physics asset: '+name);return response};
  const [vertices,indices,obstacles]=await Promise.all([fetchAsset('collision-vertices.bin').then(r=>r.arrayBuffer()),fetchAsset('collision-indices.bin').then(r=>r.arrayBuffer()),fetchAsset('collider-entities.json').then(r=>r.json())]);
  await new Promise<void>(resolve=>setTimeout(resolve,0));
@@ -214,15 +229,15 @@ function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document
  tutorial?.update(delta);
  if((physics.active&&!physics.paused&&p.state!=='finished')||view.needsRender){view.adaptResolution(now);view.render()}else view.resetPerformanceSampling();sync();if(inspecting){const m=view.metrics();$('metrics').textContent=`${Math.round(m.medianFrameMs)} ms/frame · ${m.drawCalls} draws`}requestGameFrame()
 }
-if(import.meta.env.DEV||(new URLSearchParams(location.search)).has('review')){
+if(import.meta.env.DEV){
  (window as any).__facet={ready:()=>loaded,view,inspect:(index:number)=>{if(!inspecting)toggleInspection();$<HTMLSelectElement>('view').value=String(index);view.setReference(index);applyInspectionLayout();updateOverlay()},metrics:()=>view.metrics(),pose:()=>physics.pose()};
  if(import.meta.env.DEV)Object.defineProperty((window as any).__facet,'physics',{get:()=>physics});
 }
 const gameReady=start();
 if(location.hash==='#leaderboard')void Promise.all([leaderboard.ready,gameReady]).then(()=>{if(loaded)showLeaderboard()});
-if(['#settings','#profile'].includes(location.hash))void gameReady.then(()=>{
+if(location.hash==='#profile')location.replace('/account.html?nav=game');
+if(location.hash==='#settings')void gameReady.then(()=>{
  if(!loaded)return;
- if(navToggle.getAttribute('aria-expanded')!=='true')navToggle.click();
- $(location.hash==='#settings'?'settings':'profile').click();
+ settings.click();
 });
 

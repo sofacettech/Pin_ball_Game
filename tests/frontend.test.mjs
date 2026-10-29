@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import {normalisePhone,countries,phoneCountry,maskedPhone} from '../membership-source/src/phone.js';
 import {formatPoints,rewardMoney,resultHeadline,leaveCopy,birthDateState,splitPlayerName,publicPlayerName,validPlayerName,validPublicName} from '../game-source/src/player-copy.ts';
 
@@ -24,4 +26,25 @@ test('age validation distinguishes guests, invalid dates and exact eighteenth bi
  const today=new Date(2026,9,20);
  assert.equal(birthDateState('2008-10-20',today),'adult');assert.equal(birthDateState('2008-10-21',today),'underage');assert.equal(birthDateState('2010-01-01',today),'underage');
  for(const value of ['','2027-01-01','2000-02-30','2000-13-01','1899-01-01'])assert.equal(birthDateState(value,today),'invalid');
+});
+
+test('country menus put India first without changing alphabetical order for other countries',()=>{
+ assert.equal(countries[0].code,'IN');assert.equal(countries[0].dial,'+91');
+ const rest=countries.slice(1);assert.equal(rest.some(country=>country.code==='IN'),false);
+ assert.deepEqual(rest.map(country=>country.name),[...rest].sort((a,b)=>a.name.localeCompare(b.name)).map(country=>country.name));
+});
+
+test('early-access signup requires both displayed consents without recording unaccepted Terms',()=>{
+ const source=readFileSync(new URL('../membership-source/src/main.jsx',import.meta.url),'utf8');
+ const validation=source.slice(source.indexOf('  function validate()'),source.indexOf('  async function sendCode'));
+ const submission=source.slice(source.indexOf('  function begin('),source.indexOf('  async function confirm('));
+ let errors,status,requests=0;
+ const context={joining:true,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
+ const form=vm.runInNewContext(validation+submission+';({validate,begin})',context);
+ assert.equal(form.validate(),false);assert.ok(errors.terms);assert.ok(errors.marketing);
+ context.details.privacyAccepted=true;assert.equal(form.validate(),false);assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
+ context.details.marketingConsent=true;assert.equal(form.validate(),true);
+ form.begin({preventDefault(){}});assert.equal(requests,0);assert.match(status,/not available yet/);assert.equal(context.details.termsAccepted,false);
+ context.joining=false;context.details.termsAccepted=true;context.details.marketingConsent=false;
+ form.begin({preventDefault(){}});assert.equal(requests,1,'normal points registration retains optional marketing consent and its existing API flow');
 });

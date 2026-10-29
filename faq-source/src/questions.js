@@ -6,7 +6,7 @@ export const sections = [
     "navTitle": "The basics",
     "questions": [
       {
-        "question": "What is So/Facet?",
+        "question": "What is SO/ FACET?",
         "answer": [
           "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open soon."
         ]
@@ -20,19 +20,19 @@ export const sections = [
       {
         "question": "Are your diamonds certified?",
         "answer": [
-          "Yes. Every So/Facet diamond is IGI-certified."
+          "Yes. Every SO/ FACET diamond is IGI-certified."
         ]
       },
       {
         "question": "When do you launch?",
         "answer": [
-          "Soon. Save your points or join THE FIRST CUTS, and you’ll be among the first to know."
+          "Soon. Save your points or join “THE FIRST CUT”, and you’ll be among the first to know."
         ]
       },
       {
-        "question": "What is THE FIRST CUTS?",
+        "question": "What is “THE FIRST CUT”?",
         "answer": [
-          "Everyone who saves their points or joins our list before our doors open."
+          "Our early list: everyone who saves their points or joins before our doors open."
         ]
       }
     ]
@@ -44,9 +44,13 @@ export const sections = [
     "navTitle": "Game & points",
     "questions": [
       {
+        "question": "Is the game free?",
+        "answer": ["Yes, always. No purchase is needed to play or to save your points."]
+      },
+      {
         "question": "How do I earn points?",
         "answer": [
-          "Play a round at the So/Facet table. The higher you score, the more you earn."
+          "Play a round at the SO/ FACET table. The higher you score, the more you earn."
         ]
       },
       {
@@ -82,13 +86,13 @@ export const sections = [
       {
         "question": "How do I use my points?",
         "answer": [
-          "When our main site opens. We’ll share exactly how at launch."
+          "When our shop opens. We’ll share exactly how at launch."
         ]
       },
       {
         "question": "Do my points expire?",
         "answer": [
-          "Yes. Points expire 6 months after our main site launches."
+          "Yes. Points expire 6 months after our shop opens."
         ]
       },
       {
@@ -111,6 +115,10 @@ export const sections = [
     "title": "Your details",
     "navTitle": "Your details",
     "questions": [
+      {
+        "question": "Why do you need my mobile number?",
+        "answer": ["To confirm it's you with a one-time code and keep your points safe. It's also how you sign in later."]
+      },
       {
         "question": "What do you do with my details?",
         "answer": [

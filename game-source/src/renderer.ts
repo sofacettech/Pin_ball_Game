@@ -90,7 +90,7 @@ export class TableView {
    const key=obj.userData.game_render_group;if(key){const list=this.groups.get(key)||[];list.push(obj);this.groups.set(key,list)}
   });
   for(const target of manifest.target_gameplay)this.updateTarget(target.id,target.initial_position);
-  if(!this.groups.has('ball_main')||!this.groups.has('flipper_left')||!this.groups.has('flipper_right'))throw new Error('Ball or paddle mappings are missing.');
+  if(!this.groups.has('ball_main')||!this.groups.has('flipper_left')||!this.groups.has('flipper_right'))throw new Error('Ball or flipper mappings are missing.');
   for(const id of manifest.calibration.spring.render_groups){const parts=this.groups.get(id);if(!parts?.length)throw new Error('Spring mapping is missing.');for(const obj of parts)this.springScale.set(obj,obj.scale.z)}
   const haloCanvas=document.createElement('canvas');haloCanvas.width=haloCanvas.height=128;
   const context=haloCanvas.getContext('2d')!,gradient=context.createRadialGradient(64,64,8,64,64,64);gradient.addColorStop(0,'rgba(255,255,255,1)');gradient.addColorStop(.55,'rgba(255,255,255,.6)');gradient.addColorStop(1,'rgba(255,255,255,0)');context.fillStyle=gradient;context.fillRect(0,0,128,128);

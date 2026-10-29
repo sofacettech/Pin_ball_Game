@@ -3,53 +3,54 @@ if (standalone) standalone.hidden = false;
 
 const toggle = document.querySelector('[data-menu-toggle]');
 const panel = document.querySelector('[data-menu-panel]');
-// Preserve the game menu across its linked pages; normal website visits keep the site menu.
-const accountFlow = ['/account.html', '/membership.html'].includes(location.pathname);
 const gamePage = !!document.querySelector('#game-header');
-const gameAccount = ['/account.html', '/membership.html', '/about.html', '/faq.html', '/privacy.html', '/launching-soon.html', '/first-cuts-confirmation.html'].includes(location.pathname) && new URLSearchParams(location.search).get('nav') === 'game';
-if (gameAccount) {
-  panel.setAttribute('aria-label', 'Game navigation');
-  const items = [
-    ['Leaderboard', '/play.html#leaderboard'], ['Pause', null], ['Restart game', null],
-    ['Settings', '/play.html#settings'], ['Profile', '/play.html#profile'],
-    ['My Account', '/account.html?nav=game'], ['About', '/about.html'],
-    ['FAQs', '/faq.html'], ['Privacy Policies', '/privacy.html'], ['Back to game', '/play.html']
-  ];
-  panel.replaceChildren(...items.map(([label, href]) => {
-    const item = document.createElement('a');item.className = 'menu-item';item.textContent = label;
-    if (href) { item.href = href;item.target = '_top'; }
-    else { item.setAttribute('role', 'link');item.setAttribute('aria-disabled', 'true');item.style.opacity = '.45';item.title = 'Available during an active game'; }
-    if (label === 'My Account') item.setAttribute('data-account-link', '');
-    if (label === 'Leaderboard') { item.hidden = true;window.addEventListener('sofacet:account-player', event => { item.hidden = event.detail?.member !== true; }); }
-    return item;
-  }));
-}
-if (gamePage) {
-  const back = document.createElement('a');back.className = 'menu-item';back.href = '/play.html';back.target = '_top';back.textContent = 'Back to game';back.setAttribute('data-game-return', '');panel.append(back);
-  back.addEventListener('click', event => { event.preventDefault();setOpen(false);window.dispatchEvent(new Event('sofacet:back-to-game')); });
-}
-if (gamePage || gameAccount) panel.querySelectorAll('a[href]').forEach(item => {
-  const url = new URL(item.href, location.href);
-  if (url.origin === location.origin && ['/account.html', '/about.html', '/faq.html', '/privacy.html'].includes(url.pathname)) { url.searchParams.set('nav', 'game');item.href = url.pathname + url.search + url.hash; }
+const gameAccount = new URLSearchParams(location.search).get('nav') === 'game';
+const inGame = gamePage || gameAccount;
+const contextual = href => {
+  if (!inGame || !href.startsWith('/')) return href;
+  const url = new URL(href, location.href);url.searchParams.set('nav', 'game');
+  return url.pathname + url.search + url.hash;
+};
+if (inGame) document.querySelectorAll('a[href]').forEach(link => {
+  const url = new URL(link.href, location.href);
+  if (url.origin === location.origin && ['/account.html','/membership.html','/about.html','/faq.html','/launching-soon.html','/first-cuts-confirmation.html'].includes(url.pathname)) link.href = contextual(url.pathname + url.search + url.hash);
 });
-if (gameAccount && !accountFlow) fetch('/api/player').then(response => response.ok ? response.json() : null).then(player => window.dispatchEvent(new CustomEvent('sofacet:account-player', {detail:player}))).catch(() => {});
-let accountLink = panel.querySelector('[data-account-link]');
-if (!accountLink) {
-  accountLink = document.createElement('a');
-  accountLink.className = 'menu-item';
-  accountLink.href = './account.html';
-  accountLink.target = '_top';
-  accountLink.setAttribute('data-account-link', '');
-  panel.prepend(accountLink);
+// Keep the game's existing controls and panels connected when replacing its menu.
+if (gamePage) {
+  const settings = document.getElementById('settings');
+  settings.className = '';settings.querySelector('span').className = 'sr-only';
+  document.getElementById('gameplay-controls').append(settings);
+  document.body.append(document.getElementById('game-menu'));
+  const inactive = document.createElement('div');inactive.hidden = true;
+  inactive.append(document.getElementById('navbar-extras'), document.getElementById('profile-navigation'));
+  document.body.append(inactive);
 }
-accountLink.textContent = 'My Account';
-if (gamePage || gameAccount) accountLink.href = '/account.html?nav=game';
+function menuLink(label, href, className = 'menu-item') {
+  const link = document.createElement('a');link.className = className;link.textContent = label;
+  if (href) { link.href = contextual(href);link.target = '_top'; }
+  else { link.setAttribute('role', 'link');link.setAttribute('aria-disabled', 'true'); }
+  return link;
+}
+const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/play.html');
+if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
+const accountLink = menuLink('My points', '/account.html');accountLink.setAttribute('data-account-link', '');
+const about = menuLink('About ', '/about.html');
+const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
+const join = menuLink('Join THE FIRST CUT', '/membership.html?from=first-cuts', 'menu-item menu-join');
+const small = document.createElement('div');small.className = 'menu-small-links';
+// Policy pages remain unavailable until their approved text is supplied.
+small.append(menuLink('Terms', null, ''), menuLink('Privacy', null, ''), menuLink('Contact', 'mailto:hello@sofacet.com', ''));
+const instagram = document.createElement('button');instagram.type = 'button';instagram.disabled = true;instagram.className = 'social-placeholder';instagram.setAttribute('aria-label', 'Instagram');
+instagram.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7"/></svg>';
+small.append(instagram);
+panel.replaceChildren(play, accountLink, menuLink('How points work', '/faq.html'), about, join, small);
+panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {
-  if (item.hasAttribute('data-game-return')) return;
   const target = new URL(item.href, location.href);
   const targetPath = target.pathname === '/' ? '/index.html' : target.pathname;
   if (target.origin !== location.origin || targetPath !== currentPath) return;
+  if (targetPath === '/membership.html' && target.searchParams.get('from') !== new URLSearchParams(location.search).get('from')) return;
   item.setAttribute('aria-current', 'page');
   item.setAttribute('aria-disabled', 'true');
   item.setAttribute('role', 'link');

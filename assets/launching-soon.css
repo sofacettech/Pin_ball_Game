@@ -44,3 +44,5 @@
  }
  @media(max-width:360px){.launch-page{padding-inline:21px}h1{font-size:47px}.launch-body{font-size:17px}.join-button{font-size:18px;gap:14px}}
 .join-button,.close-preview{text-decoration:none}
+.play-first{display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:14px;color:var(--lavender);font-size:14px;text-decoration:none;text-underline-offset:4px}
+.play-first:hover{text-decoration:underline}
