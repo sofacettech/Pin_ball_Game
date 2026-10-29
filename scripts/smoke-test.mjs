@@ -23,7 +23,7 @@ try{
   await setTimeout(1000);
  }
  assert.ok(healthy,'Health check did not become ready.');
- for(const path of ['/','/index.html','/play.html','/entrance-3d','/entrance-3d/','/video','/video/','/launching-soon.html','/first-cuts-confirmation.html']){
+ for(const path of ['/','/index.html','/play.html','/entrance-3d','/entrance-3d/','/video','/video/','/launching-soon.html','/first-cuts-confirmation.html','/membership.html','/terms.html','/privacy.html']){
   const res=await request(path);
   assert.equal(res.status,200,path);
   const html=await res.text();

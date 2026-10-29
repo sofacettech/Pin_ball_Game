@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 // Refresh the shared loader's CSS and content hash on non-Vite pages too.
-for(const page of ['index.html','privacy.html','launching-soon.html','first-cuts-confirmation.html']){
+for(const page of ['index.html','privacy.html','terms.html','launching-soon.html','first-cuts-confirmation.html']){
   const file=resolve(root,page);
   await writeFile(file,withGameLoader(await readFile(file,'utf8')));
 }

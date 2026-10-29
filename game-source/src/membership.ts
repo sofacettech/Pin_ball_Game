@@ -36,12 +36,12 @@ export function connectMembership(options:Options){
   profileMenu.hidden=false;profile.setAttribute('aria-expanded','true');
   (profileRetry.hidden?$('profile-close'):profileRetry).focus();
  }
- async function open(source:HTMLElement=profile,pending:CompletedGameResult|null=null){
+ async function open(source:HTMLElement=profile,pending:CompletedGameResult|null=null,verify=false){
   if(dialog.open)return;
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
-  if(player.member){closeProfile();options.onLeaderboard();return}
+  if(player.member&&!verify){closeProfile();options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;closeProfile();options.beforeOpen();
-  frame.src='/membership.html?nav=game';dialog.showModal();document.body.classList.add('membership-open');
+  frame.src='/membership.html?nav=game'+(verify?'&verify=1':'');dialog.showModal();document.body.classList.add('membership-open');
  }
  function close(){
   if(!dialog.open)return;

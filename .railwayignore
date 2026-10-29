@@ -1,10 +1,12 @@
 .git/
 .github/
 .codebase-memory/
+.codex-attachments/
 node_modules/
 dist/
 data/
 work/
+experiments/
 .playwright-cli/
 .env
 .env.*

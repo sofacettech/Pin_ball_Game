@@ -12,13 +12,13 @@ process.env.MEMBERSHIP_TERMS_URL='https://example.invalid/terms';
 process.env.MEMBERSHIP_PRIVACY_URL='https://example.invalid/privacy';
 function setup(options={}) {
  let store={players:{one:{name:'Guest'},two:{name:'Other guest'}},games:{[gameId]:{player:'one',verified:true,score:3205},[otherGame]:{player:'one',verified:true,score:4100},[lowerGame]:{player:'one',verified:true,score:1000}}};
- const calls=[],credited=new Map();let customer='cus_test',timeout=false;
- const provider={request:async()=>({challengeId:'private-provider-id',expiresIn:300}),verify:async ({otp,challengeId})=>{assert.equal(challengeId,'private-provider-id');return {verified:otp==='654321'}}};
- const api=createMembershipApi({getStore:()=>store,commit:change=>{const previous=structuredClone(store);try{change()}catch(error){store=previous;throw error}},phone:value=>{const result=normalisePhone(value);if(!result)throw new ServiceError(400,'Invalid phone');return result},publicPlayer:p=>({member:!!p.profile,display_name:p.name,best_score:p.best??null}),provider:options.provider??provider,authenticate:async()=>({customer_id:customer,created:true,balance:0}),award:async args=>{calls.push({...args});if(!credited.has(args.eventId))credited.set(args.eventId,args.points);if(timeout){timeout=false;throw new ServiceError(503,'Temporary timeout')}return {balance:[...credited.values()].reduce((a,b)=>a+b,0)}}});
- return {api,calls,credited,get store(){return store},setCustomer:value=>customer=value,failNext:()=>timeout=true};
+ const calls=[],credited=new Map();let customer='cus_test',timeout=false,clock=Date.now();
+ const provider={request:async()=>({challengeId:'private-provider-id',expiresIn:300,resendAfter:60,deliveryChannel:'whatsapp'}),verify:async ({otp,challengeId})=>{assert.equal(challengeId,'private-provider-id');return otp==='654321'?{verified:true,token:'private-jwt',customer_id:customer,expiresAt:clock+30*60000}: {verified:false}}};
+ const api=createMembershipApi({getStore:()=>store,commit:change=>{const previous=structuredClone(store);try{change()}catch(error){store=previous;throw error}},phone:value=>{const result=normalisePhone(value);if(!result)throw new ServiceError(400,'Invalid phone');return result},publicPlayer:p=>({member:!!p.profile,display_name:p.name,best_score:p.best??null}),provider:options.provider??provider,now:()=>clock,score:options.score??(async token=>{assert.equal(token,'private-jwt');return {balance:0,lifetime_earned:0,rank:null}}),award:async args=>{assert.equal(args.token,'private-jwt');calls.push({...args});if(!credited.has(args.eventId))credited.set(args.eventId,args.points);if(timeout){timeout=false;throw new ServiceError(503,'Temporary timeout')}return {balance:[...credited.values()].reduce((a,b)=>a+b,0)}}});
+ return {api,calls,credited,get store(){return store},setCustomer:value=>customer=value,failNext:()=>timeout=true,advance:ms=>clock+=ms};
 }
-async function verified(fixture,id='one',phoneNumber=valid.phoneNumber) {
- const challenge=await fixture.api('/api/membership/otp/request',{phoneNumber},id);
+async function verified(fixture,id='one',phoneNumber=valid.phoneNumber,details=valid) {
+ const challenge=await fixture.api('/api/membership/otp/request',{phoneNumber,name:details.name,consent:true,...(details.dateOfBirth?{dateOfBirth:details.dateOfBirth}:{})},id);
  assert.notEqual(challenge.challengeId,'private-provider-id');
  const result=await fixture.api('/api/membership/otp/verify',{phoneNumber,otp:'654321',challengeId:challenge.challengeId},id);
  assert.equal(result.verified,true);return result.verificationToken;
@@ -31,16 +31,16 @@ test('Indian phone validation, age boundaries and untrusted pending context',()=
  assert.equal(pendingResult({points:3200,rewardValue:999,completedAt:Date.now(),status:'completed'}),null);
  assert.equal(pendingResult({points:3200,rewardValue:320,completedAt:Date.now(),status:'completed',gameId}).points,3200);
 });
-test('production OTP hooks stay blank, and no account or credits are fabricated',async()=>{
+test('unconfigured OTP cannot create an account or credits',async()=>{
  const f=setup({provider:{request:null,verify:null}});
  assert.equal((await f.api('/api/membership/config',{},'one')).otpAvailable,false);
- await assert.rejects(f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber},'one'),status(503));
+ await assert.rejects(f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one'),status(503));
  await assert.rejects(f.api('/api/membership',valid,'one'),status(503));assert.equal(f.store.players.one.profile,undefined);assert.equal(f.calls.length,0);
 });
 test('OTP proof is scoped to the player and phone; resend and attempt limits apply',async()=>{
- const f=setup();const challenge=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber},'one');
+ const f=setup();const challenge=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one');
  await assert.rejects(f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,otp:'654321',challengeId:challenge.challengeId},'two'),status(410));
- await assert.rejects(f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber},'one'),status(429));
+ await assert.rejects(f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one'),status(429));
  for(let i=0;i<5;i++)await assert.rejects(f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,otp:'000000',challengeId:challenge.challengeId},'one'),status(400));
  await assert.rejects(f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,otp:'654321',challengeId:challenge.challengeId},'one'),status(429));
  const next=setup(),proof=await verified(next);
@@ -60,7 +60,7 @@ test('verified scores credit 10 game points per ₹1, once; improvements grant o
  await f.api('/api/membership',payload,'one');assert.equal(f.calls.length,1);
  await Promise.all([f.api('/api/membership',{...payload,gameId:otherGame},'one'),f.api('/api/membership',{...payload,gameId:otherGame},'one')]);assert.equal(f.calls.length,2);assert.equal(f.calls[1].points,90);assert.equal([...f.credited.values()].reduce((a,b)=>a+b,0),410);
  const lower=await f.api('/api/membership',{...payload,gameId:lowerGame},'one');assert.equal(lower.savedPoints,4100);assert.equal(f.calls.length,2);
- f.setCustomer('cus_other');await assert.rejects(f.api('/api/membership',payload,'one'),status(409));
+ f.store.games[gameId].rewardCustomer='cus_other';await assert.rejects(f.api('/api/membership',payload,'one'),status(409));
 });
 test('a lost upstream response retries the persisted idempotency key without double credit',async()=>{
  const f=setup(),verificationToken=await verified(f),payload={...valid,verificationToken};f.failNext();
@@ -73,7 +73,7 @@ test('membership without a completed game never invents reward credits',async()=
 });
 
 test('single-screen sign-up accepts only the collected details and preserves consent, OTP and reward checks',async()=>{
- const f=setup(),verificationToken=await verified(f),{dateOfBirth,city,...details}=valid,payload={...details,verificationToken};
+ const f=setup(),{dateOfBirth,city,...details}=valid,verificationToken=await verified(f,'one',valid.phoneNumber,details),payload={...details,verificationToken};
  for(const change of [{termsAccepted:false},{marketingConsent:null},{email:''},{verificationToken:'invalid'},{points:999999}])await assert.rejects(f.api('/api/membership',{...payload,...change},'one'),status(change.verificationToken?401:400));
  assert.equal(f.store.players.one.profile,undefined);assert.equal(f.calls.length,0);
  const result=await f.api('/api/membership',payload,'one');
@@ -86,22 +86,70 @@ test('single-screen sign-up accepts only the collected details and preserves con
 });
 
 test('registered sessions save verified later games without registering or requesting OTP again',async()=>{
- const f=setup({provider:{request:null,verify:null}});f.store.players.one.profile={customerId:'cus_test',phone:valid.phoneNumber};
+ const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');
  const first=await f.api('/api/membership/rewards',{gameId},'one');assert.equal(first.pointsSaved,true);assert.equal(first.savedPoints,3200);assert.equal(f.calls.length,1);
  await f.api('/api/membership/rewards',{gameId},'one');assert.equal(f.calls.length,1);
  await Promise.all([f.api('/api/membership/rewards',{gameId:otherGame},'one'),f.api('/api/membership/rewards',{gameId:otherGame},'one')]);assert.equal(f.calls.length,2);assert.equal(f.calls[1].points,90);
  const lower=await f.api('/api/membership/rewards',{gameId:lowerGame},'one');assert.equal(lower.savedPoints,4100);assert.equal(f.calls.length,2);
 });
 test('registered reward requests require the session member and its own verified game',async()=>{
- const f=setup({provider:{request:null,verify:null}});
+ const f=setup();
  await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(401));
- f.store.players.one.profile={customerId:'cus_test',phone:valid.phoneNumber};
+ const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');
  for(const data of [{},{gameId:'bad'},{gameId,score:99999},{gameId,customerId:'other'}])await assert.rejects(f.api('/api/membership/rewards',data,'one'),status(400));
  f.store.games[gameId].player='two';await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));
  f.store.games[gameId].player='one';f.store.games[gameId].verified=false;await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));
  f.store.games[gameId].verified=true;f.store.games[gameId].rewardCustomer='other';await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));assert.equal(f.calls.length,0);
 });
 test('a returning member can retry saving points after a lost response without duplicate credit',async()=>{
- const f=setup({provider:{request:null,verify:null}});f.store.players.one.profile={customerId:'cus_test',phone:valid.phoneNumber};f.failNext();
+ const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');f.failNext();
  await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(503));const result=await f.api('/api/membership/rewards',{gameId},'one');assert.equal(result.savedPoints,3200);assert.equal(f.calls[0].eventId,f.calls[1].eventId);assert.equal(f.credited.size,1);
+});
+
+test('resend replaces prior registration and proof, expiry rejects verification, and profile edits require a new code',async()=>{
+ const f=setup();
+ const first=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true,dateOfBirth:valid.dateOfBirth},'one');
+ assert.equal(first.resendAfter,60);f.advance(60001);
+ const next=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true,dateOfBirth:valid.dateOfBirth},'one');
+ await assert.rejects(f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,challengeId:first.challengeId,otp:'654321'},'one'),status(410));
+ const proof=await f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,challengeId:next.challengeId,otp:'654321'},'one');
+ await assert.rejects(f.api('/api/membership',{...valid,name:'Changed Name',verificationToken:proof.verificationToken},'one'),status(400));
+ f.advance(60001);await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one');
+ await assert.rejects(f.api('/api/membership',{...valid,verificationToken:proof.verificationToken},'one'),status(401));
+ f.advance(300001);
+ await assert.rejects(f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,challengeId:next.challengeId,otp:'654321'},'one'),status(410));
+ assert.equal(f.calls.length,0);assert.equal(f.store.players.one.profile,undefined);
+});
+
+test('expired JWT requires new verification and retries the pending award using its original event key',async()=>{
+ const f=setup(),verificationToken=await verified(f);f.failNext();
+ await assert.rejects(f.api('/api/membership',{...valid,verificationToken},'one'),status(503));
+ const eventId=f.calls[0].eventId;f.advance(31*60000);
+ await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),error=>error.status===401&&error.code==='rewards_verification_required');
+ assert.equal(f.calls.length,1);
+ const fresh=await verified(f);const result=await f.api('/api/membership',{...valid,verificationToken:fresh},'one');
+ assert.equal(result.savedPoints,3200);assert.equal(f.calls[1].eventId,eventId);assert.equal(f.credited.size,1);
+});
+
+test('a successful OTP exchange survives a transient score lookup failure without consuming the code again',async()=>{
+ let verifies=0,lookups=0;
+ const provider={request:async()=>({challengeId:'private',expiresIn:300}),verify:async()=>{verifies++;return {verified:true,token:'private-jwt',customer_id:'cus_test',expiresAt:Date.now()+1800000}}};
+ const f=setup({provider,score:async()=>{if(++lookups===1)throw new ServiceError(503,'Unavailable');return {balance:0}}});
+ const sent=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one');
+ const data={phoneNumber:valid.phoneNumber,challengeId:sent.challengeId,otp:'654321'};
+ await assert.rejects(f.api('/api/membership/otp/verify',data,'one'),status(503));
+ assert.equal((await f.api('/api/membership/otp/verify',data,'one')).verified,true);assert.equal(verifies,1);assert.equal(lookups,2);
+ await assert.rejects(f.api('/api/membership/otp/verify',data,'one'),status(410));
+});
+
+test('concurrent verification only exchanges a code once and grants no access until the provider confirms it',async()=>{
+ let resolveVerification,verifies=0;
+ const provider={request:async()=>({challengeId:'private',expiresIn:300}),verify:async()=>{verifies++;return new Promise(resolve=>{resolveVerification=resolve})}};
+ const f=setup({provider});const sent=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one');
+ const data={phoneNumber:valid.phoneNumber,challengeId:sent.challengeId,otp:'654321'};
+ const pending=f.api('/api/membership/otp/verify',data,'one');
+ await assert.rejects(f.api('/api/membership/otp/verify',data,'one'),status(409));
+ assert.equal(f.calls.length,0);assert.equal(f.store.players.one.profile,undefined);
+ resolveVerification({verified:true,token:'private-jwt',customer_id:'cus_test',expiresAt:Date.now()+1800000});
+ assert.equal((await pending).verified,true);assert.equal(verifies,1);
 });

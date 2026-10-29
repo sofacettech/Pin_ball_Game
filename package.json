@@ -8,6 +8,8 @@
     "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs && node scripts/build-entrance.mjs",
     "build:membership": "node scripts/build-membership.mjs",
     "test:membership": "node --test tests/membership.test.mjs",
+    "test:rewards": "node --test tests/membership.test.mjs tests/rewards-integration.test.mjs",
+    "smoke:membership": "node scripts/browser-membership-smoke.mjs",
     "test:frontend": "node --test tests/frontend.test.mjs",
     "test:leaderboard": "node --test tests/leaderboard.test.mjs",
     "build:faq": "node scripts/build-faq.mjs",

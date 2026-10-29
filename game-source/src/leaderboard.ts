@@ -3,6 +3,7 @@ import {MAX_GAME_TICKS,MAX_INPUT_RUNS,REPLAY_VERSION,packInput} from './simulati
 import type {InputRun} from './simulation';
 import type {Input} from './physics';
 import {formatPoints,resultHeadline} from './player-copy';
+import type {CompletedGameResult} from './post-game-rewards';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
 export type Player={display_name:string;member:boolean;best_score:number|null};
@@ -10,7 +11,7 @@ export type Player={display_name:string;member:boolean;best_score:number|null};
 async function request<T>(url:string,body?:unknown,timeout=30000):Promise<T>{
  const response=await fetch(url,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(timeout)});
  const data=await response.json().catch(()=>({message:'The leaderboard service is unavailable.'}));
- if(!response.ok)throw new Error(data.message||'Please try again in a moment.');return data as T;
+ if(!response.ok)throw Object.assign(new Error(data.message||'Please try again in a moment.'),{code:data.code});return data as T;
 }
 
 // Keep the current player's real rank; never renumber their pinned row as tenth.
@@ -22,7 +23,7 @@ export function visibleEntries(entries:Entry[],me:Entry|null):Entry[]{
  return rows;
 }
 
-export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void,onPlayer:(player:Player|null)=>void=()=>{},onJoin:()=>void=()=>{}){
+export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void,onPlayer:(player:Player|null)=>void=()=>{},onJoin:(verify?:boolean,pending?:CompletedGameResult)=>void=()=>{}){
  const dialog=document.getElementById('leaderboard-dialog') as HTMLDialogElement;
  const rows=document.getElementById('leaderboard-rows')!,status=document.getElementById('leaderboard-status')!,summary=document.getElementById('leaderboard-summary')!;
  const retry=document.getElementById('leaderboard-retry') as HTMLButtonElement;
@@ -65,7 +66,12 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
    let rewardError='';
    if(target.ended&&target.submitted&&player?.member&&target.id&&!target.rewardSaved){
     try{const result=await request<{pointsSaved:boolean}>('/api/membership/rewards',{gameId:target.id});if(result.pointsSaved!==true)throw Error('Points have not been saved yet.');target.rewardSaved=true}
-    catch(error){rewardError=error instanceof Error?error.message:'Points have not been saved yet.'}
+    catch(error){
+     if(error instanceof Error&&'code' in error&&['invalid_token','rewards_verification_required'].includes(String(error.code))){
+      if(current===revision){close();onJoin(true,{points:target.score!,rewardValue:target.score!/10,completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
+     }
+     rewardError=error instanceof Error?error.message:'Points have not been saved yet.';
+    }
    }
    if(current!==revision)return;const board=await request<Board>('/api/leaderboard');if(current===revision){paint(board);if(rewardError){status.textContent='Your score is recorded. Points could not be saved: '+rewardError;retry.hidden=false}else if(target.ended&&target.rewardSaved&&target.score!==undefined){summary.textContent=resultHeadline(target.score,target.previousBest)}}
   }catch(error){if(current===revision){status.textContent=error instanceof Error?error.message:'Unable to load the leaderboard.';retry.hidden=false}}

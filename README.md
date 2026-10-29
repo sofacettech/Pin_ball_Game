@@ -63,7 +63,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 | `faq-source/`, `about-source/` | React informational pages, including the Explore collection gallery |
 | `account-source/`, `shared/` | React account flow and shared brand text |
 | `server.mjs`, `verify-game.mjs`, `replay-worker.mjs` | Same-origin API, player sessions and score verification |
-| `membership-api.mjs`, `membership-otp.mjs`, `rewards.mjs` | Membership, SMS integration boundary and external rewards adapter |
+| `membership-api.mjs`, `membership-otp.mjs`, `rewards.mjs` | Membership, rewards OTP integration and external rewards adapter |
 | `scripts/`, `tests/` | Builds, deployment checks and automated tests |
 | `assets/`, `sounds/`, `vendor/`, `leaderboard/`, `references/` | Runtime media, exported table data and bundled dependencies |
 | `licenses/` | Third-party license and audio attribution notices |
@@ -117,25 +117,25 @@ All writes require JSON and the configured exact Origin. Keep the frontend and A
 | Endpoint | Request / response |
 | --- | --- |
 | `GET /api/membership/config` | Public OTP availability, approved policy URLs and `pointsPerRupee: 10` |
-| `POST /api/membership/otp/request` | `{phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}` |
+| `POST /api/membership/otp/request` | `{phoneNumber, name, consent: true, dateOfBirth?}` → `{success, challengeId, expiresIn, resendAfter, deliveryChannel}` |
 | `POST /api/membership/otp/verify` | `{phoneNumber, otp, challengeId}` → `{verified, verificationToken}` |
 | `POST /api/membership` | `{name, leaderboardName, email, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
-| `POST /api/membership/rewards` | Existing member sends `{gameId}` → `{success, pointsSaved, savedPoints, bestPoints, remainingPoints}` |
+| `POST /api/membership/rewards` | Existing member with a verified, unexpired rewards session sends `{gameId}` → `{success, pointsSaved, savedPoints, bestPoints, remainingPoints}` |
 | `GET /api/leaderboard` | Member-only game ranking with `entries` and `me` |
 | `GET /api/rewards/leaderboard` | Member-only external rewards ranking; requires rewards configuration |
 
-The legacy `/api/member` compatibility route remains available and does not grant game rewards. The current React flow uses `/api/membership`; review legacy access before opening public registration.
+The legacy phone-only `/api/member` route returns 410. Use `/api/membership` after OTP verification; there is no phone-only authentication fallback.
 
 The form keeps one **Name** field. The leaderboard name is editable during registration. Saving requires age 18+, accepted membership terms and confirmed phone verification. Marketing consent is optional and defaults off. Under-18 users can continue as guests.
 
-The OTP verification token is a short-lived internal proof bound to the current session and phone. It is not the external rewards JWT. Form details, codes and verification proofs are not persisted in browser storage.
+The OTP verification token is a short-lived internal proof bound to the current session, phone and registered name/date of birth. It is not the external rewards JWT. Form details, codes and verification proofs are not persisted in browser storage. The upstream JWT stays in server memory until expiry; a process restart or expired/invalid JWT requires a new OTP. The game opens the verification form again while retaining the completed game. Keep this service on one process with persistent player/game/award storage, as described above.
 
 ### Remaining service connections
 
-1. **SMS OTP:** `otpProvider.request` and `otpProvider.verify` in `membership-otp.mjs` are intentionally `null`. Connect the chosen SMS provider on the server. Request returns `{challengeId, expiresIn}`; verify returns `{verified: true}` only after provider confirmation. The surrounding API already handles expiry, resend cooldown and attempt limits. Until connected, requests return an unavailable response; there is no demo verification path.
+1. **Rewards OTP:** `membership-otp.mjs` connects the SO FACET rewards API using the server-only `REWARDS_API_KEY` and `REWARDS_API_BASE`. The API delivers WhatsApp or SMS codes and issues the JWT only after verification. Sends are never automatically retried. Respect the returned resend delay (at least 60 seconds), `Retry-After`, five-minute expiry and five-attempt limit. A 502 delivery failure creates no local membership or credits. The supplied integration guide reports a Meta sender approval restriction; confirm actual delivery with a consenting phone before launch. No key or live phone is included in this repository.
 2. **International phone support:** the frontend normalizes international numbers to E.164. Server phone validation currently accepts Indian `+91` numbers only. Extend server validation and provider coverage together before enabling additional countries.
 3. **Profile name updates:** the drawer includes an editable leaderboard-name flow. Supply an optional same-origin `/api/…` `profileUpdateUrl` in public membership configuration and implement authenticated updates. The proposed request is `{leaderboardName}` with `{success: true, status: "saved" | "pending"}` returned. Persist the approved name in player state; a pending moderation response must retain the current public name. No endpoint is connected yet.
-4. **Approved policies:** Terms and Privacy content was left out pending approval. Set `MEMBERSHIP_TERMS_URL` and `MEMBERSHIP_PRIVACY_URL` to the approved HTTPS URLs. Registration currently refuses completion without them. The existing Privacy page is a placeholder.
+4. **Approved policies:** Terms and Privacy content was left out pending approval. Set `MEMBERSHIP_TERMS_URL` and `MEMBERSHIP_PRIVACY_URL` to the approved HTTPS URLs. Registration currently refuses completion without them. The existing Terms and Privacy pages are explicitly labeled temporary placeholders. Production currently links to `/terms.html` and `/privacy.html` as requested; replace their content with the approved policies before public launch.
 5. **Commerce redemption:** apply the approved redemption cap, exclusions and expiry in the commerce backend when the shop opens. The frontend explains these rules; it does not enforce order eligibility.
 6. **Tracking:** live Meta and Google tags were intentionally left out. Connect them only when the approved identifiers and consent requirements are available.
 
@@ -143,13 +143,19 @@ The OTP verification token is a short-lived internal proof bound to the current 
 
 The documented rewards service is called only by the Node backend:
 
-- `/rewards/auth` resolves the phone to a customer and issues an upstream session.
-- `/rewards/points` receives server-calculated credits with a stable idempotency key.
+- `POST /rewards/auth` submits phone, explicit verification-message consent and supported profile fields, creating an unverified registration and requesting a code. It does not issue a JWT.
+- `POST /rewards/auth/verify` exchanges that registration ID and six-digit code for a customer rewards JWT.
+- `GET /rewards/score` validates the resulting customer session before the browser receives an internal verification proof.
+- `/rewards/points` receives server-calculated credits with the verified JWT and a stable idempotency key. It never requests a new token silently.
 - `/rewards/leaderboard` supplies the optional rewards ranking.
 
 **One upstream reward unit is ₹1; ten game points are ₹1.** A verified 3,200-point result therefore grants 320 upstream units. Only improvement over the customer's previous best earns additional credit. Retries reuse the pending award's key, and replays of lower scores do not grant credits. Remainders below ten points stay recorded without rounding upward.
 
-The private reward ledger is keyed by the upstream customer ID. Keep it persistent, along with player and game records. The protected internal award endpoint requires `REWARDS_ADMIN_SECRET`; it is not a browser API.
+The private reward ledger is keyed by the upstream customer ID. Keep it persistent, along with player and game records. The protected internal award endpoint requires `REWARDS_ADMIN_SECRET` and `{token, points, eventId}`, using an already verified, unexpired rewards JWT; it is not a browser API.
+
+Per the supplied v2.1 guide, name and optional date of birth are sent with the pending registration and applied by SO FACET only after verification (existing customers fill blanks only). The current form does not collect nationality. Email, leaderboard name and marketing preferences are saved in the private game profile after verification; the documented rewards API has no authenticated endpoint for saving those fields to the commerce profile. A rewards JWT does not authorize storefront profile APIs.
+
+Run `npm run test:rewards` for local HTTP contract tests and `npm run smoke:membership` after rebuilding the membership and game pages for browser checks (requires Playwright, optionally via `SOFACET_PLAYWRIGHT_PATH`; `SOFACET_BROWSER=webkit` selects WebKit). These use an isolated rewards fixture and never send production messages or award production balances. A live acceptance test still requires a securely configured partner key, approved policy URLs, a consenting +91 phone and the received OTP. Check score before awarding real points.
 
 The approved purchase rule is up to 10% of diamond value plus making charges, excluding metal, GST and shipping. Points are non-transferable, cannot be combined with sale items or other offers, and expire six months after the main shop launch. No launch date or prize is promised.
 
@@ -216,15 +222,15 @@ Uploads verify local hashes before writing immutable `videos/<sha256>/<filename>
 
 Automated tests cover score verification, scoring and target placement, membership validation, reward retry/idempotency rules, frontend state/copy, member-only leaderboard access, frame-cache bounds, video fallback behavior and verified video materialization from a separate deployment repository. Browser checks have covered desktop, phone and tablet layouts in Chromium and WebKit.
 
-Before collecting memberships publicly, finish SMS and approved policies, test the live rewards connection, and verify the complete flow on physical Safari/iPhone devices. Automated WebKit checks do not replace real-device video, audio and touch testing.
+Before collecting memberships publicly, configure the rewards key and approved policies, test actual OTP delivery and the live rewards connection, and verify the complete flow on physical Safari/iPhone devices. Automated WebKit checks do not replace real-device video, audio and touch testing.
 
 ## My Account
 
 `account-source/` is the React sign-in and points page. The shared navigation links **My Account** to `account.html`; registration remains a separate flow for saving a new player's score. The existing brand artwork and navbar anchors are reused. Written brand names use the supplied wordmark font without changing surrounding typography.
 
-I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Sign-up collects full name, mobile number and email on one screen, with the existing 18+ / policy declaration and optional launch-update consent. “Save my points” goes directly to SMS confirmation. Date of birth and city are no longer collected; the server still validates those fields if an older client supplies them. The initial public leaderboard name is derived from the full name, and the existing account/profile name-editing flow remains available.
+I've kept the updated account flow and contextual navigation. A guest opening My Account is directed to membership; the existing-member link opens the sign-in screen. Links opened from the game carry `nav=game` so the drawer can return to the paused game and its settings/profile. Sign-up collects full name, mobile number and email on one screen, with the existing 18+ / policy declaration and optional launch-update consent. “Save my points” requests a WhatsApp or SMS code, then verifies it before saving the profile and points. Date of birth and city are no longer collected; the server still validates those fields if an older client supplies them. The initial public leaderboard name is derived from the full name, and the existing account/profile name-editing flow remains available.
 
-An existing member session can read `GET /api/account`: `{name, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
+An existing member session can read `GET /api/account`: `{name, email?, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
 
 The backend account service still needs to connect these same-origin routes. They currently return 503 without sending messages or changing records:
 

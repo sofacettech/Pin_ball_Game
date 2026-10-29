@@ -4,7 +4,7 @@ import {createReadStream,mkdirSync,existsSync,readFileSync,writeFileSync,renameS
 import {stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {ServiceError,authenticatePhone,rewardsLeaderboard,awardPoints} from './rewards.mjs';
+import {ServiceError,rewardsLeaderboard,awardPoints} from './rewards.mjs';
 import {validateInputs,verifyGame} from './verify-game.mjs';
 import {REPLAY_VERSION} from './game-source/src/simulation.ts';
 import {createMembershipApi} from './membership-api.mjs';
@@ -43,7 +43,7 @@ const inflight=new Map();
 const membershipApi=createMembershipApi({getStore:()=>store,commit,phone,publicPlayer});
 async function api(request,response,path){
  rateLimit(request);
- if(path==='/api/internal/rewards/award'&&request.method==='POST'){trusted(request);const data=await body(request);data.phone=phone(data.phone);return json(response,200,await awardPoints(data))}
+ if(path==='/api/internal/rewards/award'&&request.method==='POST'){trusted(request);const data=await body(request);return json(response,200,await awardPoints(data))}
  if(request.method==='POST')sameOrigin(request);
  if(path==='/api/game-load-failure'&&request.method==='POST'){
   const data=await body(request,512);
@@ -56,7 +56,7 @@ async function api(request,response,path){
  if(path==='/api/account'&&request.method==='GET'){
   if(!p.profile)fail(401,'Please sign in to view your account.');
   const ledger=store.rewardAccounts?.[p.profile.customerId];
-  return json(response,200,{name:p.profile.name||p.profile.firstName||p.name,phoneNumber:p.profile.phone,savedPoints:(ledger?.creditedUnits||0)*10,bestPoints:Math.max(ledger?.bestScore||0,p.bestVerified?p.best:0),rank:gameBoard(id).me?.rank??null,marketingConsent:p.profile.marketingConsent===true});
+  return json(response,200,{name:p.profile.name||p.profile.firstName||p.name,email:p.profile.email,phoneNumber:p.profile.phone,savedPoints:(ledger?.creditedUnits||0)*10,bestPoints:Math.max(ledger?.bestScore||0,p.bestVerified?p.best:0),rank:gameBoard(id).me?.rank??null,marketingConsent:p.profile.marketingConsent===true});
  }
  if(path==='/api/account/signout'&&request.method==='POST'){
   response.setHeader('Set-Cookie',`sofacet_pinball_player=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`);
@@ -71,17 +71,7 @@ async function api(request,response,path){
  if(path==='/api/membership/config'&&request.method==='GET')return json(response,200,await membershipApi(path,{},id));
  if(['/api/membership','/api/membership/otp/request','/api/membership/otp/verify','/api/membership/rewards'].includes(path)&&request.method==='POST')return json(response,200,await membershipApi(path,await body(request),id));
  if(path==='/api/member'&&request.method==='POST'){
-  const data=await body(request);if(data.memberConsent!==true||data.contestConsent!==true)fail(400,'Please accept the membership and contest terms.');
-  const fullName=name(name(data.firstName)+' '+name(data.lastName));const normalized=phone(data.phone);
-  if(typeof data.email!=='string'||data.email.length>254||!/^\S+@\S+\.\S+$/.test(data.email))fail(400,'Please enter a valid email address.');
-  if(typeof data.birthDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate)||!Number.isFinite(Date.parse(data.birthDate))||new Date(data.birthDate).toISOString().slice(0,10)!==data.birthDate||data.birthDate<'1900-01-01'||data.birthDate>new Date().toISOString().slice(0,10))fail(400,'Please enter a valid date of birth.');
-  const born=new Date(data.birthDate+'T00:00:00Z'),now=new Date();let age=now.getUTCFullYear()-born.getUTCFullYear();if(now.getUTCMonth()<born.getUTCMonth()||now.getUTCMonth()===born.getUTCMonth()&&now.getUTCDate()<born.getUTCDate())age--;if(age<18)fail(400,'You must be at least 18 years old to participate.');
-  if(typeof data.country!=='string'||! /^[A-Z]{2}$/.test(data.country))fail(400,'Please select your country.');
-  if(!['Mr','Ms','Others'].includes(data.civility))fail(400,'Please select your civility.');
-  const result=await authenticatePhone(normalized);
-  // The upstream API creates a phone-only customer. Other details stay in this game's private profile.
-  commit(()=>{p.name=fullName;p.profile={customerId:result.customer_id,phone:normalized,email:data.email,firstName:data.firstName,lastName:data.lastName,birthDate:data.birthDate,country:String(data.country||'').slice(0,2),civility:String(data.civility||'').slice(0,20),memberConsent:true,contestConsent:true,registeredAt:new Date().toISOString()}});
-  return json(response,200,{...publicPlayer(p),created:result.created});
+  fail(410,'Please use the membership form and verify your phone before saving your profile.');
  }
  if(path==='/api/games/start'&&request.method==='POST'){
   const gameId=randomUUID(),now=Date.now(),seed=randomBytes(4).readUInt32LE();commit(()=>{for(const [key,game] of Object.entries(store.games))if(now-game.startedAt>86400000)delete store.games[key];store.games[gameId]={player:id,startedAt:now,seed,version:REPLAY_VERSION}});return json(response,201,{id:gameId,seed,version:REPLAY_VERSION});
@@ -114,7 +104,7 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','entrance-3d.html','play.html','launching-soon.html','first-cuts-confirmation.html','about.html','privacy.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','entrance-3d.html','play.html','launching-soon.html','first-cuts-confirmation.html','about.html','privacy.html','terms.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
@@ -156,8 +146,12 @@ const server=createServer(async(request,response)=>{
   stream.on('error',()=>response.destroy());
   response.on('close',()=>stream.destroy());
   stream.pipe(response);
- }catch(error){if(!response.headersSent)json(response,error instanceof ServiceError?error.status:500,{message:error instanceof ServiceError?error.message:'The service could not complete this request. Please try again.'});else response.end();}
+ }catch(error){if(!response.headersSent){
+  const known=error instanceof ServiceError;
+  if(known&&Number.isFinite(error.retryAfter))response.setHeader('Retry-After',String(error.retryAfter));
+  json(response,known?error.status:500,{message:known?error.message:'The service could not complete this request. Please try again.',...(known&&error.code?{code:error.code}:{}),...(known&&Number.isFinite(error.retryAfter)?{retryAfter:error.retryAfter}:{})});
+ }else response.end();}
 });
 const port=Number(process.env.PORT||8766),host=process.env.HOST||'127.0.0.1';
-server.listen(port,host,()=>console.log(`SOFACET website and pinball: http://${host}:${port}`));
+server.listen(port,host,()=>console.log(`SOFACET website and pinball: http://${host}:${server.address().port}`));
 for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close(()=>process.exit(0)));
