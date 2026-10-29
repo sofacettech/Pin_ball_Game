@@ -43,7 +43,7 @@
 @keyframes rewards-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:1100px){.rewards-panel{width:calc(100% - 48px)}.rewards-content{width:calc(100% - 48px);max-width:900px;--rewards-score-size:clamp(90px,12vw,140px)}.rewards-actions{width:100%;gap:24px}.rewards-value-line{font-size:25px}.rewards-expiry{font-size:21px}.rewards-actions button{font-size:18px}}
 @media(max-width:700px){.rewards-panel{width:100%;margin-top:max(92px,12vh);mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-composite:add}.rewards-content{width:calc(100% - 40px);padding-top:5vh;padding-bottom:8vh;--rewards-score-size:clamp(56px,17vw,110px)}#rewards-heading{margin-left:0;margin-bottom:20px;font-size:27px}.rewards-score{gap:0 12px;margin-top:22px;padding-bottom:16px;letter-spacing:-.06em}.rewards-value-line{font-size:21px;line-height:1.4}.rewards-expiry{font-size:17px;margin-top:5px;margin-bottom:26px;line-height:1.5}.rewards-actions{grid-template-columns:1fr;gap:16px;margin-top:32px}.rewards-actions button{height:66px;font-size:15px;border-radius:26px}#rewards-retry{height:58px}.rewards-actions::after{top:calc(100% + 16px);height:18vh;background:radial-gradient(ellipse 55% 70% at 45% 0,#a677cd6b,transparent 90%),radial-gradient(ellipse 60% 45% at 50% 0,#cded3147,transparent 90%)}}
-@media(max-width:360px){.rewards-actions button{font-size:12px;gap:12px;padding:0 16px}}
+@media(max-width:360px){.rewards-actions button{font-size:14px;gap:12px;padding:0 16px}}
 @media(max-height:600px) and (orientation:landscape){.rewards-panel{margin-top:70px}.rewards-content{padding-top:20px;padding-bottom:50px;--rewards-score-size:clamp(70px,9vw,115px)}#rewards-heading{font-size:27px}.rewards-actions{margin-top:28px}.rewards-actions button{height:62px}.rewards-expiry{margin-bottom:18px}}
 @media(prefers-reduced-motion:reduce){#post-game-rewards[open],#post-game-rewards[open] *{animation:none!important}.rewards-actions button,.rewards-actions svg,#rewards-register::before{transition:none}#rewards-register:hover::before,#rewards-register:hover svg,#rewards-retry:hover svg{transform:none}}
 
@@ -68,5 +68,10 @@
 /* Copy above the existing result heading, aligned with that heading. */
 .rewards-intro{margin:0 0 12px 6.3%;text-align:left}
 .rewards-intro .flow-eyebrow{margin-bottom:8px}
-.rewards-unlocked-copy{margin:0;font-size:clamp(18px,1.45vw,24px);font-weight:300;line-height:1.4}
+.rewards-unlocked-copy{margin:0;font-size:16px;font-weight:300;line-height:1.4}
 @media(max-width:700px){.rewards-intro{margin-left:0}}
+
+#post-game-rewards[open] #skip-game{display:none}
+.flow-updates{display:inline-flex;min-height:44px;align-items:center;margin-top:20px;color:#d6c6e5;font-size:14px;line-height:1.5;text-underline-offset:4px}
+.rewards-board-link{position:relative;z-index:1;display:block;min-height:44px;margin:24px auto 0;padding:10px 0;border:0;border-radius:0;background:transparent;color:#ddc0ee;font:400 14px/1.5 Acumin,Arial,sans-serif}
+.rewards-board-link:hover{background:transparent;text-decoration:underline;text-underline-offset:4px}

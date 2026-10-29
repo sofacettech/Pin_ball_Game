@@ -3,6 +3,7 @@ import {createRequire} from 'node:module';
 import {mkdir, writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
+import {summarizeFrameUpdates} from '../entrance-source/frame-rate-meter.js';
 
 // Run against an already-built release server. A desktop WebKit/Chromium run
 // with iPhone inputs validates behavior; its FPS is not an iPhone measurement.
@@ -12,7 +13,6 @@ assert.ok(['webkit', 'chromium'].includes(engine), 'SOFACET_BROWSER must be webk
 const {[engine]: browserType, devices} = require(process.env.SOFACET_PLAYWRIGHT_PATH || 'playwright');
 const url = new URL(process.env.SOFACET_ENTRANCE_URL || 'http://127.0.0.1:8766/');
 assert.equal(url.searchParams.has('quality'), false, 'Omit quality overrides to test automatic iPhone selection');
-url.searchParams.set('perf', '');
 url.hash = '#experience';
 const minimumFPS = process.env.SOFACET_MIN_FPS ? Number(process.env.SOFACET_MIN_FPS) : null;
 assert.ok(minimumFPS === null || (Number.isFinite(minimumFPS) && minimumFPS > 0), 'SOFACET_MIN_FPS must be positive');
@@ -122,12 +122,28 @@ try {
       }
       await screenshot('reverse');
       if (!disableMultiDraw) {
-        const checksBefore = await page.evaluate(() => window.frameRateChecks?.length || 0);
-        await page.locator('.frame-rate-measure').click();
-        await page.waitForFunction(count => (window.frameRateChecks?.length || 0) === count + 1, checksBefore, {timeout: 45000});
-        result.performance = await page.evaluate(() => window.frameRateChecks.at(-1));
-        assert.ok(result.performance.updates > 0 && result.performance.durationMs >= 10000, 'The panel must complete its full ten-second scene-update measurement');
+        assert.equal(await page.locator('.frame-rate-panel').count(), 0, 'Public pages must not display developer diagnostics');
+        const originalY = await page.evaluate(() => scrollY);
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.waitForFunction(() => window.entrancePreview.frame < 241);
+        const measurement = await page.evaluate(() => new Promise(resolve => {
+          const travel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--travel'));
+          const start = performance.now(), times = [];
+          let previousFrame = window.entrancePreview.frame;
+          function step(now) {
+            const frame = window.entrancePreview.frame;
+            if (frame !== previousFrame) { times.push(now); previousFrame = frame; }
+            const progress = Math.min(1, (now - start) / 10000);
+            window.scrollTo(0, travel * progress * .998);
+            if (progress === 1) resolve({times, start, end: now, sourceFrame: frame});
+            else requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        }));
+        result.performance = {...summarizeFrameUpdates(measurement.times, measurement.start, measurement.end), sourceFrame: measurement.sourceFrame};
+        assert.ok(result.performance.updates > 0 && result.performance.durationMs >= 10000, 'Complete the full ten-second scene-update measurement');
         assert.ok(result.performance.sourceFrame > 2000, 'The check must cover the entrance through the final room');
+        await page.evaluate(y => window.scrollTo(0, y), originalY);
         await page.waitForFunction(() => Math.abs(window.entrancePreview.frame - 400) < 0.2);
         await screenshot('fps-check');
         if (minimumFPS !== null) assert.ok(result.performance.minWindowFps >= minimumFPS,

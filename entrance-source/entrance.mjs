@@ -1,10 +1,9 @@
-import {presentationReady, modelDownload, setStartupStatus, cancelStartup} from './startup.mjs';
+import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js';
 import { prepareMedia } from '/assets/media-delivery.js?v=frames-dc4a9c95ed77';
 import { connectOpeningVideo } from '/assets/video-playback.js?v=entrance-opening-1';
 import { framePlacement } from '/frame-placement.js';
-import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js';
-import { createFrameRatePanel } from './frame-rate-panel.js';
+import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
 const $=id=>document.getElementById(id);
 const firstFrame=240,lastFrame=CHESS_HIT_FRAME,travel=(lastFrame-firstFrame)*8;
@@ -13,7 +12,6 @@ const coarse=matchMedia('(any-pointer: coarse)');
 const parameters=new URLSearchParams(location.search);
 const performanceMode=parameters.get('quality')!=='reference';
 // Diagnostics are opt-in on every route, including the /entrance-3d alias.
-const showPerformance=parameters.has('debug')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const opening=$('opening'),openingStage=$('opening-frame');
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
@@ -23,14 +21,7 @@ let sceneReady=false,openingFinished=false,startupFailed=false;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
-const performancePanel=showPerformance?createFrameRatePanel({label:'Live 3D',travel,minimumFPS:45,
-  compareURL:'/video?perf#experience',compareLabel:'Video FPS ↗',
-  getState:()=>{
-    const renderer=journey?.renderer,canvas=renderer?.domElement;
-    return {ready,game:gameRequested,frame,seeking:Math.abs(target-frame)>.15,
-      details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draws · ${(renderer.info.render.triangles/1e6).toFixed(2)}M triangles\n${journey.policy.name} · ${journey.batchingMode} batching`:''};
-  },
-}):{record(){},destroy(){}};
+
 
 async function loadMainPresentation(){
   // All markup and styles come from index.html at build time. Imports reuse the
@@ -66,6 +57,9 @@ function finishOpening(){
   openingFinished=true;
   if(!sceneReady){phase='buffering';document.body.dataset.phase=phase;$('journey-preparation').hidden=false;return;}
   $('journey-preparation').hidden=true;
+  finishStartupStatus();
+  $('scene-loading-status').setAttribute('data-ready','');
+  setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
   openingPlayback?.destroy();opening.removeAttribute('src');opening.load();openingStage.remove();
   phase='idle';document.body.dataset.phase=phase;ready=true;
   updateCopy(firstFrame);placeStage();journey.resize();syncScroll();
@@ -154,7 +148,7 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
-window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();performancePanel.destroy();}});
+window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
@@ -181,13 +175,11 @@ try{
       profile:parameters.has('profile'),performanceMode,renderView:()=>performanceMode?renderView:null,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onStatus:message=>{if(message)setStartupStatus(message);},
-      onRender:()=>{if(ready)performancePanel.record();},
     });
     if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
     await journey.loadVariant('compact',{download:modelDownload});
     if(gameRequested||startupFailed){journey?.dispose();journey=null;return;}
     sceneReady=true;
-    $('scene-loading-status').hidden=true;
     if(openingFinished)finishOpening();
   })();
   await Promise.all([openingReady,scenePrepared]);

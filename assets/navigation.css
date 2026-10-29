@@ -30,8 +30,20 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
 @font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
 .brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
-.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:normal!important;font-weight:400!important;letter-spacing:0!important;font-variation-settings:normal!important;font-synthesis:none;line-height:inherit!important;color:inherit!important}
 :root #game-header .site-nav{gap:16px}
 :root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:36px;min-height:36px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
-@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:11px}}
+@media(max-width:600px){:root #game-header .site-nav{gap:6px}:root #game-header .skip-game{padding:0 12px;font-size:14px}}
 @media(max-width:360px){:root #game-header .site-nav{gap:4px}:root #game-header .skip-game{padding-inline:10px}}
+
+@media(max-width:600px){
+ :root .site-nav .play-now{font-size:13px}
+}
+.menu-panel .menu-item:is(button){display:block;margin:0;padding:14px 0;border:0;border-radius:0;background:transparent;color:#fff;font:400 var(--site-menu-size)/1.2 Acumin,Arial,sans-serif;letter-spacing:-.02em;text-align:left;cursor:pointer}
+.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;color:#d9ed37;font-size:18px;text-align:center}
+.menu-small-links{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
+.menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:13px;letter-spacing:0}
+.menu-small-links [aria-disabled=true]{opacity:.6}
+.menu-panel .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#fff;opacity:.6}
+.social-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
+.menu-panel .brand-word{white-space:nowrap}

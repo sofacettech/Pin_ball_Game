@@ -1,4 +1,4 @@
-@import url('./assets/navigation.css?v=current-8d2faf6d2270');
+@import url('./assets/navigation.css?v=brand-6e6f03b9e5e6');
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:italic;font-display:swap}
@@ -155,3 +155,19 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 #story-copy .opening-brand .kinetic-line-mask{display:block;padding:0;margin:0}
 #story-copy .opening-wordmark{display:block;line-height:0}
 #story-copy .opening-wordmark img{position:static;inset:auto;display:block;width:100%;height:auto}
+
+@media(max-width:600px){
+ .story-opening p{font-size:14px;letter-spacing:.05em}
+ .story-choice p{font-size:14px;letter-spacing:.05em}
+ .info-page .back-link,#enter{font-size:14px}
+ #status{font-size:13px}
+}
+
+.site-sound .sound-icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.site-sound[data-on="true"] .sound-off-icon,.site-sound:not([data-on="true"]) .sound-on-icon{display:none}
+
+/* Feathered contrast stays with the text, clear of the interactive world. */
+.story-butterflies,.story-rules,.story-finale{isolation:isolate}
+.story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
+.story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
+:root .site-nav .play-now{font-size:13px}

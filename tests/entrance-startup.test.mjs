@@ -54,7 +54,7 @@ const opening=source.slice(source.indexOf('function finishOpening(){'),source.in
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
 async function startupFixture(){
  const model=deferred(),nodes=new Map();let started=0,removed=0,disposed=0,aborted=0,handoffs=0,redirect;
- const element=()=>({hidden:true,dataset:{},removeAttribute(){},load(){},remove(){removed++}});
+ const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
  const renderer={loadVariant:()=>model.promise,resize(){},dispose(){disposed++}};
  const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
   $:id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
@@ -62,7 +62,7 @@ async function startupFixture(){
   gameRequested:false,startupFailed:false,sceneReady:false,openingFinished:false,ready:false,firstFrame:240,
   gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
   presentationReady:Promise.resolve(),modelDownload:model.promise,
-  loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},prepareMedia:async()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},
+  loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},prepareMedia:async()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
   cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
   opening:element(),openingStage:element(),openingPlayback:undefined,reduced:{matches:false},siteSound:{setActive(){}},performancePanel:{record(){}},
   connectOpeningVideo:(_video,_button,onEnded)=>({start(){started++;context.endOpening=onEnded},destroy(){}}),

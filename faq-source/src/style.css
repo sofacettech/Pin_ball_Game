@@ -138,3 +138,13 @@
  .section-nav a,.section-nav a .nav-title{font-size:11px}
  footer{font-size:13px}
 }
+
+@media(max-width:760px){
+ .breadcrumb{font-size:11px;letter-spacing:.08em}
+ .section-nav a,.section-nav a .nav-title,.section-nav a span{font-size:13px}
+ footer{font-size:14px}
+}
+.faq-play{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-left:auto;color:var(--lime);font-size:14px;text-decoration:none}
+.section-nav a,.section-nav a .nav-title,.section-nav a span{font-size:13px}
+footer,footer .contact{font-size:14px}
+@media(max-width:560px){.faq-play{margin-left:0}}

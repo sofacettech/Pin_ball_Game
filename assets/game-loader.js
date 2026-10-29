@@ -8,7 +8,7 @@
  const gamePage=document.body.hasAttribute('data-game-loading');
  let story=gamePage&&new URLSearchParams(location.search).get('from')==='chess';
  const statement=root.querySelector('.loading-statement'),phrase=root.querySelector('.loading-phrase');
- const messages=['Your points could become something precious','Every 10 points you score is ₹1 off SO/ FACET diamond jewellery.','Play well. Save your points. Shine later.','Pink triangles and neon-green (+) bumpers add points. Cyan (−) bumpers take points away.'];
+ const messages=['Next: a game of pinball.','Score points. Save them for SO/ FACET diamond jewellery.'];
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
  let width=1,height=1,radius=9,x=0,y=0,vx=0,vy=0,time=0,last=0,frame=0,fade=0,delay=0;
  let active=false,failed=false,parentVisible=parent===window,events,observer;
@@ -114,7 +114,7 @@
    const run=textRun;
    Promise.all(['Acumin','SOFacetWordmark'].map(font=>document.fonts.load('400 16px '+font))).catch(()=>{}).then(()=>{if(run===textRun&&active&&!failed)animateStatement()});
   }
-  status.firstChild.textContent='Preparing your table. ';
+  status.firstChild.textContent='Polishing your table… ';
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;
   listen();measure();draw();resume();
   delay=setTimeout(()=>{if(active&&!failed)status.firstChild.textContent='Still preparing your game. Please wait. '},20000);

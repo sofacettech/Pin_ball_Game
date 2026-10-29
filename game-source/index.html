@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>FACET — Pinball</title><!-- game-loader-head --><style id="game-loader-critical">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#100b16"><link rel="icon" href="data:,"><title>SO/ FACET — Pinball</title><!-- game-loader-head --><style id="game-loader-critical">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -31,7 +31,7 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
 @font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
 .brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
-.brand-word:not(.opening-brand){font-size:inherit!important;font-style:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;line-height:inherit!important;color:inherit!important}
+.brand-word:not(.opening-brand){font-size:inherit!important;font-style:normal!important;font-weight:400!important;letter-spacing:0!important;font-variation-settings:normal!important;font-synthesis:none;line-height:inherit!important;color:inherit!important}
 .game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#08060c;opacity:1;transition:opacity .2s ease;touch-action:none}
 .game-loading-screen[hidden]{display:none!important}
 .game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
@@ -82,27 +82,25 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 <body data-game-loading>
  <header id="game-header">
   <div class="navbar-backdrop" aria-hidden="true"><svg class="nav-trim" viewBox="0 0 1440 34" preserveAspectRatio="none"><path class="trim-shadow" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-violet" d="M0 1L58 29H344L358 20H1082L1096 29H1382L1440 1"/><path class="trim-green" d="M2 13L38 33H87M242 29H306M1134 29H1198M1353 33H1402L1438 13"/></svg></div>
-  <a class="site-brand" href="/" target="_top" aria-label="So/Facet pinball home"><img src="/assets/sofacet-wordmark.svg" alt="SOFACET" width="2048" height="278"></a>
+  <a class="site-brand" href="/" target="_top" aria-label="SO/ FACET pinball home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></a>
   <nav class="site-nav" id="site-navigation" aria-label="Game controls">
    <a id="skip-game" class="skip-game" href="/launching-soon.html?nav=game" target="_top">Skip game</a>
    <button id="nav-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="nav-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
    <div id="nav-panel" class="menu-panel" data-menu-panel aria-label="Game navigation" aria-hidden="true" inert>
-    <div id="navbar-extras" class="navbar-extras"><button id="member" data-menu-close class="menu-item" type="button" hidden>Leaderboard</button><button id="pause" data-menu-close class="menu-item" type="button" disabled>Pause</button></div>
-    <button id="restart" data-menu-close class="menu-item nav-icon" type="button" aria-label="Restart game" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg><span>Restart game</span></button>
+    <div id="navbar-extras" class="navbar-extras"><button id="member" data-menu-close class="menu-item" type="button" hidden>Leaderboard</button></div>
     <button id="settings" aria-controls="game-menu" aria-expanded="false" class="menu-item nav-icon" type="button" aria-label="Open settings and pause game" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 3 3-1 3 5-2 2 2 2-3 5-3-1-1 3H9l-1-3-3 1-3-5 2-2-2-2 3-5 3 1Z"/><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></button>
  <section id="game-menu" hidden aria-labelledby="menu-title" aria-describedby="menu-description">
   <button id="menu-close" type="button" aria-label="Close settings and resume game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><h2 id="menu-title" tabindex="-1">Settings</h2><p id="menu-description">Game paused. Your progress is saved here.</p>
-  <fieldset><legend>Game settings</legend><label for="quality">Visual quality</label><div class="select-control"><select id="quality"><option value="auto" selected>Auto (recommended)</option><option value="full">Full resolution</option><option value="low">Low resolution</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></fieldset>
+  <fieldset aria-label="Visual settings"><label for="quality">Visual quality</label><div class="select-control"><select id="quality"><option value="auto" selected>Auto (recommended)</option><option value="full">Full resolution</option><option value="low">Low resolution</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></fieldset>
   <fieldset class="sound-settings"><legend>Sound settings</legend><div class="volume-label"><label for="volume">Game volume</label><output id="volume-value" for="volume">100%</output></div><input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Game volume"><button id="sound" type="button" aria-pressed="false" aria-label="Mute game sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-muted" d="m16 9 5 6m0-6-5 6"/></svg><span id="sound-label">Mute</span></button></fieldset>
-  <section class="how-to-play"><button id="how-to-play-toggle" type="button" aria-expanded="false" aria-controls="how-to-play-controls">How to play<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="controls-reveal" id="how-to-play-controls" inert><div class="controls-clip"><div class="controls-guide"><div class="touch-guide"><span>Touch and hold the left half of the table for the left paddle.</span><span>Touch and hold the right half for the right paddle. Use one paddle at a time.</span><span>Hold the launch button to charge; release to launch.</span><span>Open Settings to pause or resume the game.</span></div><span><kbd>A</kbd> / <kbd>←</kbd> Left paddle</span><span><kbd>D</kbd> / <kbd>→</kbd> Right paddle</span><span><kbd>Space</kbd> Hold to charge</span><span><kbd>Esc</kbd> / <kbd>P</kbd> Pause</span><button id="practice-replay" type="button">Try the controls ↗</button></div></div></div></section>
+  <section class="how-to-play"><button id="how-to-play-toggle" type="button" aria-expanded="false" aria-controls="how-to-play-controls">How to play<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="controls-reveal" id="how-to-play-controls" inert><div class="controls-clip"><div class="controls-guide"><div class="touch-guide"><span>Touch and hold the left half of the table for the left flipper.</span><span>Touch and hold the right half for the right flipper. Use one flipper at a time.</span><span>Hold the launch button to charge; release to launch.</span><span>Use the pause or resume icon below the navbar to pause or continue.</span></div><span><kbd>A</kbd> or <kbd>←</kbd> Left flipper</span><span><kbd>D</kbd> or <kbd>→</kbd> Right flipper</span><span><kbd>Space</kbd> Hold to charge</span><span><kbd>Esc</kbd> or <kbd>P</kbd> Pause</span><button id="practice-replay" type="button">Try the controls ↗</button></div></div></div></section>
   <button id="menu-member" type="button" hidden>Leaderboard</button>
-  <button id="resume" autofocus>Resume game</button>
  </section>
     <div id="profile-navigation" class="profile-navigation">
      <button id="profile" class="menu-item nav-icon" type="button" aria-label="Profile" aria-controls="profile-menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Profile</span></button>
      <section id="profile-menu" class="profile-menu" aria-label="Profile options" hidden>
       <button id="profile-close" type="button" aria-label="Close profile options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-      <h2 id="profile-name">Your profile</h2><p id="profile-status">Checking your membership…</p>
+      <h2 id="profile-name">Your profile</h2><p id="profile-status">Checking your account…</p>
       <button id="profile-retry" type="button" hidden>Try again</button>
       <button id="profile-edit" type="button" hidden>Edit leaderboard name</button>
       <form id="profile-edit-form" hidden novalidate>
@@ -121,7 +119,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
    </div>
   </nav>
  </header>
- <main id="stage" class="showing-play" data-ready="false" aria-busy="true" inert><div id="mobile-lives" role="img" aria-label="3 lives remaining" hidden><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"></div><div id="viewport"><canvas id="game" aria-label="3D FACET pinball table" tabindex="0"></canvas><img src="/references/01-gameplay-area.png" id="reference" alt="Blender reference for the selected camera" hidden><span class="compare-label" hidden>Blender reference</span>
+ <main id="stage" class="showing-play" data-ready="false" aria-busy="true" inert><div id="gameplay-controls" role="group" aria-label="Gameplay controls" hidden><button id="pause" type="button" aria-label="Pause game" aria-pressed="false" title="Pause game" disabled><span class="pause-symbol" aria-hidden="true"><svg class="pause-bars" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><svg class="pause-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></svg></span></button><button id="restart" type="button" aria-label="Restart game" title="Restart game" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg></button></div><div id="mobile-lives" role="img" aria-label="3 lives remaining" hidden><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"><img src="/assets/diamond-heart-life.webp" width="25" height="24" alt="" aria-hidden="true" draggable="false"><span class="lives-label" aria-hidden="true">Lives</span></div><div id="viewport"><canvas id="game" aria-label="3D SO/ FACET pinball table" tabindex="0"></canvas>
  </div>
  <aside class="side-panel" id="scorecard-panel" aria-label="How to play and scoreboard" hidden>
     <button class="flip-card" id="flip-card" type="button" aria-label="Show scoreboard" aria-pressed="false" aria-describedby="flip-hint">
@@ -130,16 +128,16 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
           <span class="corner corner-tl" aria-hidden="true"></span>
           <span class="card-heading"><svg viewBox="0 0 36 28" aria-hidden="true"><path d="M10 5h16c5 0 9 14 7 18s-7-1-10-4H13c-3 3-8 8-10 4S5 5 10 5Z" fill="currentColor"/><path d="M10 10v8m-4-4h8" stroke="#08070b" stroke-width="2.5"/><circle cx="25" cy="12" r="1.7" fill="#08070b"/><circle cx="28" cy="16" r="1.7" fill="#08070b"/></svg><span>HOW TO PLAY</span></span>
           <span class="control-list keyboard-instructions">
-            <span class="control-row"><span class="keys"><kbd>A</kbd><span class="slash">/</span><kbd class="arrow-key">←</kbd></span><span>Left paddle</span></span>
-            <span class="control-row"><span class="keys"><kbd>D</kbd><span class="slash">/</span><kbd class="arrow-key">→</kbd></span><span>Right paddle</span></span>
+            <span class="control-row"><span class="keys"><kbd>A</kbd><span class="key-alternative">or</span><kbd class="arrow-key">←</kbd></span><span>Left flipper</span></span>
+            <span class="control-row"><span class="keys"><kbd>D</kbd><span class="key-alternative">or</span><kbd class="arrow-key">→</kbd></span><span>Right flipper</span></span>
             <span class="control-row"><span class="keys"><kbd class="wide">Space</kbd></span><span>Hold to charge</span></span>
-            <span class="control-row"><span class="keys"><kbd class="wide">Esc / P</kbd></span><span>Pause game</span></span>
+            <span class="control-row"><span class="keys"><kbd class="wide">Esc or P</kbd></span><span>Pause game</span></span>
           </span>
           <span class="control-list touch-instructions">
             <span class="control-row"><span class="keys"><kbd>Left</kbd></span><span>Touch the left half</span></span>
             <span class="control-row"><span class="keys"><kbd>Right</kbd></span><span>Touch the right half</span></span>
             <span class="control-row"><span class="keys"><kbd>Hold</kbd></span><span>Charge, release to launch</span></span>
-            <span class="control-row"><span class="keys"><kbd>Menu</kbd></span><span>Pause / settings</span></span>
+            <span class="control-row"><span class="keys"><kbd>Menu</kbd></span><span>Pause and settings</span></span>
           </span>
           <span class="reward"><svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="21" cy="7" rx="9" ry="4"/><path d="M12 8v5c0 5 18 5 18 0V8M12 14v5c0 5 18 5 18 0v-5M3 17v5c0 5 16 5 16 0v-5M3 23v4c0 5 16 5 16 0v-4"/><ellipse cx="11" cy="16" rx="8" ry="4"/></svg><span><span class="section-label">REWARD</span><strong>10 points = ₹1</strong></span></span>
         </span>
@@ -175,6 +173,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     <button id="rewards-register" type="button"><span>Save my points</span><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M2 12h23m-9-8 9 8-9 8"/></svg></button>
     <button id="rewards-retry" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg><span>Play again</span></button>
    </div>
+   <button id="rewards-leaderboard" class="rewards-board-link" type="button">See full leaderboard →</button>
   </section>
   <section class="rewards-content reward-flow" id="rewards-leave" hidden>
    <p class="flow-eyebrow">BEFORE YOU GO</p>
@@ -189,12 +188,13 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
    <p class="flow-copy" id="rewards-exit-copy">Your points weren't saved this time. Come back and play before we open. Your best score is the one that counts.</p>
    <div class="rewards-divider" aria-hidden="true"></div>
    <div class="rewards-actions"><button class="flow-primary" id="rewards-exit-play" type="button">Play again</button><button class="flow-secondary" id="rewards-exit-world" type="button">Back to the world</button></div>
-   <p class="flow-signoff"><span class="brand-word">So/Facet</span>. What's yours?</p>
+   <a class="flow-updates" href="/launching-soon.html?nav=game" target="_top">Just want updates? Join THE FIRST CUT →</a>
+   <p class="flow-signoff"><span class="brand-word">SO/ FACET</span>. So/ what's yours?</p>
   </section>
   </div>
  </dialog>
  <dialog id="registration-dialog" aria-label="Claim what's yours.">
-  <iframe id="registration-frame" allow="web-share" title="So/Facet membership registration"></iframe>
+  <iframe id="registration-frame" allow="web-share" title="SO/ FACET account registration"></iframe>
  </dialog>
 
  <dialog id="leaderboard-dialog" aria-labelledby="leaderboard-title" aria-describedby="leaderboard-summary">
@@ -248,16 +248,16 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
    <h2 id="leaderboard-title" class="leaderboard-heading"><img src="/leaderboard/sofacet-leaderboard-title.png" alt="Leaderboard" width="666" height="123"></h2>
    <button id="leaderboard-close" class="board-close" aria-label="Close leaderboard" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
    <svg class="leaderboard-header-rail" viewBox="310 247 835 76" preserveAspectRatio="none" aria-hidden="true"><image href="/leaderboard/sofacet-leaderboard-frame.jpeg" width="1456" height="1024" preserveAspectRatio="none"/></svg>
-   <span id="leaderboard-caption" class="sr-only">Best pinball scores</span>
-   <table class="leaderboard-table" aria-labelledby="leaderboard-caption"><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
+   <span id="leaderboard-caption" class="leaderboard-caption">The best scores so far.</span>
+   <table class="leaderboard-table" aria-labelledby="leaderboard-caption"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
    <div class="leaderboard-note"><p id="leaderboard-summary"></p><p id="leaderboard-status" role="status"></p><button id="leaderboard-retry" hidden>Try again</button></div>
   </div>
   <div class="leaderboard-actions"><button id="leaderboard-play">Play again</button></div>
  </dialog>
- <section id="inspection" aria-label="Reference comparison" hidden><label>View <select id="view"><option value="0">Gameplay area</option><option value="1">Launcher</option><option value="2">Rail</option><option value="3">Scoreboard</option></select></label><label>Blender overlay <input id="overlay" type="range" min="0" max="100" value="0"></label><output id="metrics">Measuring frames…</output></section>
+
 
  <script type="module" src="/src/main.ts"></script>
- <script defer src="../navigation.js"></script>
+ <script defer src="../navigation.js?v=brand-0bb7758dbd88"></script>
 <!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen"><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body></html>
 
 

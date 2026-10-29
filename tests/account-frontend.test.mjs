@@ -15,7 +15,7 @@ test('frontend account preview uses existing membership fields and clears its ta
  writePreviewAccount({...account,name:'Asha Kapoor',leaderboardName:'Asha K.',email:'asha@example.test',marketingConsent:true});
  assert.equal(readPreviewAccount().leaderboardName,'Asha K.');
  assert.ok(![...storage.values()].join('').includes('123456'),'No verification code belongs in account storage');
- assert.match(accountSignInHref,/view=signin&preview=1/);
+ assert.match(accountSignInHref,/view=signin/);assert.doesNotMatch(accountSignInHref,/preview=/);
  clearPreviewAccount();assert.equal(readPreviewAccount(),null);assert.equal(storage.size,0);
 });
 

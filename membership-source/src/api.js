@@ -12,7 +12,7 @@ export async function request(path, body, signal) {
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || !result || typeof result !== 'object') {
-      const error = new Error(result?.message || 'The service is unavailable. Please try again.');
+      const error = new Error((result?.message || 'The service is unavailable. Please try again.').replace(/\bmembership\b/gi,'account'));
       error.code = result?.code; error.status = response.status; error.retryAfter = result?.retryAfter;
       throw error;
     }

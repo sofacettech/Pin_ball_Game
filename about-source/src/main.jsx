@@ -37,7 +37,7 @@ const collectionPictures = [
 ];
 
 function Wordmark() {
-  return <span className="wordmark"><BrandText>SO/FACET</BrandText></span>;
+  return <span className="wordmark"><BrandText>SO/ FACET</BrandText></span>;
 }
 
 function Picture(props) {
@@ -126,7 +126,7 @@ function App() {
     <p className="intro-copy" data-reveal style={{'--order':2}}><Wordmark/> is a lab-grown diamond jewellery house from India. Real diamonds, grown instead of mined.</p>
   </section>
 
-  <figure className="opening-image scene" aria-label="SO/FACET imagery">
+  <figure className="opening-image scene" aria-label="SO/ FACET imagery">
     <div className="opening-pin"><div className="image-window"><Picture data-image="hero" src="/assets/about/explore/sofacet-about-hero.webp" width="1122" height="430" alt="A woman wearing jewellery in a purple-lit lounge." decoding="async"/></div></div>
   </figure>
 
@@ -174,7 +174,7 @@ function App() {
     }}>
       <div className="gallery-toolbar"><h2 id="gallery-title">Our collections</h2><button className="icon-button" data-close-gallery aria-label="Close pictures" onClick={() => dialog.current.close()}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <figure className="lightbox-figure">{preview && <Picture key={preview.src} className="lightbox-image" src={preview.src} alt={preview.alt}/>}<figcaption aria-live="polite">{preview?.alt}</figcaption></figure>
-      <div className="gallery-controls"><button className="icon-button" aria-label="Previous picture" onClick={() => showImage(preview.index - 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><p className="image-count sr-only" aria-live="polite">{preview ? `${preview.index + 1} / 6` : ''}</p><button className="icon-button" aria-label="Next picture" onClick={() => showImage(preview.index + 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
+      <div className="gallery-controls"><button className="icon-button" aria-label="Previous picture" onClick={() => showImage(preview.index - 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><p className="image-count sr-only" aria-live="polite">{preview ? `${preview.index + 1} of 6` : ''}</p><button className="icon-button" aria-label="Next picture" onClick={() => showImage(preview.index + 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
     </dialog>
   </div>;
 }

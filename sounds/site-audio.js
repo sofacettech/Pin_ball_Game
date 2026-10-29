@@ -26,7 +26,7 @@ export function createSiteSound() {
     if (previous === String(on)) return;
     button.dataset.on = String(on);
     button.setAttribute('aria-pressed', String(on));
-    button.setAttribute('aria-label', on ? 'Mute website sound' : 'Enable website sound');
+    button.setAttribute('aria-label', on ? 'Sound on' : 'Sound off');
     button.title = on ? 'Mute sound' : 'Enable sound';
     if (previous !== undefined && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       for (const label of button.querySelectorAll('.sound-state')) {
@@ -147,10 +147,10 @@ export const siteSound = createSiteSound();
 const button = document.createElement('button');
 button.id = 'site-sound'; button.type = 'button'; button.className = 'site-sound';
 button.dataset.on = 'false';
-button.setAttribute('aria-label', 'Enable website sound'); button.setAttribute('aria-pressed', 'false'); button.title = 'Enable sound';
+button.setAttribute('aria-label', 'Sound off'); button.setAttribute('aria-pressed', 'false'); button.title = 'Enable sound';
 button.innerHTML = '<span class="sound-text" aria-hidden="true">' + ['OFF', 'ON'].map(state =>
-  `<span class="sound-state" data-state="${state === 'ON'}">${Array.from('AUDIO ' + state).map(letter => `<span class="sound-char">${letter}</span>`).join('')}</span>`
-).join('') + '</span><span class="sound-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
+  `<span class="sound-state" data-state="${state === 'ON'}">${Array.from('Sound ' + state.toLowerCase()).map(letter => `<span class="sound-char">${letter}</span>`).join('')}</span>`
+).join('') + '</span><svg class="sound-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4Z"/><path class="sound-on-icon" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-off-icon" d="m16 9 5 6m0-6-5 6"/></svg><span class="sound-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
 (document.querySelector('.site-navigation') || document.querySelector('.info-page header')).prepend(button);
 button.addEventListener('click', () => siteSound.toggle());
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {

@@ -4,14 +4,14 @@ body[data-loading]{overflow:hidden}
 #scene-frame canvas{display:block;width:100%;height:100%}
 #opening-frame{position:absolute;left:0;top:0;aspect-ratio:16/9;z-index:1;pointer-events:none}
 #opening-frame #opening{width:100%;height:100%;object-fit:contain}
-body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel,body[data-phase="opening"] #scroll-hint{visibility:hidden}
+body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel{visibility:hidden}
 #enter{z-index:5}
-#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 13px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
+#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
 body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}
 body[data-game="visible"] #entrance{visibility:hidden}
-@media(max-width:600px){#scroll-hint{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:none;font-size:12px;gap:12px}}
+@media(max-width:600px){#scroll-hint{left:50%;right:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:14px;gap:12px}}
 @media(prefers-reduced-motion:reduce){#scroll-hint{transition:none}}
 
 /* Visible in the first HTML response, before fonts or scene scripts arrive. */
@@ -23,3 +23,7 @@ body[data-game-loading] #journey-preparation{display:none}
 body[data-phase="buffering"] #scroll-hint{visibility:hidden}
 #scene-loading-status{position:absolute;z-index:6;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;gap:10px;justify-items:center;max-width:90vw;padding:12px 20px;border-radius:12px;background:#080b15c9;color:#fff;font:13px/1.4 Arial,sans-serif;text-align:center}
 body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-status,body[data-phase="buffering"] #scene-loading-status{visibility:hidden}
+
+body[data-loading] #scroll-hint{visibility:hidden}
+#scene-loading-status[data-ready]{bottom:calc(132px + env(safe-area-inset-bottom,0px));pointer-events:none}
+#scene-loading-status[data-ready] progress{display:none}

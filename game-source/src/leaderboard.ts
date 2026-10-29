@@ -37,8 +37,8 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
  dialog.oncancel=event=>{event.preventDefault();close()};
  function paint(board:Board){
   const selected=visibleEntries(board.entries,board.me);rows.replaceChildren();
-  document.getElementById('leaderboard-score-label')!.textContent=board.mode==='rewards'?'Rewards':'Score';
-  setBrandText(document.getElementById('leaderboard-caption')!,board.mode==='rewards'?'All-time SO/ FACET rewards':'Best pinball scores');
+  document.getElementById('leaderboard-score-label')!.textContent='Score';
+  setBrandText(document.getElementById('leaderboard-caption')!,'The best scores so far.');
   for(const entry of selected){const row=document.createElement('tr');if(entry.is_you){row.className='current-player';row.setAttribute('aria-label','Your position')}
    for(const [index,value] of [entry.rank===null?'—':String(entry.rank),entry.display_name,new Intl.NumberFormat('en-IN').format(entry.points)].entries()){
     const cell=document.createElement('td');cell.textContent=value;if(index===1&&entry.is_you){const you=document.createElement('span');you.className='you-label';you.textContent='You';cell.append(you)}row.append(cell);

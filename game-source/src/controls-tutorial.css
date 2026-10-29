@@ -41,3 +41,5 @@ body.practising-controls #scorecard-panel,body.practising-controls #mobile-lives
  #controls-tutorial .practice-skip{min-height:24px}
 }
 @media(prefers-reduced-motion:reduce){.practice-marker span{animation:none}}
+
+#controls-tutorial .practice-note{display:block;font-size:13px}

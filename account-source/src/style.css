@@ -35,3 +35,16 @@ input{caret-color:var(--lime)}::selection{background:#cbb1e5;color:#100b18}
 .calling-code-value svg{flex:none}.phone-wrap .calling-code select:focus-visible{outline:0}.phone-wrap>input{flex:1 1 0;width:0}
 .mobile-phone .calling-code{flex-basis:96px}.mobile-phone .calling-code-value{padding-inline:10px}
 @media(max-width:360px){.calling-code{flex-basis:94px}.calling-code-value{padding-inline:10px}}
+
+@media(max-width:680px){
+ .hint,.field .hint,.photo-row .hint,label small,.preference-label small,.form-status,.form-note,.preview-label,.form-foot,.code-note,.mobile-code-fields .code-note,.resend-row,.under-form,.score-facts dt,.validity-label,.validity .hint,.reward-details{font-size:13px}
+ .dialog-note{font-size:13px!important}
+ .error,.reward-details p,.mobile-code-fields label,.photo-actions .secondary,.photo-actions .text-button,.signout,.under-form .text-button,.mobile-verify,.mobile-code-row .secondary,.delete-outline,.score-facts dd{font-size:14px}
+ .eyebrow,.sample-score{font-size:11px;letter-spacing:.14em}
+ .sample-label{font-size:13px}
+ .step,.step-count{font-size:13px}
+ .form-title{font-size:11px;letter-spacing:.1em}
+ input:not([type=checkbox]):not([type=file]),.mobile-phone input:not([type=checkbox]){font-size:16px}
+}
+.eyebrow{font-size:12px}
+.form-foot,.under-form,.under-form .text-button{font-size:13px}
