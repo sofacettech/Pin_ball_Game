@@ -98,3 +98,33 @@ test('invalid JWT requires another OTP and preserves an uncredited award for ret
     assert.equal(events.filter(item => item.path === '/rewards/auth').length, 1);
   });
 });
+
+test('verified account details persist without changing ownership, scores or reward credits', async () => {
+  await withRewardsSite(async ({ request, events, awards, readStore }) => {
+    const details = { name: 'Updated Member', leaderboardName: 'Updated M.', email: 'updated@example.invalid', phoneNumber: profile.phoneNumber, marketingConsent: true };
+    assert.equal((await request('/api/account/details', details)).status, 401);
+    const verificationToken = await verify(request);
+    assert.equal((await request('/api/membership', { ...profile, verificationToken })).status, 200);
+    const before = await readStore(), eventCount = events.length;
+    assert.equal((await request('/api/account/details', details, other)).status, 401);
+    assert.equal((await request('/api/account/details', details, member, { Origin: 'https://example.invalid' })).status, 403);
+    for (const change of [{ name: '<script>' }, { leaderboardName: 'Player123' }, { email: 'invalid' }, { phoneNumber: '+919876543211' }, { marketingConsent: null }, { customerId: 'cus_other' }, { savedPoints: 999999 }]) {
+      const result = await request('/api/account/details', { ...details, ...change });
+      assert.ok([400,409].includes(result.status));
+      assert.deepEqual(await readStore(), before, 'rejected edits must not partially persist');
+    }
+    assert.deepEqual((await request('/api/account/details', details)).data, { success: true });
+    const account = (await request('/api/account')).data;
+    for (const [key, value] of Object.entries(details)) assert.equal(account[key], value);
+    assert.equal(account.savedPoints, 3200); assert.equal(account.bestPoints, 3205);
+    const after = await readStore();
+    assert.deepEqual(after.games, before.games); assert.deepEqual(after.rewardAccounts, before.rewardAccounts);
+    assert.equal(after.players[member].profile.customerId, before.players[member].profile.customerId);
+    assert.equal(after.players[member].name, details.leaderboardName);
+    assert.equal(after.players[member].profile.termsUrl, before.players[member].profile.termsUrl);
+    assert.equal(events.length, eventCount); assert.equal(awards.size, 1);
+    // Preferences use the same profile write, without another rewards request.
+    assert.equal((await request('/api/account/details', { ...details, marketingConsent: false })).status, 200);
+    assert.equal((await readStore()).players[member].profile.marketingConsent, false);
+  });
+});
