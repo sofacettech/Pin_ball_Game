@@ -19,7 +19,7 @@ function App(){
  const [country,setCountry]=useState('IN');
  const [mobileChallenge,setMobileChallenge]=useState(null),[mobileCode,setMobileCode]=useState(''),[verifiedPhone,setVerifiedPhone]=useState('');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[modal,setModal]=useState(null),[confirmation,setConfirmation]=useState('');
- const controller=useRef(null),mounted=useRef(true),locked=useRef(false),dialog=useRef(null),opener=useRef(null);
+ const controller=useRef(null),mounted=useRef(true),locked=useRef(false),dialog=useRef(null),opener=useRef(null),pendingEdits=useRef(null);
  function accept(result){setAccount(result);setDraft(draftOf(result));setStage('account');setMobileChallenge(null);setMobileCode('');setVerifiedPhone('')}
  async function load(signal){
   try{
@@ -29,11 +29,11 @@ function App(){
   const result=await request('/api/account',undefined,signal);if(signal.aborted)return;
   if(typeof result.name!=='string'||typeof result.phoneNumber!=='string'||![result.savedPoints,result.bestPoints].every(v=>Number.isSafeInteger(v)&&v>=0))throw Error('Your account could not be confirmed. Please try again.');
   const value={...result,leaderboardName:result.leaderboardName||player.display_name||result.name,marketingConsent:result.marketingConsent===true};accept(value);return value;
-  }catch(error){if(signal.aborted)throw error;throw Error("We couldn't load your points. Please try again.")}
+  }catch(error){if(signal.aborted)throw error;if(['invalid_token','rewards_verification_required'].includes(error.code)){setStage('signin');setError('Please verify your phone to view your account.');return}throw error}
  }
  async function run(action){
   if(locked.current)return;locked.current=true;setBusy(true);setError('');controller.current?.abort();const abort=new AbortController();controller.current=abort;
-  try{await action(abort.signal)}catch(error){if(mounted.current&&!abort.signal.aborted)setError(error.message||'Please try again.')}
+  try{await action(abort.signal)}catch(error){if(mounted.current&&!abort.signal.aborted){setError(error.message||'Please try again.');if(['invalid_token','rewards_verification_required'].includes(error.code)){pendingEdits.current=draft;setPhone(account?.phoneNumber||'');setStage('signin')}}}
   finally{locked.current=false;if(mounted.current)setBusy(false)}
  }
  useEffect(()=>{mounted.current=true;const abort=new AbortController();controller.current=abort;load(abort.signal).catch(error=>{if(!abort.signal.aborted){setError(error.message);setStage('error')}});return()=>{mounted.current=false;controller.current?.abort()}},[]);
@@ -49,14 +49,16 @@ function App(){
   await run(async signal=>{
    const result=await request('/api/account/otp/request',{phoneNumber},signal);
    if(result.success!==true||!result.challengeId||!Number.isFinite(result.expiresIn)||result.expiresIn<=0)throw Error('The code request could not be confirmed. Please try again.');
-   setChallenge({id:result.challengeId,phoneNumber,expiresAt:Date.now()+result.expiresIn*1000});setResendAt(Date.now()+Math.max(30,result.resendAfter||30)*1000);setCode('');setStage('code');requestAnimationFrame(()=>document.getElementById('code')?.focus());
+   setChallenge({id:result.challengeId,phoneNumber,channel:result.deliveryChannel,expiresAt:Date.now()+result.expiresIn*1000});setResendAt(Date.now()+Math.max(60,result.resendAfter||60)*1000);setCode('');setStage('code');requestAnimationFrame(()=>document.getElementById('code')?.focus());
   });
  }
  async function verify(event){
   event.preventDefault();if(!/^\d{6}$/.test(code)){setError('Enter the full 6-digit code.');return}if(!challenge||Date.now()>=challenge.expiresAt){setError('This code has expired. Please request a new one.');return}
   await run(async signal=>{
-   {const result=await request('/api/account/otp/verify',{phoneNumber:challenge.phoneNumber,otp:code,challengeId:challenge.id},signal);if(result.verified!==true)throw Error('The code could not be verified.');if(!await load(signal))throw Error('Your sign-in could not be confirmed. Please try again.')}
+   if(!challenge.verified){const result=await request('/api/account/otp/verify',{phoneNumber:challenge.phoneNumber,otp:code,challengeId:challenge.id},signal);if(result.verified!==true)throw Error('The code could not be verified.');setChallenge(current=>({...current,verified:true}))}
+   if(!await load(signal))throw Error('Your sign-in could not be confirmed. Please try again.');
    setCode('');setChallenge(null);setResendAt(0);history.replaceState(null,'',accountHref);
+   if(pendingEdits.current&&normalisePhone(pendingEdits.current.phoneNumber,pendingEdits.current.country)===challenge.phoneNumber){setDraft(pendingEdits.current);setNotice('Your phone is verified. Save your changes to update your profile.')}pendingEdits.current=null;
   });
  }
  function signOut(){void run(async signal=>{const result=await request('/api/account/signout',{},signal);if(result.success!==true)throw Error('Sign-out could not be confirmed.');location.replace(membershipHref)})}
@@ -76,7 +78,7 @@ function App(){
  return brandText(<><a className="skip" href="#main">Skip to content</a><main className="shell" id="main" tabIndex={-1}>
   {stage==='loading'?<section className="screen loading" aria-live="polite"><div className="loading-line" aria-hidden="true"/><p>Checking your points…</p></section>:null}
   {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1>{errors}<button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
-  {stage==='signin'||stage==='code'?<section className="screen auth-screen" aria-labelledby="signin-title"><div className="sign-in-grid"><div className={'intro '+(stage==='code'?'code-intro':'')}><p className="eyebrow">MY POINTS</p><h1 id="signin-title" tabIndex={-1}>{stage==='code'?<>One code. <em>You’re back.</em></>:<>Welcome <em>back.</em></>}</h1><p className="supporting">{stage==='code'?'Your account is one step away.':'Enter your phone number and we’ll text you a code.'}</p><a className="text-button" href={accountNavigationHref('/play.html')}>New here? Play Pinball to earn points <span aria-hidden="true">→</span></a></div><div>
+  {stage==='signin'||stage==='code'?<section className="screen auth-screen" aria-labelledby="signin-title"><div className="sign-in-grid"><div className={'intro '+(stage==='code'?'code-intro':'')}><p className="eyebrow">MY POINTS</p><h1 id="signin-title" tabIndex={-1}>{stage==='code'?<>One code. <em>You’re back.</em></>:<>Welcome <em>back.</em></>}</h1><p className="supporting">{stage==='code'?`Enter the code sent by ${challenge?.channel==='whatsapp'?'WhatsApp':'SMS'}.`:'Enter your phone number to receive a verification code by WhatsApp or SMS.'}</p><a className="text-button" href={accountNavigationHref('/play.html')}>New here? Play Pinball to earn points <span aria-hidden="true">→</span></a></div><div>
    {stage==='code'?<button className="text-button back-button" disabled={busy} onClick={()=>{setStage('signin');setChallenge(null);setCode('');setResendAt(0);setError('')}}>Change number</button>:null}
    <form className="form-frame" onSubmit={stage==='code'?verify:send} noValidate aria-busy={busy}><div className="form-top"><h2 className="form-title">{stage==='code'?'VERIFY YOUR NUMBER':'SIGN IN'}</h2><span className="step-count" aria-label={'Step '+(stage==='code'?2:1)+' of 2'}>{stage==='code'?'02':'01'} of 02</span></div><div className="steps" aria-hidden="true"><i className="current"/><i className={stage==='code'?'current':''}/></div>
     {stage==='signin'?<><label htmlFor="phone">Mobile number</label><div className="phone-wrap"><CallingCode id="phone" value={country} disabled={busy} onChange={value=>{setCountry(value);setError('')}}/><input id="phone" name="phoneNumber" type="tel" autoComplete="tel-national" inputMode="tel" maxLength={30} placeholder="Mobile number" required disabled={busy} aria-describedby="phone-help account-error" value={phone} onChange={event=>{setPhone(event.target.value);if(event.target.value.trim().startsWith('+'))setCountry(phoneCountry(event.target.value,country));setError('')}}/></div><p className="hint" id="phone-help">Use the number you saved your points with.</p></>:<><p className="code-help">Enter the 6-digit code for<br/><strong>{formatPhone(challenge?.phoneNumber||phoneNumber||'')}</strong>.</p><label htmlFor="code">6-digit code</label><input className="otp-input" id="code" name="confirmationCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" required disabled={busy} aria-describedby="account-error" value={code} onChange={event=>{setCode(event.target.value.replace(/\D/g,'').slice(0,6));setError('')}}/></>}

@@ -13,7 +13,7 @@ async function verify(request) {
 }
 
 test('HTTP flow registers, verifies leading-zero OTP, reads score, then saves profile and awards once using the JWT', async () => {
-  await withRewardsSite(async ({ request, events, awards, readStore }) => {
+  await withRewardsSite(async ({ request, events, awards, readStore, state }) => {
     assert.equal((await request('/api/membership/config')).data.otpAvailable, true);
     assert.equal((await request('/api/membership', profile)).status, 401);
     const verificationToken = await verify(request);
@@ -21,11 +21,12 @@ test('HTTP flow registers, verifies leading-zero OTP, reads score, then saves pr
     const payload = { ...profile, verificationToken };
     const result = await request('/api/membership', payload);
     assert.equal(result.status, 200); assert.equal(result.data.savedPoints, 3200); assert.equal(result.data.remainingPoints, 5);
-    assert.deepEqual(events.map(item => item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/score', '/rewards/points']);
+    assert.deepEqual(events.map(item => item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/score', '/rewards/profile', '/rewards/points']);
     assert.deepEqual(events[1].body, { registration_id: 'rreg_0', otp: '012345' });
     assert.equal(events[2].authorization, events[3].authorization);
-    assert.equal(events[3].body.points, 320); assert.equal(events[3].body.phone, undefined);
-    const store = await readStore(); assert.equal(store.players[member].profile.email, profile.email);
+    assert.equal(events[4].body.points, 320); assert.equal(events[4].body.phone, undefined);
+    assert.equal(events[3].body.email, profile.email); assert.equal(events[3].body.terms_accepted, true);
+    const store = await readStore(); assert.equal(store.players[member].profile.email, undefined); assert.equal(state.profile.email, profile.email);
     assert.equal(store.players[member].profile.customerId, 'cus_fixture');
     assert.ok(!JSON.stringify(store).includes('fixture-signature') && !JSON.stringify(store).includes(verificationToken));
     assert.equal((await request('/api/membership', payload, other)).status, 401);
@@ -89,7 +90,7 @@ test('lost award responses retry with the same JWT and event key, without double
 
 test('invalid JWT requires another OTP and preserves an uncredited award for retry', async () => {
   await withRewardsSite(async ({ request, events, awards, state, readStore }) => {
-    const verificationToken = await verify(request); state.expiredToken = true;
+    const verificationToken = await verify(request); state.pointsError = {status:401,code:'invalid_token'};
     const result = await request('/api/membership', { ...profile, verificationToken });
     assert.equal(result.status, 401); assert.equal(result.data.code, 'invalid_token'); assert.equal(awards.size, 0);
     assert.ok((await readStore()).rewardAccounts.cus_fixture.pending);
@@ -100,7 +101,7 @@ test('invalid JWT requires another OTP and preserves an uncredited award for ret
 });
 
 test('verified account details persist without changing ownership, scores or reward credits', async () => {
-  await withRewardsSite(async ({ request, events, awards, readStore }) => {
+  await withRewardsSite(async ({ request, events, awards, readStore, state }) => {
     const details = { name: 'Updated Member', leaderboardName: 'Updated M.', email: 'updated@example.invalid', phoneNumber: profile.phoneNumber, marketingConsent: true };
     assert.equal((await request('/api/account/details', details)).status, 401);
     const verificationToken = await verify(request);
@@ -122,9 +123,28 @@ test('verified account details persist without changing ownership, scores or rew
     assert.equal(after.players[member].profile.customerId, before.players[member].profile.customerId);
     assert.equal(after.players[member].name, details.leaderboardName);
     assert.equal(after.players[member].profile.termsUrl, before.players[member].profile.termsUrl);
-    assert.equal(events.length, eventCount); assert.equal(awards.size, 1);
+    assert.ok(events.length > eventCount); assert.equal(awards.size, 1); assert.equal(state.profile.email, details.email);
     // Preferences use the same profile write, without another rewards request.
     assert.equal((await request('/api/account/details', { ...details, marketingConsent: false })).status, 200);
-    assert.equal((await readStore()).players[member].profile.marketingConsent, false);
+    assert.equal((await readStore()).players[member].profile.marketingConsent, undefined); assert.equal(state.profile.marketing_consent,false);
+  });
+});
+
+test('Medusa profile failures never report a local-only save or award points',async()=>{
+  await withRewardsSite(async({request,state,awards,readStore})=>{
+    const verificationToken=await verify(request);
+    state.profileWriteError={status:409,code:'email_in_use'};
+    const failed=await request('/api/membership',{...profile,verificationToken});
+    assert.equal(failed.status,409);assert.equal(failed.data.code,'email_in_use');
+    assert.equal((await readStore()).players[member].profile,undefined);assert.equal(awards.size,0);
+    state.profileWriteError=null;
+    assert.equal((await request('/api/membership',{...profile,verificationToken})).status,200);
+    const before=await readStore(),centralBefore={...state.profile};
+    state.profileWriteError={status:409,code:'email_in_use'};
+    assert.equal((await request('/api/account/details',{name:'Another Member',leaderboardName:'Another M.',email:'used@example.invalid',phoneNumber:profile.phoneNumber,marketingConsent:false})).status,409);
+    assert.deepEqual(await readStore(),before);assert.deepEqual(state.profile,centralBefore);
+    state.expiredToken=true;
+    assert.equal((await request('/api/account')).status,401);
+    assert.equal((await request('/api/account')).data.code,'rewards_verification_required');
   });
 });

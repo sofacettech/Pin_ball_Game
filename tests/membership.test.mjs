@@ -12,10 +12,10 @@ process.env.MEMBERSHIP_TERMS_URL='https://example.invalid/terms';
 process.env.MEMBERSHIP_PRIVACY_URL='https://example.invalid/privacy';
 function setup(options={}) {
  let store={players:{one:{name:'Guest'},two:{name:'Other guest'}},games:{[gameId]:{player:'one',verified:true,score:3205},[otherGame]:{player:'one',verified:true,score:4100},[lowerGame]:{player:'one',verified:true,score:1000}}};
- const calls=[],credited=new Map();let customer='cus_test',timeout=false,clock=Date.now();
+ const calls=[],credited=new Map();let customer='cus_test',timeout=false,clock=Date.now(),central={customer_id:'cus_test',phone:valid.phoneNumber,profile_complete:false};
  const provider={request:async()=>({challengeId:'private-provider-id',expiresIn:300,resendAfter:60,deliveryChannel:'whatsapp'}),verify:async ({otp,challengeId})=>{assert.equal(challengeId,'private-provider-id');return otp==='654321'?{verified:true,token:'private-jwt',customer_id:customer,expiresAt:clock+30*60000}: {verified:false}}};
- const api=createMembershipApi({getStore:()=>store,commit:change=>{const previous=structuredClone(store);try{change()}catch(error){store=previous;throw error}},phone:value=>{const result=normalisePhone(value);if(!result)throw new ServiceError(400,'Invalid phone');return result},publicPlayer:p=>({member:!!p.profile,display_name:p.name,best_score:p.best??null}),provider:options.provider??provider,now:()=>clock,score:options.score??(async token=>{assert.equal(token,'private-jwt');return {balance:0,lifetime_earned:0,rank:null}}),award:async args=>{assert.equal(args.token,'private-jwt');calls.push({...args});if(!credited.has(args.eventId))credited.set(args.eventId,args.points);if(timeout){timeout=false;throw new ServiceError(503,'Temporary timeout')}return {balance:[...credited.values()].reduce((a,b)=>a+b,0)}}});
- return {api,calls,credited,get store(){return store},setCustomer:value=>customer=value,failNext:()=>timeout=true,advance:ms=>clock+=ms};
+ const api=createMembershipApi({getStore:()=>store,commit:change=>{const previous=structuredClone(store);try{change()}catch(error){store=previous;throw error}},phone:value=>{const result=normalisePhone(value);if(!result)throw new ServiceError(400,'Invalid phone');return result},publicPlayer:p=>({member:!!p.profile,display_name:p.name,best_score:p.best??null}),provider:options.provider??provider,now:()=>clock,profile:options.profile??(async(token,values)=>{assert.equal(token,'private-jwt');if(values)central={...central,...values,profile_complete:true};return central}),score:options.score??(async token=>{assert.equal(token,'private-jwt');return {balance:0,lifetime_earned:0,rank:null}}),award:async args=>{assert.equal(args.token,'private-jwt');calls.push({...args});if(!credited.has(args.eventId))credited.set(args.eventId,args.points);if(timeout){timeout=false;throw new ServiceError(503,'Temporary timeout')}return {balance:[...credited.values()].reduce((a,b)=>a+b,0)}}});
+ return {api,calls,credited,get store(){return store},get central(){return central},setCustomer:value=>customer=value,failNext:()=>timeout=true,advance:ms=>clock+=ms};
 }
 async function verified(fixture,id='one',phoneNumber=valid.phoneNumber,details=valid) {
  const challenge=await fixture.api('/api/membership/otp/request',{phoneNumber,name:details.name,consent:true,...(details.dateOfBirth?{dateOfBirth:details.dateOfBirth}:{})},id);
@@ -56,7 +56,7 @@ test('server validates details and ignores no client-supplied score or reward',a
 test('verified scores credit 10 game points per ₹1, once; improvements grant only the difference',async()=>{
  const f=setup(),verificationToken=await verified(f),payload={...valid,verificationToken};
  const result=await f.api('/api/membership',payload,'one');
- assert.equal(result.savedPoints,3200);assert.equal(result.remainingPoints,5);assert.equal(result.bestPoints,3205);assert.equal(f.calls[0].points,320);assert.equal(result.player.display_name,'Test Nickname');assert.equal(f.store.players.one.profile.marketingConsent,false);
+ assert.equal(result.savedPoints,3200);assert.equal(result.remainingPoints,5);assert.equal(result.bestPoints,3205);assert.equal(f.calls[0].points,320);assert.equal(result.player.display_name,'Test Nickname');assert.equal(f.central.marketing_consent,false);
  await f.api('/api/membership',payload,'one');assert.equal(f.calls.length,1);
  await Promise.all([f.api('/api/membership',{...payload,gameId:otherGame},'one'),f.api('/api/membership',{...payload,gameId:otherGame},'one')]);assert.equal(f.calls.length,2);assert.equal(f.calls[1].points,90);assert.equal([...f.credited.values()].reduce((a,b)=>a+b,0),410);
  const lower=await f.api('/api/membership',{...payload,gameId:lowerGame},'one');assert.equal(lower.savedPoints,4100);assert.equal(f.calls.length,2);
@@ -78,11 +78,11 @@ test('single-screen sign-up accepts only the collected details and preserves con
  assert.equal(f.store.players.one.profile,undefined);assert.equal(f.calls.length,0);
  const result=await f.api('/api/membership',payload,'one');
  assert.equal(result.player.member,true);assert.equal(result.savedPoints,3200);assert.equal(f.calls[0].points,320);
- assert.equal(f.store.players.one.profile.email,valid.email);assert.equal(f.store.players.one.profile.marketingConsent,false);
- assert.equal('birthDate' in f.store.players.one.profile,false);assert.equal('city' in f.store.players.one.profile,false);
- f.store.players.one.profile.birthDate='1990-01-01';f.store.players.one.profile.city='Delhi';
+ assert.equal(f.central.email,valid.email);assert.equal(f.central.marketing_consent,false);
+ assert.equal('email' in f.store.players.one.profile,false);assert.equal('city' in f.store.players.one.profile,false);
+ f.central.dob='1990-01-01';f.central.city='Delhi';
  await f.api('/api/membership',payload,'one');assert.equal(f.calls.length,1);
- assert.equal(f.store.players.one.profile.birthDate,'1990-01-01');assert.equal(f.store.players.one.profile.city,'Delhi');
+ assert.equal(f.central.dob,'1990-01-01');assert.equal(f.central.city,'Delhi');
 });
 
 test('registered sessions save verified later games without registering or requesting OTP again',async()=>{

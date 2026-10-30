@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { ServiceError, rewardsScore, awardPoints } from './rewards.mjs';
+import { ServiceError, rewardsScore, rewardsProfile, awardPoints } from './rewards.mjs';
 import { otpProvider } from './membership-otp.mjs';
 import { isAdult } from './membership-source/src/api.js';
 import { validPlayerName, validPublicName } from './game-source/src/player-copy.ts';
@@ -17,7 +17,7 @@ function publicUrl(value) {
   try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; }
 }
 
-export function createMembershipApi({ getStore, commit, phone, publicPlayer, provider = otpProvider, score = rewardsScore, award = awardPoints, now = Date.now }) {
+export function createMembershipApi({ getStore, commit, phone, publicPlayer, provider = otpProvider, score = rewardsScore, profile = rewardsProfile, award = awardPoints, now = Date.now }) {
   const challenges = new Map(), proofs = new Map(), sessions = new Map(), cooldowns = new Map(), jobs = new Map();
   const policies = () => ({ terms: publicUrl(process.env.MEMBERSHIP_TERMS_URL), privacy: publicUrl(process.env.MEMBERSHIP_PRIVACY_URL) });
   const configured = () => typeof provider.request === 'function' && typeof provider.verify === 'function' && (!provider.configured || provider.configured());
@@ -30,6 +30,42 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
     const saved = sessions.get(id);
     if (!saved || saved.expiresAt <= now() || saved.customer_id !== customerId || saved.phone !== normalized) requireVerification();
     return saved;
+  }
+  function cachedProfile(id, remote) {
+    commit(() => {
+      const player = getStore().players[id];
+      player.name = remote.leaderboard_name || player.name;
+      player.profile = { customerId: remote.customer_id, phone: phone(remote.phone) };
+    });
+  }
+  async function remoteProfile(id, customer, values) {
+    try {
+      const result = await profile(customer.token, values);
+      if (result.customer_id !== customer.customer_id || phone(result.phone) !== customer.phone) fail(503, 'Your account could not be confirmed. Please try again.');
+      return result;
+    } catch (error) { if (error.code === 'invalid_token') sessions.delete(id); throw error; }
+  }
+  const registrationProfile = (details, policy) => ({ name: details.name, email: details.email, leaderboard_name: details.leaderboardName,
+    marketing_consent: details.marketingConsent, terms_accepted: true, adult_confirmed: true, terms_url: policy.terms, privacy_url: policy.privacy,
+    ...(details.dateOfBirth || details.birthDate ? { dob: details.dateOfBirth || details.birthDate } : {}), ...(details.city ? { city: details.city } : {}) });
+  async function readAccount(id, confirmedProfile) {
+    const saved = getStore().players[id]?.profile;
+    if (!saved?.customerId || !saved.phone) fail(401, 'Please sign in to view your account.');
+    const customer = session(id, saved.customerId, phone(saved.phone));
+    let remote = confirmedProfile || await remoteProfile(id, customer);
+    // Migrate a previously local profile only after fresh ownership verification,
+    // and only when Medusa has no completed profile. Never overwrite central edits.
+    if (!remote.profile_complete && saved.email && saved.name && saved.memberConsent) {
+      remote = await remoteProfile(id, customer, registrationProfile(saved, { terms: saved.termsUrl, privacy: saved.privacyUrl }));
+    }
+    if (!remote.profile_complete) throw new ServiceError(409, 'Please save your profile details from the game first.', 'profile_required');
+    let standing;
+    try { standing = await score(customer.token); } catch (error) { if (error.code === 'invalid_token') sessions.delete(id); throw error; }
+    cachedProfile(id, remote);
+    const ledger = getStore().rewardAccounts?.[customer.customer_id], player = getStore().players[id];
+    return { name: remote.name, leaderboardName: remote.leaderboard_name, email: remote.email, phoneNumber: remote.phone,
+      marketingConsent: remote.marketing_consent, savedPoints: standing.balance * 10,
+      bestPoints: Math.max(ledger?.bestScore || 0, player.bestVerified ? player.best : 0) };
   }
   function gameFor(gameId, id, customerId) {
     const game = getStore().games[gameId];
@@ -73,6 +109,14 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
   }
   return async (path, data, id) => {
     cleanup();
+    if (path === '/api/account') return readAccount(id);
+    if (path === '/api/account/signout') {
+      sessions.delete(id);
+      for (const map of [challenges, proofs]) for (const [key, value] of map) if (value.player === id) map.delete(key);
+      return { success: true };
+    }
+    const signingIn = path.startsWith('/api/account/otp/');
+    if (signingIn) path = path.replace('/api/account/otp/', '/api/membership/otp/');
     if (path === '/api/membership/config') return { otpAvailable: configured(), policies: policies(), pointsPerRupee: 10 };
     if (!data || typeof data !== 'object' || Array.isArray(data)) fail(400, 'Please send valid membership details.');
     if (path === '/api/account/details') {
@@ -85,13 +129,9 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Please enter a valid email address.');
       if (phone(data.phoneNumber) !== current.phone) fail(409, 'Your verified phone number cannot be changed here. Please contact SO FACET.');
       if (typeof data.marketingConsent !== 'boolean') fail(400, 'Please check your contact preferences.');
-      // This HttpOnly player session was upgraded by verified registration. Profile
-      // edits are local account writes; they never exchange OTPs or award rewards.
-      commit(() => {
-        const player = getStore().players[id];
-        player.name = leaderboardName;
-        player.profile = { ...player.profile, name, leaderboardName, email, marketingConsent: data.marketingConsent };
-      });
+      const customer = session(id, current.customerId, phone(current.phone));
+      const remote = await remoteProfile(id, customer, { name, email, leaderboard_name: leaderboardName, marketing_consent: data.marketingConsent });
+      cachedProfile(id, remote);
       return { success: true };
     }
     if (path === '/api/membership/rewards') {
@@ -102,12 +142,12 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
     }
     if (!configured()) fail(503, 'Phone verification is not connected yet. Your points have not been saved. Please try again later.');
     if (path === '/api/membership/otp/request') {
-      const normalized = phone(data.phoneNumber), name = text(data.name, 80, 'your name');
+      const normalized = phone(data.phoneNumber), name = signingIn ? undefined : text(data.name, 80, 'your name');
       const member = getStore().players[id]?.profile;
       if (member && member.phone !== normalized) fail(409, 'Please verify the phone number belonging to your current membership.');
-      if (data.consent !== true) fail(400, 'Please agree to receive a verification code.');
+      if (!signingIn && data.consent !== true) fail(400, 'Please agree to receive a verification code.');
       if (data.dateOfBirth !== undefined && (typeof data.dateOfBirth !== 'string' || !isAdult(data.dateOfBirth))) fail(400, 'You must be at least 18 years old to participate.');
-      if (!policies().terms || !policies().privacy) fail(503, 'Membership terms are not available yet. Please try again later.');
+      if (!signingIn && (!policies().terms || !policies().privacy)) fail(503, 'Membership terms are not available yet. Please try again later.');
       const wait = Math.ceil((Math.max(cooldowns.get(id) || 0, cooldowns.get(normalized) || 0) - now()) / 1000);
       if (wait > 0) throw new ServiceError(429, 'Please wait before requesting another code.', 'rate_limited', wait);
       cooldowns.set(id, now() + 60000); cooldowns.set(normalized, now() + 60000);
@@ -124,12 +164,13 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       cooldowns.set(id, now() + resendAfter * 1000); cooldowns.set(normalized, now() + resendAfter * 1000);
       for (const [key, item] of challenges) if (item.player === id) challenges.delete(key);
       for (const [key, item] of proofs) if (item.player === id) proofs.delete(key);
-      challenges.set(challengeId, { player: id, phone: normalized, name, dob: data.dateOfBirth, providerId: result.challengeId, attempts: 0, expiresAt: now() + expiresIn * 1000 });
+      challenges.set(challengeId, { player: id, phone: normalized, name, signingIn, dob: data.dateOfBirth, providerId: result.challengeId, attempts: 0, expiresAt: now() + expiresIn * 1000 });
       return { success: true, challengeId, expiresIn, resendAfter, deliveryChannel: result.deliveryChannel };
     }
     if (path === '/api/membership/otp/verify') {
       const normalized = phone(data.phoneNumber), challenge = challenges.get(data.challengeId);
       if (!challenge || challenge.player !== id || challenge.phone !== normalized || challenge.expiresAt <= now()) fail(410, 'This code expired. Please request a new one.');
+      if (challenge.signingIn !== signingIn) fail(400, 'Please use the verification flow that requested this code.');
       if (typeof data.otp !== 'string' || !/^\d{6}$/.test(data.otp)) fail(400, 'Enter the six-digit code.');
       if (challenge.verifying) fail(409, 'Your code is already being verified. Please wait.');
       if (!challenge.customer && challenge.attempts >= 5) { challenges.delete(data.challengeId); fail(429, 'Too many attempts. Please request a new code.'); }
@@ -148,15 +189,24 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         }
         const existing = getStore().players[id]?.profile;
         if (existing && (existing.customerId !== result.customer_id || existing.phone !== normalized)) fail(409, 'Please verify the phone number belonging to your current membership.');
-        await score(result.token);
+        if (!signingIn) await score(result.token);
         if (challenges.get(data.challengeId) !== challenge || challenge.expiresAt <= now()) fail(410, 'This code expired or was replaced. Please request a new one.');
       } catch (error) {
         if (['otp_expired','otp_attempts_exceeded','invalid_token'].includes(error.code)) challenges.delete(data.challengeId);
         throw error;
       } finally { challenge.verifying = false; }
-      challenges.delete(data.challengeId);
       const token = randomBytes(32).toString('hex');
       sessions.set(id, { ...result, phone: normalized });
+      if (signingIn) {
+        const remote = await remoteProfile(id, sessions.get(id));
+        const legacy = getStore().players[id]?.profile;
+        if (!remote.profile_complete && !legacy?.email) throw new ServiceError(409, 'Please save your profile details from the game first.', 'profile_required');
+        if (remote.profile_complete) cachedProfile(id, remote);
+        await readAccount(id, remote);
+        challenges.delete(data.challengeId);
+        return { verified: true };
+      }
+      challenges.delete(data.challengeId);
       proofs.set(token, { player: id, phone: normalized, customerId: result.customer_id, name: challenge.name, dob: challenge.dob, expiresAt: Math.min(result.expiresAt, now() + 15 * 60000) });
       return { verified: true, verificationToken: token };
     }
@@ -164,13 +214,13 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       if (!data || typeof data !== 'object' || Object.keys(data).some(key => !['name','leaderboardName','email','dateOfBirth','city','termsAccepted','marketingConsent','phoneNumber','verificationToken','gameId'].includes(key))) fail(400, 'Please submit membership details and the game ID only.');
       const normalized = phone(data.phoneNumber), proof = proofs.get(data.verificationToken);
       if (!proof || proof.player !== id || proof.phone !== normalized || proof.expiresAt <= now()) requireVerification();
-      const profile = { name: text(data.name, 80, 'your name'), leaderboardName: text(data.leaderboardName, 30, 'your leaderboard name') };
-      if (data.city !== undefined) profile.city = text(data.city, 100, 'your city');
+      const details = { name: text(data.name, 80, 'your name'), leaderboardName: text(data.leaderboardName, 30, 'your leaderboard name') };
+      if (data.city !== undefined) details.city = text(data.city, 100, 'your city');
       if (typeof data.email !== 'string' || data.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) fail(400, 'Please enter a valid email address.');
       // The single-screen form uses the required 18+ declaration; validate dates from older clients when supplied.
       if (data.dateOfBirth !== undefined) {
         if (typeof data.dateOfBirth !== 'string' || !isAdult(data.dateOfBirth)) fail(400, 'You must be at least 18 years old to participate.');
-        profile.birthDate = data.dateOfBirth;
+        details.birthDate = data.dateOfBirth;
       }
       if (data.termsAccepted !== true || typeof data.marketingConsent !== 'boolean') fail(400, 'Please accept the terms and check your contact preferences.');
       const policy = policies(); if (!policy.terms || !policy.privacy) fail(503, 'Membership terms are not available yet. Please try again later.');
@@ -179,13 +229,12 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         const game = getStore().games[data.gameId];
         if (!game || game.player !== id || !game.verified) fail(409, 'Your score is still being verified. Please try again.');
       }
-      if (proof.name !== profile.name || proof.dob !== data.dateOfBirth) fail(400, 'Your details changed. Please request a new verification code.');
+      if (proof.name !== details.name || proof.dob !== data.dateOfBirth) fail(400, 'Your details changed. Please request a new verification code.');
       const customer = session(id, proof.customerId, normalized);
       if (data.gameId && getStore().games[data.gameId].rewardCustomer && getStore().games[data.gameId].rewardCustomer !== customer.customer_id) fail(409, 'This game has already been saved to another membership.');
-      commit(() => {
-        const player = getStore().players[id]; player.name = profile.leaderboardName;
-        player.profile = { ...player.profile, ...profile, customerId: customer.customer_id, phone: normalized, email: data.email.trim(), memberConsent: true, contestConsent: true, marketingConsent: data.marketingConsent, termsUrl: policy.terms, privacyUrl: policy.privacy, registeredAt: new Date().toISOString() };
-      });
+      const remote = await remoteProfile(id, customer, registrationProfile({ ...details, email: data.email.trim(), marketingConsent: data.marketingConsent }, policy));
+      if (!remote.profile_complete) fail(503, 'Your profile has not been confirmed as saved. Please try again.');
+      cachedProfile(id, remote);
       const reward = data.gameId ? await saveReward(customer.customer_id, normalized, data.gameId, id) : { pointsSaved: false, savedPoints: 0, bestPoints: 0, remainingPoints: 0 };
       return { success: true, player: publicPlayer(getStore().players[id]), ...reward };
     }

@@ -49,6 +49,7 @@ function App() {
   const [exit,setExit]=useState(null),[newCountry,setNewCountry]=useState('IN');
   const controller=useRef(null),locked=useRef(false),policyDialog=useRef(null),mounted=useRef(true),pendingRef=useRef(null),exitHandler=useRef(null),exitDestination=useRef('/');
   const joining=firstCutsJoin&&!pending;
+  const reauth=renewVerification&&!joining;
   const hasUnsaved=()=>!!pendingRef.current&&pendingRef.current.points>=10&&!saved;
   function requestExit(destination='/') {
     if(locked.current){setStatus('Please wait for the current request to finish.');return}
@@ -66,10 +67,6 @@ function App() {
       if(signal.aborted||!mounted.current)return;
       if(typeof player.member!=='boolean')throw new Error('Membership could not be checked.');
       if(player.member&&renewVerification){
-        const account=await request('/api/account',undefined,signal);
-        if(signal.aborted||!mounted.current)return;
-        setIdentity({phone:account.phoneNumber,country:phoneCountry(account.phoneNumber,'IN')});
-        setDetails({name:account.name,email:account.email||'',termsAccepted:false,privacyAccepted:false,marketingConsent:account.marketingConsent===true});
         setStatus('Please verify your phone again to save your points.');setMemberCheck('guest');
       }
       else if(player.member){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountHref)}
@@ -123,6 +120,7 @@ function App() {
   }
   function validate() {
     const found={};
+    if(reauth){if(!normalisePhone(identity.phone,identity.country))found.phone='Enter your verified phone number.';setErrors(found);return Object.keys(found).length===0}
     if(!validPlayerName(details.name))found['front-name']='Please enter your full name.';
     if(!normalisePhone(identity.phone,identity.country))found.phone='Enter a valid number for the selected country, or include + and your country code.';
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()))found.email='Enter a valid email address.';
@@ -135,7 +133,7 @@ function App() {
   async function sendCode(signal,phone=normalisePhone(identity.phone,identity.country)) {
     if(!phone)throw new Error('Please check your country code and phone number.');
     setProof(null);setChallenge(null);
-    const result=await request('/api/membership/otp/request',{phoneNumber:phone,name:details.name.trim(),consent:details.termsAccepted},signal);
+    const result=await request(reauth?'/api/account/otp/request':'/api/membership/otp/request',reauth?{phoneNumber:phone}:{phoneNumber:phone,name:details.name.trim(),consent:details.termsAccepted},signal);
     if(result.success!==true||typeof result.challengeId!=='string'||!Number.isFinite(result.expiresIn)||result.expiresIn<=0)throw new Error('We couldn’t send your code. Please try again.');
     setIdentity(current=>({...current,phone,country:phoneCountry(phone,current.country)}));setChallenge({id:result.challengeId,expiresAt:Date.now()+result.expiresIn*1000,channel:result.deliveryChannel});setProof(null);setOtp('');setResendAt(Date.now()+(result.resendAfter??60)*1000);setChanging(false);setStage('confirmation');
   }
@@ -152,6 +150,15 @@ function App() {
     if(!/^\d{6}$/.test(otp)){setErrors(current=>({...current,'final-otp':'Enter the six-digit code.'}));document.getElementById('final-otp').focus();return}
     if(pending&&!pending.gameId){setStatus('This game could not connect for verification. Please play another round to save points.');return}
     void run(async signal=>{
+      if(reauth){
+        if(!challenge||Date.now()>challenge.expiresAt)throw new Error('This code expired. Please request a new one.');
+        if(!proof){const verified=await request('/api/account/otp/verify',{phoneNumber:normalisePhone(identity.phone,identity.country),otp,challengeId:challenge.id},signal);if(verified.verified!==true)throw new Error('Your phone could not be verified.');setProof('account-verified')}
+        const account=await request('/api/account',undefined,signal),player=await request('/api/player',undefined,signal);
+        const reward=pending?await request('/api/membership/rewards',{gameId:pending.gameId},signal):{pointsSaved:false,savedPoints:account.savedPoints,remainingPoints:0};
+        if(pending&&reward.pointsSaved!==true)throw new Error('Your points have not been confirmed as saved.');
+        setDetails(current=>({...current,name:account.name,email:account.email}));pendingRef.current=null;setSaved({...reward,player});setStage('success');setResendAt(0);post({type:'contest-registration:complete',player});
+        if(!embedded)location.replace(pending?'/play.html#leaderboard':accountHref);return;
+      }
       let token=proof;
       if(!token){
         if(!challenge||Date.now()>challenge.expiresAt)throw new Error('This code expired. Please request a new one.');
@@ -194,11 +201,11 @@ function App() {
         <div className="card-perspective"><div className={'flip-card '+(flipped?'is-flipped':'')}>
           <section className="card-face card-front" aria-label={joining?'Join THE FIRST CUT':'Save your points'} aria-hidden={flipped} inert={flipped}><span className="edge-glint" aria-hidden="true"/>
             <form className="front-form" id="identity-form" onSubmit={begin} noValidate aria-busy={busy}>
-              <Field id="front-name" label="Full name" name="name" placeholder="Full name" autoComplete="name" maxLength={80} required value={details.name} error={errors['front-name']} disabled={busy} onChange={change('name','front-name')}/>
+              {!reauth&&<Field id="front-name" label="Full name" name="name" placeholder="Full name" autoComplete="name" maxLength={80} required value={details.name} error={errors['front-name']} disabled={busy} onChange={change('name','front-name')}/>}
               <PhoneField id="phone" compact disabled={busy} country={identity.country} onCountry={country=>{setIdentity(current=>({...current,country}));clear('phone')}} value={identity.phone} error={errors.phone} onChange={event=>{const phone=event.target.value;setIdentity(current=>({...current,phone,country:phone.startsWith('+')?phoneCountry(phone,current.country):current.country}));clear('phone')}}/>
-              <Field id="email" label="Email" name="email" type="email" placeholder="Email" autoComplete="email" maxLength={254} required value={details.email} error={errors.email} disabled={busy} onChange={change('email','email')}/>
+              {!reauth&&<Field id="email" label="Email" name="email" type="email" placeholder="Email" autoComplete="email" maxLength={254} required value={details.email} error={errors.email} disabled={busy} onChange={change('email','email')}/>}
               <p className="front-copy"><a className="text-link existing-member-link" href={accountSignInHref} target="_top">Already saved your points? Sign in</a>{joining?"We'll send a code by WhatsApp or SMS to confirm it's you.":"We'll send a code by WhatsApp or SMS to confirm it's you. Points can be used once our shop opens and expire 6 months after it opens. Terms apply."}</p>
-              <div className="consents"><div className="consent-row"><input id="terms" name={joining?'privacyAccepted':'termsAccepted'} type="checkbox" required checked={joining?details.privacyAccepted:details.termsAccepted} aria-invalid={!!errors.terms} aria-describedby="terms-error" disabled={busy} onChange={change(joining?'privacyAccepted':'termsAccepted','terms')}/><label htmlFor="terms">{joining?<>I'm 18 or older and I agree to the <button className="text-link" type="button" onClick={()=>policy('privacy')}>Privacy Policy</button>.</>:<>I’m 18 or older and I agree to the <button className="text-link" type="button" onClick={()=>policy('terms')}>Terms and Conditions</button> and <button className="text-link" type="button" onClick={()=>policy('privacy')}>Privacy Policy</button>, and I agree to receive a verification code.</>} <span className="required" aria-hidden="true">*</span></label></div><div className="consent-row"><input id="marketing" name="marketingConsent" type="checkbox" required={joining} aria-invalid={!!errors.marketing} aria-describedby="marketing-error" checked={details.marketingConsent} disabled={busy} onChange={change('marketingConsent','marketing')}/><label htmlFor="marketing"><BrandText>{joining?'Send me SO/ FACET updates and early access.':'Send me SO/ FACET news and launch updates.'}</BrandText></label></div><span className="field-error" id="terms-error">{errors.terms}</span><span className="field-error" id="marketing-error" role="alert">{errors.marketing}</span></div>
+              {!reauth&&<div className="consents"><div className="consent-row"><input id="terms" name={joining?'privacyAccepted':'termsAccepted'} type="checkbox" required checked={joining?details.privacyAccepted:details.termsAccepted} aria-invalid={!!errors.terms} aria-describedby="terms-error" disabled={busy} onChange={change(joining?'privacyAccepted':'termsAccepted','terms')}/><label htmlFor="terms">{joining?<>I'm 18 or older and I agree to the <button className="text-link" type="button" onClick={()=>policy('privacy')}>Privacy Policy</button>.</>:<>I’m 18 or older and I agree to the <button className="text-link" type="button" onClick={()=>policy('terms')}>Terms and Conditions</button> and <button className="text-link" type="button" onClick={()=>policy('privacy')}>Privacy Policy</button>, and I agree to receive a verification code.</>} <span className="required" aria-hidden="true">*</span></label></div><div className="consent-row"><input id="marketing" name="marketingConsent" type="checkbox" required={joining} aria-invalid={!!errors.marketing} aria-describedby="marketing-error" checked={details.marketingConsent} disabled={busy} onChange={change('marketingConsent','marketing')}/><label htmlFor="marketing"><BrandText>{joining?'Send me SO/ FACET updates and early access.':'Send me SO/ FACET news and launch updates.'}</BrandText></label></div><span className="field-error" id="terms-error">{errors.terms}</span><span className="field-error" id="marketing-error" role="alert">{errors.marketing}</span></div>}
               <div className="front-actions"><CrystalButton type="submit" disabled={busy||seconds>0} arrow>{busy?'Sending…':seconds>0?'Try again in '+seconds+'s':joining?'Join THE FIRST CUT':'Save my points'}</CrystalButton>{!joining&&<button className="secondary-button" type="button" disabled={busy} onClick={replay}><Icon name="replay" className="replay-icon" viewBox="0 0 40 40"/><span>Play again</span></button>}</div>
             </form>
           </section>

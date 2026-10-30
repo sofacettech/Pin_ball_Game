@@ -55,16 +55,17 @@ async function api(request,response,path){
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
  if(path==='/api/account'&&request.method==='GET'){
   if(!p.profile)fail(401,'Please sign in to view your account.');
-  const ledger=store.rewardAccounts?.[p.profile.customerId];
-  return json(response,200,{name:p.profile.name||p.profile.firstName||p.name,leaderboardName:p.profile.leaderboardName||p.name,email:p.profile.email,phoneNumber:p.profile.phone,savedPoints:(ledger?.creditedUnits||0)*10,bestPoints:Math.max(ledger?.bestScore||0,p.bestVerified?p.best:0),rank:gameBoard(id).me?.rank??null,marketingConsent:p.profile.marketingConsent===true});
+  const account=await membershipApi(path,{},id);
+  return json(response,200,{...account,rank:gameBoard(id).me?.rank??null});
  }
  if(path==='/api/account/signout'&&request.method==='POST'){
+  await membershipApi(path,{},id);
   response.setHeader('Set-Cookie',`sofacet_pinball_player=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${process.env.APP_ORIGIN?.startsWith('https://')?'; Secure':''}`);
   return json(response,200,{success:true});
  }
- if(path==='/api/account/details'&&request.method==='POST')return json(response,200,await membershipApi(path,await body(request),id));
+ if(['/api/account/details','/api/account/otp/request','/api/account/otp/verify'].includes(path)&&request.method==='POST')return json(response,200,await membershipApi(path,await body(request),id));
  // Separate sign-in and deletion still require the backend's verified account service.
- if(['/api/account/otp/request','/api/account/otp/verify','/api/account/preferences','/api/account/delete'].includes(path)&&request.method==='POST'){
+ if(['/api/account/preferences','/api/account/delete'].includes(path)&&request.method==='POST'){
   if(!path.includes('/otp/')&&!p.profile)fail(401,'Please sign in to manage your account.');
   fail(503,path.includes('/otp/')?'Account sign-in by SMS is not connected yet. Please try again later.':'Account changes are not connected yet. Your details and points have not changed.');
  }

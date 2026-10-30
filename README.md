@@ -137,7 +137,7 @@ The OTP verification token is a short-lived internal proof bound to the current 
 
 1. **Rewards OTP:** `membership-otp.mjs` connects the SO FACET rewards API using the server-only `REWARDS_API_KEY` and `REWARDS_API_BASE`. The API delivers WhatsApp or SMS codes and issues the JWT only after verification. Sends are never automatically retried. Respect the returned resend delay (at least 60 seconds), `Retry-After`, five-minute expiry and five-attempt limit. A 502 delivery failure creates no local membership or credits. The supplied integration guide reports a Meta sender approval restriction; confirm actual delivery with a consenting phone before launch. No key or live phone is included in this repository.
 2. **International phone support:** the frontend normalizes international numbers to E.164. Server phone validation currently accepts Indian `+91` numbers only. Extend server validation and provider coverage together before enabling additional countries.
-3. **My points:** please connect authenticated sign-in, details updates and deletion using the account contracts below. Name and leaderboard-name updates are handled from My points; the old profile panel is no longer in the menu.
+3. **My points:** OTP sign-in and full Medusa profile reads/updates are connected. Account deletion remains unconnected. Name and leaderboard-name updates are handled from My points; the old profile panel is no longer in the menu.
 4. **Approved policies:** Terms and Privacy content was left out pending approval. Set `MEMBERSHIP_TERMS_URL` and `MEMBERSHIP_PRIVACY_URL` to the approved HTTPS URLs. Registration currently refuses completion without them. The existing Terms and Privacy pages are explicitly labeled temporary placeholders. Production currently links to `/terms.html` and `/privacy.html` as requested; replace their content with the approved policies before public launch.
 5. **Commerce redemption:** apply the approved redemption cap, exclusions and expiry in the commerce backend when the shop opens. The frontend explains these rules; it does not enforce order eligibility.
 6. **Tracking:** I haven’t supplied Meta or Google identifiers yet. Connect them when the approved identifiers and consent requirements are available.
@@ -150,6 +150,7 @@ The documented rewards service is called only by the Node backend:
 - `POST /rewards/auth` submits phone, explicit verification-message consent and supported profile fields, creating an unverified registration and requesting a code. It does not issue a JWT.
 - `POST /rewards/auth/verify` exchanges that registration ID and six-digit code for a customer rewards JWT.
 - `GET /rewards/score` validates the resulting customer session before the browser receives an internal verification proof.
+- `GET/POST /rewards/profile` reads and persists native Medusa name/email plus leaderboard name, marketing choice, 18+ declaration and policy consent metadata. Registration waits for this write before awarding points.
 - `/rewards/points` receives server-calculated credits with the verified JWT and a stable idempotency key. It never requests a new token silently.
 - `/rewards/leaderboard` supplies the optional rewards ranking.
 
@@ -157,7 +158,7 @@ The documented rewards service is called only by the Node backend:
 
 The private reward ledger is keyed by the upstream customer ID. Keep it persistent, along with player and game records. The protected internal award endpoint requires `REWARDS_ADMIN_SECRET` and `{token, points, eventId}`, using an already verified, unexpired rewards JWT; it is not a browser API.
 
-Per the supplied v2.1 guide, name and optional date of birth are sent with the pending registration and applied by SO FACET only after verification (existing customers fill blanks only). The current form does not collect nationality. Email, leaderboard name and marketing preferences are saved in the private game profile after verification; the documented rewards API has no authenticated endpoint for saving those fields to the commerce profile. A rewards JWT does not authorize storefront profile APIs.
+The v2.2 rewards contract adds a JWT-scoped profile API. Name/email persist on the existing Medusa customer; game-specific public name and consent records persist under customer.metadata.pinball_profile. Optional date of birth/city from older clients are forwarded; the current form does not collect nationality. The game retains the Medusa customer ID, verified phone reference and public display name, plus gameplay and idempotency records. It removes its duplicate private profile fields after a confirmed central save/read. Legacy local profiles migrate only after fresh OTP verification and only if Medusa has no complete profile. Existing central edits are never overwritten by that migration. Rewards JWTs still do not authorize unrelated storefront endpoints or create storefront sessions.
 
 Run `npm run test:rewards` for local HTTP contract tests and `npm run smoke:membership` after rebuilding the membership and game pages for browser checks (requires Playwright, optionally via `SOFACET_PLAYWRIGHT_PATH`; `SOFACET_BROWSER=webkit` selects WebKit). These use an isolated rewards fixture and never send production messages or award production balances. A live acceptance test still requires a securely configured partner key, approved policy URLs, a consenting +91 phone and the received OTP. Check score before awarding real points.
 
@@ -234,15 +235,13 @@ Before collecting memberships publicly, configure the rewards key and approved p
 
 I’ve kept registration separate from sign-in. The save-points form uses the WhatsApp or SMS confirmation flow, and confirmed points remain tied to the server-verified game. The early-access list form has different consent requirements, as noted above.
 
-An existing member session can read `GET /api/account`: `{name, email?, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
+A verified rewards session can read `GET /api/account`: `{name, leaderboardName, email, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. Profile fields are fetched from Medusa. `savedPoints` is Medusa's current spendable balance converted to game-point units; `bestPoints` and rank remain game results. Expired/missing JWTs require OTP sign-in. `POST /api/account/signout` invalidates the in-memory JWT and verification proofs and expires the browser cookie while retaining saved records.
 
-`POST /api/account/details {name, leaderboardName, email, phoneNumber, marketingConsent}` persists edits to the pinball profile belonging to the authenticated HttpOnly player session established by verified registration. It validates the fields, keeps the verified phone read-only, and updates the profile and public leaderboard name atomically. It does not award points or change the rewards ledger. These local profile fields are not synchronized to the commerce customer; the rewards API does not expose a profile-update endpoint.
+`POST /api/account/details {name, leaderboardName, email, phoneNumber, marketingConsent}` validates the signed-in user's fields and forwards them to `POST /rewards/profile` using that user's verified JWT. Medusa persistence is required before success is returned. Phone changes are rejected. Email conflicts return a useful error; provider failures never fall back to a local-only save. Points are not awarded by edits.
 
-The following account routes still return 503 without sending messages or changing records. Please connect them on the server:
-
-- `POST /api/account/otp/request {phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}`.
-- `POST /api/account/otp/verify {phoneNumber, otp, challengeId}` → `{verified: true}` plus an authenticated HttpOnly session cookie. Verify ownership on the server; the frontend checks the resulting session before showing points.
-- `POST /api/account/delete {confirm: true}` → `{success: true}` only after deleting the details, saved points and leaderboard identity and invalidating the session. The UI requires typing DELETE before submitting.
+- `POST /api/account/otp/request {phoneNumber}` requests a real WhatsApp/SMS code through rewards authentication, without changing legal or marketing consents.
+- `POST /api/account/otp/verify {phoneNumber, otp, challengeId}` verifies the code, reads the existing Medusa profile and binds its customer to the current HttpOnly session. A new phone without a complete profile must use the registration form.
+- `POST /api/account/delete {confirm: true}` remains unconnected (503); it must eventually delete through the central service and invalidate the session. The UI requires typing DELETE before submitting.
 
 The separate `/api/account/preferences` placeholder is retained; the current account form saves `marketingConsent` through the implemented details request. Please keep those writes consistent if both routes are implemented.
 

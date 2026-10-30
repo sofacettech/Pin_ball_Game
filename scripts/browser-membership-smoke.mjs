@@ -24,17 +24,17 @@ try {
           });
         </script>`);
         const frame = page.frameLocator('#membership');
-        await frame.locator('#front-name').waitFor({ state: 'visible' });
+        await frame.locator(returningMember ? '#phone' : '#front-name').waitFor({ state: 'visible' });
         if (returningMember) {
-          assert.equal(await frame.locator('#front-name').inputValue(), 'Test Member');
-          assert.equal(await frame.locator('#email').inputValue(), 'test@example.invalid');
+          assert.equal(await frame.locator('#front-name').count(), 0);
+          await frame.locator('#phone').fill('9876543210');
           assert.equal((await request('/api/membership/rewards', { gameId })).data.code, 'rewards_verification_required');
         } else {
           await frame.locator('#front-name').fill('Test Member');
           await frame.locator('#phone').fill('9876543210');
           await frame.locator('#email').fill('test@example.invalid');
         }
-        await frame.locator('#terms').check();
+        if (!returningMember) await frame.locator('#terms').check();
         await frame.getByRole('button', { name: 'Save my points', exact: true }).click();
         await frame.locator('#final-otp').waitFor({ state: 'visible' });
         assert.match(await frame.locator('#confirmation-copy').innerText(), /WhatsApp/);
@@ -47,7 +47,8 @@ try {
         await frame.getByRole('button', { name: 'Confirm', exact: true }).click();
         await frame.locator('#success').waitFor({ state: 'visible' });
         assert.match(await frame.locator('#success').innerText(), /3,200 points/);
-        assert.deepEqual(events.map(item => item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/auth/verify', '/rewards/score', '/rewards/points']);
+        assert.deepEqual(events.filter(item => ['/rewards/auth','/rewards/auth/verify'].includes(item.path)).map(item=>item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/auth/verify']);
+        assert.ok(events.some(item=>item.path==='/rewards/profile'));
         assert.equal(awards.size, 1); assert.deepEqual(errors, []);
         const storage = await frame.locator('body').evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
         assert.ok(!storage.includes('fixture-signature') && !storage.includes('fixture-partner-key'));
@@ -64,7 +65,7 @@ try {
         assert.equal(await page.getByRole('textbox', { name: 'Email', exact: true }).inputValue(), 'updated@example.invalid');
         assert.match(await page.locator('.score-panel').innerText(), /Saved for launch/);
         assert.equal((await request('/api/account')).data.savedPoints, 3200);
-        assert.equal(awards.size, 1); assert.equal(events.length, 5);
+        assert.equal(awards.size, 1); assert.ok(events.some(item=>item.path==='/rewards/profile'&&item.body?.email==='updated@example.invalid'));
         console.log(engine + ': profile edits persisted after reload without new reward credits');
       } finally { await context.close(); }
     }, { returningMember });

@@ -19,7 +19,11 @@ const messages = {
  invalid_dob: 'Please check your date of birth.',
  invalid_nationality: 'Please check your nationality.',
  invalid_request: 'Please check the details and try again.',
- customer_not_found: 'Your rewards account could not be found. Please contact SO FACET.'
+ customer_not_found: 'Your rewards account could not be found. Please contact SO FACET.',
+ invalid_profile: 'Please check your profile details.',
+ email_in_use: 'This email belongs to another account. Use a different email or contact SO FACET.',
+ profile_conflict: 'Your account details changed. Please verify your phone again.',
+ profile_required: 'Please save your profile details from the game first.'
 };
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 function configuration() {
@@ -86,6 +90,11 @@ export async function rewardsScore(token) {
  const data = await call('/rewards/score', { token });
  valid(integer(data.balance) && integer(data.lifetime_earned) && (data.rank === null || Number.isSafeInteger(data.rank) && data.rank > 0));
  return { balance: data.balance, lifetime_earned: data.lifetime_earned, rank: data.rank };
+}
+export async function rewardsProfile(token, profile) {
+ const data = await call('/rewards/profile', { token, ...(profile === undefined ? {} : { body: profile }) });
+ valid(typeof data.customer_id === 'string' && !!data.customer_id && typeof data.phone === 'string' && typeof data.name === 'string' && typeof data.email === 'string' && typeof data.leaderboard_name === 'string' && typeof data.marketing_consent === 'boolean' && typeof data.profile_complete === 'boolean');
+ return data;
 }
 export async function rewardsLeaderboard() {
  const data = await call('/rewards/leaderboard?limit=100');

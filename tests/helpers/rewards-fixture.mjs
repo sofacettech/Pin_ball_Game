@@ -13,7 +13,8 @@ export const profile = { name: 'Test Member', leaderboardName: 'Test M.', email:
 
 export async function withRewardsSite(check, { returningMember = false } = {}) {
   const events = [], awards = new Map(), registrations = new Map();
-  const state = { sendError: null, verifyError: null, scoreError: null, pointsError: null, loseAwardResponse: false, expiredToken: false, resendAfter: 60 };
+  const state = { sendError: null, verifyError: null, scoreError: null, pointsError: null, profileWriteError: null, loseAwardResponse: false, expiredToken: false, resendAfter: 60,
+    profile: { customer_id: 'cus_fixture', phone: registration.phoneNumber, name: profile.name, email: returningMember ? profile.email : '', leaderboard_name: 'Test M.', marketing_consent: false, terms_accepted: returningMember, profile_complete: returningMember } };
   const key = 'fixture-partner-key';
   const token = () => 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify({ sub: 'cus_fixture', otp_verified: true, exp: Math.floor(Date.now() / 1000) + 1800 })).toString('base64url') + '.fixture-signature';
   const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json', ...headers }); res.end(JSON.stringify(data)); };
@@ -25,7 +26,7 @@ export async function withRewardsSite(check, { returningMember = false } = {}) {
     if (req.headers['x-rewards-key'] !== key) return send(res, 401, { error: 'unauthorized' });
     if (path === '/rewards/auth') {
       if (state.sendError) return send(res, state.sendError.status, { error: state.sendError.code }, state.sendError.headers);
-      assert.equal(body.consent, true); assert.equal(body.name, registration.name);
+      assert.equal(body.consent, true); if (body.name !== undefined) assert.equal(body.name, registration.name);
       assert.equal(body.phone, registration.phoneNumber); assert.equal(body.email, undefined);
       for (const pending of registrations.values()) pending.consumed = true;
       const id = 'rreg_' + registrations.size;
@@ -42,9 +43,17 @@ export async function withRewardsSite(check, { returningMember = false } = {}) {
       return send(res, 201, { token: token(), customer_id: 'cus_fixture', balance: 0, created: true });
     }
     if (!/^Bearer ey/.test(req.headers.authorization || '') || state.expiredToken) return send(res, 401, { error: 'invalid_token' });
+    if (path === '/rewards/profile') {
+      if (body) {
+        if (state.profileWriteError) return send(res, state.profileWriteError.status, { error: state.profileWriteError.code });
+        Object.assign(state.profile, body, { profile_complete: true });
+      }
+      return send(res, 200, state.profile);
+    }
     if (path === '/rewards/score') {
       if (state.scoreError) return send(res, state.scoreError.status, { error: state.scoreError.code });
-      return send(res, 200, { balance: 0, lifetime_earned: 0, rank: null });
+      const balance = [...awards.values()].reduce((a,b) => a+b, 0);
+      return send(res, 200, { balance, lifetime_earned: balance, rank: null });
     }
     if (path === '/rewards/points') {
       if (state.pointsError) return send(res, state.pointsError.status, { error: state.pointsError.code });

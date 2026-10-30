@@ -39,7 +39,7 @@ test('early-access signup requires both displayed consents without recording una
  const validation=source.slice(source.indexOf('  function validate()'),source.indexOf('  async function sendCode'));
  const submission=source.slice(source.indexOf('  function begin('),source.indexOf('  async function confirm('));
  let errors,status,requests=0;
- const context={joining:true,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
+ const context={joining:true,reauth:false,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
  const form=vm.runInNewContext(validation+submission+';({validate,begin})',context);
  assert.equal(form.validate(),false);assert.ok(errors.terms);assert.ok(errors.marketing);
  context.details.privacyAccepted=true;assert.equal(form.validate(),false);assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
