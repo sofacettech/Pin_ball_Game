@@ -236,13 +236,14 @@ I’ve kept registration separate from sign-in. The save-points form uses the Wh
 
 An existing member session can read `GET /api/account`: `{name, email?, phoneNumber, savedPoints, bestPoints, rank, marketingConsent}`. `savedPoints` represents confirmed game credits in the private reward ledger; it is not a live commerce balance. `POST /api/account/signout` expires the current browser cookie and retains saved records.
 
+`POST /api/account/details {name, leaderboardName, email, phoneNumber, marketingConsent}` persists edits to the pinball profile belonging to the authenticated HttpOnly player session established by verified registration. It validates the fields, keeps the verified phone read-only, and updates the profile and public leaderboard name atomically. It does not award points or change the rewards ledger. These local profile fields are not synchronized to the commerce customer; the rewards API does not expose a profile-update endpoint.
+
 The following account routes still return 503 without sending messages or changing records. Please connect them on the server:
 
 - `POST /api/account/otp/request {phoneNumber}` → `{success, challengeId, expiresIn, resendAfter}`.
 - `POST /api/account/otp/verify {phoneNumber, otp, challengeId}` → `{verified: true}` plus an authenticated HttpOnly session cookie. Verify ownership on the server; the frontend checks the resulting session before showing points.
-- `POST /api/account/details {name, leaderboardName, email, phoneNumber, marketingConsent}` → `{success: true}` only after persistence. The current form sends these fields together. The verified mobile number is read-only until phone-change verification is connected.
 - `POST /api/account/delete {confirm: true}` → `{success: true}` only after deleting the details, saved points and leaderboard identity and invalidating the session. The UI requires typing DELETE before submitting.
 
-The separate `/api/account/preferences` placeholder is retained, but the current account form includes `marketingConsent` in its details request. Please keep those writes consistent if both routes are implemented.
+The separate `/api/account/preferences` placeholder is retained; the current account form saves `marketingConsent` through the implemented details request. Please keep those writes consistent if both routes are implemented.
 
 The frontend refreshes account data after changes and does not report unconfirmed server writes as saved. OTP codes and verification tokens are not persisted in browser storage. Score sharing uses the account’s confirmed best score. Play again and Share my score remain available from My points.

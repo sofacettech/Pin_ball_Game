@@ -23,9 +23,13 @@ test('account reads only the current member, uses confirmed credits, blocks pend
   await Promise.race([once(child.stdout,'data'),exited.then(()=>{throw Error('Fixture server stopped')})]);
   const request=(path,id=member,body)=>fetch(origin+path,{method:body===undefined?'GET':'POST',headers:{Cookie:'sofacet_pinball_player='+id,...(body===undefined?{}:{Origin:origin,'Content-Type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body)});
   assert.equal((await request('/api/account',guest)).status,401);
-  const account=await (await request('/api/account')).json();assert.deepEqual(account,{name:'Asha',phoneNumber:'+919876543210',savedPoints:3200,bestPoints:4500,rank:1,marketingConsent:false});assert.ok(!JSON.stringify(account).includes('test-customer'));
-  for(const path of ['otp/request','otp/verify','details','preferences','delete'])assert.equal((await request('/api/account/'+path,member,{confirm:true,name:'Changed',phoneNumber:'+919000000000',otp:'123456'})).status,503);
+  const account=await (await request('/api/account')).json();assert.deepEqual(account,{name:'Asha',leaderboardName:'Asha',phoneNumber:'+919876543210',savedPoints:3200,bestPoints:4500,rank:1,marketingConsent:false});assert.ok(!JSON.stringify(account).includes('test-customer'));
+  for(const path of ['otp/request','otp/verify','preferences','delete'])assert.equal((await request('/api/account/'+path,member,{confirm:true,name:'Changed',phoneNumber:'+919000000000',otp:'123456'})).status,503);
   assert.deepEqual(await (await request('/api/account')).json(),account);
+  const details={name:'Asha Kapoor',leaderboardName:'Asha K.',email:'asha@example.invalid',phoneNumber:account.phoneNumber,marketingConsent:false};
+  assert.equal((await request('/api/account/details',guest,details)).status,401);
+  assert.equal((await request('/api/account/details',member,details)).status,200);
+  assert.deepEqual(await (await request('/api/account')).json(),{...account,...details});
   const signout=await request('/api/account/signout',member,{});assert.equal(signout.status,200);assert.match(signout.headers.get('set-cookie'),/HttpOnly/);assert.match(signout.headers.get('set-cookie'),/Max-Age=0/);assert.deepEqual(await signout.json(),{success:true});
   assert.equal((await fetch(origin+'/api/account/signout',{method:'POST',headers:{Origin:'https://example.invalid','Content-Type':'application/json'},body:'{}'})).status,403);
  }finally{child.kill('SIGTERM');await exited;await rm(directory,{recursive:true,force:true})}

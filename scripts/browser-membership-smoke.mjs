@@ -52,6 +52,20 @@ try {
         const storage = await frame.locator('body').evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
         assert.ok(!storage.includes('fixture-signature') && !storage.includes('fixture-partner-key'));
         console.log(engine + ': ' + (returningMember ? 'returning-member re-verification' : 'save-my-points registration') + ' passed');
+        await page.goto(origin + '/account.html');
+        await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Updated Member');
+        await page.getByRole('textbox', { name: 'Leaderboard name', exact: true }).fill('Updated M.');
+        await page.getByRole('textbox', { name: 'Email', exact: true }).fill('updated@example.invalid');
+        await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+        await page.getByRole('status').filter({ hasText: 'Your details are updated.' }).waitFor();
+        await page.reload();
+        await page.locator('#account-screen').waitFor();
+        assert.equal(await page.getByRole('textbox', { name: 'Name', exact: true }).inputValue(), 'Updated Member');
+        assert.equal(await page.getByRole('textbox', { name: 'Email', exact: true }).inputValue(), 'updated@example.invalid');
+        assert.match(await page.locator('.score-panel').innerText(), /Saved for launch/);
+        assert.equal((await request('/api/account')).data.savedPoints, 3200);
+        assert.equal(awards.size, 1); assert.equal(events.length, 5);
+        console.log(engine + ': profile edits persisted after reload without new reward credits');
       } finally { await context.close(); }
     }, { returningMember });
   }

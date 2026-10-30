@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { ServiceError, rewardsScore, awardPoints } from './rewards.mjs';
 import { otpProvider } from './membership-otp.mjs';
 import { isAdult } from './membership-source/src/api.js';
+import { validPlayerName, validPublicName } from './game-source/src/player-copy.ts';
 
 const fail = (status, message) => { throw new ServiceError(status, message); };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -74,6 +75,25 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
     cleanup();
     if (path === '/api/membership/config') return { otpAvailable: configured(), policies: policies(), pointsPerRupee: 10 };
     if (!data || typeof data !== 'object' || Array.isArray(data)) fail(400, 'Please send valid membership details.');
+    if (path === '/api/account/details') {
+      const current = getStore().players[id]?.profile;
+      if (!current?.customerId || !current.phone) fail(401, 'Please sign in to manage your account.');
+      if (Object.keys(data).some(key => !['name','leaderboardName','email','phoneNumber','marketingConsent'].includes(key))) fail(400, 'Please submit profile details only.');
+      const name = text(data.name, 80, 'your name'), leaderboardName = text(data.leaderboardName, 30, 'your leaderboard name');
+      if (!validPlayerName(name) || !validPublicName(leaderboardName)) fail(400, 'Please use letters for your name and leaderboard name.');
+      const email = text(data.email, 254, 'your email address');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Please enter a valid email address.');
+      if (phone(data.phoneNumber) !== current.phone) fail(409, 'Your verified phone number cannot be changed here. Please contact SO FACET.');
+      if (typeof data.marketingConsent !== 'boolean') fail(400, 'Please check your contact preferences.');
+      // This HttpOnly player session was upgraded by verified registration. Profile
+      // edits are local account writes; they never exchange OTPs or award rewards.
+      commit(() => {
+        const player = getStore().players[id];
+        player.name = leaderboardName;
+        player.profile = { ...player.profile, name, leaderboardName, email, marketingConsent: data.marketingConsent };
+      });
+      return { success: true };
+    }
     if (path === '/api/membership/rewards') {
       if (Object.keys(data).some(key => key !== 'gameId') || typeof data.gameId !== 'string' || !uuid.test(data.gameId)) fail(400, 'Submit the completed game ID only.');
       const profile = getStore().players[id]?.profile;
