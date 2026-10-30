@@ -25,6 +25,20 @@ test('Auto starts as sharp as Full on retina phones and Full HD desktops',()=>{
   assert.equal(full.samples,2);assert.equal(full.transmissionScale,1);
 });
 
+test('handheld Full preserves density without allocating multisampled HDR targets',()=>{
+  for(const [w,h,dpr] of [[390,700,3],[844,390,3],[1024,1366,2]]){
+    const phone=gameRenderResolution('full',3,w,h,dpr,true);
+    const desktop=gameRenderResolution('full',3,w,h,dpr,false);
+    assert.equal(phone.pixelRatio,desktop.pixelRatio);
+    assert.equal(phone.samples,0);assert.equal(desktop.samples,2);
+    assert.equal(phone.transmissionScale,.5);
+    for(let tier=0;tier<=3;tier++){
+      const auto=gameRenderResolution('auto',tier,w,h,dpr,true);
+      assert.ok(auto.pixelRatio>=1&&auto.pixelRatio<=phone.pixelRatio);
+    }
+  }
+});
+
 test('every Auto tier preserves CSS-pixel detail through 4K without supersampling low-density displays',()=>{
   for(let level=0;level<=3;level++){
     for(const [w,h] of [[390,700],[1920,1080],[2560,1440],[3840,2160]]){

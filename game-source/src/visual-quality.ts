@@ -26,6 +26,17 @@ export class NeonMaterial extends THREE.MeshBasicMaterial {
 
 export type GlowMaterial=THREE.MeshStandardMaterial|NeonMaterial;
 
+// The thin tunnel canopy only needs a clear view of the ball and reflected
+// highlights on handhelds. Physical transmission redraws the entire table,
+// including its lights and diamond shaders, even at a smaller buffer size.
+export function handheldGlass(source:THREE.MeshPhysicalMaterial){
+ const glass=new THREE.MeshStandardMaterial().copy(source);
+ glass.color.set('#e8fff8');glass.metalness=1;glass.roughness=.08;
+ glass.transparent=true;glass.opacity=.22;glass.depthWrite=false;
+ glass.forceSinglePass=true;
+ return glass;
+}
+
 export async function prepareGeometry(root:THREE.Object3D){
  const meshes:THREE.Mesh[]=[];
  root.traverse(obj=>{if(obj instanceof THREE.Mesh)meshes.push(obj)});
@@ -65,7 +76,7 @@ export function batchOverview(root:THREE.Object3D){
  const buckets=new Map<THREE.Material,Map<string,THREE.Mesh[]>>(),hidden:{mesh:THREE.Mesh;visible:boolean}[]=[];
  const group=new THREE.Group();group.name='Complete view | shared-material static batches';group.visible=false;
  root.traverse(obj=>{
-  if(!(obj instanceof THREE.Mesh)||!obj.visible||Array.isArray(obj.material)||obj.material.transparent)return;
+  if(!(obj instanceof THREE.Mesh)||!obj.visible||Array.isArray(obj.material)||obj.material.transparent||(obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0))return;
   const id=obj.userData.game_render_group||'';if(!id.startsWith('static_')&&id!=='rail_network')return;
   const signature=Object.keys(obj.geometry.attributes).sort().map(k=>{const a=obj.geometry.attributes[k];return k+':'+a.itemSize+':'+a.normalized+':'+a.array.constructor.name+':'+('gpuType' in a?a.gpuType:'default')}).join(',');
   const byAttributes=buckets.get(obj.material)||new Map<string,THREE.Mesh[]>(),list=byAttributes.get(signature)||[];list.push(obj);byAttributes.set(signature,list);buckets.set(obj.material,byAttributes);

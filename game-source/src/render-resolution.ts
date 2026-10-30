@@ -7,9 +7,10 @@ export const parseGameQuality = (value: unknown): GameQuality => value === 'full
 const levels = [1, 1.15, 1.3, 1.5];
 const maxAutoPixels = 3840 * 2160;
 
-export function gameRenderResolution(mode: GameQuality, level: number, width: number, height: number, deviceRatio: number) {
+export function gameRenderResolution(mode: GameQuality, level: number, width: number, height: number, deviceRatio: number, handheld = false) {
   const nativeRatio = Number.isFinite(deviceRatio) && deviceRatio > 0 ? deviceRatio : 1;
-  if (mode === 'full') return { pixelRatio: Math.min(nativeRatio, 1.5), samples: 2, transmissionScale: 1 };
+  // Full controls sharpness, not an extra multisampled HDR buffer on phones.
+  if (mode === 'full') return { pixelRatio: Math.min(nativeRatio, 1.5), samples: handheld ? 0 : 2, transmissionScale: handheld ? .5 : 1 };
   const area = Math.max(1, width) * Math.max(1, height);
   const tier = Number.isFinite(level) ? Math.max(0, Math.min(levels.length - 1, Math.round(level))) : levels.length - 1;
   const ratio = mode === 'low' ? .65 : levels[tier];
