@@ -1,7 +1,7 @@
 import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js';
 import { prepareMedia } from '/assets/media-delivery.js?v=frames-dc4a9c95ed77';
-import { connectOpeningVideo } from '/assets/video-playback.js?v=entrance-opening-1';
+import { connectOpeningVideo } from '/assets/video-playback.js?v=entrance-opening-2';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
@@ -164,7 +164,7 @@ try{
     await presentationReady;
     if(gameRequested||startupFailed)return;
     phase='opening';document.body.dataset.phase=phase;updateCopy(0);placeStage();
-    openingPlayback=connectOpeningVideo(opening,$('enter'),finishOpening,requestTick);
+    openingPlayback=connectOpeningVideo(opening,$('enter'),finishOpening,requestTick,{skipOnBlocked:true});
     siteSound.setActive(true);openingPlayback.start(reduced.matches);
   })();
   const scenePrepared=(async()=>{

@@ -20,12 +20,12 @@ function snapshotEnvironment(t){
  globalThis.VideoFrame=class{constructor(video){this.time=video.currentTime;this.width=video.videoWidth;this.height=video.videoHeight}close(){this.closed=true}};
  t.after(()=>{globalThis.VideoFrame=previous});
 }
-function environment(t){
+function environment(t,options){
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
  globalThis.document=Object.assign(new EventTarget(),{hidden:false});globalThis.window=new EventTarget();
 
  const video=new Video(),button=Object.assign(new EventTarget(),{innerHTML:'Enter SOFACET',hidden:true});let ended=0,frames=0;
- const player=connectOpeningVideo(video,button,()=>ended++,()=>frames++);t.after(()=>{player.destroy();globalThis.document=oldDocument;globalThis.window=oldWindow});
+ const player=connectOpeningVideo(video,button,()=>ended++,()=>frames++,options);t.after(()=>{player.destroy();globalThis.document=oldDocument;globalThis.window=oldWindow});
  return{video,button,player,get ended(){return ended},get frames(){return frames}};
 }
 
@@ -89,6 +89,36 @@ test('denied autoplay shows a working gesture button without automatic retries',
  const e=environment(t);e.video.reject=true;e.player.start();await turn();assert.equal(e.button.hidden,false);assert.equal(e.video.calls,1);
  e.video.dispatchEvent(new Event('canplay'));await turn();assert.equal(e.video.calls,1);
  e.video.reject=false;e.button.dispatchEvent(new Event('click'));await turn();assert.equal(e.video.calls,2);assert.equal(e.button.hidden,true);assert.ok(e.frames);
+});
+
+test('the 3D landing continues once without a tap when iOS blocks autoplay',async t=>{
+ const e=environment(t,{skipOnBlocked:true});e.video.reject=true;e.player.start();await turn();
+ assert.equal(e.ended,1);assert.equal(e.button.hidden,true);assert.equal(e.video.calls,1);assert.equal(e.video.paused,true);
+ e.video.dispatchEvent(new Event('error'));e.video.dispatchEvent(new Event('ended'));
+ document.dispatchEvent(new Event('visibilitychange'));e.button.dispatchEvent(new Event('click'));await turn();
+ assert.equal(e.ended,1);assert.equal(e.video.calls,1,'A skipped opening never retries playback');
+});
+
+test('a stalled 3D opening releases the landing without presenting a play button',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const e=environment(t,{skipOnBlocked:true});
+ e.video.play=()=>{e.video.calls++;return new Promise(()=>{})};e.player.start();
+ t.mock.timers.tick(10000);
+ assert.equal(e.ended,1);assert.equal(e.button.hidden,true);assert.equal(e.video.calls,1);
+});
+
+test('reduced motion does not require a tap on the 3D landing',async t=>{
+ const e=environment(t,{skipOnBlocked:true});e.player.start(true);
+ assert.equal(e.ended,1);assert.equal(e.video.calls,0);assert.equal(e.button.hidden,true);
+});
+
+test('an interrupted 3D opening continues automatically after foreground playback pauses',async t=>{
+ const e=environment(t,{skipOnBlocked:true});e.player.start();await turn();
+ document.hidden=true;document.dispatchEvent(new Event('visibilitychange'));
+ assert.equal(e.ended,0,'Background suspension must not skip the opening');
+ document.hidden=false;document.dispatchEvent(new Event('visibilitychange'));await turn();
+ assert.equal(e.video.calls,2);assert.equal(e.ended,0);
+ e.video.pause();assert.equal(e.ended,1);assert.equal(e.button.hidden,true);
 });
 
 test('native compositor readiness waits for presented pixels and cancels frame callbacks',async()=>{

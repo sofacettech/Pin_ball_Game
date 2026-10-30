@@ -52,7 +52,7 @@ const source=read('entrance-source/entrance.mjs');
 const startup=source.slice(source.lastIndexOf('\ntry{')).replace("import('./journey-renderer.mjs')",'Promise.resolve(rendererModuleFixture)');
 const opening=source.slice(source.indexOf('function finishOpening(){'),source.indexOf('function gameVisibility('));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
-async function startupFixture(){
+async function startupFixture({blocked=false,reduced=false}={}){
  const model=deferred(),nodes=new Map();let started=0,removed=0,disposed=0,aborted=0,handoffs=0,redirect;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
  const renderer={loadVariant:()=>model.promise,resize(){},dispose(){disposed++}};
@@ -64,8 +64,11 @@ async function startupFixture(){
   presentationReady:Promise.resolve(),modelDownload:model.promise,
   loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},prepareMedia:async()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
   cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
-  opening:element(),openingStage:element(),openingPlayback:undefined,reduced:{matches:false},siteSound:{setActive(){}},performancePanel:{record(){}},
-  connectOpeningVideo:(_video,_button,onEnded)=>({start(){started++;context.endOpening=onEnded},destroy(){}}),
+  opening:element(),openingStage:element(),openingPlayback:undefined,reduced:{matches:reduced},siteSound:{setActive(){}},performancePanel:{record(){}},
+  connectOpeningVideo:(_video,_button,onEnded,_requestTick,options)=>{
+   assert.equal(options.skipOnBlocked,true);
+   return{start(manual){started++;context.endOpening=onEnded;if(blocked||manual)onEnded()},destroy(){}};
+  },
  };
  vm.createContext(context);vm.runInContext(opening,context);
  const done=vm.runInContext('(async()=>{'+startup+'})()',context);
@@ -78,6 +81,16 @@ test('the opening plays before scene readiness and holds its final frame until G
  view.context.endOpening();assert.equal(view.context.phase,'buffering');assert.equal(view.removed,0);assert.equal(view.context.$('journey-preparation').hidden,false);
  view.model.resolve();await view.done;
  assert.equal(view.context.ready,true);assert.equal(view.context.phase,'idle');assert.equal(view.removed,1);assert.equal(view.context.$('journey-preparation').hidden,true);
+});
+
+test('blocked autoplay and reduced motion enter the scrollable scene when preparation completes',async()=>{
+ for(const options of [{blocked:true},{reduced:true}]){
+  const view=await startupFixture(options);
+  assert.equal(view.context.phase,'buffering');assert.equal(view.context.ready,false);
+  view.model.resolve();await view.done;
+  assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);
+  assert.equal(view.context.document.body.dataset.phase,'idle');assert.equal(view.removed,1);
+ }
 });
 
 test('skipping while a cold model loads releases its renderer without showing a false error',async()=>{

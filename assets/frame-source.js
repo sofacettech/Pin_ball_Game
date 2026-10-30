@@ -1,4 +1,4 @@
-import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-82220d500c54';
+import { prepareInlineVideo, waitForVideo } from './video-playback.js?v=frames-10f6f59459b9';
 
 const abortError=()=>new DOMException('Frame loading cancelled','AbortError');
 

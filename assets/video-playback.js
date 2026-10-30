@@ -74,7 +74,7 @@ export function waitForVideo(video, {readyState = 1, signal, timeout = 15000, po
 }
 
 // The existing opening owns its timing; autoplay attributes would bypass the logo reveal.
-export function connectOpeningVideo(video, button, onEnded, requestFrame) {
+export function connectOpeningVideo(video, button, onEnded, requestFrame, {skipOnBlocked = false} = {}) {
   prepareInlineVideo(video);
   const events = new AbortController();
   const label = button.innerHTML;
@@ -83,6 +83,9 @@ export function connectOpeningVideo(video, button, onEnded, requestFrame) {
   function clearWatch() { clearTimeout(timer); timer = undefined; }
   function prompt() {
     if (!started || finished || destroyed || suspended) return;
+    // The 3D landing can continue without this optional clip, including when
+    // iOS Low Power Mode refuses muted autoplay. Never gate its scroll on a tap.
+    if (skipOnBlocked) { complete(); return; }
     blocked = true;
     button.textContent = video.error?.code === 4 ? 'Continue experience ↗' : 'Tap to play experience ↗';
     button.hidden = false;
@@ -95,6 +98,7 @@ export function connectOpeningVideo(video, button, onEnded, requestFrame) {
     if (finished || destroyed) return;
     finished = true; attempt++; clearWatch();
     button.hidden = true;
+    if (skipOnBlocked) video.pause();
     onEnded();
   }
   async function play(user = false) {
@@ -146,7 +150,11 @@ export function connectOpeningVideo(video, button, onEnded, requestFrame) {
   window.addEventListener('pagehide', suspend, {signal: events.signal});
   window.addEventListener('pageshow', event => { if (event.persisted) restore(); }, {signal: events.signal});
   return {
-    start(manual = false) { if (manual) { started = true; blocked = true; button.hidden = false; } else void play(); },
+    start(manual = false) {
+      if (manual && skipOnBlocked) complete();
+      else if (manual) { started = true; blocked = true; button.hidden = false; }
+      else void play();
+    },
     destroy() {
       if (destroyed) return;
       destroyed = true; attempt++; clearWatch(); events.abort(); video.pause();
