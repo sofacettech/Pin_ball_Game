@@ -1,7 +1,7 @@
 import {aimRailCamera} from './camera-follow';
 import {fitOverview,OverviewFocus,overviewGeometryPoints} from './overview-camera';
 import {CameraTransition} from './camera-transition';
-import {prepareGeometry,NeonMaterial,batchOverview} from './visual-quality';
+import {prepareGeometry,NeonMaterial,batchOverview,handheldGlass} from './visual-quality';
 import type {GlowMaterial} from './visual-quality';
 import {AdaptiveResolution,gameRenderResolution} from './render-resolution';
 import type {GameQuality} from './render-resolution';
@@ -199,7 +199,7 @@ export class TableView {
   for(const root of this.groups.get('static_cave')||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&(obj.material instanceof THREE.MeshStandardMaterial||obj.material instanceof NeonMaterial)&&obj.material.emissiveIntensity>0){const mat=obj.material.clone();obj.material=mat;this.caveGlow.push({material:mat,baseline:mat.emissiveIntensity})}});
   gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0){const full=obj.material;
    full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
-   const fast=full.clone();fast.name=full.name;fast.transmission=.94;fast.clearcoat=.6;fast.depthWrite=false;fast.forceSinglePass=true;this.glassQuality.set(obj,{full,fast})}});
+   this.glassQuality.set(obj,{full,fast:handheldGlass(full)})}});
   await new Promise<void>(resolve=>setTimeout(resolve,0));
   this.overviewBatch=batchOverview(this.scene);
   this.diamonds=new FloatingDiamonds(this.scene,this.scene.environment!,[this.convert([-8.6,10.2,.18]),this.convert([8.7,10.5,.18])],this.reduced);
@@ -216,11 +216,11 @@ export class TableView {
  }
  setHandheld(active:boolean){
   if(active===this.handheld)return;
-  this.handheld=active;this.updateCameraLighting();this.resize();
+  this.handheld=active;this.updateLightingQuality();this.resize();
  }
  private resizeDrawingBuffer(w=this.viewport.clientWidth,h=this.viewport.clientHeight){
   if(!w||!h)return;
-  const policy=gameRenderResolution(this.quality,this.resolution.level,w,h,devicePixelRatio);
+  const policy=gameRenderResolution(this.quality,this.resolution.level,w,h,devicePixelRatio,this.handheld);
   if(this.renderer.getPixelRatio()!==policy.pixelRatio)this.renderer.setPixelRatio(policy.pixelRatio);
   this.renderer.transmissionResolutionScale=policy.transmissionScale;
   for(const target of [this.composer.renderTarget1,this.composer.renderTarget2])if(target.samples!==policy.samples){target.samples=policy.samples;target.dispose()}
@@ -253,7 +253,7 @@ export class TableView {
 
  advanceCamera(dt:number){if(!this.cameraTransition.active)return;this.cameraTransition.advance(this.destinationCamera,dt);this.renderer.toneMappingExposure=THREE.MathUtils.lerp(this.transitionExposure,this.sourceExposure*(!this.railCamera?this.overviewExposure:1),this.cameraTransition.progress);this.needsRender=true}
  private updateCameraLighting(){this.frames=[];this.last=performance.now();const complete=!this.inspect&&!this.railCamera;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);if(!this.cameraTransition.active)this.renderer.toneMappingExposure=this.sourceExposure*(complete?this.overviewExposure:1)}
- private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=true;for(const light of this.previewKeys)light.visible=false;for(const [mesh,materials] of this.glassQuality)mesh.material=materials.full}
+ private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=true;for(const light of this.previewKeys)light.visible=false;for(const [mesh,materials] of this.glassQuality)mesh.material=this.handheld?materials.fast:materials.full}
  setInspect(inspect:boolean){this.cameraTransition.active=false;this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
  updateBall(position:XYZ,rotation:{x:number;y:number;z:number;w:number},visible=true){if(!visible)this.teleportEffect.reset();const fx=this.inspect?{position,presence:1,strength:0}:this.teleportEffect.sample(position);this.teleportEffect.apply(fx.position,fx.presence,fx.strength);const floor=this.ballShadow.userData.floorHeight;this.ballShadow.visible=visible&&fx.presence>0&&fx.position[1]<floor+this.manifest.ball_diameter*.9;this.ballShadow.position.set(fx.position[0],floor+.00035,fx.position[2]);this.ballShadow.material.opacity=.32*fx.presence;for(const obj of this.groups.get('ball_main')||[]){obj.visible=visible;obj.position.set(...fx.position);obj.quaternion.set(rotation.x,rotation.y,rotation.z,rotation.w)}}
  updatePaddle(id:string,angle:number){for(const obj of this.groups.get(id)||[])obj.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),angle)}
