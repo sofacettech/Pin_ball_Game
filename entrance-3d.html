@@ -6,7 +6,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=frames-2d8ae0387039">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+  <style data-shared-style="./style.css?v=frames-9e592b286f8c">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -147,6 +147,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .opening-welcome{top:var(--opening-top);width:var(--opening-wordmark-width);font-size:var(--opening-label-size)}
 .opening-brand{top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap));width:var(--opening-wordmark-width)}
 .story-opening p{position:absolute;left:var(--opening-left);right:auto;top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap)*2 + var(--opening-wordmark-width)*278/2048);width:var(--opening-wordmark-width);max-width:none;margin:0;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.05;letter-spacing:0}
+@media(min-width:1025px){.story-opening p .story-text-line{display:inline}}
 @media(max-width:1024px),(any-pointer:coarse){
   .story-opening{--opening-left:9%;--opening-top:19%;--opening-label-size:clamp(20px,3vw,28px);--opening-wordmark-width:clamp(200px,35vw,300px);--opening-line-gap:7px}
   .story-opening p{font-size:clamp(11px,1.4vw,15px)}
@@ -440,7 +441,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     <div id="story-copy" aria-label="The SO/ FACET story">
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
         <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/ FACET</span></span></h1>
-        <p><span class="story-text-line">Lab-grown diamonds,</span> <span class="story-text-line">redefined.</span></p>
+        <p><span class="story-text-line">FOR EVERY FACET</span> <span class="story-text-line">OF YOU</span></p>
       </section>
       <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
         <h2><span class="story-text-line">For years,</span> <span class="story-text-line">diamonds came</span> <span class="story-text-line">with rules/</span></h2>
@@ -488,7 +489,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <iframe id="game-page" title="SO/ FACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-50a02ac77886"></script>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-c21220d0bb2d"></script>
   <script type="module" src="/assets/entrance-3d/entry-5BBV7XWU.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

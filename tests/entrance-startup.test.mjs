@@ -7,7 +7,7 @@ import {downloadModel} from '../entrance-source/download-model.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('the first HTML includes the current video copy, navigation and reveal without a runtime page fetch',()=>{
- const source=read('index.html').replace('Lab-grown diamonds,','Updated approved copy,');
+ const source=read('index.html').replace('FOR EVERY FACET','Updated approved copy,');
  const html=withEntrancePresentation(read('entrance-source/entrance.html'),source);
  for(const selector of [/\bid="story-copy"/,/\bclass="[^"]*\bsite-brand\b/,/\bid="enter"/])assert.ok(html.includes(fragment(source,selector)));
  assert.ok(html.includes('Updated approved copy,'));

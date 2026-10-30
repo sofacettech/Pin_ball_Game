@@ -88,6 +88,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .opening-welcome{top:var(--opening-top);width:var(--opening-wordmark-width);font-size:var(--opening-label-size)}
 .opening-brand{top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap));width:var(--opening-wordmark-width)}
 .story-opening p{position:absolute;left:var(--opening-left);right:auto;top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap)*2 + var(--opening-wordmark-width)*278/2048);width:var(--opening-wordmark-width);max-width:none;margin:0;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.05;letter-spacing:0}
+@media(min-width:1025px){.story-opening p .story-text-line{display:inline}}
 @media(max-width:1024px),(any-pointer:coarse){
   .story-opening{--opening-left:9%;--opening-top:19%;--opening-label-size:clamp(20px,3vw,28px);--opening-wordmark-width:clamp(200px,35vw,300px);--opening-line-gap:7px}
   .story-opening p{font-size:clamp(11px,1.4vw,15px)}
