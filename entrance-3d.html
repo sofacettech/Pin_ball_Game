@@ -55,6 +55,8 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 .menu-panel .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#fff;opacity:.6}
 .social-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
 .menu-panel .brand-word{white-space:nowrap}
+.menu-social-links{display:flex;align-items:center;gap:8px;flex-basis:100%}
+@media(max-width:700px){.menu-panel{padding-top:calc(76px + env(safe-area-inset-top,0px))}}
 
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
@@ -486,7 +488,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <iframe id="game-page" title="SO/ FACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-0bb7758dbd88"></script>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-50a02ac77886"></script>
   <script type="module" src="/assets/entrance-3d/entry-5BBV7XWU.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

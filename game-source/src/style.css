@@ -144,7 +144,7 @@ header #member{color:#b5ff42;border:1px solid #68408b}
  header{padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px));gap:4px;align-content:space-between}
  .brand{height:44px;margin:0 auto 0 0;gap:8px}.brand span{font-size:20px}
  header #member{top:calc(8px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));min-height:44px;padding:8px 10px;font-size:12px;max-width:none}
- header nav{flex-wrap:nowrap;gap:6px}header nav button:not(#member){flex:1;min-height:44px;padding:8px 10px;font-size:13px}
+ header nav{flex-wrap:nowrap;gap:6px}header nav > button:not(#member){flex:1;min-height:44px;padding:8px 10px;font-size:13px}
  #stage{height:calc(100vh - var(--nav-height));height:calc(100dvh - var(--nav-height))}
  .hud{left:max(14px,env(safe-area-inset-left,0px));font-size:13px}.hud strong{font-size:17px}
  #action{left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);text-align:center;max-width:calc(100% - 24px);padding:12px 16px}#message{font-size:13px}#start{min-height:48px;min-width:160px}

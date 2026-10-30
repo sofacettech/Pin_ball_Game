@@ -40,9 +40,18 @@ const join = menuLink('Join THE FIRST CUT', '/membership.html?from=first-cuts', 
 const small = document.createElement('div');small.className = 'menu-small-links';
 // Policy pages remain unavailable until their approved text is supplied.
 small.append(menuLink('Terms', null, ''), menuLink('Privacy', null, ''), menuLink('Contact', 'mailto:hello@sofacet.com', ''));
-const instagram = document.createElement('button');instagram.type = 'button';instagram.disabled = true;instagram.className = 'social-placeholder';instagram.setAttribute('aria-label', 'Instagram');
-instagram.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7"/></svg>';
-small.append(instagram);
+const socials = document.createElement('div');socials.className = 'menu-social-links';socials.setAttribute('role', 'group');socials.setAttribute('aria-label', 'Social media');
+for (const [label, icon] of [
+  ['Instagram', '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7"/>'],
+  ['LinkedIn', '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7m0-10v.01M11 17v-7m0 3a3 3 0 0 1 6 0v4"/>'],
+  ['Facebook', '<path d="M14 21V11h4l.5-4H14V5.5c0-1.5.5-2 2-2h2V0h-3c-4 0-5 2.5-5 5.5V7H7v4h3v10" transform="translate(0 1) scale(.95)"/>'],
+  ['X', '<path d="m4 3 12 18h4L8 3Zm0 18 7-8M20 3l-7 8"/>'],
+  ['YouTube', '<rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3Z"/>'],
+]) {
+  const button = document.createElement('button');button.type = 'button';button.disabled = true;button.className = 'social-placeholder';button.setAttribute('aria-label', label);
+  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(button);
+}
+small.append(socials);
 panel.replaceChildren(play, accountLink, menuLink('How points work', '/faq.html'), about, join, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;

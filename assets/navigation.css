@@ -47,3 +47,5 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 .menu-panel .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#fff;opacity:.6}
 .social-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
 .menu-panel .brand-word{white-space:nowrap}
+.menu-social-links{display:flex;align-items:center;gap:8px;flex-basis:100%}
+@media(max-width:700px){.menu-panel{padding-top:calc(76px + env(safe-area-inset-top,0px))}}
