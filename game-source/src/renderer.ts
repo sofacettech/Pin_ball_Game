@@ -49,6 +49,8 @@ export class TableView {
  private caveGlow:{material:GlowMaterial;baseline:number}[]=[];
  private glassQuality=new Map<THREE.Mesh,{full:THREE.MeshPhysicalMaterial;fast:THREE.MeshStandardMaterial}>();
  private resolution:AdaptiveResolution;
+ private resizePending=false;private framingKey='';private bufferWidth=0;private bufferHeight=0;private bufferRatio=0;private bufferResizes=0;
+ private paddleAxis=new THREE.Vector3(0,1,0);private followPoint=new THREE.Vector3();
  get quality(){return this.resolution.mode}
  constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement,quality:GameQuality='auto'){
   this.resolution=new AdaptiveResolution(quality);
@@ -58,9 +60,9 @@ export class TableView {
   this.renderer.info.autoReset=false;
   this.scene.background=new THREE.Color('#000');
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:policy.samples});
-  this.composer=new EffectComposer(this.renderer,target);this.renderPass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=policy.samples===0;this.composer.addPass(this.fxaa);
+  this.composer=new EffectComposer(this.renderer,target);this.composer.setPixelRatio(1);this.renderPass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=policy.samples===0;this.composer.addPass(this.fxaa);
   RectAreaLightUniformsLib.init();
-  new ResizeObserver(()=>this.resize()).observe(viewport);
+  new ResizeObserver(()=>{this.resizePending=true;this.needsRender=true}).observe(viewport);
  }
  convert(p:XYZ){const s=this.manifest.scale;return new THREE.Vector3(p[0]*s,p[2]*s,-p[1]*s)}
  async load(progress:(value:number,label:string)=>void){
@@ -206,7 +208,7 @@ export class TableView {
   this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
  }
  setReference(index:number){
-  this.needsRender=true;
+  this.needsRender=true;this.framingKey='';
   this.referenceIndex=index;const ref=this.references[index];if(!ref)return;
   const matrix=new THREE.Matrix4().set(...ref.world_matrix.flat() as [number,number,number,number,number,number,number,number,number,number,number,number,number,number,number,number]);
   const s=this.manifest.scale;matrix.setPosition(new THREE.Vector3().setFromMatrixPosition(matrix).multiplyScalar(s));matrix.premultiply(this.conversion);
@@ -221,12 +223,17 @@ export class TableView {
  private resizeDrawingBuffer(w=this.viewport.clientWidth,h=this.viewport.clientHeight){
   if(!w||!h)return;
   const policy=gameRenderResolution(this.quality,this.resolution.level,w,h,devicePixelRatio,this.handheld);
-  if(this.renderer.getPixelRatio()!==policy.pixelRatio)this.renderer.setPixelRatio(policy.pixelRatio);
   this.renderer.transmissionResolutionScale=policy.transmissionScale;
   for(const target of [this.composer.renderTarget1,this.composer.renderTarget2])if(target.samples!==policy.samples){target.samples=policy.samples;target.dispose()}
   this.fxaa.enabled=policy.samples===0;
-  this.renderer.setSize(w,h,false);this.composer.setPixelRatio(policy.pixelRatio);this.composer.setSize(w,h);
-  this.fxaa.uniforms.resolution.value.set(1/(w*policy.pixelRatio),1/(h*policy.pixelRatio));
+  if(w!==this.bufferWidth||h!==this.bufferHeight||policy.pixelRatio!==this.bufferRatio){
+   // Set size and density together. The composer uses physical pixels so a
+   // DPR change never allocates an intermediate pair of HDR render targets.
+   this.renderer.setDrawingBufferSize(w,h,policy.pixelRatio);
+   this.composer.setSize(this.canvas.width,this.canvas.height);
+   this.fxaa.uniforms.resolution.value.set(1/this.canvas.width,1/this.canvas.height);
+   this.bufferWidth=w;this.bufferHeight=h;this.bufferRatio=policy.pixelRatio;this.bufferResizes++;
+  }
   this.needsRender=true;
  }
  setQuality(mode:GameQuality){this.resolution.setMode(mode);this.frames=[];this.last=performance.now();this.resizeDrawingBuffer()}
@@ -238,11 +245,15 @@ export class TableView {
   this.phonePlay=active;if(!active)this.overviewFocus.reset();this.overviewPoints=[];this.resize();
  }
  resize(){
-  this.needsRender=true;const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;
-  this.resetPerformanceSampling();this.resizeDrawingBuffer(w,h);
+  this.resizePending=false;const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;
+  this.resizeDrawingBuffer(w,h);
+  const framingKey=[w,h,this.phonePlay,this.inspect,document.body.classList.contains('phone-layout')].join(':');
+  if(framingKey===this.framingKey)return;
+  this.resetPerformanceSampling();
   this.camera.aspect=w/h;this.camera.updateProjectionMatrix();if(this.overviewBounds.isEmpty())return;
+  this.framingKey=framingKey;
   // Retain the playable span and the two ledge decorations in portrait play.
-  const portrait=this.phonePlay&&w/h<.85,tilt=this.phonePlay?.8:.62;
+  const portrait=this.phonePlay&&w/h<1,tilt=portrait?.65:this.phonePlay?.8:.62;
   if(this.overviewPoints.length!==(portrait?8:5)||this.overviewCamera.aspect!==w/h){
    this.overviewPoints=overviewGeometryPoints(this.overviewMeshes,w/h,tilt);
    if(portrait){const x=this.overviewBounds.getCenter(new THREE.Vector3()).x,vertical=this.overviewPoints.slice(2).map(p=>p.setX(x));this.overviewPoints=[...overviewGeometryPoints([...this.phoneMeshes,...(this.diamonds?.framingMeshes||[])],w/h,tilt),...vertical]}
@@ -256,7 +267,7 @@ export class TableView {
  private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=true;for(const light of this.previewKeys)light.visible=false;for(const [mesh,materials] of this.glassQuality)mesh.material=this.handheld?materials.fast:materials.full}
  setInspect(inspect:boolean){this.cameraTransition.active=false;this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
  updateBall(position:XYZ,rotation:{x:number;y:number;z:number;w:number},visible=true){if(!visible)this.teleportEffect.reset();const fx=this.inspect?{position,presence:1,strength:0}:this.teleportEffect.sample(position);this.teleportEffect.apply(fx.position,fx.presence,fx.strength);const floor=this.ballShadow.userData.floorHeight;this.ballShadow.visible=visible&&fx.presence>0&&fx.position[1]<floor+this.manifest.ball_diameter*.9;this.ballShadow.position.set(fx.position[0],floor+.00035,fx.position[2]);this.ballShadow.material.opacity=.32*fx.presence;for(const obj of this.groups.get('ball_main')||[]){obj.visible=visible;obj.position.set(...fx.position);obj.quaternion.set(rotation.x,rotation.y,rotation.z,rotation.w)}}
- updatePaddle(id:string,angle:number){for(const obj of this.groups.get(id)||[])obj.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),angle)}
+ updatePaddle(id:string,angle:number){for(const obj of this.groups.get(id)||[])obj.quaternion.setFromAxisAngle(this.paddleAxis,angle)}
  updateTarget(id:string,position:XYZ){for(const obj of this.groups.get(id)||[])obj.position.set(...position)}
  updateSpring(compression:number){const ratio=1-(1-this.manifest.calibration.spring.minimum_length_ratio)*THREE.MathUtils.clamp(compression,0,1);for(const [obj,baseline] of this.springScale)obj.scale.z=baseline*ratio}
  updateCaveCharge(progress:number,active:boolean){for(const p of this.caveGlow)p.material.emissiveIntensity=p.baseline*(active?1+progress*1.5:1)}
@@ -270,15 +281,15 @@ export class TableView {
   if(this.inspect)return;
   const rail=ballMode==='rail'&&state==='playing';
   if(rail!==this.railCamera){this.cameraTransition.begin(this.activeCamera,this.reduced?.2:rail?2:1.2);this.transitionExposure=this.renderer.toneMappingExposure;this.railCamera=rail;this.updateCameraLighting();if(rail)this.smoothedBall.set(...ball)}
-  const b=new THREE.Vector3(...ball),strength=this.reduced||rail||state==='finished'?0:focus==='cave'?.12:focus==='launcher'?.08:0;
+  const b=this.followPoint.set(...ball),strength=this.reduced||rail||state==='finished'?0:focus==='cave'?.12:focus==='launcher'?.08:0;
   if(this.overviewFocus.advance(b,dt,strength,focus==='launcher'&&strength>0?1.12:1))this.needsRender=true;
   if(!this.initializedFollow||!rail){this.smoothedBall.copy(b);this.initializedFollow=true}
   if(rail){this.smoothedBall.lerp(b,1-Math.exp(-dt*3));aimRailCamera(this.camera,this.smoothedBall,this.manifest.scale)}
  }
 
- render(){this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
+ render(){if(this.resizePending)this.resize();this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
 
  }
- metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.quality==='auto',quality:this.quality,resolutionLevel:this.resolution.level,renderWidth:this.canvas.width,renderHeight:this.canvas.height,transmissionScale:this.renderer.transmissionResolutionScale,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
+ metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.quality==='auto',quality:this.quality,resolutionLevel:this.resolution.level,bufferResizes:this.bufferResizes,renderWidth:this.canvas.width,renderHeight:this.canvas.height,transmissionScale:this.renderer.transmissionResolutionScale,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
 }
 type EntityLike={role:string};

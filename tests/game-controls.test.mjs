@@ -16,7 +16,7 @@ const send=(element,type,props={})=>{if(['pointerup','pointercancel','lostpointe
 
 test('playback icons follow actual paused state and reject inactive, busy and finished controls',()=>{
  const source=readFileSync(new URL('../game-source/src/main.ts',import.meta.url),'utf8');
- const code=source.slice(source.indexOf('function syncPlaybackControls(){'),source.indexOf('\nfunction sync(){'));
+ const code=source.slice(source.indexOf('function syncPlaybackControls(){'),source.indexOf('\nfunction sync('));
  const playbackControls={},pauseButton=new Element(),restartButton=new Element();
  const context={playbackControls,pauseButton,restartButton,physics:{active:false,state:'launcher',paused:false},inspecting:false,starting:false};
  const update=vm.runInNewContext(code+';syncPlaybackControls',context);
