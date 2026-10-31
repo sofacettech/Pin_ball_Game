@@ -95,10 +95,28 @@ test('welcome text and fragments advance together while the new spawn stays fixe
  assert.equal(view.context.frame,334);assert.equal(view.context.phase,'assembly');
 });
 
-test('a ready 3D scene waits for the logo reveal before starting its assembly clock',async()=>{
+test('the prepared opening replaces the old poster before the loader fades, with assembly held at its first pose',async()=>{
  const reveal=deferred(),view=await startupFixture({reveal:reveal.promise});view.model.resolve();
- await new Promise(resolve=>setImmediate(resolve));assert.equal(view.context.ready,false);assert.equal(view.assemblyRendered.length,0);assert.equal(view.prepared,1);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(view.context.ready,false);assert.equal(view.prepared,1);
+ assert.equal(view.removed,1,'the outdated poster must be gone before releasing the loader');
+ assert.deepEqual(view.assemblyRendered,[1],'draw the actual opening while the loader is still opaque');
+ assert.equal(view.context.assembly.frame,1,'the opening animation must wait for the reveal');
  reveal.resolve();await view.done;assert.deepEqual(view.assemblyRendered,[1]);
+});
+
+test('reduced-motion visitors also get their final opening pose before the loader is released',async()=>{
+ const reveal=deferred(),view=await startupFixture({reduced:true,reveal:reveal.promise});view.model.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(view.removed,1);assert.deepEqual(view.rendered,[334]);assert.equal(view.context.ready,false);
+ reveal.resolve();await view.done;assert.deepEqual(view.rendered,[334]);
+});
+
+test('skipping while a successful model finishes preparation cannot reveal the entrance over the game',async()=>{
+ const view=await startupFixture();view.context.gameRequested=true;
+ view.model.resolve();await view.done;
+ assert.equal(view.context.ready,false);assert.equal(view.disposed,1);
+ assert.equal(view.removed,0);assert.deepEqual(view.assemblyRendered,[]);
 });
 
 test('a first swipe during assembly can advance directly into the journey',async()=>{
