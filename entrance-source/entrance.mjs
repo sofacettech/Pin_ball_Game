@@ -3,6 +3,7 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
+import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
@@ -13,7 +14,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
 const parameters=new URLSearchParams(location.search);
 const performanceMode=parameters.get('quality')!=='reference';
-// Diagnostics are opt-in on every route, including the /entrance-3d alias.
+const showFPS=parameters.has('debug')||parameters.has('debug/1')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const assembly=createAssemblyClock({reducedMotion:reduced.matches});
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
@@ -23,7 +24,14 @@ let startupFailed=false;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
-
+const frameRate=showFPS?createFrameRatePanel({label:'Live 3D model',travel,firstFrame,
+  compareURL:'/video?perf=1',compareLabel:'Video debug ↗',
+  getState:()=>{const renderer=journey?.renderer,canvas=renderer?.domElement;return {
+    ready,game:gameRequested,frame:phase==='assembly'?assembly.frame:frame,
+    seeking:phase==='assembly'||Math.abs(target-frame)>.15,
+    details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draw calls`:''
+  };}
+}):null;
 
 async function loadMainPresentation(){
   // All markup and styles come from index.html at build time. Imports reuse the
@@ -157,7 +165,7 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
-window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();}});
+window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
@@ -177,6 +185,7 @@ try{
       profile:parameters.has('profile'),performanceMode,renderView:()=>renderView,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onStatus:message=>{if(message)setStartupStatus(message);},
+      onRender:()=>frameRate?.record(),
     });
     if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
     await journey.loadVariant('compact',{download:modelDownload});

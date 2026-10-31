@@ -14,6 +14,7 @@ const engine = process.env.SOFACET_BROWSER || 'webkit';
 assert.ok(['webkit', 'chromium'].includes(engine), 'SOFACET_BROWSER must be webkit or chromium');
 const {[engine]: browserType, devices} = require(process.env.SOFACET_PLAYWRIGHT_PATH || 'playwright');
 const url = new URL(process.env.SOFACET_ENTRANCE_URL || 'http://127.0.0.1:8766/');
+const diagnostics = ['debug','debug/1','perf'].some(key => url.searchParams.has(key));
 assert.equal(url.searchParams.has('quality'), false, 'Omit quality overrides to test automatic iPhone selection');
 if(process.env.SOFACET_ENTRANCE_FULL_INTRO !== '1')url.hash = '#experience';
 const minimumFPS = process.env.SOFACET_MIN_FPS ? Number(process.env.SOFACET_MIN_FPS) : null;
@@ -128,11 +129,23 @@ try {
       }
       await screenshot('reverse');
       if (!disableMultiDraw) {
-        assert.equal(await page.locator('.frame-rate-panel').count(), 0, 'Public pages must not display developer diagnostics');
+        assert.equal(await page.locator('.frame-rate-panel').count(), diagnostics ? 1 : 0, 'FPS diagnostics require an explicit URL parameter');
         const originalY = await page.evaluate(() => scrollY);
         await page.evaluate(() => window.scrollTo(0, 0));
         await page.waitForFunction(() => Math.abs(window.entrancePreview.frame-334)<.2);
-        const measurement = await page.evaluate(() => new Promise(resolve => {
+        if (diagnostics) {
+          await page.locator('.frame-rate-measure').click();
+          await page.waitForFunction(() => Number(document.querySelector('.frame-rate-value strong').textContent) > 0, null, {timeout:5000});
+          await page.waitForFunction(() => window.frameRateChecks?.length > 0, null, {timeout:20000});
+          result.performance = await page.evaluate(() => window.frameRateChecks.at(-1));
+          assert.ok(result.performance.fps > 0, 'The capture records actual scene updates');
+          assert.match(await page.locator('.frame-rate-result').textContent(), /Slowest 1s/);
+          await page.getByRole('button', {name:'Hide frame-rate display'}).click();
+          assert.equal(await page.locator('.frame-rate-panel').isVisible(), false);
+          await page.getByRole('button', {name:'Show FPS'}).click();
+          assert.equal(await page.locator('.frame-rate-panel').isVisible(), true);
+        } else {
+         const measurement = await page.evaluate(() => new Promise(resolve => {
           const travel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--travel'));
           const start = performance.now(), times = [];
           let previousFrame = window.entrancePreview.frame;
@@ -146,7 +159,8 @@ try {
           }
           requestAnimationFrame(step);
         }));
-        result.performance = {...summarizeFrameUpdates(measurement.times, measurement.start, measurement.end), sourceFrame: measurement.sourceFrame};
+         result.performance = {...summarizeFrameUpdates(measurement.times, measurement.start, measurement.end), sourceFrame: measurement.sourceFrame};
+        }
         assert.ok(result.performance.updates > 0 && result.performance.durationMs >= 10000, 'Complete the full ten-second scene-update measurement');
         assert.ok(result.performance.sourceFrame > 2000, 'The check must cover the entrance through the final room');
         await page.evaluate(y => window.scrollTo(0, y), originalY);

@@ -18,6 +18,8 @@ npm start
 
 Open `http://127.0.0.1:8766/` for the default Three.js entrance. `/entrance-3d` is an alias, `/play.html` opens the game, and `/video` opens the retained video comparison. Both entrance paths reuse the approved story copy, fonts, navigation and game loader. Production pages do not display developer inspection panels.
 
+To measure the live 3D homepage, open `/?debug=1` (`/?debug/1` is also supported). Its opt-in FPS panel counts rendered scene updates during assembly and scrolling, shows resolution and draw calls, and offers **Run 10s check** for average FPS, slowest one-second FPS and p95 frame intervals. Close it with × and reopen with **Show FPS**. The panel hides when entering pinball; it measures the 3D journey, not game FPS. Ordinary homepage visits do not create the panel or its sampling timer.
+
 The default entrance renders the ball assembly and scrolling journey in the same Three.js scene. It starts at the closer doorway composition (source frame 334). The authored assembly poses are cached and relocated to that position before playback. The logo loader waits for the assets, poses and real GPU warm-up, pulsing if preparation outlasts its reveal. A first swipe can enter the journey immediately; the outdoor approach and empty chessboard both use half the original scroll distance. Reduced motion starts at the assembled pose. The default entrance does not create a video element or request an opening video, and backgrounding pauses its assembly clock.
 
 For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
