@@ -1,11 +1,13 @@
 import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js';
 import { createAssemblyClock } from './assembly-clock.mjs';
+import { createJourneyScrollMap } from './journey-scroll.mjs';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
 const $=id=>document.getElementById(id);
-const firstFrame=240,lastFrame=CHESS_HIT_FRAME,travel=(lastFrame-firstFrame)*8;
+const firstFrame=240,lastFrame=CHESS_HIT_FRAME;
+const journeyScroll=createJourneyScrollMap(firstFrame,lastFrame),travel=journeyScroll.travel;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
 const parameters=new URLSearchParams(location.search);
@@ -137,7 +139,7 @@ function syncScroll(){
   if(!ready)return;
   // A swipe can enter the journey immediately, without waiting for assembly.
   if(phase==='assembly'&&scrollY>0){frame=assembly.finish();phase='idle';document.body.dataset.phase=phase;}
-  target=firstFrame+(lastFrame-firstFrame)*Math.max(0,Math.min(1,scrollY/travel));requestTick();
+  target=journeyScroll.frameAtScroll(scrollY);requestTick();
 }
 window.addEventListener('scroll',syncScroll,{passive:true});
 const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.resize();requestTick();}});

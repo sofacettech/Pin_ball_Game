@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {fragment,withEntrancePresentation} from '../scripts/entrance-presentation.mjs';
 import {downloadModel} from '../entrance-source/download-model.mjs';
 import {createAssemblyClock} from '../entrance-source/assembly-clock.mjs';
+import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('the 3D entrance shares copy, navigation and reveal without a video or a start button',()=>{
@@ -94,7 +95,7 @@ test('a ready 3D scene waits for the logo reveal before starting its assembly cl
 
 test('a first swipe during assembly can advance directly into the journey',async()=>{
  const view=await startupFixture();view.model.resolve();await view.done;
- view.context.scrollY=100;view.context.travel=15392;view.context.lastFrame=2164;
+ view.context.scrollY=100;view.context.journeyScroll=createJourneyScrollMap();
  const sync=source.slice(source.indexOf('function syncScroll(){'),source.indexOf("window.addEventListener('scroll',syncScroll"));
  vm.runInContext(sync+';syncScroll();',view.context);
  assert.equal(view.context.phase,'idle');assert.equal(view.context.frame,240);assert.ok(view.context.target>240);

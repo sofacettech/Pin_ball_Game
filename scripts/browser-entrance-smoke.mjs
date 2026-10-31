@@ -4,6 +4,8 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {summarizeFrameUpdates} from '../entrance-source/frame-rate-meter.js';
+import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
+const journeyScroll=createJourneyScrollMap();
 
 // Run against an already-built release server. A desktop WebKit/Chromium run
 // with iPhone inputs validates behavior; its FPS is not an iPhone measurement.
@@ -113,8 +115,8 @@ try {
       if (disableMultiDraw) assert.equal(result.initial.multiDraw, false);
       assert.ok(result.initial.draws > 0 && result.initial.triangles > 0, 'The loaded scene must actually render');
       await screenshot('ready');
-      for (const frame of [680, 1000, 1550, 2050, 940, 400]) {
-        await page.evaluate(frame => window.scrollTo(0, (frame - 240) * 8), frame);
+      for (const frame of [680, 1000, 1550, 1750, 1950, 2050, 1750, 1550, 940, 400]) {
+        await page.evaluate(y => window.scrollTo(0, y), journeyScroll.scrollAtFrame(frame));
         await page.waitForFunction(frame => Math.abs(window.entrancePreview.frame - frame) < 0.2, frame);
         const state = await readState(page);
         assert.equal(state.gameVisible, false, 'Scrolling short of the handoff must retain the entrance');
