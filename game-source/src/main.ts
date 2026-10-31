@@ -30,7 +30,7 @@ const mobileLives=$('mobile-lives'),lifeHearts=mobileLives.querySelectorAll<HTML
 const scorecardPanel=$('scorecard-panel'),scorecard=connectFlipScorecard($<HTMLButtonElement>('flip-card'),$('card-score'),$('card-best'));
 scorecard.update(0,null);
 const quality=$<HTMLSelectElement>('quality');
-try{quality.value=parseGameQuality(localStorage.getItem(gameQualityStorageKey))}catch{quality.value='auto'}
+try{quality.value=parseGameQuality(localStorage.getItem(gameQualityStorageKey))}catch{quality.value='full'}
 const view=new TableView(canvas,viewport,parseGameQuality(quality.value));let inspecting=false,loaded=false,physics:PinballPhysics;
 quality.onchange=()=>{const mode=parseGameQuality(quality.value);view.setQuality(mode);try{localStorage.setItem(gameQualityStorageKey,mode)}catch{}requestGameFrame()};
 let tutorial:ReturnType<typeof connectControlsTutorial>|undefined;
@@ -224,6 +224,11 @@ async function start(){let phase='styles';try{
  if(view.renderer.getContext().isContextLost())throw new Error('WebGL context lost during game startup');
  stage.dataset.ready='true';stage.setAttribute('aria-busy','false');window.sofacetGameLoader?.ready();requestGameFrame();
  }catch(error){loaded=false;window.sofacetGameLoader?.fail(error,phase);stage.setAttribute('aria-busy','false');$('action').hidden=true;$('error').hidden=false;$('error-detail').textContent=error instanceof Error?error.message:String(error)}}
+function sampleGameplayPerformance(now:number){
+ if(!physics.active||physics.state!=='playing'||!canTouch('paddle')||navToggle.getAttribute('aria-expanded')==='true'){view.resetPerformanceSampling();return}
+ // Automatic fallback is for this session; retain the player's saved choice.
+ if(view.adaptResolution(now))quality.value=view.quality;
+}
 function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!physics.paused&&!tutorial?.active)accumulator+=delta;else accumulator=0;
  while(accumulator>=DT){const controls=input(),launches=physics.launches;
   if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
@@ -235,7 +240,8 @@ function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document
   const target:XYZ=p.state==='resetting'?[spawn[0]*s,spawn[2]*s,-spawn[1]*s]:p.position;const focus=p.cave?'cave':!p.laneExited&&['launcher','charging','spring_return','playing'].includes(p.state)?'launcher':null;view.follow(target,delta,p.state,p.ballMode,focus)}
  view.advanceCamera(delta);
  tutorial?.update(delta);
- if((physics.active&&!physics.paused&&p.state!=='finished')||view.needsRender){view.adaptResolution(now);view.render()}else view.resetPerformanceSampling();sync(p);if(inspecting){const m=view.metrics();$('metrics').textContent=`${Math.round(m.medianFrameMs)} ms/frame · ${m.drawCalls} draws`}requestGameFrame()
+ sampleGameplayPerformance(now);
+ if((physics.active&&!physics.paused&&p.state!=='finished')||view.needsRender)view.render();sync(p);if(inspecting){const m=view.metrics();$('metrics').textContent=`${Math.round(m.medianFrameMs)} ms/frame · ${m.drawCalls} draws`}requestGameFrame()
 }
 if(import.meta.env.DEV){
  (window as any).__facet={ready:()=>loaded,view,inspect:(index:number)=>{if(!inspecting)toggleInspection();$<HTMLSelectElement>('view').value=String(index);view.setReference(index);applyInspectionLayout();updateOverlay()},metrics:()=>view.metrics(),pose:()=>physics.pose()};

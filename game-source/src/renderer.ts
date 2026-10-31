@@ -52,7 +52,7 @@ export class TableView {
  private resizePending=false;private framingKey='';private bufferWidth=0;private bufferHeight=0;private bufferRatio=0;private bufferResizes=0;
  private paddleAxis=new THREE.Vector3(0,1,0);private followPoint=new THREE.Vector3();
  get quality(){return this.resolution.mode}
- constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement,quality:GameQuality='auto'){
+ constructor(readonly canvas:HTMLCanvasElement,readonly viewport:HTMLElement,quality:GameQuality='full'){
   this.resolution=new AdaptiveResolution(quality);
   const policy=gameRenderResolution(quality,this.resolution.level,viewport.clientWidth,viewport.clientHeight,devicePixelRatio);
   this.renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
@@ -238,7 +238,7 @@ export class TableView {
  }
  setQuality(mode:GameQuality){this.resolution.setMode(mode);this.frames=[];this.last=performance.now();this.resizeDrawingBuffer()}
  resetPerformanceSampling(){this.resolution.resetTiming()}
- adaptResolution(now:number){if(this.resolution.sample(now))this.resizeDrawingBuffer()}
+ adaptResolution(now:number){const previous=this.quality;if(this.resolution.sample(now))this.resizeDrawingBuffer();return this.quality!==previous}
  setPhonePlay(active:boolean){
   if(active===this.phonePlay)return;
   if(!this.inspect&&!this.reduced){this.cameraTransition.begin(this.activeCamera,2.2);this.transitionExposure=this.renderer.toneMappingExposure}
