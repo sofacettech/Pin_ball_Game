@@ -15,7 +15,7 @@ import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
 import {EXRLoader} from 'three/addons/loaders/EXRLoader.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {CachedBoardPass} from './cached-board-pass';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
@@ -29,7 +29,7 @@ type SourceLighting={source_sha256:string;exposure:number;keys:{name:string;ener
 export class TableView {
  readonly scene=new THREE.Scene();readonly camera=new THREE.PerspectiveCamera(48,1,.001,10);
  readonly overviewCamera=new THREE.PerspectiveCamera(42,1,.001,10);
- private overviewFocus=new OverviewFocus();private overviewBounds=new THREE.Box3();private overviewPoints:THREE.Vector3[]=[];private overviewMeshes:THREE.Mesh[]=[];private phoneMeshes:THREE.Mesh[]=[];private overviewFill:THREE.Light[]=[];private renderPass:RenderPass;private overviewBatch?:ReturnType<typeof batchOverview>;
+ private overviewFocus=new OverviewFocus();private overviewBounds=new THREE.Box3();private overviewPoints:THREE.Vector3[]=[];private overviewMeshes:THREE.Mesh[]=[];private phoneMeshes:THREE.Mesh[]=[];private overviewFill:THREE.Light[]=[];private renderPass:CachedBoardPass;private overviewBatch?:ReturnType<typeof batchOverview>;
  private handheld=false;private phonePlay=false;private railCamera=false;private cameraTransition=new CameraTransition();private transitionExposure=0;
  private get overviewExposure(){return this.handheld?1.7:1.4}
  private sourceExposure=2**-.65*1.05;
@@ -60,7 +60,8 @@ export class TableView {
   this.renderer.info.autoReset=false;
   this.scene.background=new THREE.Color('#000');
   const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:policy.samples});
-  this.composer=new EffectComposer(this.renderer,target);this.composer.setPixelRatio(1);this.renderPass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=policy.samples===0;this.composer.addPass(this.fxaa);
+  this.composer=new EffectComposer(this.renderer,target);this.composer.setPixelRatio(1);this.renderPass=new CachedBoardPass(this.scene,this.camera);this.composer.addPass(this.renderPass);this.composer.addPass(new OutputPass());this.fxaa.enabled=policy.samples===0;this.composer.addPass(this.fxaa);
+  canvas.addEventListener('webglcontextrestored',()=>{this.renderPass.invalidate();this.needsRender=true});
   RectAreaLightUniformsLib.init();
   new ResizeObserver(()=>{this.resizePending=true;this.needsRender=true}).observe(viewport);
  }
@@ -99,7 +100,7 @@ export class TableView {
   const haloTexture=new THREE.CanvasTexture(haloCanvas),haloGeometry=new THREE.PlaneGeometry(1,1);
   for(const entity of manifest.entities){if(!['bumper_neutral','bumper_plus','bumper_minus','drum_base_bumper'].includes(entity.role))continue;
    const lights:{material:GlowMaterial;baseline:number}[]=[];
-   for(const root of this.groups.get(entity.game_id)||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshStandardMaterial&&(obj.material.emissive.r+obj.material.emissive.g+obj.material.emissive.b)>0){const material=obj.material.clone();obj.material=material;lights.push({material,baseline:material.emissiveIntensity})}});
+   for(const root of this.groups.get(entity.game_id)||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshStandardMaterial&&(obj.material.emissive.r+obj.material.emissive.g+obj.material.emissive.b)>0){const material=obj.material.clone();material.userData.gameDynamic=true;obj.material=material;lights.push({material,baseline:material.emissiveIntensity})}});
    this.glow.set(entity.game_id,lights)
    if(lights.length){const box=new THREE.Box3();for(const obj of this.groups.get(entity.game_id)||[])box.expandByObject(obj);const center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),color=lights[0].material.emissive.clone();color.multiplyScalar(1/Math.max(color.r,color.g,color.b,1));
     const material=new THREE.MeshBasicMaterial({map:haloTexture,color,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});const halo=new THREE.Mesh(haloGeometry,material);halo.rotation.x=-Math.PI/2;halo.position.set(center.x,floorTop+.0004,center.z);const diameter=Math.max(size.x,size.z)*1.75;halo.scale.set(diameter,diameter,1);halo.visible=false;this.scene.add(halo);this.halos.set(entity.game_id,halo)
@@ -198,14 +199,24 @@ export class TableView {
   this.scene.traverse(obj=>{if(!(obj instanceof THREE.Mesh)||!(obj.material instanceof NeonMaterial)||!obj.userData.game_render_group?.startsWith('static_')||obj.material.name!=='Lighting | original green recessed diffuser')return;
    const mat=obj.material;if(!borderNeon.has(mat)){const lens=mat.clone();lens.polygonOffset=true;lens.polygonOffsetFactor=-2;lens.polygonOffsetUnits=-2;borderNeon.set(mat,lens)}obj.material=borderNeon.get(mat)!;
   });
-  for(const root of this.groups.get('static_cave')||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&(obj.material instanceof THREE.MeshStandardMaterial||obj.material instanceof NeonMaterial)&&obj.material.emissiveIntensity>0){const mat=obj.material.clone();obj.material=mat;this.caveGlow.push({material:mat,baseline:mat.emissiveIntensity})}});
+  for(const root of this.groups.get('static_cave')||[])root.traverse(obj=>{if(obj instanceof THREE.Mesh&&(obj.material instanceof THREE.MeshStandardMaterial||obj.material instanceof NeonMaterial)&&obj.material.emissiveIntensity>0){const mat=obj.material.clone();mat.userData.gameDynamic=true;obj.material=mat;this.caveGlow.push({material:mat,baseline:mat.emissiveIntensity})}});
   gltf.scene.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0){const full=obj.material;
    full.color.set('#f2fbff');full.roughness=.045;full.metalness=0;full.ior=1.52;full.transmission=.98;full.thickness=.003;full.attenuationColor.set('#d8f5ee');full.attenuationDistance=.4;full.clearcoat=1;full.clearcoatRoughness=.035;full.envMapIntensity=1.25;
    this.glassQuality.set(obj,{full,fast:handheldGlass(full)})}});
   await new Promise<void>(resolve=>setTimeout(resolve,0));
-  this.overviewBatch=batchOverview(this.scene);
+  const fixedGroups=new Set<string>(manifest.entities.filter((entity:{role:string})=>entity.role.startsWith('bumper')||['drum_base_bumper','playfield','launch_lane'].includes(entity.role)).map((entity:{game_id:string})=>entity.game_id));
+  this.overviewBatch=batchOverview(this.scene,fixedGroups);
   this.diamonds=new FloatingDiamonds(this.scene,this.scene.environment!,[this.convert([-8.6,10.2,.18]),this.convert([8.7,10.5,.18])],this.reduced);
-  this.updateLightingQuality();this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
+  this.updateLightingQuality();
+  const cached:THREE.Mesh[]=[],cacheLights:THREE.Light[]=[];
+  this.scene.traverse(object=>{
+   if(object instanceof THREE.Light)cacheLights.push(object);
+   if(!(object instanceof THREE.Mesh)||Array.isArray(object.material)||object.material.transparent||object.material.userData.gameDynamic||this.glassQuality.has(object))return;
+   const id=object.userData.game_render_group||'';
+   if(object.userData.cacheStatic||id.startsWith('static_')||id==='rail_network'||fixedGroups.has(id))cached.push(object);
+  });
+  this.renderPass.configure(cached,cacheLights);
+  this.setReference(0);this.resize();this.render();progress(100,'Table ready.');
  }
  setReference(index:number){
   this.needsRender=true;this.framingKey='';
@@ -263,7 +274,7 @@ export class TableView {
  }
 
  advanceCamera(dt:number){if(!this.cameraTransition.active)return;this.cameraTransition.advance(this.destinationCamera,dt);this.renderer.toneMappingExposure=THREE.MathUtils.lerp(this.transitionExposure,this.sourceExposure*(!this.railCamera?this.overviewExposure:1),this.cameraTransition.progress);this.needsRender=true}
- private updateCameraLighting(){this.frames=[];this.last=performance.now();const complete=!this.inspect&&!this.railCamera;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);if(!this.cameraTransition.active)this.renderer.toneMappingExposure=this.sourceExposure*(complete?this.overviewExposure:1)}
+ private updateCameraLighting(){this.renderPass.invalidate();this.frames=[];this.last=performance.now();const complete=!this.inspect&&!this.railCamera;for(const light of this.overviewFill)light.visible=complete;this.overviewBatch?.setEnabled(complete);if(!this.cameraTransition.active)this.renderer.toneMappingExposure=this.sourceExposure*(complete?this.overviewExposure:1)}
  private updateLightingQuality(){this.updateCameraLighting();for(const light of this.authoredKeys)light.visible=true;for(const light of this.previewKeys)light.visible=false;for(const [mesh,materials] of this.glassQuality)mesh.material=this.handheld?materials.fast:materials.full}
  setInspect(inspect:boolean){this.cameraTransition.active=false;this.inspect=inspect;this.updateCameraLighting();this.geometryQuality?.setInspection(inspect);this.setReference(this.referenceIndex);this.resize()}
  updateBall(position:XYZ,rotation:{x:number;y:number;z:number;w:number},visible=true){if(!visible)this.teleportEffect.reset();const fx=this.inspect?{position,presence:1,strength:0}:this.teleportEffect.sample(position);this.teleportEffect.apply(fx.position,fx.presence,fx.strength);const floor=this.ballShadow.userData.floorHeight;this.ballShadow.visible=visible&&fx.presence>0&&fx.position[1]<floor+this.manifest.ball_diameter*.9;this.ballShadow.position.set(fx.position[0],floor+.00035,fx.position[2]);this.ballShadow.material.opacity=.32*fx.presence;for(const obj of this.groups.get('ball_main')||[]){obj.visible=visible;obj.position.set(...fx.position);obj.quaternion.set(rotation.x,rotation.y,rotation.z,rotation.w)}}
@@ -281,15 +292,17 @@ export class TableView {
   if(this.inspect)return;
   const rail=ballMode==='rail'&&state==='playing';
   if(rail!==this.railCamera){this.cameraTransition.begin(this.activeCamera,this.reduced?.2:rail?2:1.2);this.transitionExposure=this.renderer.toneMappingExposure;this.railCamera=rail;this.updateCameraLighting();if(rail)this.smoothedBall.set(...ball)}
-  const b=this.followPoint.set(...ball),strength=this.reduced||rail||state==='finished'?0:focus==='cave'?.12:focus==='launcher'?.08:0;
+  // Keep the complete phone board steady during launch/cave charging. Tiny
+  // camera movements otherwise invalidate the board cache for several seconds.
+  const b=this.followPoint.set(...ball),strength=this.handheld||this.reduced||rail||state==='finished'?0:focus==='cave'?.12:focus==='launcher'?.08:0;
   if(this.overviewFocus.advance(b,dt,strength,focus==='launcher'&&strength>0?1.12:1))this.needsRender=true;
   if(!this.initializedFollow||!rail){this.smoothedBall.copy(b);this.initializedFollow=true}
   if(rail){this.smoothedBall.lerp(b,1-Math.exp(-dt*3));aimRailCamera(this.camera,this.smoothedBall,this.manifest.scale)}
  }
 
- render(){if(this.resizePending)this.resize();this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
+ render(){if(this.resizePending)this.resize();this.needsRender=false;this.renderPass.camera=this.activeCamera;this.renderPass.cacheEnabled=this.handheld&&!this.inspect&&!this.railCamera&&!this.cameraTransition.active;this.renderer.info.reset();this.composer.render();const now=performance.now();const elapsed=now-this.last;if(elapsed<250)this.frames.push(elapsed);this.last=now;if(this.frames.length>240)this.frames.shift();
 
  }
- metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.quality==='auto',quality:this.quality,resolutionLevel:this.resolution.level,bufferResizes:this.bufferResizes,renderWidth:this.canvas.width,renderHeight:this.canvas.height,transmissionScale:this.renderer.transmissionResolutionScale,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
+ metrics(){const sorted=[...this.frames].sort((a,b)=>a-b);return{drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,medianFrameMs:sorted[Math.floor(sorted.length/2)]||0,p95FrameMs:sorted[Math.floor(sorted.length*.95)]||0,pixelRatio:this.renderer.getPixelRatio(),automaticQuality:this.quality==='auto',quality:this.quality,resolutionLevel:this.resolution.level,bufferResizes:this.bufferResizes,renderWidth:this.canvas.width,renderHeight:this.canvas.height,transmissionScale:this.renderer.transmissionResolutionScale,textureCount:this.renderer.info.memory.textures,geometryCount:this.renderer.info.memory.geometries,antialiasing:this.fxaa.enabled?'FXAA':'MSAA 2x',lightingQuality:'baked floor + authored area keys',originalTriangles:this.geometryQuality?.originalTriangles,optimizedTriangles:this.geometryQuality?.optimizedTriangles,geometryErrorMetres:this.geometryQuality?.maxErrorMetres,boardCache:{...this.renderPass.cacheStats},overviewOriginalDraws:this.overviewBatch?.originalDraws,overviewBatchedDraws:this.overviewBatch?.batchedDraws}}
 }
 type EntityLike={role:string};

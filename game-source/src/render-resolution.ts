@@ -5,15 +5,18 @@ export const parseGameQuality = (value: unknown): GameQuality => value === 'auto
 // Auto starts at Full's density and scales down to CSS resolution, preserving
 // board detail. Only unusually large buffers need to go below 1x to stay bounded.
 const levels = [1, 1.15, 1.3, 1.5];
+// The fixed-board cache leaves room for sharper phone pixels. Auto descends
+// gradually and preserves a supersampled floor instead of making text/rails soft.
+const handheldLevels = [1.25, 1.5, 1.75, 2];
 const maxAutoPixels = 3840 * 2160;
 
 export function gameRenderResolution(mode: GameQuality, level: number, width: number, height: number, deviceRatio: number, handheld = false) {
   const nativeRatio = Number.isFinite(deviceRatio) && deviceRatio > 0 ? deviceRatio : 1;
   // Full controls sharpness, not an extra multisampled HDR buffer on phones.
-  if (mode === 'full') return { pixelRatio: Math.min(nativeRatio, 1.5), samples: handheld ? 0 : 2, transmissionScale: handheld ? .5 : 1 };
+  if (mode === 'full') return { pixelRatio: Math.min(nativeRatio, handheld ? 2 : 1.5), samples: handheld ? 0 : 2, transmissionScale: handheld ? .5 : 1 };
   const area = Math.max(1, width) * Math.max(1, height);
   const tier = Number.isFinite(level) ? Math.max(0, Math.min(levels.length - 1, Math.round(level))) : levels.length - 1;
-  const ratio = mode === 'low' ? .65 : levels[tier];
+  const ratio = mode === 'low' ? .65 : (handheld ? handheldLevels : levels)[tier];
   const pixels = mode === 'low' ? 450_000 : maxAutoPixels;
   return { pixelRatio: Math.min(nativeRatio, ratio, Math.sqrt(pixels / area)), samples: 0, transmissionScale: .5 };
 }
