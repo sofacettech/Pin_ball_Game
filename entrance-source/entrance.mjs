@@ -1,6 +1,7 @@
 import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, completePreparation, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
+import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
@@ -55,7 +56,7 @@ function startScene(){
   $('scene-loading-status').setAttribute('data-ready','');
   setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
   phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
-  frame=firstFrame;updateCopy(frame);placeStage();journey.resize();
+  frame=firstFrame;updateCopy(assembly.active?assembly.frame:240);placeStage();journey.resize();
   if(assembly.active)journey.renderAssemblyAt(assembly.frame);else journey.renderAt(frame);
   $('scene-poster').remove();siteSound.setActive(true);syncScroll();requestTick();
 }
@@ -116,7 +117,7 @@ function tick(now){
   raf=0;if(gameRequested||document.hidden)return;
   if(!ready)return;
   if(phase==='assembly'){
-    journey.renderAssemblyAt(assembly.advance(now));
+    const pose=assembly.advance(now);updateCopy(pose);journey.renderAssemblyAt(pose);
     if(assembly.active)requestTick();
     else{phase='idle';document.body.dataset.phase=phase;syncScroll();}
     return;
@@ -125,7 +126,7 @@ function tick(now){
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
   const amount=coarse.matches||reduced.matches?1:1-Math.exp(-dt/75);
   frame+= (target-frame)*amount;if(Math.abs(target-frame)<.15)frame=target;
-  placeStage();updateCopy.setScrolled(target>firstFrame);updateCopy(frame);
+  placeStage();updateCopy.setScrolled(target>firstFrame);updateCopy(storyFrameAt(frame));
   document.body.toggleAttribute('data-scrolled',target>firstFrame+8);
   $('progress').style.transform=`scaleX(${(frame-firstFrame)/(lastFrame-firstFrame)})`;
   siteSound.frame(frame);
@@ -159,7 +160,7 @@ try{
   const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
   const copyReady=(async()=>{
     await loadMainPresentation();
-    const [copy]=await Promise.all([createLandingCopy({welcome:false}),pointsReady]);
+    const [copy]=await Promise.all([createLandingCopy(),pointsReady]);
     updateCopy=copy;
   })();
   const scenePrepared=(async()=>{

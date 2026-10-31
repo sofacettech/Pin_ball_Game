@@ -56,7 +56,7 @@ const startup=source.slice(source.lastIndexOf('\ntry{')).replace("import('./jour
 const opening=source.slice(source.indexOf('function startScene(){'),source.indexOf('function gameVisibility('));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
 async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
- const model=deferred(),nodes=new Map(),rendered=[],assemblyRendered=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect,prepared=0;
+ const model=deferred(),nodes=new Map(),rendered=[],assemblyRendered=[],copyFrames=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect,prepared=0;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
  const renderer={loadVariant:()=>model.promise,resize(){},renderAt(frame){rendered.push(frame)},renderAssemblyAt(frame){assemblyRendered.push(frame)},dispose(){disposed++}};
  const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
@@ -65,14 +65,14 @@ async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
   gameRequested:false,startupFailed:false,ready:false,firstFrame:334,assembly:createAssemblyClock({reducedMotion:reduced}),
   gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
   presentationReady:reveal,modelDownload:model.promise,
-  loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
+  loadMainPresentation:async()=>{},createLandingCopy:async()=>frame=>copyFrames.push(frame),placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
   completePreparation(){prepared++},cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
   reduced:{matches:reduced},siteSound:{setActive(){}},performancePanel:{record(){}},
  };
  vm.createContext(context);vm.runInContext(opening,context);
  const done=vm.runInContext('(async()=>{'+startup+'})()',context);
  await new Promise(resolve=>setImmediate(resolve));
- return{context,model,done,rendered,assemblyRendered,get prepared(){return prepared},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
+ return{context,model,done,rendered,assemblyRendered,copyFrames,get prepared(){return prepared},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
 }
 
 test('3D assembly starts only after GPU preparation with the original first pose',async()=>{
@@ -85,6 +85,14 @@ test('3D assembly starts only after GPU preparation with the original first pose
 test('reduced motion starts at the assembled pose without any media activation',async()=>{
  const view=await startupFixture({reduced:true});view.model.resolve();await view.done;
  assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);assert.deepEqual(view.rendered,[334]);
+});
+
+test('welcome text and fragments advance together while the new spawn stays fixed',async()=>{
+ const view=await startupFixture();view.model.resolve();await view.done;
+ vm.runInContext(source.slice(source.indexOf('function tick(now){'),source.indexOf('function requestTick(){')),view.context);
+ view.context.tick(100);view.context.tick(1100);
+ assert.equal(view.copyFrames.at(-1),61);assert.equal(view.assemblyRendered.at(-1),61);
+ assert.equal(view.context.frame,334);assert.equal(view.context.phase,'assembly');
 });
 
 test('a ready 3D scene waits for the logo reveal before starting its assembly clock',async()=>{
