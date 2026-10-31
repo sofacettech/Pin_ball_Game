@@ -3,6 +3,20 @@ body[data-loading]{overflow:hidden}
 #scene-frame{will-change:transform}
 #scene-frame canvas{display:block;width:100%;height:100%}
 #scene-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+/* The opening copy shares a clear slot above the relocated ball. Keep the
+   welcome and scroll chapters exclusive, even when a fast swipe skips ahead. */
+#story-copy .story-opening{--opening-left:8.5%;--opening-top:16.5%;--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
+#story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:16.5%;bottom:auto;width:min(31vw,480px)}
+body[data-scrolled] #story-copy .story-opening{visibility:hidden!important}
+body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility:hidden!important}
+@media(max-width:1024px),(any-pointer:coarse){
+ #story-copy .story-opening{--opening-left:7%;--opening-top:calc(14% + env(safe-area-inset-top,0px));--opening-label-size:22px;--opening-wordmark-width:min(66vw,280px);--opening-line-gap:8px}
+ #story-copy .story-outside,#story-copy .story-approach{left:7%;top:calc(14% + env(safe-area-inset-top,0px));width:86%;max-width:540px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ #story-copy .story-opening{--opening-left:6%;--opening-top:22%;--opening-label-size:18px;--opening-wordmark-width:clamp(160px,20vw,230px);--opening-line-gap:4px}
+ #story-copy .story-outside,#story-copy .story-approach{left:6%;top:22%;width:35%}
+}
 body[data-loading] .frame-rate-panel{visibility:hidden}
 #scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
