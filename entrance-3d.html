@@ -234,6 +234,9 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 </style>
 <style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
 [data-skip-intro] #site-loader{display:none}
+[data-skip-intro] #site-loader[data-preparing]{display:block}
+#site-loader[data-waiting] #scene{animation:preparation-pulse 1.8s ease-in-out infinite}
+@keyframes preparation-pulse{0%,100%{opacity:.65}50%{opacity:1}}
 #site-loader{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 52%,#020402,#000100 44%);color-scheme:dark;opacity:1;transition:opacity .45s ease}
 #site-loader.leaving{opacity:0;pointer-events:none}
 #loading-stage{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none}
@@ -242,7 +245,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 #loading-stage:focus-visible::after{content:'';position:absolute;inset:8px;border:1px solid #b9cd4550;pointer-events:none}
 #loading-instructions{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 @media(max-width:700px){#site-loader #scene{width:max(100vw,950px)}}
-@media(prefers-reduced-motion:reduce){#site-loader{transition:none}#site-loader #scanner{display:none}}
+@media(prefers-reduced-motion:reduce){#site-loader{transition:none}#site-loader #scanner{display:none}#site-loader[data-waiting] #scene{animation:none}}
 </style>
 <style data-shared-style="./assets/brand-text.css?v=f87558ca6205">.inline-brand{display:inline-block;position:relative;white-space:nowrap;vertical-align:baseline;font:inherit;letter-spacing:inherit;text-transform:inherit}
 .inline-brand__size{visibility:hidden}
@@ -250,7 +253,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 @media print{.inline-brand>img{filter:brightness(0)}}
 </style>
 
-  <style data-entrance-style>:root{--travel:13632px}
+  <style data-entrance-style>:root{--travel:11096px}
 body[data-loading]{overflow:hidden}
 #scene-frame{will-change:transform}
 #scene-frame canvas{display:block;width:100%;height:100%}
@@ -430,7 +433,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     </svg>
     </div>
   <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress></div></div>
-  <script type="module" src="/assets/entrance-3d/entry-KE5UQHXN.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-7MO5T3HQ.js"></script>
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
@@ -487,6 +490,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-c21220d0bb2d"></script>
-  <script type="module" src="/assets/entrance-3d/entry-R5P64VCO.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-PYP5BMAQ.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

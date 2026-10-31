@@ -1,10 +1,12 @@
-// Keep the authored animation, but spend half as much scroll on the empty
-// chessboard crossing. The rooms and final approach retain 8 pixels per frame.
-export function createJourneyScrollMap(firstFrame=240,lastFrame=2164) {
+export const JOURNEY_START_FRAME=334;
+// Start near the doorway. Both the outdoor approach and empty chessboard use
+// half the scrolling; the rooms and final contact keep their authored pacing.
+export function createJourneyScrollMap(firstFrame=JOURNEY_START_FRAME,lastFrame=2164) {
   const chessStart=1560,chessEnd=2000;
-  const before=(chessStart-firstFrame)*8;
+  const doorway=780,approach=(doorway-firstFrame)*4;
+  const before=approach+(chessStart-doorway)*8;
   const crossing=before+(chessEnd-chessStart)*4;
-  const points=[[firstFrame,0],[chessStart,before],[chessEnd,crossing],[lastFrame,crossing+(lastFrame-chessEnd)*8]];
+  const points=[[firstFrame,0],[doorway,approach],[chessStart,before],[chessEnd,crossing],[lastFrame,crossing+(lastFrame-chessEnd)*8]];
   function sample(value,from,to) {
     if(value<=points[0][from])return points[0][to];
     for(let i=1;i<points.length;i++) {

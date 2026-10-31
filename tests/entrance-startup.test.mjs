@@ -56,41 +56,41 @@ const startup=source.slice(source.lastIndexOf('\ntry{')).replace("import('./jour
 const opening=source.slice(source.indexOf('function startScene(){'),source.indexOf('function gameVisibility('));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
 async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
- const model=deferred(),nodes=new Map(),rendered=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect;
+ const model=deferred(),nodes=new Map(),rendered=[],assemblyRendered=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect,prepared=0;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
- const renderer={loadVariant:()=>model.promise,resize(){},renderAt(frame){rendered.push(frame)},dispose(){disposed++}};
+ const renderer={loadVariant:()=>model.promise,resize(){},renderAt(frame){rendered.push(frame)},renderAssemblyAt(frame){assemblyRendered.push(frame)},dispose(){disposed++}};
  const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
   $:id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
   document:{body:{dataset:{}}},fetch:async()=>({ok:true,json:async()=>({points:[]})}),
-  gameRequested:false,startupFailed:false,ready:false,firstFrame:240,assembly:createAssemblyClock({reducedMotion:reduced}),
+  gameRequested:false,startupFailed:false,ready:false,firstFrame:334,assembly:createAssemblyClock({reducedMotion:reduced}),
   gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
   presentationReady:reveal,modelDownload:model.promise,
   loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
-  cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
+  completePreparation(){prepared++},cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
   reduced:{matches:reduced},siteSound:{setActive(){}},performancePanel:{record(){}},
  };
  vm.createContext(context);vm.runInContext(opening,context);
  const done=vm.runInContext('(async()=>{'+startup+'})()',context);
  await new Promise(resolve=>setImmediate(resolve));
- return{context,model,done,rendered,get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
+ return{context,model,done,rendered,assemblyRendered,get prepared(){return prepared},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
 }
 
 test('3D assembly starts only after GPU preparation with the original first pose',async()=>{
- const view=await startupFixture();assert.equal(view.context.ready,false);assert.equal(view.rendered.length,0);
+ const view=await startupFixture();assert.equal(view.context.ready,false);assert.equal(view.assemblyRendered.length,0);assert.equal(view.prepared,0);
  view.model.resolve();await view.done;
  assert.equal(view.context.ready,true);assert.equal(view.context.phase,'assembly');assert.equal(view.removed,1);
- assert.deepEqual(view.rendered,[1]);assert.equal(view.context.$('journey-preparation').hidden,true);
+ assert.deepEqual(view.assemblyRendered,[1]);assert.equal(view.context.frame,334);assert.equal(view.prepared,1);assert.equal(view.context.$('journey-preparation').hidden,true);
 });
 
 test('reduced motion starts at the assembled pose without any media activation',async()=>{
  const view=await startupFixture({reduced:true});view.model.resolve();await view.done;
- assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);assert.deepEqual(view.rendered,[240]);
+ assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);assert.deepEqual(view.rendered,[334]);
 });
 
 test('a ready 3D scene waits for the logo reveal before starting its assembly clock',async()=>{
  const reveal=deferred(),view=await startupFixture({reveal:reveal.promise});view.model.resolve();
- await new Promise(resolve=>setImmediate(resolve));assert.equal(view.context.ready,false);assert.equal(view.rendered.length,0);
- reveal.resolve();await view.done;assert.deepEqual(view.rendered,[1]);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(view.context.ready,false);assert.equal(view.assemblyRendered.length,0);assert.equal(view.prepared,1);
+ reveal.resolve();await view.done;assert.deepEqual(view.assemblyRendered,[1]);
 });
 
 test('a first swipe during assembly can advance directly into the journey',async()=>{
@@ -98,7 +98,7 @@ test('a first swipe during assembly can advance directly into the journey',async
  view.context.scrollY=100;view.context.journeyScroll=createJourneyScrollMap();
  const sync=source.slice(source.indexOf('function syncScroll(){'),source.indexOf("window.addEventListener('scroll',syncScroll"));
  vm.runInContext(sync+';syncScroll();',view.context);
- assert.equal(view.context.phase,'idle');assert.equal(view.context.frame,240);assert.ok(view.context.target>240);
+ assert.equal(view.context.phase,'idle');assert.equal(view.context.frame,334);assert.ok(view.context.target>334);
 });
 
 test('skipping while a cold model loads releases its renderer without showing a false error',async()=>{

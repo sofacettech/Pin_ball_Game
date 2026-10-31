@@ -92,30 +92,17 @@ try {
       assert.equal(response?.status(), 200, 'The release entrance must load');
       result.modules = await page.locator('script[type="module"][src]').evaluateAll(elements => elements.map(element => element.src));
       assert.ok(result.modules.some(src => /\/assets\/entrance-3d\/entry-[\w-]+\.js(?:\?|$)/.test(src)), 'Exercise the built entrance bundle, not an experiment/source page');
-      await page.waitForFunction(() => document.body.hasAttribute('data-error') || window.entrancePreview?.ready || window.entrancePreview?.phase === 'opening', {}, {timeout: 120000});
+      await page.waitForFunction(() => document.body.hasAttribute('data-error') || window.entrancePreview?.ready, {}, {timeout: 120000});
       assert.equal(await page.locator('body').getAttribute('data-error'), null, 'The release scene must load without its error fallback');
-      try {
-        await page.waitForFunction(() => window.entrancePreview?.ready, {}, {timeout: 8000});
-      } catch {
-        // The smoke tests the live 3D scroll, independently of CDN opening-video
-        // availability or autoplay permission. Use its installed completion event.
-        result.openingSkipped = await page.evaluate(() => {
-          const opening = document.querySelector('#opening');
-          if (!opening || window.entrancePreview?.phase !== 'opening') return false;
-          opening.dispatchEvent(new Event('ended'));
-          return true;
-        });
-      }
-      // The opening now runs during the download and shader warm-up. Keep the
-      // same scene-readiness budget even when the opening finishes first.
       await page.waitForFunction(() => window.entrancePreview?.ready, {}, {timeout: 120000});
+      assert.equal(await page.locator('video').count(),0,'The entrance must render its assembly without a video');
       result.initial = await readState(page);
       assert.equal(result.initial.quality?.mobile, true, 'iPhone must select mobile quality without a URL override');
       assert.equal(result.initial.batching, 'portable', 'iPhone must use extension-independent batching');
       if (disableMultiDraw) assert.equal(result.initial.multiDraw, false);
       assert.ok(result.initial.draws > 0 && result.initial.triangles > 0, 'The loaded scene must actually render');
       await screenshot('ready');
-      for (const frame of [680, 1000, 1550, 1750, 1950, 2050, 1750, 1550, 940, 400]) {
+      for (const frame of [700, 1000, 1550, 1750, 1950, 2050, 1750, 1550, 940, 700]) {
         await page.evaluate(y => window.scrollTo(0, y), journeyScroll.scrollAtFrame(frame));
         await page.waitForFunction(frame => Math.abs(window.entrancePreview.frame - frame) < 0.2, frame);
         const state = await readState(page);
@@ -127,7 +114,7 @@ try {
         assert.equal(await page.locator('.frame-rate-panel').count(), 0, 'Public pages must not display developer diagnostics');
         const originalY = await page.evaluate(() => scrollY);
         await page.evaluate(() => window.scrollTo(0, 0));
-        await page.waitForFunction(() => window.entrancePreview.frame < 241);
+        await page.waitForFunction(() => Math.abs(window.entrancePreview.frame-334)<.2);
         const measurement = await page.evaluate(() => new Promise(resolve => {
           const travel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--travel'));
           const start = performance.now(), times = [];
@@ -146,7 +133,7 @@ try {
         assert.ok(result.performance.updates > 0 && result.performance.durationMs >= 10000, 'Complete the full ten-second scene-update measurement');
         assert.ok(result.performance.sourceFrame > 2000, 'The check must cover the entrance through the final room');
         await page.evaluate(y => window.scrollTo(0, y), originalY);
-        await page.waitForFunction(() => Math.abs(window.entrancePreview.frame - 400) < 0.2);
+        await page.waitForFunction(() => Math.abs(window.entrancePreview.frame - 700) < 0.2);
         await screenshot('fps-check');
         if (minimumFPS !== null) assert.ok(result.performance.minWindowFps >= minimumFPS,
           `Slowest one-second window ${result.performance.minWindowFps} FPS is below SOFACET_MIN_FPS=${minimumFPS}`);
@@ -158,7 +145,7 @@ try {
         return bounds && Math.abs(bounds.width - 852) < 2 && Math.abs(bounds.height - 393) < 2;
       });
       result.landscape = await readState(page);
-      assert.ok(Math.abs(result.landscape.frame - 400) < 0.2, 'Rotation must preserve the current animation pose');
+      assert.ok(Math.abs(result.landscape.frame - 700) < 0.2, 'Rotation must preserve the current animation pose');
       assert.ok(result.landscape.pixels[0] > 0 && result.landscape.pixels[0] <= 852
         && result.landscape.pixels[1] > 0 && result.landscape.pixels[1] <= 393, 'Rotated mobile canvas must retain its one-device-pixel budget');
       await screenshot('landscape');

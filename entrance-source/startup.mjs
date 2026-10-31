@@ -13,14 +13,17 @@ export function setStartupStatus(message, progress = null) {
     if (progress === null) bar.removeAttribute('value'); else bar.value = progress;
   }
 }
-// The lightweight logo owns only its six-second reveal, never the WebGL download.
-// It is a separate entry so GSAP, fonts and Three.js cannot delay the first UI.
-export const presentationReady = finishLoading();
+// Start the lightweight logo immediately, but hold its handoff until real GPU
+// preparation finishes. A slow download must never expose an unprepared scene.
+let releasePreparation;
+const prepared=new Promise(resolve=>{releasePreparation=resolve});
+export const completePreparation=()=>releasePreparation();
+export const presentationReady = finishLoading({ready:prepared});
 export const modelDownload = downloadModel('/assets/entrance-3d/journey-compact.glb', {
   signal: controller.signal,
   onProgress: value => setStartupStatus(value === null ? 'Loading the world…' : `Loading the world… ${value}%`, value),
 });
 // The renderer can attach later, after its own module has downloaded.
 modelDownload.catch(() => {});
-export function cancelStartup() { loadingCopy.cancel(); controller.abort(); }
+export function cancelStartup() { completePreparation();loadingCopy.cancel(); controller.abort(); }
 addEventListener('pagehide',event=>{if(!event.persisted)loadingCopy.cancel()});

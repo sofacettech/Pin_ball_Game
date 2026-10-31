@@ -6,7 +6,7 @@ const ENTER = .62;
 const EXIT = .48;
 const STAGGER = .16;
 
-export async function createLandingCopy() {
+export async function createLandingCopy({welcome:showWelcome=true}={}) {
   // WebKit can hold fonts.ready until a stalled video finishes the document load.
   await document.fonts.load('400 16px Biarty').catch(() => {});
   const root = document.querySelector('#story-copy');
@@ -22,7 +22,7 @@ export async function createLandingCopy() {
   let frame = 0, reduced = false, scrollStarted = false, welcomeTween;
 
   function paint() {
-    const welcomeVisible = !scrollStarted || Number(gsap.getProperty(welcome, 'opacity')) > 0;
+    const welcomeVisible = showWelcome&&(!scrollStarted || Number(gsap.getProperty(welcome, 'opacity')) > 0);
     for (const { element, from, until } of headlines) {
       const active = frame >= from && (element === welcome ? welcomeVisible : frame < until);
       if (visibility.get(element) !== active) {
@@ -40,10 +40,11 @@ export async function createLandingCopy() {
 
   media.add({ all: 'all', reduce: '(prefers-reduced-motion: reduce)' }, context => {
     reduced = context.conditions.reduce;
-    gsap.set(welcome, { opacity: scrollStarted ? 0 : 1, y: 0 });
+    gsap.set(welcome, { opacity: showWelcome&&!scrollStarted ? 1 : 0, y: 0 });
     if (!reduced) {
       for (const { element: section, heading, detail, from, until } of headlines) {
         const opening = section === headlines[0].element;
+        if(opening&&!showWelcome)continue;
         const revealRate = opening ? .9 : 1;
         const handoffDelay = section === headlines[1].element ? .28 : 0;
         const parts = heading.children.length ? [...heading.children] : [heading];
@@ -101,6 +102,7 @@ export async function createLandingCopy() {
   update.setScrolled = scrolled => {
     if (scrollStarted === scrolled) return;
     scrollStarted = scrolled;
+    if(!showWelcome){paint();return;}
     welcomeTween?.kill();
     if (reduced) gsap.set(welcome, { opacity: scrolled ? 0 : 1, y: 0 });
     else welcomeTween = gsap.to(welcome, {

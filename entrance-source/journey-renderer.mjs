@@ -10,6 +10,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { entranceRenderPolicy } from './render-policy.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
+import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
+import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { createExteriorLook } from './exterior-look.mjs';
 import { createInteriorLook } from './interior-look.mjs';
 import { createChessLook } from './chess-look.mjs';
@@ -49,7 +51,8 @@ renderer.info.autoReset=false;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
 const metadataPromise=fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
-let model,mixer,actions=[],frame=240,preparing=false,loadID=0,suspended=false,disposed=false;
+let model,mixer,actions=[],frame=JOURNEY_START_FRAME,preparing=false,loadID=0,suspended=false,disposed=false;
+let assemblyPoses,assemblyPose=null,assemblyBaseNeedsReset=true,lastAssemblyReflectionPose=null;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
 const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
@@ -120,7 +123,7 @@ function pollTimers(){
   for(let i=pendingTimers.length-1;i>=0;i--){const item=pendingTimers[i];if(disjoint||gl.getQueryParameter(item.query,gl.QUERY_RESULT_AVAILABLE)){if(!disjoint)item.timings['gpu_'+item.name]=gl.getQueryParameter(item.query,gl.QUERY_RESULT)/1e6;gl.deleteQuery(item.query);pendingTimers.splice(i,1);}}
 }
 
-function resize(){const rect=stage.getBoundingClientRect();renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;requestRender();}
+function resize(){const rect=stage.getBoundingClientRect();renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;lastAssemblyReflectionPose=null;requestRender();}
 const observer=new ResizeObserver(resize);observer.observe(stage);
 
 function sampleCamera(at){
@@ -178,7 +181,11 @@ function render(){
   const beginTimer=()=>{if(timerExtension){query=gl.createQuery();gl.beginQuery(timerExtension.TIME_ELAPSED_EXT,query);}};
   beginTimer();
   const mark=name=>{if(profile){const now=performance.now();timings[name]=now-measured;measured=now;if(query){gl.endQuery(timerExtension.TIME_ELAPSED_EXT);pendingTimers.push({query,timings,name});query=null;}if(name!=='main')beginTimer();}};
-  mixer?.setTime(frame/motion.fps);updateBallBatches();sampleCamera(frame);
+  if(assemblyPose!==null){
+    if(assemblyBaseNeedsReset){mixer.setTime(JOURNEY_START_FRAME/motion.fps);assemblyBaseNeedsReset=false;}
+    assemblyPoses.apply(assemblyPose);
+  }else mixer?.setTime(frame/motion.fps);
+  updateBallBatches();sampleCamera(frame);
   mark('animation');
   const outside=1-THREE.MathUtils.smoothstep(frame,780,940);
   const chamber=interior.update(frame);
@@ -195,17 +202,27 @@ function render(){
   const alternate=performanceMode&&frame>680&&frame<940&&lastReflectionFrame>680&&lastReflectionFrame<940&&Math.abs(frame-lastReflectionFrame)<8;
   const exteriorTurn=entryReflectionTurn++%2===0;
   lastReflectionFrame=frame;
-  mark('lighting');renderer.info.reset();exterior.update(camera,frame,!alternate||exteriorTurn);mark('exterior');
+  // The opening camera is stationary: refresh its planar reflection at 30 Hz
+  // while the main ball animation still renders on every requested frame.
+  const reflectAssembly=assemblyPose===null||lastAssemblyReflectionPose===null||Math.abs(assemblyPose-lastAssemblyReflectionPose)>=2||assemblyPose===240;
+  if(assemblyPose!==null&&reflectAssembly)lastAssemblyReflectionPose=assemblyPose;
+  mark('lighting');renderer.info.reset();exterior.update(camera,frame,(!alternate||exteriorTurn)&&reflectAssembly);mark('exterior');
   if(!alternate||!exteriorTurn)interior.capture(camera);
   mark('chamber');chess.capture(camera,frame);mark('gallery');composer.render();mark('main');
   if(profile){timings.total=performance.now()-started;timings.calls=renderer.info.render.calls;timings.triangles=renderer.info.render.triangles;timings.programs=renderer.info.programs.length;profileFrames.push(timings);if(profileFrames.length>1200)profileFrames.shift();}
   onRender({frame,triangles:renderer.info.render.triangles,calls:renderer.info.render.calls,width:renderer.domElement.width,height:renderer.domElement.height});
 }
 function requestRender(){if(!renderRequested&&!suspended&&!disposed)renderRequested=requestAnimationFrame(render);}
-function setFrame(value){frame=THREE.MathUtils.clamp(value,1,2164);requestRender();}
-function renderAt(value){if(renderRequested)cancelAnimationFrame(renderRequested);frame=THREE.MathUtils.clamp(value,1,2164);render();}
+function selectFrame(value){assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;frame=THREE.MathUtils.clamp(value,JOURNEY_START_FRAME,2164);}
+function setFrame(value){selectFrame(value);requestRender();}
+function renderAt(value){if(renderRequested)cancelAnimationFrame(renderRequested);selectFrame(value);render();}
+function renderAssemblyAt(value){
+  if(renderRequested)cancelAnimationFrame(renderRequested);
+  frame=JOURNEY_START_FRAME;assemblyPose=THREE.MathUtils.clamp(value,1,240);render();
+}
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
+  assemblyPoses=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
   for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
   for(const material of reflectionMaterials.values())material.dispose();reflectionMaterials.clear();reflectionBindings=[];
   lastReflectionFrame=null;entryReflectionTurn=0;
@@ -227,10 +244,13 @@ async function loadVariant(name,{download}={}){
     prepareStableLighting();
     if(performanceMode)batchBall();
     prepareReflectionMaterials();
+    const assemblyObjects=findAssemblyObjects(model);
+    assemblyPoses=createAssemblyPoses({...assemblyObjects,targetFrame:JOURNEY_START_FRAME,
+      sample:at=>{mixer.setTime(at/motion.fps);model.updateMatrixWorld(true);}});
     onStatus('Preparing the lights…');
     // Prepare the actual HDR, transmission, and mirror passes. Compiling only
     // the default framebuffer leaves different shader variants cold at entry.
-    for(const warmFrame of [1,120,240,680,720,780,850,940,1000,1480,1520,1600,1680,1800]){
+    for(const warmFrame of [JOURNEY_START_FRAME,720,780,850,940,1000,1480,1520,1600,1680,1800]){
       mixer.setTime(warmFrame/motion.fps);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       renderer.setRenderTarget(composer.renderTarget1);
@@ -239,10 +259,13 @@ async function loadVariant(name,{download}={}){
       renderer.setRenderTarget(null);
       interior.capture(camera);chess.capture(camera,warmFrame);composer.render();
     }
-    // Keep queued warm-up work behind the loading screen, not the first scroll.
+    // Draw the actual relocated facet poses too, including batch texture uploads
+    // and reflection/composer targets, before releasing the startup loader.
+    preparing=false;assemblyBaseNeedsReset=true;
+    for(const pose of [1,60,90,120,150,180,240,1])renderAssemblyAt(pose);
     gl.finish();
     modelBytes=bytes.byteLength;loadMs=performance.now()-start;
-    preparing=false;render();onStatus('');
+    onStatus('');
     return {ready:true,variant:name,bytes:modelBytes,loadMs,animations:gltf.animations.length,metadata:(await metadataPromise)[name],look};
   }catch(error){preparing=false;renderer.setRenderTarget(null);throw error;}
 }
@@ -253,6 +276,6 @@ function dispose(){
   env.dispose();for(const pass of composer.passes)pass.dispose?.();composer.dispose();
   renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
 }
-return {setFrame,renderAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,policy,batchingMode,
+return {setFrame,renderAt,renderAssemblyAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,policy,batchingMode,
   get model(){return model;},get mixer(){return mixer;},get frame(){return frame;}};
 }

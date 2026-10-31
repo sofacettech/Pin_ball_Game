@@ -9,9 +9,16 @@ const revealed = new Promise(resolve => {
   cleanup = mountReveal(stage, resolve);
 });
 let handoff;
-export function finishLoading() {
+export function finishLoading({ready}={}) {
   return handoff ||= (async () => {
+    if(ready)overlay?.setAttribute('data-preparing','');
     await revealed;
+    if(ready){
+      overlay?.setAttribute('data-waiting','');
+      await ready;
+      overlay?.removeAttribute('data-waiting');
+      overlay?.removeAttribute('data-preparing');
+    }
     if (!overlay) return;
     cleanup?.();
     overlay.classList.add('leaving');

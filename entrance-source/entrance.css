@@ -1,4 +1,4 @@
-:root{--travel:13632px}
+:root{--travel:11096px}
 body[data-loading]{overflow:hidden}
 #scene-frame{will-change:transform}
 #scene-frame canvas{display:block;width:100%;height:100%}

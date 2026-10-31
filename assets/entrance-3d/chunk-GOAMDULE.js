@@ -1,0 +1,1 @@
+function R(a=334,h=2164){let d=(780-a)*4,E=d+780*8,S=E+440*4,s=[[a,0],[780,d],[1560,E],[2e3,S],[h,S+(h-2e3)*8]];function l(t,c,n){if(t<=s[0][c])return s[0][n];for(let r=1;r<s.length;r++){let e=s[r-1],o=s[r];if(t<=o[c])return e[n]+(t-e[c])/(o[c]-e[c])*(o[n]-e[n])}return s.at(-1)[n]}return{travel:s.at(-1)[1],frameAtScroll:t=>l(t,1,0),scrollAtFrame:t=>l(t,0,1)}}export{R as a};

@@ -1,12 +1,12 @@
-import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, cancelStartup} from './startup.mjs';
-import { createLandingCopy } from '/assets/kinetic-copy.js';
+import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, completePreparation, cancelStartup} from './startup.mjs';
+import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
-import { createJourneyScrollMap } from './journey-scroll.mjs';
+import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
 const $=id=>document.getElementById(id);
-const firstFrame=240,lastFrame=CHESS_HIT_FRAME;
+const firstFrame=JOURNEY_START_FRAME,lastFrame=CHESS_HIT_FRAME;
 const journeyScroll=createJourneyScrollMap(firstFrame,lastFrame),travel=journeyScroll.travel;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
@@ -19,7 +19,7 @@ let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,
 let phase='loading',gameLoader,gameReadyObserver;
 let gameRecovering=false;
 let startupFailed=false;
-let frame=assembly.frame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
+let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
 
@@ -55,7 +55,8 @@ function startScene(){
   $('scene-loading-status').setAttribute('data-ready','');
   setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
   phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
-  frame=assembly.frame;updateCopy(frame);placeStage();journey.resize();journey.renderAt(frame);
+  frame=firstFrame;updateCopy(frame);placeStage();journey.resize();
+  if(assembly.active)journey.renderAssemblyAt(assembly.frame);else journey.renderAt(frame);
   $('scene-poster').remove();siteSound.setActive(true);syncScroll();requestTick();
 }
 function gameVisibility(visible){
@@ -115,7 +116,7 @@ function tick(now){
   raf=0;if(gameRequested||document.hidden)return;
   if(!ready)return;
   if(phase==='assembly'){
-    frame=assembly.advance(now);placeStage();updateCopy(frame);journey.renderAt(frame);
+    journey.renderAssemblyAt(assembly.advance(now));
     if(assembly.active)requestTick();
     else{phase='idle';document.body.dataset.phase=phase;syncScroll();}
     return;
@@ -138,7 +139,7 @@ function requestTick(){if(!raf&&!document.hidden&&!gameRequested)raf=requestAnim
 function syncScroll(){
   if(!ready)return;
   // A swipe can enter the journey immediately, without waiting for assembly.
-  if(phase==='assembly'&&scrollY>0){frame=assembly.finish();phase='idle';document.body.dataset.phase=phase;}
+  if(phase==='assembly'&&scrollY>0){assembly.finish();frame=firstFrame;phase='idle';document.body.dataset.phase=phase;}
   target=journeyScroll.frameAtScroll(scrollY);requestTick();
 }
 window.addEventListener('scroll',syncScroll,{passive:true});
@@ -158,7 +159,7 @@ try{
   const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
   const copyReady=(async()=>{
     await loadMainPresentation();
-    const [copy]=await Promise.all([createLandingCopy(),pointsReady]);
+    const [copy]=await Promise.all([createLandingCopy({welcome:false}),pointsReady]);
     updateCopy=copy;
   })();
   const scenePrepared=(async()=>{
@@ -174,8 +175,10 @@ try{
     await journey.loadVariant('compact',{download:modelDownload});
     if(gameRequested||startupFailed){journey?.dispose();journey=null;return;}
   })();
-  // Reveal and GPU preparation must both finish before the first 3D frame.
-  await Promise.all([copyReady,scenePrepared,presentationReady]);
+  // Keep the logo visible until assets, cached poses and real GPU passes are ready.
+  await Promise.all([copyReady,scenePrepared]);
+  completePreparation();
+  await presentationReady;
   startScene();
 }catch(error){
   startupFailed=true;cancelStartup();
