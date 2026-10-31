@@ -12,6 +12,7 @@ import { entranceRenderPolicy } from './render-policy.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
 import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
+import { createOpeningFraming } from './opening-framing.mjs';
 import { createExteriorLook } from './exterior-look.mjs';
 import { createInteriorLook } from './interior-look.mjs';
 import { createChessLook } from './chess-look.mjs';
@@ -53,6 +54,7 @@ const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
 const metadataPromise=fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 let model,mixer,actions=[],frame=JOURNEY_START_FRAME,preparing=false,loadID=0,suspended=false,disposed=false;
 let assemblyPoses,assemblyPose=null,assemblyBaseNeedsReset=true,lastAssemblyReflectionPose=null;
+let openingFraming;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
 const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
@@ -132,8 +134,13 @@ function sampleCamera(at){
   const a=path[lo],b=path[hi],t=THREE.MathUtils.clamp((at-a.frame)/(b.frame-a.frame),0,1);
   camera.position.fromArray(a.position).lerp(new THREE.Vector3().fromArray(b.position),t);
   q0.fromArray(a.quaternion);q1.fromArray(b.quaternion);camera.quaternion.copy(q0).slerp(q1,t);
+  const view=renderView();
+  if(camera.view?.enabled)camera.clearViewOffset();
+  camera.aspect=view&&(performanceMode||at<640)?view.fullWidth/view.fullHeight:motion.aspect;
   camera.fov=lerp(a.fov,b.fov,t);camera.near=a.near;camera.far=a.far;camera.updateProjectionMatrix();
-  const view=renderView();if(view)camera.setViewOffset(view.fullWidth,view.fullHeight,view.x,view.y,view.width,view.height);else if(camera.view?.enabled)camera.clearViewOffset();
+  const fitted=openingFraming?.(camera,view,at);
+  if(view&&performanceMode){const v=fitted||view;camera.setViewOffset(v.fullWidth,v.fullHeight,v.x,v.y,v.width,v.height);}
+  else if(fitted)camera.setViewOffset(fitted.fullWidth,fitted.fullHeight,fitted.x-view.x,fitted.y-view.y,view.fullWidth,view.fullHeight);
 }
 function batchBall(){
   const groups=new Map();
@@ -222,7 +229,7 @@ function renderAssemblyAt(value){
 }
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
-  assemblyPoses=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
+  assemblyPoses=null;openingFraming=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
   for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
   for(const material of reflectionMaterials.values())material.dispose();reflectionMaterials.clear();reflectionBindings=[];
   lastReflectionFrame=null;entryReflectionTurn=0;
@@ -247,6 +254,7 @@ async function loadVariant(name,{download}={}){
     const assemblyObjects=findAssemblyObjects(model);
     assemblyPoses=createAssemblyPoses({...assemblyObjects,targetFrame:JOURNEY_START_FRAME,
       sample:at=>{mixer.setTime(at/motion.fps);model.updateMatrixWorld(true);}});
+    openingFraming=createOpeningFraming(model,assemblyObjects);
     onStatus('Preparing the lights…');
     // Prepare the actual HDR, transmission, and mirror passes. Compiling only
     // the default framebuffer leaves different shader variants cold at entry.

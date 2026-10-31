@@ -168,7 +168,7 @@ try{
     await pointsReady;
     if(gameRequested||startupFailed)return;
     journey=await renderModule.createJourneyRenderer({stage,
-      profile:parameters.has('profile'),performanceMode,renderView:()=>performanceMode?renderView:null,
+      profile:parameters.has('profile'),performanceMode,renderView:()=>renderView,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onStatus:message=>{if(message)setStartupStatus(message);},
     });
