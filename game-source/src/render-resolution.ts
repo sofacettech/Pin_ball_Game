@@ -1,6 +1,6 @@
 export type GameQuality = 'auto' | 'full' | 'low';
 export const gameQualityStorageKey = 'sofacet.game-quality.v1';
-export const parseGameQuality = (value: unknown): GameQuality => value === 'full' || value === 'low' ? value : 'auto';
+export const parseGameQuality = (value: unknown): GameQuality => value === 'auto' || value === 'low' ? value : 'full';
 
 // Auto starts at Full's density and scales down to CSS resolution, preserving
 // board detail. Only unusually large buffers need to go below 1x to stay bounded.
@@ -29,7 +29,7 @@ export class AdaptiveResolution {
   private stableMs = 0;
   private slowMs = 0;
 
-  constructor(mode: GameQuality = 'auto') { this.mode = mode; }
+  constructor(mode: GameQuality = 'full') { this.mode = mode; }
 
   setMode(mode: GameQuality) {
     this.mode = mode;
@@ -44,7 +44,7 @@ export class AdaptiveResolution {
   }
 
   sample(now: number): boolean {
-    if (this.mode !== 'auto' || !Number.isFinite(now)) return false;
+    if (this.mode === 'low' || !Number.isFinite(now)) return false;
     if (this.last === null) { this.last = now; return false; }
     const elapsed = now - this.last;
     this.last = now;
@@ -56,6 +56,16 @@ export class AdaptiveResolution {
     if (this.windowMs < 800 || this.count < 8) return false;
     const average = this.windowMs / this.count, duration = this.windowMs;
     this.windowMs = this.count = 0;
+    if (this.mode === 'full') {
+      // Ignore rounding at exactly 30fps and isolated hitches. Only sustained
+      // sub-30fps gameplay activates Auto, beginning one small tier lower.
+      this.slowMs = average > 1000 / 30 + .01 ? this.slowMs + duration : 0;
+      if (this.slowMs < 2000) return false;
+      this.mode = 'auto';
+      this.level = levels.length - 2;
+      this.resetTiming();
+      return true;
+    }
     if (average > 25) {
       this.stableMs = 0;
       this.slowMs += duration;

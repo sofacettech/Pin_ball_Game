@@ -23,6 +23,7 @@ try{
    if(version==='baseline')await page.route(new URL(path,origin).href,route=>route.fulfill({contentType:'text/html',body:baselineHtml}));
    await page.goto(new URL(path,origin).href);
    await page.waitForSelector('#stage[data-ready="true"]',{timeout:60000});
+   if(version==='current')assert.equal(await page.locator('#quality').inputValue(),'full','new visitors start at Full quality');
    await page.locator('#start').click();
    const skip=page.getByRole('button',{name:'Skip guide ↗'});
    if(await skip.isVisible())await skip.click();
@@ -49,7 +50,7 @@ try{
     await page.locator('#pause').click();assert.equal(await page.locator('#pause').getAttribute('aria-label'),'Pause game');
     await page.locator('#settings').click();await page.locator('#quality').selectOption('full');
     await page.locator('#menu-close').click();
-    const full=await measure();assert.deepEqual(full.buffer,result.buffer,'Full and initial Auto keep the same sharpness on phones');
+    const full=await measure();assert.deepEqual(full.buffer,result.buffer,'selecting Full keeps the default sharpness on phones');
     const launch=await page.locator('#touch-launch').boundingBox();await page.mouse.move(launch.x+launch.width/2,launch.y+launch.height/2);await page.mouse.down();await page.waitForTimeout(350);
     assert.ok(Number(await page.locator('.charge').getAttribute('aria-valuenow'))>0,'charge remains responsive while other UI is cached');
     await page.mouse.up();await page.waitForFunction(()=>document.querySelector('#scorecard-panel').dataset.scoreVisible==='true');
