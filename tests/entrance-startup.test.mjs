@@ -4,12 +4,14 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {fragment,withEntrancePresentation} from '../scripts/entrance-presentation.mjs';
 import {downloadModel} from '../entrance-source/download-model.mjs';
+import {createAssemblyClock} from '../entrance-source/assembly-clock.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('the first HTML includes the current video copy, navigation and reveal without a runtime page fetch',()=>{
+test('the 3D entrance shares copy, navigation and reveal without a video or a start button',()=>{
  const source=read('index.html').replace('FOR EVERY FACET','Updated approved copy,');
  const html=withEntrancePresentation(read('entrance-source/entrance.html'),source);
- for(const selector of [/\bid="story-copy"/,/\bclass="[^"]*\bsite-brand\b/,/\bid="enter"/])assert.ok(html.includes(fragment(source,selector)));
+ for(const selector of [/\bid="story-copy"/,/\bclass="[^"]*\bsite-brand\b/])assert.ok(html.includes(fragment(source,selector)));
+ assert.doesNotMatch(html,/<video\b|id="enter"/);
  assert.ok(html.includes('Updated approved copy,'));
  assert.equal((html.match(/id="site-loader"/g)||[]).length,1);
  assert.ok(html.includes('id="skip-game"'));
@@ -50,47 +52,52 @@ test('buffering intro audio cannot pin the six-second logo animation',()=>{
 
 const source=read('entrance-source/entrance.mjs');
 const startup=source.slice(source.lastIndexOf('\ntry{')).replace("import('./journey-renderer.mjs')",'Promise.resolve(rendererModuleFixture)');
-const opening=source.slice(source.indexOf('function finishOpening(){'),source.indexOf('function gameVisibility('));
+const opening=source.slice(source.indexOf('function startScene(){'),source.indexOf('function gameVisibility('));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}}
-async function startupFixture({blocked=false,reduced=false}={}){
- const model=deferred(),nodes=new Map();let started=0,removed=0,disposed=0,aborted=0,handoffs=0,redirect;
+async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
+ const model=deferred(),nodes=new Map(),rendered=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
- const renderer={loadVariant:()=>model.promise,resize(){},dispose(){disposed++}};
+ const renderer={loadVariant:()=>model.promise,resize(){},renderAt(frame){rendered.push(frame)},dispose(){disposed++}};
  const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
   $:id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
   document:{body:{dataset:{}}},fetch:async()=>({ok:true,json:async()=>({points:[]})}),
-  gameRequested:false,startupFailed:false,sceneReady:false,openingFinished:false,ready:false,firstFrame:240,
+  gameRequested:false,startupFailed:false,ready:false,firstFrame:240,assembly:createAssemblyClock({reducedMotion:reduced}),
   gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
-  presentationReady:Promise.resolve(),modelDownload:model.promise,
-  loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},prepareMedia:async()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
+  presentationReady:reveal,modelDownload:model.promise,
+  loadMainPresentation:async()=>{},createLandingCopy:async()=>()=>{},placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
   cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},
-  opening:element(),openingStage:element(),openingPlayback:undefined,reduced:{matches:reduced},siteSound:{setActive(){}},performancePanel:{record(){}},
-  connectOpeningVideo:(_video,_button,onEnded,_requestTick,options)=>{
-   assert.equal(options.skipOnBlocked,true);
-   return{start(manual){started++;context.endOpening=onEnded;if(blocked||manual)onEnded()},destroy(){}};
-  },
+  reduced:{matches:reduced},siteSound:{setActive(){}},performancePanel:{record(){}},
  };
  vm.createContext(context);vm.runInContext(opening,context);
  const done=vm.runInContext('(async()=>{'+startup+'})()',context);
  await new Promise(resolve=>setImmediate(resolve));
- return{context,model,done,get started(){return started},get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
+ return{context,model,done,rendered,get disposed(){return disposed},get aborted(){return aborted},get removed(){return removed},get handoffs(){return handoffs},get redirect(){return redirect}};
 }
 
-test('the opening plays before scene readiness and holds its final frame until GPU preparation completes',async()=>{
- const view=await startupFixture();assert.equal(view.started,1);assert.equal(view.context.ready,false);
- view.context.endOpening();assert.equal(view.context.phase,'buffering');assert.equal(view.removed,0);assert.equal(view.context.$('journey-preparation').hidden,false);
+test('3D assembly starts only after GPU preparation with the original first pose',async()=>{
+ const view=await startupFixture();assert.equal(view.context.ready,false);assert.equal(view.rendered.length,0);
  view.model.resolve();await view.done;
- assert.equal(view.context.ready,true);assert.equal(view.context.phase,'idle');assert.equal(view.removed,1);assert.equal(view.context.$('journey-preparation').hidden,true);
+ assert.equal(view.context.ready,true);assert.equal(view.context.phase,'assembly');assert.equal(view.removed,1);
+ assert.deepEqual(view.rendered,[1]);assert.equal(view.context.$('journey-preparation').hidden,true);
 });
 
-test('blocked autoplay and reduced motion enter the scrollable scene when preparation completes',async()=>{
- for(const options of [{blocked:true},{reduced:true}]){
-  const view=await startupFixture(options);
-  assert.equal(view.context.phase,'buffering');assert.equal(view.context.ready,false);
-  view.model.resolve();await view.done;
-  assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);
-  assert.equal(view.context.document.body.dataset.phase,'idle');assert.equal(view.removed,1);
- }
+test('reduced motion starts at the assembled pose without any media activation',async()=>{
+ const view=await startupFixture({reduced:true});view.model.resolve();await view.done;
+ assert.equal(view.context.phase,'idle');assert.equal(view.context.ready,true);assert.deepEqual(view.rendered,[240]);
+});
+
+test('a ready 3D scene waits for the logo reveal before starting its assembly clock',async()=>{
+ const reveal=deferred(),view=await startupFixture({reveal:reveal.promise});view.model.resolve();
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(view.context.ready,false);assert.equal(view.rendered.length,0);
+ reveal.resolve();await view.done;assert.deepEqual(view.rendered,[1]);
+});
+
+test('a first swipe during assembly can advance directly into the journey',async()=>{
+ const view=await startupFixture();view.model.resolve();await view.done;
+ view.context.scrollY=100;view.context.travel=15392;view.context.lastFrame=2164;
+ const sync=source.slice(source.indexOf('function syncScroll(){'),source.indexOf("window.addEventListener('scroll',syncScroll"));
+ vm.runInContext(sync+';syncScroll();',view.context);
+ assert.equal(view.context.phase,'idle');assert.equal(view.context.frame,240);assert.ok(view.context.target>240);
 });
 
 test('skipping while a cold model loads releases its renderer without showing a false error',async()=>{

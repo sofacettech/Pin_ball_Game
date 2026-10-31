@@ -10,18 +10,17 @@
   <style data-entrance-style>__ENTRANCE_CSS__</style>
   <link rel="preload" href="/assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
 </head>
-<body data-phase="opening" data-loading>
+<body data-phase="buffering" data-loading>
   __SHARED_LOADER__
   <script type="module" src="__STARTUP_JS__"></script>
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
-      <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SO/ FACET fragmented ball assembling"></video></div>
+      <img id="scene-poster" src="/assets/opening-poster.webp" alt="" aria-hidden="true">
     </div>
     __SHARED_COPY__
     __SHARED_BRAND__
     __SHARED_NAVIGATION__
-    __SHARED_ENTER__
     <div id="scene-loading-status"><span data-scene-status role="status">Growing the diamonds…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
     <section id="journey-preparation" aria-label="Preparing your journey" hidden>
       <h2>A world taking shape.</h2>

@@ -202,8 +202,8 @@ function render(){
   onRender({frame,triangles:renderer.info.render.triangles,calls:renderer.info.render.calls,width:renderer.domElement.width,height:renderer.domElement.height});
 }
 function requestRender(){if(!renderRequested&&!suspended&&!disposed)renderRequested=requestAnimationFrame(render);}
-function setFrame(value){frame=THREE.MathUtils.clamp(value,240,2164);requestRender();}
-function renderAt(value){if(renderRequested)cancelAnimationFrame(renderRequested);frame=THREE.MathUtils.clamp(value,240,2164);render();}
+function setFrame(value){frame=THREE.MathUtils.clamp(value,1,2164);requestRender();}
+function renderAt(value){if(renderRequested)cancelAnimationFrame(renderRequested);frame=THREE.MathUtils.clamp(value,1,2164);render();}
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
   for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
@@ -230,7 +230,7 @@ async function loadVariant(name,{download}={}){
     onStatus('Preparing the lights…');
     // Prepare the actual HDR, transmission, and mirror passes. Compiling only
     // the default framebuffer leaves different shader variants cold at entry.
-    for(const warmFrame of [240,680,720,780,850,940,1000,1480,1520,1600,1680,1800]){
+    for(const warmFrame of [1,120,240,680,720,780,850,940,1000,1480,1520,1600,1680,1800]){
       mixer.setTime(warmFrame/motion.fps);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       renderer.setRenderTarget(composer.renderTarget1);

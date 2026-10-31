@@ -18,6 +18,8 @@ npm start
 
 Open `http://127.0.0.1:8766/` for the default Three.js entrance. `/entrance-3d` is an alias, `/play.html` opens the game, and `/video` opens the retained video comparison. Both entrance paths reuse the approved story copy, fonts, navigation and game loader. Production pages do not display developer inspection panels.
 
+The default entrance renders the ball assembly and scrolling journey in the same Three.js scene. After the logo reveal and model preparation, the authored frames 1–240 animate automatically; a first swipe can enter the journey immediately. Reduced motion starts at the assembled pose. The default entrance does not create a video element or request an opening video, and backgrounding pauses its assembly clock.
+
 For local configuration, copy `.env.example` to `.env` and fill in values privately. The game can run without rewards credentials; registration and reward saving require the services described below.
 
 ### iOS entrance rendering

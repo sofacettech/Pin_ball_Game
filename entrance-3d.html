@@ -254,10 +254,8 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 body[data-loading]{overflow:hidden}
 #scene-frame{will-change:transform}
 #scene-frame canvas{display:block;width:100%;height:100%}
-#opening-frame{position:absolute;left:0;top:0;aspect-ratio:16/9;z-index:1;pointer-events:none}
-#opening-frame #opening{width:100%;height:100%;object-fit:contain}
-body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel{visibility:hidden}
-#enter{z-index:5}
+#scene-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+body[data-loading] .frame-rate-panel{visibility:hidden}
 #scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
@@ -342,7 +340,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
 </style><link rel="preload" href="/assets/game-loader.js?v=a5735df1a965" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=a5735df1a965" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
-<body data-phase="opening" data-loading>
+<body data-phase="buffering" data-loading>
   <div id="site-loader" role="region" aria-label="Loading SO/ FACET">
     <div id="loading-stage" tabindex="0" aria-label="SO/ FACET logo reveal" aria-describedby="loading-instructions">
       <p id="loading-instructions">SO/ FACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
@@ -436,7 +434,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
-      <div id="opening-frame"><video id="opening" poster="/assets/opening-poster.webp" muted playsinline webkit-playsinline preload="auto" aria-label="SO/ FACET fragmented ball assembling"></video></div>
+      <img id="scene-poster" src="/assets/opening-poster.webp" alt="" aria-hidden="true">
     </div>
     <div id="story-copy" aria-label="The SO/ FACET story">
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
@@ -476,7 +474,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
           <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
     </header>
-    <button id="enter" hidden>Enter <span class="inline-brand"><span class="inline-brand__size" aria-hidden="true">SO/ FACET</span><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></span> <span aria-hidden="true">↗</span></button>
     <div id="scene-loading-status"><span data-scene-status role="status">Growing the diamonds…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
     <section id="journey-preparation" aria-label="Preparing your journey" hidden>
       <h2>A world taking shape.</h2>
@@ -490,6 +487,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-c21220d0bb2d"></script>
-  <script type="module" src="/assets/entrance-3d/entry-EWP7LFIN.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-EBNYXPZL.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

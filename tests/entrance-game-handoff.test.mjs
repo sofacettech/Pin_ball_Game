@@ -24,7 +24,7 @@ function entrance(){
  };
  const context={cancelStartup(){},game,gameLoader:loader,main:{setAttribute(){}},
   document:{body:{dataset:{},setAttribute(){}}},location:{origin:'http://localhost',replace:url=>redirects.push(url)},
-  siteSound:{handoff(){},save(){}},opening:{removeAttribute(){},load(){}},
+  siteSound:{handoff(){},save(){}},assembly:{finish(){}},
   journey:{suspend(){},dispose(){events.push('dispose-journey')}},
   MutationObserver:class{constructor(callback){this.callback=callback;observer=this}observe(){}disconnect(){this.disconnected=true}},
   cancelAnimationFrame(){},

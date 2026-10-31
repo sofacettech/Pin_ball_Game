@@ -2,10 +2,8 @@
 body[data-loading]{overflow:hidden}
 #scene-frame{will-change:transform}
 #scene-frame canvas{display:block;width:100%;height:100%}
-#opening-frame{position:absolute;left:0;top:0;aspect-ratio:16/9;z-index:1;pointer-events:none}
-#opening-frame #opening{width:100%;height:100%;object-fit:contain}
-body[data-loading] .frame-rate-panel,body[data-phase="opening"] .frame-rate-panel{visibility:hidden}
-#enter{z-index:5}
+#scene-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+body[data-loading] .frame-rate-panel{visibility:hidden}
 #scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}

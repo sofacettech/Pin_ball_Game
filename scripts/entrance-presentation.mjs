@@ -21,7 +21,6 @@ export function withEntrancePresentation(template, source) {
     COPY: /\bid="story-copy"/,
     BRAND: /\bclass="[^"]*\bsite-brand\b/,
     NAVIGATION: /<header\b[^>]*\bsite-navigation\b/,
-    ENTER: /\bid="enter"/,
   };
   for (const [key, selector] of Object.entries(sections)) {
     let html = fragment(source, selector);

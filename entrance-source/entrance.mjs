@@ -1,7 +1,6 @@
 import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js';
-import { prepareMedia } from '/assets/media-delivery.js?v=frames-dc4a9c95ed77';
-import { connectOpeningVideo } from '/assets/video-playback.js?v=entrance-opening-2';
+import { createAssemblyClock } from './assembly-clock.mjs';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
 
@@ -13,12 +12,12 @@ const parameters=new URLSearchParams(location.search);
 const performanceMode=parameters.get('quality')!=='reference';
 // Diagnostics are opt-in on every route, including the /entrance-3d alias.
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
-const opening=$('opening'),openingStage=$('opening-frame');
+const assembly=createAssemblyClock({reducedMotion:reduced.matches});
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
-let phase='loading',openingPlayback,gameLoader,gameReadyObserver;
+let phase='loading',gameLoader,gameReadyObserver;
 let gameRecovering=false;
-let sceneReady=false,openingFinished=false,startupFailed=false;
-let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
+let startupFailed=false;
+let frame=assembly.frame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
 
@@ -46,23 +45,16 @@ function placeStage(){
   renderView={fullWidth:placement.width,fullHeight:placement.height,x:-placement.x,y:-placement.y,width:rect.width,height:rect.height};
   stage.style.width=(performanceMode?rect.width:placement.width)+'px';stage.style.height=(performanceMode?rect.height:placement.height)+'px';
   stage.style.transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
-  if(phase==='loading'||phase==='opening'){
-    const introPlacement=placementAt(Math.min(firstFrame,opening.currentTime*60),rect);
-    openingStage.style.width=introPlacement.width+'px';openingStage.style.height=introPlacement.height+'px';
-    openingStage.style.transform=`translate3d(${introPlacement.x}px,${introPlacement.y}px,0)`;
-  }
 }
-function finishOpening(){
+function startScene(){
   if(gameRequested||startupFailed)return;
-  openingFinished=true;
-  if(!sceneReady){phase='buffering';document.body.dataset.phase=phase;$('journey-preparation').hidden=false;return;}
   $('journey-preparation').hidden=true;
   finishStartupStatus();
   $('scene-loading-status').setAttribute('data-ready','');
   setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
-  openingPlayback?.destroy();opening.removeAttribute('src');opening.load();openingStage.remove();
-  phase='idle';document.body.dataset.phase=phase;ready=true;
-  updateCopy(firstFrame);placeStage();journey.resize();syncScroll();
+  phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
+  frame=assembly.frame;updateCopy(frame);placeStage();journey.resize();journey.renderAt(frame);
+  $('scene-poster').remove();siteSound.setActive(true);syncScroll();requestTick();
 }
 function gameVisibility(visible){
   game.contentWindow?.postMessage({type:'sofacet:experience-visibility',visible},location.origin);
@@ -87,7 +79,7 @@ function showGame(){
 function enterGame({fromChess=false}={}){
   if(gameRequested)return;gameRequested=true;cancelStartup();
   cancelAnimationFrame(raf);raf=0;journey?.suspend();siteSound.handoff();
-  openingPlayback?.destroy();opening.removeAttribute('src');opening.load();
+  assembly.finish();
   // Keep game work after the 3D loop stops. The origin/main loader covers real
   // game readiness, including its reward-copy sequence after the chess room.
   main.inert=true;document.body.setAttribute('data-game-loading','');
@@ -119,11 +111,13 @@ $('scroll-hint').addEventListener('click',()=>{siteSound.unlock();window.scrollT
 
 function tick(now){
   raf=0;if(gameRequested||document.hidden)return;
-  if(phase==='opening'){
-    placeStage();updateCopy(Math.min(firstFrame,opening.currentTime*60));
-    if(!opening.paused&&!opening.ended)requestTick();return;
-  }
   if(!ready)return;
+  if(phase==='assembly'){
+    frame=assembly.advance(now);placeStage();updateCopy(frame);journey.renderAt(frame);
+    if(assembly.active)requestTick();
+    else{phase='idle';document.body.dataset.phase=phase;syncScroll();}
+    return;
+  }
   const tickStart=performance.now();
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
   const amount=coarse.matches||reduced.matches?1:1-Math.exp(-dt/75);
@@ -139,33 +133,31 @@ function tick(now){
   if(frame!==target)requestTick();else lastTime=0;
 }
 function requestTick(){if(!raf&&!document.hidden&&!gameRequested)raf=requestAnimationFrame(tick);}
-function syncScroll(){if(!ready)return;target=firstFrame+(lastFrame-firstFrame)*Math.max(0,Math.min(1,scrollY/travel));requestTick();}
+function syncScroll(){
+  if(!ready)return;
+  // A swipe can enter the journey immediately, without waiting for assembly.
+  if(phase==='assembly'&&scrollY>0){frame=assembly.finish();phase='idle';document.body.dataset.phase=phase;}
+  target=firstFrame+(lastFrame-firstFrame)*Math.max(0,Math.min(1,scrollY/travel));requestTick();
+}
 window.addEventListener('scroll',syncScroll,{passive:true});
 const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.resize();requestTick();}});
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
   gameVisibility(gameVisible&&!document.hidden);
-  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;journey?.suspend();}
+  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
-window.addEventListener('pagehide',event=>{if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();openingPlayback?.destroy();updateCopy?.destroy();journey?.dispose();}});
+window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
 
 try{
   const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
-  // The opening is usable while the model downloads. Keep its final frame and
-  // a live progress indicator until the scene's actual GPU preparation is done.
-  const openingReady=(async()=>{
+  const copyReady=(async()=>{
     await loadMainPresentation();
-    const [copy]=await Promise.all([createLandingCopy(),prepareMedia(opening),pointsReady]);
+    const [copy]=await Promise.all([createLandingCopy(),pointsReady]);
     updateCopy=copy;
-    await presentationReady;
-    if(gameRequested||startupFailed)return;
-    phase='opening';document.body.dataset.phase=phase;updateCopy(0);placeStage();
-    openingPlayback=connectOpeningVideo(opening,$('enter'),finishOpening,requestTick,{skipOnBlocked:true});
-    siteSound.setActive(true);openingPlayback.start(reduced.matches);
   })();
   const scenePrepared=(async()=>{
     const renderModule=await import('./journey-renderer.mjs');
@@ -179,15 +171,14 @@ try{
     if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
     await journey.loadVariant('compact',{download:modelDownload});
     if(gameRequested||startupFailed){journey?.dispose();journey=null;return;}
-    sceneReady=true;
-    if(openingFinished)finishOpening();
   })();
-  await Promise.all([openingReady,scenePrepared]);
+  // Reveal and GPU preparation must both finish before the first 3D frame.
+  await Promise.all([copyReady,scenePrepared,presentationReady]);
+  startScene();
 }catch(error){
   startupFailed=true;cancelStartup();
   journey?.dispose();journey=null;
   if(!gameRequested){
-    openingPlayback?.destroy();
     document.body.dataset.error='';console.error(error);
     await presentationReady;
     // The entrance is optional. Recover through the normal game loader instead
