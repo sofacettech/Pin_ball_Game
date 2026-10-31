@@ -41,6 +41,8 @@ try{
    if(version==='current'){
     assert.equal(result.panel.height,80,'portrait launch/score panel remains compact');
     assert.ok(result.board.height<=(viewport.width-20)*1.2+1,'extra height does not expand the WebGL buffer');
+    const oldBuffer=results.find(r=>r.name===name&&r.version==='baseline')?.buffer||(name==='phone'?[555,616]:[559,889]);
+    assert.ok(result.buffer[0]*result.buffer[1]<=oldBuffer[0]*oldBuffer[1],'compact controls must not increase the former phone render budget');
     assert.ok(result.launch.height>=44&&result.launch.bottom<=viewport.height,'launch control is reachable and onscreen');
     assert.ok(result.mutations<=5,`stationary gameplay must not rewrite unchanged UI (${result.mutations} mutations)`);
     await page.locator('#pause').click();assert.equal(await page.locator('#pause').getAttribute('aria-label'),'Resume game');
