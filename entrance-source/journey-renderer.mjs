@@ -13,6 +13,7 @@ import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
 import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { createOpeningFraming } from './opening-framing.mjs';
+import { prepareJourneyGeometry } from './geometry-budget.mjs';
 import { createExteriorLook } from './exterior-look.mjs';
 import { createInteriorLook } from './interior-look.mjs';
 import { createChessLook } from './chess-look.mjs';
@@ -59,6 +60,7 @@ let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
 const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
 let reflectionBindings=[],reflectionMaterials=new Map();
+let geometryStats=null;
 let lastReflectionFrame=null,entryReflectionTurn=0;
 const q0=new THREE.Quaternion(),q1=new THREE.Quaternion();
 const lerp=THREE.MathUtils.lerp;
@@ -246,7 +248,10 @@ async function loadVariant(name,{download}={}){
     const bytes=await (download||fetch(base+'journey-'+name+'.glb').then(response=>{if(!response.ok)throw Error('Export not available: '+response.status);return response.arrayBuffer();}));
     if(id!==loadID||disposed)return;
     const gltf=await loader.parseAsync(bytes,base);if(id!==loadID||disposed)return;
-    model=gltf.scene;scene.add(model);const look=exterior.install(model);interior.install(model);chess.install(model);mixer=new THREE.AnimationMixer(model);actions=gltf.animations.map(clip=>{const a=mixer.clipAction(clip);a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play();return a;});
+    model=gltf.scene;
+    geometryStats=policy.mobile?await prepareJourneyGeometry(model):null;
+    if(id!==loadID||disposed)return;
+    scene.add(model);const look=exterior.install(model);interior.install(model);chess.install(model);mixer=new THREE.AnimationMixer(model);actions=gltf.animations.map(clip=>{const a=mixer.clipAction(clip);a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play();return a;});
     matchExteriorPalette(model);
     prepareStableLighting();
     if(performanceMode)batchBall();
@@ -285,5 +290,5 @@ function dispose(){
   renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
 }
 return {setFrame,renderAt,renderAssemblyAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,policy,batchingMode,
-  get model(){return model;},get mixer(){return mixer;},get frame(){return frame;}};
+  get model(){return model;},get mixer(){return mixer;},get frame(){return frame;},get geometryStats(){return geometryStats;}};
 }

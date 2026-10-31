@@ -10,7 +10,7 @@ export class NeonMaterial extends THREE.MeshBasicMaterial {
   super();
   // Three refreshes the compatibility emission field even on a basic shader.
   this.onBeforeCompile=shader=>{shader.uniforms.emissive={value:new THREE.Color()}};
-  if(source){this.name=source.name;this.side=source.side;this.transparent=source.transparent;this.opacity=source.opacity;this.emissive.copy(source.emissive);this.emissiveIntensity=source.emissiveIntensity}
+  if(source){this.userData={...source.userData};this.name=source.name;this.side=source.side;this.transparent=source.transparent;this.opacity=source.opacity;this.emissive.copy(source.emissive);this.emissiveIntensity=source.emissiveIntensity}
  }
  get emissiveIntensity(){return this.strength}
  set emissiveIntensity(value:number){
@@ -71,13 +71,13 @@ export async function prepareGeometry(root:THREE.Object3D){
 
 // Complete view draws the same static geometry and material instances in fewer
 // calls. Ball view retains spatial culling; inspection retains original meshes.
-export function batchOverview(root:THREE.Object3D){
+export function batchOverview(root:THREE.Object3D,fixedGroups:ReadonlySet<string>=new Set()){
  root.updateMatrixWorld(true);
  const buckets=new Map<THREE.Material,Map<string,THREE.Mesh[]>>(),hidden:{mesh:THREE.Mesh;visible:boolean}[]=[];
  const group=new THREE.Group();group.name='Complete view | shared-material static batches';group.visible=false;
  root.traverse(obj=>{
   if(!(obj instanceof THREE.Mesh)||!obj.visible||Array.isArray(obj.material)||obj.material.transparent||(obj.material instanceof THREE.MeshPhysicalMaterial&&obj.material.transmission>0))return;
-  const id=obj.userData.game_render_group||'';if(!id.startsWith('static_')&&id!=='rail_network')return;
+  const id=obj.userData.game_render_group||'';if(!id.startsWith('static_')&&id!=='rail_network'&&!fixedGroups.has(id)||obj.material.userData.gameDynamic)return;
   const signature=Object.keys(obj.geometry.attributes).sort().map(k=>{const a=obj.geometry.attributes[k];return k+':'+a.itemSize+':'+a.normalized+':'+a.array.constructor.name+':'+('gpuType' in a?a.gpuType:'default')}).join(',');
   const byAttributes=buckets.get(obj.material)||new Map<string,THREE.Mesh[]>(),list=byAttributes.get(signature)||[];list.push(obj);byAttributes.set(signature,list);buckets.set(obj.material,byAttributes);
  });
@@ -85,7 +85,7 @@ export function batchOverview(root:THREE.Object3D){
  for(const [material,attributes] of buckets)for(const list of attributes.values()){
   if(list.length<2)continue;
   const pieces=list.map(mesh=>mesh.geometry.clone().applyMatrix4(mesh.matrixWorld)),geometry=mergeGeometries(pieces,false);for(const piece of pieces)piece.dispose();if(!geometry)continue;
-  geometry.computeBoundingBox();geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,material);mesh.name='Overview batch | '+material.name;group.add(mesh);
+  geometry.computeBoundingBox();geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,material);mesh.name='Overview batch | '+material.name;mesh.userData.cacheStatic=true;group.add(mesh);
   for(const mesh of list)hidden.push({mesh,visible:mesh.visible});originalDraws+=list.length;
  }
  root.add(group);

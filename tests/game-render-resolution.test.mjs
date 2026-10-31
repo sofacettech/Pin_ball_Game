@@ -31,7 +31,7 @@ test('handheld Full preserves density without allocating multisampled HDR target
   for(const [w,h,dpr] of [[390,700,3],[844,390,3],[1024,1366,2]]){
     const phone=gameRenderResolution('full',3,w,h,dpr,true);
     const desktop=gameRenderResolution('full',3,w,h,dpr,false);
-    assert.equal(phone.pixelRatio,desktop.pixelRatio);
+    assert.equal(phone.pixelRatio,2);assert.equal(desktop.pixelRatio,1.5);
     assert.equal(phone.samples,0);assert.equal(desktop.samples,2);
     assert.equal(phone.transmissionScale,.5);
     for(let tier=0;tier<=3;tier++){
@@ -166,4 +166,9 @@ test('only active unobstructed ball play can activate Auto and update the settin
     for(let i=0;i<180;i++)context.sample(i*40);
     assert.equal(context.quality.value,block?'full':'auto');assert.equal(controller.mode,block?'full':'auto');
   }
+});
+
+test('phone Auto preserves detail with gradual 2x to 1.25x steps',()=>{
+  assert.deepEqual([0,1,2,3].map(level=>gameRenderResolution('auto',level,393,440,3,true).pixelRatio),[1.25,1.5,1.75,2]);
+  assert.equal(gameRenderResolution('auto',3,393,440,1,true).pixelRatio,1);
 });
