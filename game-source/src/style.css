@@ -413,6 +413,19 @@ body.handheld #stage.has-scorecard{padding-top:var(--site-header-clearance)}
 @media(prefers-reduced-motion:reduce){body.handheld .side-panel .card-inner,body.handheld #stage #scorecard-panel #touch-launch{transition:none}}
 body.handheld #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#171022;box-shadow:inset 0 0 0 1px var(--card-lime)}
 
+/* Keep portrait play and its controls together without rendering a tall empty
+   canvas. Short screens can shrink the board; taller screens cap its buffer. */
+@media(orientation:portrait){
+ body.phone-layout:not(.practising-controls) #stage.has-scorecard:not(.showing-play){grid-template-rows:minmax(0,calc((100cqw - 20px)*1.2)) auto;gap:12px;align-content:center}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .side-panel{--card-height:80px}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped .card-face.back{grid-template-rows:16px minmax(0,1fr);gap:4px 12px;padding:8px 14px}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped .card-heading{font-size:12px;line-height:16px;padding:0;margin:0}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped .card-heading svg{width:18px;height:15px}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped :is(.score-block,.best-block){padding:0;gap:2px}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped .section-label{padding:0;line-height:1.2}
+ body.phone-layout:not(.practising-controls) #stage:not(.showing-play) .flip-card.flipped :is(.score-number,.best-number){font-size:min(calc(var(--score-size,76px)*.5),28px);line-height:1}
+}
+
 /* A first-time player needs only Play. Keep the guide's reserved space while practising. */
 body:not(.practising-controls) #stage.has-scorecard .side-panel.play-only{height:auto;align-self:center}
 
