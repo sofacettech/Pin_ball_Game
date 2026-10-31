@@ -1,6 +1,6 @@
 import {createFrameRateMeter,summarizeFrameUpdates} from './frame-rate-meter.js';
 
-export function createFrameRatePanel({label,getState,compareURL,compareLabel,travel,minimumFPS=null}){
+export function createFrameRatePanel({label,getState,compareURL,compareLabel,travel,firstFrame=240,minimumFPS=null}){
   const style=document.createElement('style');
   style.textContent=`
     .frame-rate-panel{position:fixed;right:20px;bottom:20px;z-index:10001;width:266px;padding:16px;border:1px solid #ffffff30;border-radius:14px;background:#0b0d18ed;box-shadow:0 8px 30px #0004;color:#f6f2ff;font:12px/1.5 system-ui,sans-serif;backdrop-filter:blur(12px)}
@@ -67,7 +67,7 @@ export function createFrameRatePanel({label,getState,compareURL,compareLabel,tra
       if(document.hidden){finish(true);return;}
       // Let the existing renderer/decoder return to its start before measuring.
       if(run.started===null){
-        if(getState().frame>241&&now-run.preparing<5000){run.raf=requestAnimationFrame(step);return;}
+        if(getState().frame>firstFrame+1&&now-run.preparing<5000){run.raf=requestAnimationFrame(step);return;}
         run.started=now;meter.setActive(false,now);meter.setActive(true,now);
       }
       const progress=Math.min(1,(now-run.started)/10000);
