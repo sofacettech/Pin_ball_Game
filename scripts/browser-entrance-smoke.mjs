@@ -15,7 +15,7 @@ assert.ok(['webkit', 'chromium'].includes(engine), 'SOFACET_BROWSER must be webk
 const {[engine]: browserType, devices} = require(process.env.SOFACET_PLAYWRIGHT_PATH || 'playwright');
 const url = new URL(process.env.SOFACET_ENTRANCE_URL || 'http://127.0.0.1:8766/');
 assert.equal(url.searchParams.has('quality'), false, 'Omit quality overrides to test automatic iPhone selection');
-url.hash = '#experience';
+if(process.env.SOFACET_ENTRANCE_FULL_INTRO !== '1')url.hash = '#experience';
 const minimumFPS = process.env.SOFACET_MIN_FPS ? Number(process.env.SOFACET_MIN_FPS) : null;
 assert.ok(minimumFPS === null || (Number.isFinite(minimumFPS) && minimumFPS > 0), 'SOFACET_MIN_FPS must be positive');
 const output = fileURLToPath(new URL('../work/entrance-performance/', import.meta.url));
@@ -61,6 +61,19 @@ try {
       if (/THREE\.WebGLProgram|VALIDATE_STATUS|shader.*(?:error|failed)|(?:error|failed).*shader|GL_INVALID_/i.test(message.text())) result.shaderErrors.push(message.text());
     });
     page.on('requestfailed', request => result.failedRequests.push({url: request.url(), error: request.failure()?.errorText}));
+    await page.addInitScript(() => {
+      window.entranceRevealSamples=[];
+      const observer=new MutationObserver(records=>{
+        for(const {target} of records){
+          if(target.id!=='site-loader'||!target.classList.contains('leaving')||window.entranceRevealSamples.length)continue;
+          const renderer=window.entrancePreview?.renderer;
+          window.entranceRevealSamples.push({posterPresent:!!document.querySelector('#scene-poster'),
+            draws:renderer?.info.render.calls||0,triangles:renderer?.info.render.triangles||0});
+          observer.disconnect();
+        }
+      });
+      observer.observe(document,{subtree:true,attributes:true,attributeFilter:['class']});
+    });
     if (disableMultiDraw) await page.addInitScript(() => {
       for (const type of [globalThis.WebGLRenderingContext, globalThis.WebGL2RenderingContext]) {
         if (!type) continue;
@@ -95,6 +108,10 @@ try {
       await page.waitForFunction(() => document.body.hasAttribute('data-error') || window.entrancePreview?.ready, {}, {timeout: 120000});
       assert.equal(await page.locator('body').getAttribute('data-error'), null, 'The release scene must load without its error fallback');
       await page.waitForFunction(() => window.entrancePreview?.ready, {}, {timeout: 120000});
+      result.reveal=await page.evaluate(()=>window.entranceRevealSamples);
+      assert.equal(result.reveal.length,1,'Observe the actual loader-to-scene handoff');
+      assert.equal(result.reveal[0].posterPresent,false,'The loader must never fade onto the outdated ball poster');
+      assert.ok(result.reveal[0].draws>0&&result.reveal[0].triangles>0,'Draw the real opening before revealing it');
       assert.equal(await page.locator('video').count(),0,'The entrance must render its assembly without a video');
       result.initial = await readState(page);
       assert.equal(result.initial.quality?.mobile, true, 'iPhone must select mobile quality without a URL override');

@@ -56,9 +56,15 @@ function startScene(){
   $('scene-loading-status').setAttribute('data-ready','');
   setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
   phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
+  siteSound.setActive(true);syncScroll();requestTick();
+}
+function prepareScene(){
+  if(gameRequested||startupFailed)return;
+  // Replace the old video poster while the loader is still opaque. The fade
+  // must reveal the relocated 3D opening, with its animation held until ready.
   frame=firstFrame;updateCopy(assembly.active?assembly.frame:240);placeStage();journey.resize();
   if(assembly.active)journey.renderAssemblyAt(assembly.frame);else journey.renderAt(frame);
-  $('scene-poster').remove();siteSound.setActive(true);syncScroll();requestTick();
+  $('scene-poster').remove();
 }
 function gameVisibility(visible){
   game.contentWindow?.postMessage({type:'sofacet:experience-visibility',visible},location.origin);
@@ -178,6 +184,7 @@ try{
   })();
   // Keep the logo visible until assets, cached poses and real GPU passes are ready.
   await Promise.all([copyReady,scenePrepared]);
+  prepareScene();
   completePreparation();
   await presentationReady;
   startScene();
