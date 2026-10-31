@@ -39,7 +39,7 @@ try{
    const result={engine,name,version,...await measure(),errors};results.push(result);
    await page.screenshot({path:resolve(output,`${engine}-${name}-${version}.png`)});
    if(version==='current'){
-    assert.equal(result.panel.height,80,'portrait launch/score panel remains compact');
+    assert.equal(result.panel.height,96,'portrait launch/score panel leaves room inside the score borders');
     assert.ok(result.board.height<=(viewport.width-20)*1.2+1,'extra height does not expand the WebGL buffer');
     const oldBuffer=results.find(r=>r.name===name&&r.version==='baseline')?.buffer||(name==='phone'?[555,616]:[559,889]);
     assert.ok(result.buffer[0]*result.buffer[1]<=oldBuffer[0]*oldBuffer[1],'compact controls must not increase the former phone render budget');
@@ -54,6 +54,14 @@ try{
     assert.ok(Number(await page.locator('.charge').getAttribute('aria-valuenow'))>0,'charge remains responsive while other UI is cached');
     await page.mouse.up();await page.waitForFunction(()=>document.querySelector('#scorecard-panel').dataset.scoreVisible==='true');
     assert.equal(await page.locator('#scoreboard').getAttribute('aria-hidden'),'false');
+    const scoreSpacing=await page.locator('#scoreboard').evaluate(card=>[...card.querySelectorAll('.score-block,.best-block')].map(block=>{
+     const box=block.getBoundingClientRect(),label=block.querySelector('.section-label').getBoundingClientRect(),value=block.querySelector('strong').getBoundingClientRect();
+     return{above:label.top-box.top,between:value.top-label.bottom,below:box.bottom-value.bottom};
+    }));
+    for(const spacing of scoreSpacing){
+     assert.ok(spacing.above>=4&&spacing.below>=4,'score labels and values must clear their own box borders');
+     assert.ok(spacing.between>=1,'score labels and values must not overlap');
+    }
     const number=await page.locator('#card-score').boundingBox(),panel=await page.locator('#scorecard-panel').boundingBox();
     assert.ok(number.y>=panel.y&&number.y+number.height<=panel.y+panel.height,'score fits the compact card');
     await page.locator('#pause').click();
