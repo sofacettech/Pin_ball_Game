@@ -381,7 +381,7 @@ export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(
       card.material.uniforms.radiance.value.copy(light.color).multiplyScalar(cardRadiance*THREE.MathUtils.lerp(1,light.userData.roomGain??1,roomTint));
     }
     for(const {material,color} of interiorMaterials)material.color.copy(color).multiplyScalar(THREE.MathUtils.lerp(1,.25,roomHiddenUniform.value));
-    lights.visible=performanceMode||strength>0;
+    lights.visible=strength>0;
     for(const light of lights.children){if(!light.isLight)continue;light.userData.fullIntensity??=light.intensity;light.intensity=light.userData.fullIntensity*strength*THREE.MathUtils.lerp(1,light.userData.roomGain??1,roomTint);}
     for(const u of uniforms)u.weight.value=u.strength*strength;
     if(strength<=0||!reflectiveMeshes.length||!refreshReflection)return;

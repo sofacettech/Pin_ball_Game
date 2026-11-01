@@ -77,6 +77,7 @@ jobs:
           done
           # Record timing without treating hosted-runner emulation as iPhone certification.
           node scripts/browser-entrance-smoke.mjs
+          node scripts/browser-entrance-preparation.mjs
           node scripts/browser-reflection-continuity.mjs
           node scripts/browser-ball-handoff.mjs
           node scripts/browser-chess-transition.mjs
@@ -91,6 +92,7 @@ jobs:
           name: entrance-${{ matrix.browser }}
           path: |
             work/entrance-performance/
+            work/entrance-preparation/
             work/reflections/
             work/ball-handoff/
             work/chess-transition/

@@ -147,7 +147,7 @@ export function createInteriorLook(scene,renderer,{reflectionPass,captureReflect
     const visible=THREE.MathUtils.smoothstep(frame,560,720)*exit;
     localStrength.value=visible;
     ballStrength.value=THREE.MathUtils.smoothstep(frame,640,800)*exit;
-    lights.visible=performanceMode||visible>0;
+    lights.visible=visible>0;
     for(const light of lights.children)light.intensity=light.userData.fullIntensity*visible;
     reflectionStrength.value=THREE.MathUtils.smoothstep(frame,680,780)*exit*.72;
     // Camera grading follows entry; room illumination is visible from outside.
