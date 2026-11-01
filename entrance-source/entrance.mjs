@@ -3,6 +3,7 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
+import { advanceJourneyFrame } from './journey-motion.mjs';
 import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
@@ -138,8 +139,7 @@ function tick(now){
   }
   const tickStart=performance.now();
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
-  const amount=coarse.matches||reduced.matches?1:1-Math.exp(-dt/75);
-  frame+= (target-frame)*amount;if(Math.abs(target-frame)<.15)frame=target;
+  frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
   placeStage();updateCopy.setScrolled(target>firstFrame);updateCopy(storyFrameAt(frame));
   document.body.toggleAttribute('data-scrolled',target>firstFrame+8);
   $('progress').style.transform=`scaleX(${(frame-firstFrame)/(lastFrame-firstFrame)})`;

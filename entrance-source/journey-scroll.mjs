@@ -1,23 +1,22 @@
 export const JOURNEY_START_FRAME=334;
-// Start near the doorway. Both the outdoor approach and empty chessboard use
-// half the scrolling; the rooms and final contact keep their authored pacing.
+// Integral of a smooth 0→1 ramp, with zero acceleration at either end.
+export function integratedRamp(frame,center,halfWidth=80){
+  const width=halfWidth*2,x=frame-(center-halfWidth);
+  if(x<=0)return 0;
+  if(x>=width)return x-halfWidth;
+  const t=x/width;return width*(t*t*t-.5*t*t*t*t);
+}
+// Keep the shorter approaches and total travel, blending their speeds into
+// the rooms instead of doubling the ball's speed at a single scroll position.
 export function createJourneyScrollMap(firstFrame=JOURNEY_START_FRAME,lastFrame=2164) {
-  const chessStart=1560,chessEnd=2000;
-  const doorway=780,approach=(doorway-firstFrame)*4;
-  const before=approach+(chessStart-doorway)*8;
-  const crossing=before+(chessEnd-chessStart)*4;
-  const points=[[firstFrame,0],[doorway,approach],[chessStart,before],[chessEnd,crossing],[lastFrame,crossing+(lastFrame-chessEnd)*8]];
-  function sample(value,from,to) {
-    if(value<=points[0][from])return points[0][to];
-    for(let i=1;i<points.length;i++) {
-      const a=points[i-1],b=points[i];
-      if(value<=b[from])return a[to]+(value-a[from])/(b[from]-a[from])*(b[to]-a[to]);
-    }
-    return points.at(-1)[to];
+  const distance=frame=>4*(frame+integratedRamp(frame,780)-integratedRamp(frame,1560)+integratedRamp(frame,2000));
+  const start=distance(firstFrame),travel=distance(lastFrame)-start;
+  const scrollAtFrame=frame=>distance(Math.max(firstFrame,Math.min(lastFrame,frame)))-start;
+  function frameAtScroll(value){
+    if(value<=0)return firstFrame;if(value>=travel)return lastFrame;
+    let low=firstFrame,high=lastFrame;
+    for(let i=0;i<44;i++){const mid=(low+high)/2;if(scrollAtFrame(mid)<value)low=mid;else high=mid;}
+    return (low+high)/2;
   }
-  return {
-    travel:points.at(-1)[1],
-    frameAtScroll:value=>sample(value,1,0),
-    scrollAtFrame:value=>sample(value,0,1),
-  };
+  return {travel,frameAtScroll,scrollAtFrame};
 }
