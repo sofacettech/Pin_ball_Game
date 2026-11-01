@@ -1,15 +1,10 @@
 import {JOURNEY_START_FRAME} from './journey-scroll.mjs';
+import {loadEntranceMedia} from './video-delivery.mjs';
 
 // Short GOP media belongs to the browser decoder. The existing all-IDR
 // WebCodecs worker cannot decode these samples independently.
 export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{}}){
-  const base='/assets/entrance-video/';
-  const response=await fetch(base+'manifest.json');
-  if(!response.ok)throw Error('Rendered entrance is unavailable');
-  const manifest=await response.json();
-  if(manifest.version!==1||manifest.width!==1920||manifest.height!==1080||manifest.fps!==60||
-    manifest.firstFrame!==JOURNEY_START_FRAME||manifest.lastFrame!==2164||
-    manifest.clips?.opening?.frameCount!==240||manifest.clips?.journey?.frameCount!==1831)throw Error('Invalid rendered entrance');
+  const {manifest,clips}=await loadEntranceMedia();
   const canvas=document.createElement('canvas');canvas.width=manifest.width;canvas.height=manifest.height;
   const context=canvas.getContext('2d',{alpha:false});
   if(!context)throw Error('Video canvas unavailable');
@@ -62,19 +57,34 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
   async function loadVariant(){
     await Promise.all(['opening','journey'].map(kind=>new Promise((resolve,reject)=>{
       const video=document.createElement('video');videos[kind]=video;
-      video.muted=true;video.playsInline=true;video.preload='auto';video.setAttribute('webkit-playsinline','');
-      const timer=setTimeout(()=>reject(Error('Rendered entrance loading timed out')),30000);loadingTimers.add(timer);
+      video.crossOrigin='anonymous';video.muted=true;video.playsInline=true;video.preload='auto';video.setAttribute('webkit-playsinline','');
+      let local=clips[kind].url===clips[kind].local,timer;
+      const clear=()=>{clearTimeout(timer);loadingTimers.delete(timer)};
+      const arm=()=>{clear();timer=setTimeout(()=>retryOrFail(Error('Rendered entrance loading timed out')),30000);loadingTimers.add(timer)};
+      const retryOrFail=error=>{
+        clear();
+        if(!local&&!disposed){
+          local=true;
+          if(pending?.kind===kind){pending=null;clearTimeout(timeout)}
+          if(painted?.kind===kind)painted=null;
+          if(kind==='opening')stopOpening();
+          video.src=clips[kind].local;arm();video.load();
+        }else{reject(error);fail(error)}
+      };
+      arm();
       events.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Entrance disposed','AbortError'));},{once:true});
-      const loaded=()=>{clearTimeout(timer);loadingTimers.delete(timer);resolve();};
-      video.addEventListener('loadeddata',loaded,{once:true,signal:events.signal});
-      video.addEventListener('error',()=>{clearTimeout(timer);const error=Error('Rendered entrance video failed');reject(error);fail(error);},{signal:events.signal});
+      const loaded=()=>{
+        if(video.videoWidth!==canvas.width||video.videoHeight!==canvas.height||Math.abs(video.duration-manifest.clips[kind].frameCount/60)>.02){retryOrFail(Error('Rendered entrance media does not match its manifest'));return}
+        clear();resolve();pump();
+      };
+      video.addEventListener('loadeddata',loaded,{signal:events.signal});
+      video.addEventListener('error',()=>retryOrFail(Error('Rendered entrance video failed')),{signal:events.signal});
       video.addEventListener('seeked',()=>{
         if(!pending||pending.kind!==kind)return;
         const request=pending;pending=null;clearTimeout(timeout);
         paint(request);pump();
       },{signal:events.signal});
-      // Only fixed local filenames are accepted, regardless of manifest content.
-      video.src=base+kind+'.mp4?v='+manifest.clips[kind].sha256;video.load();
+      video.src=clips[kind].url;video.load();
     })));
     for(const [kind,video] of Object.entries(videos)){
       if(video.videoWidth!==canvas.width||video.videoHeight!==canvas.height||Math.abs(video.duration-manifest.clips[kind].frameCount/60)>.02)throw Error('Rendered entrance media does not match its manifest');

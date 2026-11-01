@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
-async function fixture(){
+async function fixture({cdn=false}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
     readyState=2;videoWidth=1920;videoHeight=1080;time=0;seeking=false;seeks=[];
@@ -17,9 +18,9 @@ async function fixture(){
   let removed=false;
   const canvas={getContext:()=>({drawImage:video=>draws.push({video,index:Math.floor(video.time*60)})}),remove(){removed=true}};
   const manifest={version:1,width:1920,height:1080,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
-  const context={JOURNEY_START_FRAME:334,document:{createElement:type=>type==='canvas'?canvas:new Video()},
+  const context={JOURNEY_START_FRAME:334,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4'}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console};
-  vm.runInNewContext(source.replace(/^import .*;\n/,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
+  vm.runInNewContext(source.replace(/^import .*;\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},onError:error=>errors.push(error)});
   await renderer.loadVariant();
   return{renderer,videos,draws,errors,get removed(){return removed}};
@@ -79,4 +80,48 @@ test('opening uses consecutive decoded video frames after the loader, then cance
     f.renderer.renderAt(334);assert.equal(video.paused,true);assert.ok(cancels>0);
     f.videos[1].complete();assert.equal(f.renderer.settled,true);
   }finally{f.renderer.dispose()}
+});
+
+test('CDN playback failure retries the matching local timeline once and preserves scroll intent',async()=>{
+  const f=await fixture({cdn:true}),video=f.videos[1];
+  try{
+    assert.equal(video.crossOrigin,'anonymous');
+    assert.equal(video.src,'https://media.example/journey.mp4');
+    f.renderer.renderAt(1500);
+    const ready=f.renderer.whenSettled();
+    video.dispatchEvent(new Event('error'));
+    await Promise.resolve();
+    assert.equal(video.src,'/local/journey.mp4');assert.equal(f.errors.length,0);
+    video.complete();await ready;assert.equal(f.renderer.displayedFrame,1500);
+    f.renderer.renderAt(1600);
+    const failed=assert.rejects(f.renderer.whenSettled(),/video failed/);
+    video.dispatchEvent(new Event('error'));await failed;assert.equal(f.errors.length,1);
+  }finally{f.renderer.dispose()}
+});
+
+test('higher-quality CDN media requires a complete matching timeline and immutable filenames',async()=>{
+  const local={version:1,width:1920,height:1080,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
+  const remote=structuredClone(local);
+  for(const kind of ['opening','journey'])remote.clips[kind]={...remote.clips[kind],file:`entrance-${kind}-${remote.clips[kind].sha256}.mp4`,bytes:100};
+  const calls=[];
+  let config={entranceManifestURL:'https://media.example/release/manifest.json'};
+  const fetcher=async url=>{calls.push(url);return {ok:true,json:async()=>url==='/api/media-config'?config:String(url).startsWith('https:')?remote:local}};
+  const good=await loadEntranceMedia(fetcher);
+  assert.equal(good.clips.journey.url,`https://media.example/release/${remote.clips.journey.file}`);
+  assert.match(good.clips.journey.local,/^\/assets\/entrance-video\/journey.mp4/);
+  remote.clips.journey.frameCount=100;
+  const mismatched=await loadEntranceMedia(fetcher);
+  assert.equal(mismatched.clips.opening.url,mismatched.clips.opening.local);
+  remote.clips.journey.frameCount=1831;remote.clips.journey.file='https://unrelated.example/video.mp4';
+  const malformed=await loadEntranceMedia(fetcher);
+  assert.equal(malformed.clips.opening.url,malformed.clips.opening.local);
+  config={entranceManifestURL:'http://media.example/manifest.json'};
+  const before=calls.length;
+  const insecure=await loadEntranceMedia(fetcher);
+  assert.equal(insecure.clips.journey.url,insecure.clips.journey.local);
+  assert.equal(calls.length-before,2,'invalid CDN URL is never fetched');
+  const unavailable=await loadEntranceMedia(async url=>{
+    if(url==='/api/media-config')throw Error('offline');return {ok:true,json:async()=>local};
+  });
+  assert.equal(unavailable.clips.opening.url,unavailable.clips.opening.local);
 });
