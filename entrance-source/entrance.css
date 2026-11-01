@@ -39,6 +39,3 @@ body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-
 body[data-loading] #scroll-hint{visibility:hidden}
 #scene-loading-status[data-ready]{bottom:calc(132px + env(safe-area-inset-bottom,0px));pointer-events:none}
 #scene-loading-status[data-ready] progress{display:none}
-
-.startup-feedback [data-video-skip]{color:#cbd0bf;text-underline-offset:4px;padding:10px;min-height:44px;box-sizing:border-box}
-.startup-feedback [data-video-skip]:focus-visible{outline:2px solid #b9cd45;outline-offset:3px}

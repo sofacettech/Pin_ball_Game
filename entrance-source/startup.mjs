@@ -12,9 +12,8 @@ export function setStartupStatus(message, progress = null) {
   if (progress === lastProgress) return;
   lastProgress = progress;
   if(videoEntrance){
-    const label=document.querySelector('[data-video-progress]'),skip=document.querySelector('[data-video-skip]');
+    const label=document.querySelector('[data-video-progress]');
     if(label){label.hidden=false;label.textContent=progress===null?'Preparing your journey…':`Preparing your journey… ${progress}%`;}
-    if(skip)skip.hidden=false;
   }
   for (const bar of document.querySelectorAll('[data-scene-progress]')) {
     if (progress === null) bar.removeAttribute('value'); else bar.value = progress;
