@@ -20,7 +20,7 @@ try{
     page.on('pageerror',error=>errors.push(error.message));
     const url=new URL(base);url.searchParams.set(process.env.SOFACET_ENTRANCE_PARAMETER||'entrance',option);url.hash='experience';
     await page.goto(url.href);
-    await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:45000});
+    await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:180000});
     assert.equal(await page.locator('body').getAttribute('data-error'),null);
     assert.equal(await page.evaluate(()=>window.entrancePreview.batching),'video');
     if(reducedMotion==='no-preference'){
@@ -42,6 +42,7 @@ try{
     await page.waitForFunction(()=>window.entrancePreview.displayedFrame===1840&&window.entrancePreview.settled);
     await page.screenshot({path:new URL(`${engine}-${name}-chess.png`,output).pathname});
     const quality=await page.evaluate(()=>window.entrancePreview.quality);
+    assert.equal(quality.preloaded,true);assert.equal(quality.preview,false);
     assert.equal(quality.sourceWidth,expectedWidth,'The resting frame must decode at the selected resolution');
     assert.equal(quality.sourceHeight,expectedWidth*9/16);
     if(process.env.SOFACET_EXPECT_ENTRANCE_SEGMENTS==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.segmented),true,'The complete journey must keep using buffered sections');

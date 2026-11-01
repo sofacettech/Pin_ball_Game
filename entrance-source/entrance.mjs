@@ -191,6 +191,7 @@ try{
     journey=await renderModule.createJourneyRenderer({stage,
       profile:parameters.has('profile'),performanceMode,renderView:()=>renderView,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
+      onProgress:(loaded,total)=>setStartupStatus('Preparing your journey…',Math.floor(loaded/total*100)),
       onStatus:message=>{if(message)setStartupStatus(message);},
       onRender:({frame:drawnFrame})=>{
         if(videoEntrance){

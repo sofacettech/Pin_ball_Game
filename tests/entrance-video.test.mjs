@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
-async function fixture({cdn=false,segmentSource,streamSource,previewSource,width=1920,height=1080}={}){
+async function fixture({cdn=false,segmentSource,streamSource,previewSource,width=1920,height=1080,preloadFailure=false}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
     readyState=2;videoWidth=width;videoHeight=height;time=0;seeking=false;seeks=[];
@@ -18,7 +18,7 @@ async function fixture({cdn=false,segmentSource,streamSource,previewSource,width
   let removed=false;
   const canvas={getContext:()=>({drawImage:video=>draws.push({video,index:Math.floor(video.time*60)})}),remove(){removed=true}};
   const manifest={version:1,width,height,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
-  const context={JOURNEY_START_FRAME:334,createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
+  const context={JOURNEY_START_FRAME:334,createPreloadedVideo:()=>({load:async()=>{if(preloadFailure){preloadFailure=false;throw Error('CDN unavailable')}},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:100}),createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console};
   vm.runInNewContext(source.replace(/^import .*;\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},onError:error=>errors.push(error)});
@@ -39,33 +39,32 @@ test('video preserves source timing and coalesces rapid scroll/reversal into one
   }finally{f.renderer.dispose()}
 });
 
-test('motion preview follows new targets while full resolution is loading and refines only the matching frame',async()=>{
- const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}},low={frameAt:async index=>({time:index/60,preview:true}),dispose(){}};
- const f=await fixture({streamSource:high,previewSource:low}),pending=[];
+test('moving frames stay sharp and a completed decode advances before the latest target settles',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60,displayWidth:3840,displayHeight:2160}),dispose(){}};
+ const low={frameAt:async()=>{throw Error('The blurry preview must never be requested')},dispose(){}};
+ const f=await fixture({streamSource:high,previewSource:low,width:3840,height:2160}),pending=[];
  high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
  try{
-  f.renderer.renderAt(1700);await new Promise(r=>setImmediate(r));
-  assert.equal(f.renderer.displayedFrame,1700);assert.equal(f.renderer.policy.previewVisible,true);assert.equal(f.renderer.settled,false);
-  f.renderer.renderAt(2100);await new Promise(r=>setImmediate(r));assert.equal(f.renderer.displayedFrame,2100);
-  pending[0].resolve({time:pending[0].index/60});await new Promise(r=>setImmediate(r));
-  assert.equal(f.renderer.displayedFrame,2100,'stale full resolution must not rewind the motion preview');assert.equal(pending.length,2);
-  pending[1].resolve({time:pending[1].index/60});await f.renderer.whenSettled();
-  assert.equal(f.renderer.displayedFrame,2100);assert.equal(f.renderer.policy.previewVisible,false);assert.equal(f.draws.at(-1).video.preview,undefined);
-  f.renderer.renderAt(1900);await new Promise(r=>setImmediate(r));assert.equal(f.renderer.policy.previewVisible,true);
-  f.renderer.renderAt(2100);assert.equal(f.renderer.settled,false,'an earlier full-resolution frame is not the currently displayed preview');
+  f.renderer.renderAt(1700);f.renderer.renderAt(2100);
+  assert.equal(f.renderer.policy.preloaded,true);assert.equal(f.renderer.policy.preview,false);
+  pending[0].resolve({time:pending[0].index/60,displayWidth:3840,displayHeight:2160});await new Promise(r=>setImmediate(r));
+  assert.equal(f.renderer.displayedFrame,1700,'keep presenting completed full-resolution frames during continuous scrolling');
+  assert.equal(f.renderer.policy.sourceWidth,3840);assert.equal(f.renderer.settled,false);assert.equal(pending.length,2);
+  pending[1].resolve({time:pending[1].index/60,displayWidth:3840,displayHeight:2160});await f.renderer.whenSettled();
+  assert.equal(f.renderer.displayedFrame,2100);assert.equal(f.renderer.policy.previewVisible,false);
  }finally{f.renderer.dispose()}
 });
 
-test('a late or failed preview cannot replace a sharp frame or fail the entrance',async()=>{
- const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}},low={frameAt:async index=>({time:index/60}),dispose(){}};
- const f=await fixture({streamSource:high,previewSource:low});let finishHigh,finishLow;
- high.frameAt=index=>new Promise(resolve=>{finishHigh=()=>resolve({time:index/60})});
- low.frameAt=index=>new Promise(resolve=>{finishLow=()=>resolve({time:index/60,preview:true})});
+test('a reversal does not paint an obsolete frame beyond the new destination',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}};
+ const f=await fixture({streamSource:high}),pending=[];
  try{
-  f.renderer.renderAt(1700);await new Promise(r=>setImmediate(r));finishHigh();await f.renderer.whenSettled();
-  finishLow();await new Promise(r=>setImmediate(r));assert.equal(f.renderer.policy.previewVisible,false);assert.equal(f.draws.at(-1).video.preview,undefined);
-  low.frameAt=async()=>{throw Error('preview unavailable')};f.renderer.renderAt(1800);await new Promise(r=>setImmediate(r));
-  assert.equal(f.renderer.policy.preview,false);assert.equal(f.errors.length,0);finishHigh();await f.renderer.whenSettled();
+  f.renderer.renderAt(334);await f.renderer.whenSettled();
+  high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
+  f.renderer.renderAt(1700);f.renderer.renderAt(500);
+  pending[0].resolve({time:1366/60});await new Promise(r=>setImmediate(r));
+  assert.equal(f.renderer.displayedFrame,334,'discard the overshoot instead of shaking outward and back');
+  pending[1].resolve({time:166/60});await f.renderer.whenSettled();assert.equal(f.renderer.displayedFrame,500);
  }finally{f.renderer.dispose()}
 });
 
@@ -213,4 +212,16 @@ test('option 3 selects verified 4K media while option 2 and unavailable 4K retai
 test('neutral entrance selectors retain the default and support the version alias',async()=>{
  const {selectEntranceOption}=await import('../entrance-source/entrance-option.mjs');
  for(const [query,expected] of [['','1'],['?entrance=1','1'],['?entrance=2','2'],['?entrance=3','3'],['?version=3','3'],['?version=3&entrance=2','2'],['?entrance=video','1'],['?entrance=4','1']])assert.equal(selectEntranceOption(query),expected);
+});
+
+test('failed CDN preloading retries the complete bundled journey before it becomes ready',async()=>{
+ let released=0;
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){released++}};
+ const f=await fixture({cdn:true,width:3840,height:2160,streamSource:high,preloadFailure:true});
+ try{
+  assert.equal(released,1);assert.equal(f.renderer.policy.segmented,false);assert.equal(f.renderer.policy.preloaded,true);
+  assert.equal(f.videos[0].src,'/local/opening.mp4');assert.equal(f.videos[1].src,'/local/journey.mp4');
+  f.renderer.renderAt(1840);f.videos[1].complete();await f.renderer.whenSettled();
+  assert.equal(f.renderer.policy.sourceWidth,1920);assert.deepEqual(f.errors,[]);
+ }finally{f.renderer.dispose()}
 });

@@ -294,6 +294,9 @@ body[data-loading] #scene-loading-status,body[data-game-loading] #scene-loading-
 body[data-loading] #scroll-hint{visibility:hidden}
 #scene-loading-status[data-ready]{bottom:calc(132px + env(safe-area-inset-bottom,0px));pointer-events:none}
 #scene-loading-status[data-ready] progress{display:none}
+
+.startup-feedback [data-video-skip]{color:#cbd0bf;text-underline-offset:4px;padding:10px;min-height:44px;box-sizing:border-box}
+.startup-feedback [data-video-skip]:focus-visible{outline:2px solid #b9cd45;outline-offset:3px}
 </style>
   <link rel="preload" href="/assets/fonts/sofacet-biarty-regular.otf" as="font" type="font/otf" crossorigin>
 <!-- site-metadata -->
@@ -446,8 +449,8 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
       </g>
     </svg>
     </div>
-  <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress></div></div>
-  <script type="module" src="/assets/entrance-3d/entry-554ZQ6V6.js"></script>
+  <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress><span data-video-progress hidden></span><a data-video-skip href="/play.html" hidden>Skip to pinball</a></div></div>
+  <script type="module" src="/assets/entrance-3d/entry-XP25OOY5.js"></script>
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
@@ -504,6 +507,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-e14e24a4ec52"></script>
-  <script type="module" src="/assets/entrance-3d/entry-TT4OPFUY.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-GCKBER72.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

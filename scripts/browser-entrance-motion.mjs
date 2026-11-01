@@ -39,7 +39,11 @@ try{for(const option of options){
  await page.goto(url.href);
  await page.waitForFunction(()=>window.entrancePreview?.ready&&window.entrancePreview.phase==='idle',null,{timeout:180000});
  if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true);
- if(process.env.SOFACET_EXPECT_ENTRANCE_PREVIEW==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preview),true);
+ if(['2','3'].includes(option)){
+  assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preloaded),true);
+  assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preview),false);
+ }
+ if(process.env.SOFACET_OFFLINE_SCROLL==='1')await context.setOffline(true);
  const runs=[];
  const entry=process.env.SOFACET_MOTION_FULL_ENTRY==='1'?[[334,1100,12000],[1100,334,12000]]:[[600,1100,8000],[1100,600,8000]];
  const legs=process.env.SOFACET_MOTION_CHESS==='1'?[[1700,2163,8000],[2163,1700,8000],[1700,2163,2000],[2163,1700,2000]]:[...entry,[1300,1740,6000],[1740,1300,6000]];
@@ -56,7 +60,7 @@ try{for(const option of options){
     const i=Math.floor(shown),j=Math.min(i+1,framing.points.length-1),focus=framing.points[i].map((v,n)=>v+(framing.points[j][n]-v)*(shown-i));
     const scale=Math.max(r.width/1920,r.height/1080),w=1920*scale,h=1080*scale;
     const x=Math.max(r.width-w,Math.min(0,r.width/2-focus[0]*w)),y=Math.max(r.height-h,Math.min(0,r.height/2-focus[1]*h));
-    rows.push({at:now,frame:p.frame,shown,stageX:transform.m41,stageY:transform.m42,expectedX:x,expectedY:y,settled:p.settled,preview:!!p.quality.previewVisible});
+    rows.push({at:now,frame:p.frame,shown,stageX:transform.m41,stageY:transform.m42,expectedX:x,expectedY:y,settled:p.settled,preview:!!p.quality.previewVisible,sourceWidth:p.quality.sourceWidth});
     if(elapsed<duration)requestAnimationFrame(step);else resolve(rows);
    };requestAnimationFrame(step);
   }),{points,duration,framing});
@@ -66,10 +70,10 @@ try{for(const option of options){
   const cropErrors=['2','3'].includes(option)?active.map(r=>Math.hypot(r.stageX-r.expectedX,r.stageY-r.expectedY)).sort((a,b)=>a-b):[];
   const frozenMoving=active.filter((r,i)=>i&&r.shown===active[i-1].shown&&Math.abs(r.stageX-active[i-1].stageX)>.1).length;
   const backwards=updates.filter((r,i)=>i&&(r.shown-updates[i-1].shown)*Math.sign(to-from)<-.5).length;
-  const summary={from,to,updatesPerSecond:updates.length/((active.at(-1).at-active[0].at)/1000),p95UpdateGapMs:intervals[Math.floor(intervals.length*.95)],maxUpdateGapMs:Math.max(...intervals),cropErrorP95:cropErrors[Math.floor(cropErrors.length*.95)]??null,maxCropError:cropErrors.at(-1)??null,frozenImageMovingCropFrames:frozenMoving,backwards,previewFraction:active.filter(row=>row.preview).length/active.length};
+  const summary={from,to,updatesPerSecond:updates.length/((active.at(-1).at-active[0].at)/1000),p95UpdateGapMs:intervals[Math.floor(intervals.length*.95)],maxUpdateGapMs:Math.max(...intervals),cropErrorP95:cropErrors[Math.floor(cropErrors.length*.95)]??null,maxCropError:cropErrors.at(-1)??null,frozenImageMovingCropFrames:frozenMoving,backwards,previewFraction:active.filter(row=>row.preview).length/active.length,minSourceWidth:Math.min(...active.map(row=>row.sourceWidth))};
   console.log(JSON.stringify({option,...summary}));runs.push({...summary,samples});
   await writeFile(new URL(`option-${option}.json`,out),JSON.stringify({option,engine,device:deviceName||null,runs,network,errors}));
-  if(['2','3'].includes(option)&&process.env.SOFACET_CHECK_MOTION==='1'){assert.ok(updates.length>0,'The video must present frames while scrolling');assert.ok(summary.maxCropError<1,'The crop must match the displayed frame');assert.equal(summary.frozenImageMovingCropFrames,0,'Frozen video must not slide across the viewport');assert.equal(summary.backwards,0,'Monotonic input must not reverse presented frames');}
+  if(['2','3'].includes(option)&&process.env.SOFACET_CHECK_MOTION==='1'){assert.equal(summary.previewFraction,0,'Moving frames must never become a blurry preview');if(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH)assert.equal(summary.minSourceWidth,Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH),'Every moving frame must use the selected resolution');assert.ok(updates.length>0,'The video must present frames while scrolling');assert.ok(summary.maxCropError<1,'The crop must match the displayed frame');assert.equal(summary.frozenImageMovingCropFrames,0,'Frozen video must not slide across the viewport');assert.equal(summary.backwards,0,'Monotonic input must not reverse presented frames');}
   if(process.env.SOFACET_MAX_VIDEO_STALL_MS&&['2','3'].includes(option))assert.ok(summary.maxUpdateGapMs<=Number(process.env.SOFACET_MAX_VIDEO_STALL_MS),`Video stalled for ${summary.maxUpdateGapMs}ms`);
   if(['2','3'].includes(option)){
    await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.3&&window.entrancePreview.settled,to,{timeout:30000});
