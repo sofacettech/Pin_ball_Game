@@ -34,6 +34,10 @@ try{
  // Deliberately stall actual scene draws; this tests the safeguard, not device FPS.
  await move(12000,65,true);assert.ok((await state()).activePixelRatio<3,'sustained slow rendering must activate the movement budget');
  const slow=await state();assert.ok(slow.activePixelRatio>=slow.minPixelRatio);assert.ok(slow.buffer[0]>=1080&&slow.buffer[1]>=1920);
+ // A slow runner can still be traversing the protected doorway after input
+ // stops. Wait for that final pose before asserting that rendering is idle.
+ const finalFrame=map.frameAtScroll(await page.evaluate(()=>scrollY));
+ await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.15,finalFrame);
  await page.waitForFunction(()=>window.entrancePreview.resolution.pixelRatio===3);await page.waitForTimeout(250);
  const settled=await state();await page.waitForTimeout(450);assert.equal((await state()).renderCount,settled.renderCount,'sharp still frame must not create an idle render loop');
  await move(300,0);const resumed=await state();
