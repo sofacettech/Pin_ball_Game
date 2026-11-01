@@ -22,7 +22,7 @@ let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,
 let phase='loading',gameLoader,gameReadyObserver;
 let gameRecovering=false;
 let startupFailed=false;
-let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
+let frame=firstFrame,presentedFrame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
 const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
@@ -53,7 +53,9 @@ function placementAt(at,rect){
 function placeStage(){
   if(!framing)return;
   const rect=viewport.getBoundingClientRect();
-  placement=placementAt(frame,rect);
+  // A decoded video frame and its responsive crop must move together. The
+  // requested scroll frame can be several frames ahead while a seek completes.
+  placement=placementAt(videoEntrance?presentedFrame:frame,rect);
   renderView={fullWidth:placement.width,fullHeight:placement.height,x:-placement.x,y:-placement.y,width:rect.width,height:rect.height};
   stage.style.width=(performanceMode?rect.width:placement.width)+'px';stage.style.height=(performanceMode?rect.height:placement.height)+'px';
   stage.style.transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
@@ -141,15 +143,19 @@ function tick(now){
   const tickStart=performance.now();
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
   frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
-  placeStage();updateCopy.setScrolled(target>firstFrame);updateCopy(storyFrameAt(frame));
-  document.body.toggleAttribute('data-scrolled',target>firstFrame+8);
-  $('progress').style.transform=`scaleX(${(frame-firstFrame)/(lastFrame-firstFrame)})`;
-  siteSound.frame(frame);
+  if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
   journey.renderAt(frame);
   if(journey.profileFrames.length)journey.profileFrames.at(-1).page=pageTime;
   if(frame===lastFrame){if(videoEntrance&&!journey.settled){requestTick();return;}enterGame({fromChess:true});return;}
   if(frame!==target)requestTick();else lastTime=0;
+}
+function presentJourneyFrame(at){
+  const scrolledFrame=videoEntrance?at:target;
+  updateCopy.setScrolled(scrolledFrame>firstFrame);updateCopy(storyFrameAt(at));
+  document.body.toggleAttribute('data-scrolled',scrolledFrame>firstFrame+8);
+  $('progress').style.transform=`scaleX(${(at-firstFrame)/(lastFrame-firstFrame)})`;
+  siteSound.frame(at);
 }
 function requestTick(){if(!raf&&!document.hidden&&!gameRequested)raf=requestAnimationFrame(tick);}
 function syncScroll(){
@@ -186,7 +192,13 @@ try{
       profile:parameters.has('profile'),performanceMode,renderView:()=>renderView,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onStatus:message=>{if(message)setStartupStatus(message);},
-      onRender:()=>frameRate?.record(),
+      onRender:({frame:drawnFrame})=>{
+        if(videoEntrance){
+          presentedFrame=drawnFrame;placeStage();
+          if(ready&&phase!=='assembly')presentJourneyFrame(drawnFrame);
+        }
+        frameRate?.record();
+      },
       onError:error=>{console.error(error);if(ready&&!gameRequested)enterGame();},
     });
     if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
