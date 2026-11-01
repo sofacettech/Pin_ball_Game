@@ -74,7 +74,7 @@ try{
 // A small complete motion proxy keeps cold, fast scrolls responsive. The full
 // resolution frame replaces it as soon as available, including every resting pose.
 const previewPath=join(output,'preview.mp4');
-const previewEncode=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(work,'journey-master.mp4'),
+const previewEncode=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(work,ultra?'rendered/journey.mp4':'journey-master.mp4'),
   '-an','-vf','scale=512:288','-c:v','libx264','-preset','slow','-crf','24','-g','12','-keyint_min','12','-sc_threshold','0','-bf','0','-pix_fmt','yuv420p',
   '-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',previewPath],{stdio:'inherit'});
 if(previewEncode.error||previewEncode.status!==0)throw Error('Motion preview encoding failed');

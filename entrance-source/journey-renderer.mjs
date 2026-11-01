@@ -12,6 +12,7 @@ import { entranceRenderPolicy } from './render-policy.mjs';
 import { createEntranceResolution, entranceResolutionBounds } from './entrance-resolution.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
+import { createBallHandoff } from './ball-handoff.mjs';
 import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { createOpeningFraming } from './opening-framing.mjs';
 import { prepareJourneyGeometry } from './geometry-budget.mjs';
@@ -57,7 +58,7 @@ const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
 const metadataPromise=fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 let model,mixer,actions=[],frame=JOURNEY_START_FRAME,preparing=false,loadID=0,suspended=false,disposed=false;
 let assemblyPoses,assemblyPose=null,assemblyBaseNeedsReset=true,lastAssemblyReflectionPose=null;
-let openingFraming;
+let openingFraming,ballHandoff;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
 const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
@@ -210,7 +211,7 @@ function render(){
   if(assemblyPose!==null){
     if(assemblyBaseNeedsReset){mixer.setTime(JOURNEY_START_FRAME/motion.fps);assemblyBaseNeedsReset=false;}
     assemblyPoses.apply(assemblyPose);
-  }else mixer?.setTime(frame/motion.fps);
+  }else{mixer?.setTime(frame/motion.fps);ballHandoff?.apply(frame);}
   updateBallBatches();sampleCamera(frame);
   mark('animation');
   const outside=1-THREE.MathUtils.smoothstep(frame,780,940);
@@ -249,7 +250,7 @@ function renderAssemblyAt(value){
 }
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
-  assemblyPoses=null;openingFraming=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
+  assemblyPoses=null;openingFraming=null;ballHandoff=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
   for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
   for(const material of reflectionMaterials.values())material.dispose();reflectionMaterials.clear();reflectionBindings=[];
   lastReflectionFrame=null;entryReflectionTurn=0;
@@ -277,12 +278,14 @@ async function loadVariant(name,{download}={}){
     const assemblyObjects=findAssemblyObjects(model);
     assemblyPoses=createAssemblyPoses({...assemblyObjects,targetFrame:JOURNEY_START_FRAME,
       sample:at=>{mixer.setTime(at/motion.fps);model.updateMatrixWorld(true);}});
+    ballHandoff=createBallHandoff(model,{restoreFrame:JOURNEY_START_FRAME,
+      sample:at=>mixer.setTime(at/motion.fps)});
     openingFraming=createOpeningFraming(model,assemblyObjects);
     onStatus('Preparing the lights…');
     // Prepare the actual HDR, transmission, and mirror passes. Compiling only
     // the default framebuffer leaves different shader variants cold at entry.
     for(const warmFrame of [JOURNEY_START_FRAME,720,780,850,940,1000,1480,1520,1600,1680,1800]){
-      mixer.setTime(warmFrame/motion.fps);updateBallBatches();sampleCamera(warmFrame);
+      mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       renderer.setRenderTarget(composer.renderTarget1);
       await renderer.compileAsync(scene,camera);
