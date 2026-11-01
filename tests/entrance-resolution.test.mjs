@@ -33,6 +33,12 @@ test('one hitch does not blur the scene and sustained headroom recovers detail',
  f.run(20,3);assert.equal(f.quality.pixelRatio,2.75);
  f.run(60,6);assert.equal(f.quality.pixelRatio,3);
 });
+
+test('very slow display opportunities are still measured when the monitor runs before the next draw',()=>{
+ const f=fixture();
+ for(let i=0;i<40;i++){f.quality.motion();f.step(160,false);}
+ assert.equal(f.quality.activePixelRatio,2.75);assert.equal(f.quality.pixelRatio,2.75);
+});
 test('paused and disposed monitors stop requesting frames',()=>{
  const f=fixture(1,1);f.run(20,5);assert.equal(f.quality.pixelRatio,1);assert.deepEqual(f.changes,[]);
  f.quality.pause();assert.equal(f.frames.size,0);

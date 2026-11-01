@@ -26,13 +26,13 @@ try{
    return draw(scene,camera);
   };
  });
- const move=async(duration,slow)=>page.evaluate(({duration,slow,base})=>new Promise(resolve=>{
+ const move=async(duration,slow,untilReduced=false)=>page.evaluate(({duration,slow,base,untilReduced})=>new Promise(resolve=>{
   window.claritySlowDraw=slow;const started=performance.now();
-  function step(now){scrollTo(0,base+220*Math.sin((now-started)/320));if(now-started>=duration){window.claritySlowDraw=0;resolve();return;}requestAnimationFrame(step);}
+  function step(now){scrollTo(0,base+220*Math.sin((now-started)/320));if(now-started>=duration||(untilReduced&&window.entrancePreview.resolution.activePixelRatio<3)){window.claritySlowDraw=0;resolve();return;}requestAnimationFrame(step);}
   requestAnimationFrame(step);
- }),{duration,slow,base:map.scrollAtFrame(1000)});
+ }),{duration,slow,untilReduced,base:map.scrollAtFrame(1000)});
  // Deliberately stall actual scene draws; this tests the safeguard, not device FPS.
- await move(3600,65);await page.waitForFunction(()=>window.entrancePreview.resolution.activePixelRatio<3);
+ await move(12000,65,true);assert.ok((await state()).activePixelRatio<3,'sustained slow rendering must activate the movement budget');
  const slow=await state();assert.ok(slow.activePixelRatio>=slow.minPixelRatio);assert.ok(slow.buffer[0]>=1080&&slow.buffer[1]>=1920);
  await page.waitForFunction(()=>window.entrancePreview.resolution.pixelRatio===3);await page.waitForTimeout(250);
  const settled=await state();await page.waitForTimeout(450);assert.equal((await state()).renderCount,settled.renderCount,'sharp still frame must not create an idle render loop');

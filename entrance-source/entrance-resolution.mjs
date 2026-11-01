@@ -38,7 +38,9 @@ export function createEntranceResolution({minPixelRatio=2.75,maxPixelRatio=3,onC
   // One sharp frame after settling; keep the measured movement budget for
   // the next swipe. The redraw itself must not restart this monitor.
   if(idle>=650){reset();apply(maxPixelRatio);return;}
-  if(idle<120)sample(time);else reset();
+  // A slow GPU can leave more than 120ms between moving frames. Keep sampling
+  // until the scene truly settles; idle RAF opportunities themselves stay fast.
+  sample(time);
   raf=requestFrame(monitor);
  }
  function pause(){if(raf)cancelFrame(raf);raf=0;lastMotion=-Infinity;reset();}
