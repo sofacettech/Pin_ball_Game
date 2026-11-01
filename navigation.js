@@ -42,11 +42,11 @@ const small = document.createElement('div');small.className = 'menu-small-links'
 small.append(menuLink('Terms', null, ''), menuLink('Privacy', null, ''), menuLink('Contact', 'mailto:hello@sofacet.com', ''));
 const socials = document.createElement('div');socials.className = 'menu-social-links';socials.setAttribute('role', 'group');socials.setAttribute('aria-label', 'Social media');
 for (const [label, icon, href] of [
-  ['Instagram', '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".7"/>'],
-  ['LinkedIn', '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7m0-10v.01M11 17v-7m0 3a3 3 0 0 1 6 0v4"/>', 'https://www.linkedin.com/company/so-facet/'],
-  ['Facebook', '<path d="M14 21V11h4l.5-4H14V5.5c0-1.5.5-2 2-2h2V0h-3c-4 0-5 2.5-5 5.5V7H7v4h3v10" transform="translate(0 1) scale(.95)"/>'],
-  ['X', '<path d="m4 3 12 18h4L8 3Zm0 18 7-8M20 3l-7 8"/>', 'https://x.com/so_facet?s=11&t=MpVMDpjvxy77_g81vQ3U7w'],
-  ['YouTube', '<rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3Z"/>', 'https://youtube.com/@so_facet?si=_lCL7Q40ECeZ60g1'],
+  ['Instagram', '<rect x="2" y="2" width="20" height="20" rx="6"/><rect x="4.5" y="4.5" width="15" height="15" rx="3.5" fill="#0b0e18"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2.6" fill="#0b0e18"/><circle cx="17.5" cy="6.6" r="1.3"/>'],
+  ['LinkedIn', '<rect x="2" y="2" width="20" height="20" rx="2"/><g fill="#0b0e18"><circle cx="7" cy="7" r="1.5"/><path d="M5.7 9.5h2.6V18H5.7zM10 9.5h2.5v1.2c.7-1 1.6-1.5 2.8-1.5 2.6 0 3.4 1.6 3.4 4.2V18H16v-4.1c0-1.4-.2-2.2-1.5-2.2-1.4 0-1.8.9-1.8 2.2V18H10z"/></g>', 'https://www.linkedin.com/company/so-facet/'],
+  ['Facebook', '<path d="M14.2 22v-9.1h3.1l.5-3.6h-3.6V7c0-1 .3-1.7 1.8-1.7H18V2.1c-.4 0-1.6-.1-2.9-.1-2.9 0-4.9 1.8-4.9 5.1v2.2H7v3.6h3.2V22z"/>'],
+  ['X', '<path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.634 7.584H.478l8.6-9.835L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>', 'https://x.com/so_facet?s=11&t=MpVMDpjvxy77_g81vQ3U7w'],
+  ['YouTube', '<rect x="1" y="4.5" width="22" height="15" rx="4.5"/><path d="m10 8.2 6 3.8-6 3.8Z" fill="#0b0e18"/>', 'https://youtube.com/@so_facet?si=_lCL7Q40ECeZ60g1'],
 ]) {
   const item = document.createElement(href ? 'a' : 'button');item.className = 'social-placeholder';item.setAttribute('aria-label', label);
   if (href) {item.href = href;item.target = '_blank';item.rel = 'noopener noreferrer';}

@@ -1,10 +1,11 @@
 import {finishLoading} from '../assets/loading/intro.js';
 import {downloadModel} from './download-model.mjs';
 import {createLoadingCopy} from './loading-copy.mjs';
+import {setBrandText} from '../shared/brand-text.ts';
 
 const controller = new AbortController();
 let lastProgress;
-const loadingCopy=createLoadingCopy(message=>{for(const status of document.querySelectorAll('[data-scene-status]'))status.textContent=message});
+const loadingCopy=createLoadingCopy(message=>{for(const status of document.querySelectorAll('[data-scene-status]'))setBrandText(status,message)});
 export const finishStartupStatus=()=>loadingCopy.ready();
 export function setStartupStatus(message, progress = null) {
   if (progress === lastProgress) return;

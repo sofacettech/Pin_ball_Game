@@ -4,13 +4,20 @@ import {readFileSync} from 'node:fs';
 import {createLoadingCopy} from '../entrance-source/loading-copy.mjs';
 import {withSiteMetadata} from '../scripts/site-metadata.mjs';
 
-test('loading copy cycles every 1.5 seconds and stops when the real scene is ready',()=>{
+test('slow loading cycles through all eight messages without claiming the world is ready',()=>{
  const messages=[];let tick,cleared=0;
  const copy=createLoadingCopy(message=>messages.push(message),{setInterval(callback,delay){assert.equal(delay,1500);tick=callback;return 1},clearInterval(id){assert.equal(id,1);cleared++}});
- assert.deepEqual(messages,['Growing the diamonds…']);tick();tick();
- assert.deepEqual(messages,['Growing the diamonds…','Cutting the facets…','Setting the light…']);
- copy.ready();assert.equal(messages.at(-1),"Ready. So/ what's yours?");assert.equal(cleared,1);copy.ready();assert.equal(cleared,1);
- const cancel=createLoadingCopy(()=>{},{setInterval(){return 2},clearInterval(id){assert.equal(id,2);cleared++}});cancel.cancel();assert.equal(cleared,2);
+ for(let i=0;i<7;i++)tick();
+ assert.deepEqual(messages,['Growing the diamonds…','Cutting the facets…','Setting the light…','Building the SO/ FACET world…','Polishing the pinball table…','Warming up the flippers…','Opening the doors…',"SO/ FACET. What's yours?"]);
+ assert.equal(cleared,0);tick();assert.equal(messages.at(-1),'Growing the diamonds…');
+ copy.cancel();tick();assert.equal(messages.length,9);assert.equal(cleared,1);
+});
+test('a ready world skips the remaining loading messages and stops the timer immediately',()=>{
+ const messages=[];let tick,cleared=0;
+ const copy=createLoadingCopy(message=>messages.push(message),{setInterval(callback){tick=callback;return 1},clearInterval(){cleared++}});
+ tick();copy.ready();tick();copy.ready();
+ assert.deepEqual(messages,['Growing the diamonds…','Cutting the facets…',"SO/ FACET. What's yours?"]);
+ assert.equal(cleared,1);
 });
 test('all page builds receive one complete share card and real favicons',()=>{
  const source='<html><head><title>Page</title><link rel="icon" href="data:,"></head><body></body></html>';
