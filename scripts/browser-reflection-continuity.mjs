@@ -21,8 +21,14 @@ try{
  const results=[];
  for(const viewport of [{width:393,height:735},{width:852,height:393}]){
   await page.setViewportSize(viewport);
+  await page.waitForFunction(({width,height})=>{
+   const canvas=window.entrancePreview.renderer.domElement;
+   return canvas.width===width&&canvas.height===height;
+  },viewport);
   for(const frame of [1260,1300,1340,1380,1420,1440,1420,1380,1340,1300,1260]){
    await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(frame));await page.waitForFunction(f=>Math.abs(window.entrancePreview.frame-f)<.2,frame);
+   // ResizeObserver can update the camera before its next reflection capture.
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    const result=await page.evaluate(()=>{
     let floor;window.reflectionReviewScene.traverse(o=>{if(o.material?.name==='Reflective floor')floor=o;});
     const shader={uniforms:{},vertexShader:'',fragmentShader:''};floor.material.onBeforeCompile(shader);
@@ -37,7 +43,7 @@ try{
     return{frame:window.entrancePreview.frame,points,draws:renderer.info.render.calls,triangles:renderer.info.render.triangles,buffer:[renderer.domElement.width,renderer.domElement.height]};
    });
    assert.ok(result.points.length>=3,'sample the visible floor');
-   for(const {uv,expected} of result.points){assert.ok(uv[0]>0&&uv[0]<1&&uv[1]>0&&uv[1]<1,`reflection cutoff at frame ${frame}: ${uv}`);assert.ok(Math.abs(uv[0]-expected[0])<.001&&Math.abs(uv[1]-expected[1])<.001,'capture follows the current phone crop');}
+   for(const {uv,expected} of result.points){assert.ok(uv[0]>0&&uv[0]<1&&uv[1]>0&&uv[1]<1,`reflection cutoff at frame ${frame}: ${uv}`);assert.ok(Math.abs(uv[0]-expected[0])<.001&&Math.abs(uv[1]-expected[1])<.001,`capture follows frame ${result.frame} at width ${viewport.width}: ${uv} vs ${expected}`);}
    if(frame===1380)await page.screenshot({path:`work/reflections/${engine}-${viewport.width}-1380.png`});
    results.push({viewport,frame,draws:result.draws,triangles:result.triangles,buffer:result.buffer});
   }
