@@ -5,11 +5,24 @@ import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 test('the closer spawn and both empty approaches need less scrolling without speeding up the rooms',()=>{
  const map=createJourneyScrollMap();
  assert.equal(map.scrollAtFrame(334),0);
- assert.equal(map.scrollAtFrame(780),(780-334)*4);
- assert.equal(map.scrollAtFrame(1560)-map.scrollAtFrame(780),(1560-780)*8);
- assert.equal(map.scrollAtFrame(2000)-map.scrollAtFrame(1560), (2000-1560)*4);
- assert.equal(map.scrollAtFrame(2164)-map.scrollAtFrame(2000), (2164-2000)*8);
+ assert.equal(map.scrollAtFrame(700),(700-334)*4);
+ assert.equal(map.scrollAtFrame(1480)-map.scrollAtFrame(860),(1480-860)*8);
+ assert.equal(map.scrollAtFrame(1920)-map.scrollAtFrame(1640), (1920-1640)*4);
+ assert.equal(map.scrollAtFrame(2164)-map.scrollAtFrame(2080), (2164-2080)*8);
  assert.equal(map.travel,11096);
+});
+
+test('equal scroll inputs accelerate gradually across each section boundary',()=>{
+ const map=createJourneyScrollMap(),speed=y=>map.frameAtScroll(y+.5)-map.frameAtScroll(y-.5);
+ for(const boundary of [780,1560,2000]){
+  const center=map.scrollAtFrame(boundary);
+  assert.ok(Math.abs(speed(center-.5)-speed(center+.5))<.001,'no abrupt 2x speed change');
+  for(let frame=boundary-90;frame<boundary+90;frame++){
+   const y=map.scrollAtFrame(frame),a=speed(y),b=speed(y+1);
+   assert.ok(a>=.125-1e-8&&a<=.25+1e-8);
+   assert.ok(Math.abs(b-a)<.001,'speed blends throughout the transition');
+  }
+ }
 });
 
 test('forward and reverse scrolling keep continuous, reversible poses through both chess boundaries',()=>{
