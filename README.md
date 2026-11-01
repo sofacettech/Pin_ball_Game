@@ -18,6 +18,22 @@ npm start
 
 Open `http://127.0.0.1:8766/` for the default Three.js entrance. `/entrance-3d` is an alias, `/play.html` opens the game, and `/video` opens the retained video comparison. Both entrance paths reuse the approved story copy, fonts, navigation and game loader. Production pages do not display developer inspection panels.
 
+### Optional video of the current model
+
+Use `/?entrance=1` and `/?entrance=2` for a comparison with neutral URL labels. Option 1 is the default live 3D entrance; option 2 uses the pre-rendered optimized model. This option includes the four-second ball assembly at the current doorway position and the complete scroll path through the queen impact. It retains the current scroll pacing, story copy, reverse scrolling, reduced-motion behavior and pinball handoff. Ordinary visits still use live 3D and do not download these videos; video visits do not download the entrance GLB or initialize its WebGL renderer.
+
+The Full HD, 60 FPS H.264 clips and their source/encoding manifest live in `assets/entrance-video/`. They are rendered deterministically from `journey-compact.glb` with the current Three.js materials, reflections and camera data. They are **not a new Blender/Cycles render**: the saved Blender snapshot predates the current website framing and materials. Compressed video uses browser decoding and coalesced precise seeks, rather than the legacy all-IDR worker. Physical-phone smoothness still needs device validation.
+
+To regenerate, install FFmpeg and provide a Playwright installation with Chromium:
+
+```sh
+SOFACET_PLAYWRIGHT_PATH=/absolute/path/to/playwright npm run render:entrance-video
+npm run build:entrance
+SOFACET_PLAYWRIGHT_PATH=/absolute/path/to/playwright SOFACET_BROWSER=chromium node scripts/browser-entrance-video.mjs
+```
+
+Use `npm run render:entrance-video -- --preview` to inspect six representative frames before a full render. `npm run encode:entrance-video` recompresses the saved master clips without rendering the scene again. High-quality intermediate movies and verification captures stay in ignored `work/entrance-video/`; only the web clips, poster and manifest are served. The exporter samples every authored frame, so rendering delays do not become dropped frames in the movie. The existing `/video` assets and independent-frame index are unchanged.
+
 To measure the live 3D homepage, open `/?debug=1` (`/?debug/1` is also supported). Its opt-in FPS panel counts rendered scene updates during assembly and scrolling, shows resolution and draw calls, and offers **Run 10s check** for average FPS, slowest one-second FPS and p95 frame intervals. Close it with × and reopen with **Show FPS**. The panel hides when entering pinball; it measures the 3D journey, not game FPS. Ordinary homepage visits do not create the panel or its sampling timer.
 
 The default entrance renders the ball assembly and scrolling journey in the same Three.js scene. It starts at the closer doorway composition (source frame 334). The authored assembly poses are cached and relocated to that position before playback. The logo loader waits for the assets, poses and real GPU warm-up, pulsing if preparation outlasts its reveal. A first swipe can enter the journey immediately; the outdoor approach and empty chessboard both use half the original scroll distance. Reduced motion starts at the assembled pose. The default entrance does not create a video element or request an opening video, and backgrounding pauses its assembly clock.

@@ -1,4 +1,4 @@
-import {presentationReady, modelDownload, setStartupStatus, finishStartupStatus, completePreparation, cancelStartup} from './startup.mjs';
+import {presentationReady, modelDownload, videoEntrance, setStartupStatus, finishStartupStatus, completePreparation, cancelStartup} from './startup.mjs';
 import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
@@ -14,7 +14,7 @@ const journeyScroll=createJourneyScrollMap(firstFrame,lastFrame),travel=journeyS
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
 const parameters=new URLSearchParams(location.search);
-const performanceMode=parameters.get('quality')!=='reference';
+const performanceMode=!videoEntrance&&parameters.get('quality')!=='reference';
 const showFPS=parameters.has('debug')||parameters.has('debug/1')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const assembly=createAssemblyClock({reducedMotion:reduced.matches});
@@ -25,12 +25,12 @@ let startupFailed=false;
 let frame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';window.scrollTo(0,0);
-const frameRate=showFPS?createFrameRatePanel({label:'Live 3D model',travel,firstFrame,
+const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
   compareURL:'/video?perf=1',compareLabel:'Video debug ↗',
   getState:()=>{const renderer=journey?.renderer,canvas=renderer?.domElement;return {
     ready,game:gameRequested,frame:phase==='assembly'?assembly.frame:frame,
     seeking:phase==='assembly'||Math.abs(target-frame)>.15,
-    details:canvas?`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draw calls`:''
+    details:canvas?(videoEntrance?`${canvas.width} × ${canvas.height} · video frames`:`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draw calls`):''
   };}
 }):null;
 
@@ -67,12 +67,13 @@ function startScene(){
   phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
   siteSound.setActive(true);syncScroll();requestTick();
 }
-function prepareScene(){
+async function prepareScene(){
   if(gameRequested||startupFailed)return;
   // Replace the old video poster while the loader is still opaque. The fade
   // must reveal the relocated 3D opening, with its animation held until ready.
   frame=firstFrame;updateCopy(assembly.active?assembly.frame:240);placeStage();journey.resize();
   if(assembly.active)journey.renderAssemblyAt(assembly.frame);else journey.renderAt(frame);
+  await journey.whenSettled?.();
   $('scene-poster').remove();
 }
 function gameVisibility(visible){
@@ -147,7 +148,7 @@ function tick(now){
   const pageTime=performance.now()-tickStart;
   journey.renderAt(frame);
   if(journey.profileFrames.length)journey.profileFrames.at(-1).page=pageTime;
-  if(frame===lastFrame){enterGame({fromChess:true});return;}
+  if(frame===lastFrame){if(videoEntrance&&!journey.settled){requestTick();return;}enterGame({fromChess:true});return;}
   if(frame!==target)requestTick();else lastTime=0;
 }
 function requestTick(){if(!raf&&!document.hidden&&!gameRequested)raf=requestAnimationFrame(tick);}
@@ -168,7 +169,7 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
-window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get resolution(){return journey?.resolution;},get batching(){return journey?.batchingMode;}};
+window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get displayedFrame(){return journey?.displayedFrame??frame;},get settled(){return journey?.settled??true;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get resolution(){return journey?.resolution;},get batching(){return journey?.batchingMode;}};
 
 try{
   const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
@@ -178,7 +179,7 @@ try{
     updateCopy=copy;
   })();
   const scenePrepared=(async()=>{
-    const renderModule=await import('./journey-renderer.mjs');
+    const renderModule=await (videoEntrance?import('./video-renderer.mjs'):import('./journey-renderer.mjs'));
     await pointsReady;
     if(gameRequested||startupFailed)return;
     journey=await renderModule.createJourneyRenderer({stage,
@@ -186,6 +187,7 @@ try{
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onStatus:message=>{if(message)setStartupStatus(message);},
       onRender:()=>frameRate?.record(),
+      onError:error=>{console.error(error);if(ready&&!gameRequested)enterGame();},
     });
     if(gameRequested||startupFailed){journey.dispose();journey=null;return;}
     await journey.loadVariant('compact',{download:modelDownload});
@@ -193,7 +195,7 @@ try{
   })();
   // Keep the logo visible until assets, cached poses and real GPU passes are ready.
   await Promise.all([copyReady,scenePrepared]);
-  prepareScene();
+  await prepareScene();
   completePreparation();
   await presentationReady;
   startScene();

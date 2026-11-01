@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "renderer": "production-threejs-reference",
+  "model": "assets/entrance-3d/journey-compact.glb",
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "firstFrame": 334,
+  "lastFrame": 2164,
+  "encoding": {
+    "codec": "h264",
+    "crf": 20,
+    "keyframeInterval": 24,
+    "pixelFormat": "yuv420p",
+    "colorSpace": "bt709",
+    "fastStart": true
+  },
+  "clips": {
+    "opening": {
+      "file": "opening.mp4",
+      "firstFrame": 1,
+      "lastFrame": 240,
+      "frameCount": 240,
+      "bytes": 1823721,
+      "sha256": "f8bc18804ec2f3e307f277bbd533d3afd4200abad2c23b11f994eb61c4345a7e"
+    },
+    "journey": {
+      "file": "journey.mp4",
+      "firstFrame": 334,
+      "lastFrame": 2164,
+      "frameCount": 1831,
+      "bytes": 54222782,
+      "sha256": "043e392640d3a851aedcf39f964f53f1b2ed0a0e58ad8fb8480c04ba3ffb4839"
+    }
+  },
+  "sources": {
+    "assets/entrance-3d/journey-compact.glb": "cad14131ddcf6eca4104876d8e1a7693dea536e6da006a00ff4e668a23950587",
+    "assets/entrance-3d/camera-motion.json": "c25a7e7bcb900a2933ba97fa96e97b2c45f509ee8cab2a0c8f9408f5371949c8",
+    "entrance-source/animated-mesh-batch.mjs": "435581d357bd853861cc8ddf8820271e31cee2f57d6c10551b6bc8ffe2cdf955",
+    "entrance-source/assembly-clock.mjs": "f8a30eba322ce638b9a5c10fde8f5c34680fd159dd1fae68eb606b042952b7e2",
+    "entrance-source/assembly-poses.mjs": "65211a7ab0a7ec29fc7f475215714f79b712d0dd7ca8eab7c8777d6574799f11",
+    "entrance-source/chamber-reflections.mjs": "4079d7cfa7aa4d534a98fe9c547694df8e7030741848e36c548a25ba8e6b46a6",
+    "entrance-source/chess-look.mjs": "3ce1104831499eedc85eea949faae911d40b428d96db59949b17569f33fbc892",
+    "entrance-source/cinematic-look.mjs": "ac8f6dc4a29e32d43ba8abed342b64971e7e4ecee8bff42ffda6bbf2a1520be1",
+    "entrance-source/download-model.mjs": "521a48818943fc036f8fe37e695b11dd9f633c0e741f950d44ef5a71c6557d7f",
+    "entrance-source/entrance.mjs": "bf40c42fe341cce4e4b4c1fe9975b7675910e09b6e23c6dd22b22870c3c5be4c",
+    "entrance-source/exterior-look.mjs": "eb373c3d7e6a05cbad57ef5b3b3ab48494ec8cc8b2a4033879da875e4c284f14",
+    "entrance-source/frame-rate-meter.js": "3b6a3cda23072acec1790529ab1639d543a373a6adf627902f8f32064300c14c",
+    "entrance-source/frame-rate-panel.js": "07dc732fc5334798c4b8db5b0907ee1b4141d15827ccc9ca241769a02c57e4b9",
+    "entrance-source/geometry-budget.mjs": "def12961fadc4a17e8f04d45e11592d256230c8ff2da0cabf9c122a69187b101",
+    "entrance-source/interior-look.mjs": "e70aa12b7309cd593fda5bb5f17c5f7f0c982c186101810b3eabc49a024186b9",
+    "entrance-source/journey-motion.mjs": "50c2ccf590aec84b906194a06d2da5e01e81db0f15ed26f0e6523e258c100e16",
+    "entrance-source/journey-renderer.mjs": "2ef50c89c92ebd6e8df641335b24135505023f5ba6946dcd8d404e8145b724bc",
+    "entrance-source/journey-scroll.mjs": "3830cb28ce5b69e1210ddc4b8eb03cc1a3da023473505af35f9589b24403a1af",
+    "entrance-source/loading-copy.mjs": "00c27d2ab925f2d155845409b42bc3aaa49d6ec826ddc73e66be135b8d40cd62",
+    "entrance-source/opening-framing.mjs": "10993fb11f7238959f83d33a521c0d9e0eda6f96616ba34636682f734a8446c4",
+    "entrance-source/reflection-camera.mjs": "37f89342ef83d004d40ef96fddfd787a5b87dab161365d06515b4d4f1bad2d61",
+    "entrance-source/render-policy.mjs": "2b49f5c8aa02758ccbf42fb330521670fb8a6341beeb9f1592a1acb7a5317dc5",
+    "entrance-source/startup.mjs": "7d6e5c0f0e51c23dee4a20b4330aa2d27a3fd367ceded2bb6d3df6648aa2edc7",
+    "entrance-source/story-timing.mjs": "674bd11b9ad574fd426bc0f125e8f1c0a74f4b64269d25cceef6e8a4216bad46",
+    "entrance-source/video-renderer.mjs": "ca8b0b95dd5ed66c00f64004bca870eb1095dabe629ed7f58101c82c89bf72b9"
+  }
+}

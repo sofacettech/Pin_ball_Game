@@ -20,7 +20,8 @@ let releasePreparation;
 const prepared=new Promise(resolve=>{releasePreparation=resolve});
 export const completePreparation=()=>releasePreparation();
 export const presentationReady = finishLoading({ready:prepared});
-export const modelDownload = downloadModel('/assets/entrance-3d/journey-compact.glb', {
+export const videoEntrance = new URLSearchParams(location.search).get('entrance') === '2';
+export const modelDownload = videoEntrance ? Promise.resolve(null) : downloadModel('/assets/entrance-3d/journey-compact.glb', {
   signal: controller.signal,
   onProgress: value => setStartupStatus(value === null ? 'Loading the world…' : `Loading the world… ${value}%`, value),
 });
