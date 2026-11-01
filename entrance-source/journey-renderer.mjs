@@ -13,6 +13,7 @@ import { createEntranceResolution, entranceResolutionBounds } from './entrance-r
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
 import { createBallHandoff } from './ball-handoff.mjs';
+import { createPreparedTransforms } from './prepared-transforms.mjs';
 import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
 import { createOpeningFraming } from './opening-framing.mjs';
 import { prepareJourneyGeometry } from './geometry-budget.mjs';
@@ -58,7 +59,7 @@ const motion=await fetch(base+'camera-motion.json').then(r=>r.json());
 const metadataPromise=fetch(base+'variants.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
 let model,mixer,actions=[],frame=JOURNEY_START_FRAME,preparing=false,loadID=0,suspended=false,disposed=false;
 let assemblyPoses,assemblyPose=null,assemblyBaseNeedsReset=true,lastAssemblyReflectionPose=null;
-let openingFraming,ballHandoff;
+let openingFraming,ballHandoff,preparedTransforms;
 let loadMs=0,modelBytes=0,renderRequested=0;
 let ballBatches=[];
 const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extensions.has('WEBGL_multi_draw')?'portable':'multi-draw';
@@ -75,8 +76,8 @@ const q0=new THREE.Quaternion(),q1=new THREE.Quaternion();
 const lerp=THREE.MathUtils.lerp;
 function prepareStableLighting(){
   if(!performanceMode)return;
-  // Keep the same light slots across rooms. Zero-intensity lights skip their
-  // BRDF work instead of changing the shader layout at the doorway.
+  // Room-specific light layouts are prepared under the loader. Guard any
+  // remaining zero-energy lights during fades as well.
   const done=new Set();
   model.traverse(object=>{
     for(const material of object.material?(Array.isArray(object.material)?object.material:[object.material]):[]){
@@ -190,8 +191,9 @@ function batchBall(){
 }
 const batchInverse=new THREE.Matrix4(),batchMatrix=new THREE.Matrix4();
 function updateBallBatches(){
+  if(preparedTransforms)preparedTransforms.update();else model.updateMatrixWorld(true);
   if(!ballBatches.length)return;
-  model.updateMatrixWorld(true);batchInverse.copy(model.matrixWorld).invert();
+  batchInverse.copy(model.matrixWorld).invert();
   for(const {batch,instances,portable} of ballBatches){
     if(portable){portable.update(batchInverse);continue;}
     for(const {object,id} of instances)batch.setMatrixAt(id,batchMatrix.multiplyMatrices(batchInverse,object.matrixWorld));
@@ -250,6 +252,7 @@ function renderAssemblyAt(value){
 }
 function disposeModel(){
   if(!model)return;mixer?.stopAllAction();mixer?.uncacheRoot(model);scene.remove(model);
+  preparedTransforms?.restore();preparedTransforms=null;
   assemblyPoses=null;openingFraming=null;ballHandoff=null;assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;
   for(const {batch,portable} of ballBatches){if(portable)portable.dispose();else batch.dispose();}ballBatches=[];
   for(const material of reflectionMaterials.values())material.dispose();reflectionMaterials.clear();reflectionBindings=[];
@@ -281,10 +284,13 @@ async function loadVariant(name,{download}={}){
     ballHandoff=createBallHandoff(model,{restoreFrame:JOURNEY_START_FRAME,
       sample:at=>mixer.setTime(at/motion.fps)});
     openingFraming=createOpeningFraming(model,assemblyObjects);
+    if(performanceMode)preparedTransforms=createPreparedTransforms(model,gltf.animations,{dynamicObjects:assemblyObjects.objects});
     onStatus('Preparing the lights…');
-    // Prepare the actual HDR, transmission, and mirror passes. Compiling only
-    // the default framebuffer leaves different shader variants cold at entry.
-    for(const warmFrame of [JOURNEY_START_FRAME,720,780,850,940,1000,1480,1520,1600,1680,1800]){
+    // Prepare each active-room light layout in the actual HDR, transmission
+    // and mirror passes. Zero-energy room lights can then leave the shader
+    // entirely during scrolling. 1655 includes the gallery environment switch
+    // while chamber lights still overlap; 1680 prepares the gallery alone.
+    for(const warmFrame of [JOURNEY_START_FRAME,720,780,850,940,1000,1480,1520,1600,1655,1680,1800]){
       mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       renderer.setRenderTarget(composer.renderTarget1);

@@ -179,7 +179,7 @@ export function createChessLook(scene,renderer,{performanceMode=false,captureRef
       simpleGlass=distant;
     }
     strength.value=THREE.MathUtils.smoothstep(frame,1520,1680);
-    lights.visible=performanceMode||strength.value>0;for(const l of lights.children)l.intensity=l.userData.fullIntensity*strength.value;
+    lights.visible=strength.value>0;for(const l of lights.children)l.intensity=l.userData.fullIntensity*strength.value;
     const useRoom=strength.value>.9;
     for(const saved of ballMaterials){
       saved.m.roughness=THREE.MathUtils.lerp(saved.roughness,.055,strength.value);
