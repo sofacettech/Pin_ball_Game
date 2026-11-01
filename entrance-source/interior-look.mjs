@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { createChamberReflections } from './chamber-reflections.mjs';
+import { copyReflectionCamera } from './reflection-camera.mjs';
 
 const sourceLights=await fetch('/assets/entrance-3d/interior-lights.json').then(r=>r.json());
 const roomMaterial=/Polished steel|Reflective floor|Panel joint shadow|Pitted architectural concrete|Arch borders|Arch entry|architectural blocks|Layered violet|Mannequin body|Earrings|Necklace|Ring|Purple |Purple •|Veins •|Pattern •|Lime •|Outer arch edge|Exterior boxes/;
@@ -46,6 +47,7 @@ export function createInteriorLook(scene,renderer,{reflectionPass,captureReflect
   mirror.getRenderTarget().texture.generateMipmaps=true;
   mirror.getRenderTarget().texture.minFilter=THREE.LinearMipmapLinearFilter;
   const inverseMirror=mirror.matrixWorld.clone().invert();
+  const reflectionCamera=new THREE.PerspectiveCamera();
   const reflectionMatrix={value:new THREE.Matrix4()},reflectionStrength={value:0};
   let floorMeshes=[];
   function install(model){
@@ -156,7 +158,8 @@ export function createInteriorLook(scene,renderer,{reflectionPass,captureReflect
     camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);
     const visibility=floorMeshes.map(o=>o.visible);floorMeshes.forEach(o=>{o.visible=false;});
     reflectionPass.value=1;
-    captureReflection(()=>mirror.onBeforeRender(renderer,scene,camera));
+    copyReflectionCamera(camera,reflectionCamera);
+    captureReflection(()=>mirror.onBeforeRender(renderer,scene,reflectionCamera));
     reflectionPass.value=0;
     reflectionMatrix.value.copy(mirror.material.uniforms.textureMatrix.value).multiply(inverseMirror);
     floorMeshes.forEach((o,i)=>{o.visible=visibility[i];});

@@ -77,6 +77,7 @@ jobs:
           done
           # Record timing without treating hosted-runner emulation as iPhone certification.
           node scripts/browser-entrance-smoke.mjs
+          node scripts/browser-reflection-continuity.mjs
       - name: Upload entrance measurements and screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -84,6 +85,7 @@ jobs:
           name: entrance-${{ matrix.browser }}
           path: |
             work/entrance-performance/
+            work/reflections/
             ${{ runner.temp }}/entrance-server.log
           if-no-files-found: warn
           retention-days: 14

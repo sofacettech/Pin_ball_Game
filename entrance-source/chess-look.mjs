@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
+import { copyReflectionCamera } from './reflection-camera.mjs';
 
 const isRoom=name=>name.includes(' | ')&&parseInt(name)>=1&&parseInt(name)<=14;
 
@@ -17,6 +18,7 @@ export function createChessLook(scene,renderer,{performanceMode=false,captureRef
   lights.visible=false;
   let surfaces=[],environment=null,ballMaterials=[],ballUsesRoom=false,crystalMaterials=[],simpleGlass=null;
   let lastCaptureFrame=null,wallCapture=0;
+  const reflectionCamera=new THREE.PerspectiveCamera();
 
   function dominantPlane(meshes,center){
     const planes=new Map(),a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),ab=new THREE.Vector3(),ac=new THREE.Vector3();
@@ -189,6 +191,7 @@ export function createChessLook(scene,renderer,{performanceMode=false,captureRef
   function capture(camera,frame){
     if(strength.value<=0){lastCaptureFrame=null;return;}
     camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);capturing.value=1;
+    copyReflectionCamera(camera,reflectionCamera);
     const refreshAll=!performanceMode||lastCaptureFrame===null||Math.abs(frame-lastCaptureFrame)>24;
     const selectedWall=1+wallCapture++%Math.max(1,surfaces.length-1);lastCaptureFrame=frame;
     try{
@@ -199,7 +202,7 @@ export function createChessLook(scene,renderer,{performanceMode=false,captureRef
         const visibility=s.meshes.map(o=>o.visible);s.meshes.forEach(o=>{o.visible=false;});
         // Match the entrance mirrors: reflected glass should not trigger
         // another transmission render of the entire world for every surface.
-        try{captureReflection(()=>s.mirror.onBeforeRender(renderer,scene,camera));s.matrix.value.copy(s.mirror.material.uniforms.textureMatrix.value).multiply(s.inverse);}
+        try{captureReflection(()=>s.mirror.onBeforeRender(renderer,scene,reflectionCamera));s.matrix.value.copy(s.mirror.material.uniforms.textureMatrix.value).multiply(s.inverse);}
         finally{s.meshes.forEach((o,i)=>{o.visible=visibility[i];});}
       }
     }finally{capturing.value=0;}
