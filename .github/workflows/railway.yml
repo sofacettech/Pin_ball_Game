@@ -78,6 +78,7 @@ jobs:
           # Record timing without treating hosted-runner emulation as iPhone certification.
           node scripts/browser-entrance-smoke.mjs
           node scripts/browser-reflection-continuity.mjs
+          node scripts/browser-ball-handoff.mjs
           node scripts/browser-chess-transition.mjs
           node scripts/browser-entrance-video.mjs
           SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
@@ -91,6 +92,7 @@ jobs:
           path: |
             work/entrance-performance/
             work/reflections/
+            work/ball-handoff/
             work/chess-transition/
             work/entrance-video/
             work/entrance-motion/
