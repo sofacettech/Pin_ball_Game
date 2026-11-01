@@ -6,7 +6,9 @@ const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'chromium';
 const {[engine]:browserType}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const base=process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8766/';
-const output=new URL('../work/entrance-video/',import.meta.url);
+const option=process.env.SOFACET_ENTRANCE_OPTION||'2';
+const expectedWidth=Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH||1920);
+const output=new URL(`../work/entrance-video${option==='3'?'-4k':''}/`,import.meta.url);
 await mkdir(output,{recursive:true});
 const scroll=createJourneyScrollMap(),report=[];
 const browser=await browserType.launch({...engine==='chromium'&&process.platform==='darwin'?{args:['--enable-gpu']}:{}});
@@ -16,7 +18,7 @@ try{
     const page=await context.newPage(),requests=[],errors=[];
     page.on('request',request=>requests.push(request.url()));
     page.on('pageerror',error=>errors.push(error.message));
-    const url=new URL(base);url.searchParams.set('entrance','2');url.hash='experience';
+    const url=new URL(base);url.searchParams.set(process.env.SOFACET_ENTRANCE_PARAMETER||'entrance',option);url.hash='experience';
     await page.goto(url.href);
     await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:45000});
     assert.equal(await page.locator('body').getAttribute('data-error'),null);
@@ -39,6 +41,9 @@ try{
     await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(1840));
     await page.waitForFunction(()=>window.entrancePreview.displayedFrame===1840&&window.entrancePreview.settled);
     await page.screenshot({path:new URL(`${engine}-${name}-chess.png`,output).pathname});
+    const quality=await page.evaluate(()=>window.entrancePreview.quality);
+    assert.equal(quality.sourceWidth,expectedWidth,'The resting frame must decode at the selected resolution');
+    assert.equal(quality.sourceHeight,expectedWidth*9/16);
     if(process.env.SOFACET_EXPECT_ENTRANCE_SEGMENTS==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.segmented),true,'The complete journey must keep using buffered sections');
     if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'The complete journey must keep using streamed decoding');
     await page.evaluate(y=>scrollTo(0,y),scroll.travel);
@@ -47,7 +52,7 @@ try{
     await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
     if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
     assert.deepEqual(errors,[]);
-    report.push({name,engine,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
+    report.push({name,engine,option,quality,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
   // Ordinary visits still select 3D and do not prefetch the optional videos.

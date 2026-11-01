@@ -1,12 +1,14 @@
-export function validateEntranceManifest(manifest){
-  if(manifest?.version!==1||manifest.width!==1920||manifest.height!==1080||manifest.fps!==60||manifest.firstFrame!==334||manifest.lastFrame!==2164||
+import {selectEntranceOption} from './entrance-option.mjs';
+
+export function validateEntranceManifest(manifest,{width=1920,height=1080}={}){
+  if(manifest?.version!==1||manifest.width!==width||manifest.height!==height||manifest.fps!==60||manifest.firstFrame!==334||manifest.lastFrame!==2164||
     manifest.clips?.opening?.frameCount!==240||manifest.clips?.journey?.frameCount!==1831)throw Error('Invalid rendered entrance');
   return manifest;
 }
 
 // A separate switch prevents an existing legacy-video CDN setting from selecting
 // new objects before they have been uploaded and verified.
-export async function loadEntranceMedia(fetcher=fetch){
+export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOption(globalThis.location?.search||'')}={}){
   const localBase='/assets/entrance-video/';
   const [response,config]=await Promise.all([
     fetcher(localBase+'manifest.json'),
@@ -16,15 +18,15 @@ export async function loadEntranceMedia(fetcher=fetch){
   const manifest=validateEntranceManifest(await response.json());
   const clips=Object.fromEntries(['opening','journey'].map(kind=>{
     const local=localBase+kind+'.mp4?v='+manifest.clips[kind].sha256;
-    return [kind,{url:local,local}];
+    return [kind,{url:local,local,localWidth:manifest.width,localHeight:manifest.height}];
   }));
-  try{
-    if(!config.entranceManifestURL)return {manifest,clips};
-    const url=new URL(config.entranceManifestURL);
+  const candidates=[...(option==='3'?[{url:config.entrance4kManifestURL,width:3840,height:2160}]:[]),{url:config.entranceManifestURL,width:1920,height:1080}];
+  for(const candidate of candidates.filter(item=>item.url))try{
+    const url=new URL(candidate.url);
     if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Invalid entrance CDN URL');
     const remote=await fetcher(url.href,{signal:AbortSignal.timeout(5000)});
     if(!remote.ok)throw Error('Entrance CDN unavailable');
-    const higherQuality=validateEntranceManifest(await remote.json());
+    const higherQuality=validateEntranceManifest(await remote.json(),candidate);
     const urls={};let segments,preview;
     const validFile=(clip,kind)=>/^[a-f0-9]{64}$/.test(clip.sha256)&&clip.file===`entrance-${kind}-${clip.sha256}.mp4`&&Number.isSafeInteger(clip.bytes)&&clip.bytes>0;
     for(const kind of ['opening','journey']){
@@ -65,6 +67,7 @@ export async function loadEntranceMedia(fetcher=fetch){
     for(const kind of ['opening','journey'])clips[kind].url=urls[kind];
     if(segments){clips.journey.segments=segments;clips.journey.decoder=higherQuality.clips.journey.decoder;}
     if(preview)clips.journey.preview=preview;
-  }catch{/* Local media keeps the entrance available if CDN configuration fails. */}
+    return {manifest:higherQuality,clips};
+  }catch{/* Try the regular CDN, then bundled media, if a variant is unavailable. */}
   return {manifest,clips};
 }

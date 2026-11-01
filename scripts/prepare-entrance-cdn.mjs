@@ -8,16 +8,18 @@ import {join} from 'node:path';
 // The opening plays normally. The scroll movie needs short prediction chains
 // and no B frames so reverse seeking does not stall Safari's decoder.
 const root=fileURLToPath(new URL('../',import.meta.url));
-const output=join(root,'work/entrance-video/cdn');
-const crf=20,keyframeInterval=12;
+const ultra=process.argv.includes('--4k');
+const work=join(root,ultra?'work/entrance-video-4k':'work/entrance-video');
+const output=join(work,'cdn');
+const crf=ultra?18:20,keyframeInterval=12;
 await mkdir(output,{recursive:true});
-const manifest=JSON.parse(await readFile(join(root,'assets/entrance-video/manifest.json'),'utf8'));
-manifest.encoding={codec:'h264',crf,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true,source:'saved-master'};
+const manifest=JSON.parse(await readFile(ultra?join(work,'rendered/manifest.json'):join(root,'assets/entrance-video/manifest.json'),'utf8'));
+manifest.encoding={codec:'h264',crf,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true,source:ultra?'native-4k-render':'saved-master'};
 for(const kind of ['opening','journey']){
   const seekable=kind==='journey';
   const temporary=join(output,kind+'.mp4');
-  const result=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(root,`work/entrance-video/${kind}-master.mp4`),
-    '-an',...(seekable?['-c:v','libx264','-preset','slow','-crf',String(crf),'-g',String(keyframeInterval),'-keyint_min',String(keyframeInterval),'-sc_threshold','0','-bf','0','-pix_fmt','yuv420p']:['-c:v','copy']),
+  const result=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',ultra?join(work,`rendered/${kind}.mp4`):join(work,`${kind}-master.mp4`),
+    '-an',...(seekable&&!ultra?['-c:v','libx264','-preset','slow','-crf',String(crf),'-g',String(keyframeInterval),'-keyint_min',String(keyframeInterval),'-sc_threshold','0','-bf','0','-pix_fmt','yuv420p']:['-c:v','copy']),
     '-bsf:v','h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0',
     '-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',temporary],{stdio:'inherit'});
   if(result.error)throw result.error;
@@ -25,20 +27,20 @@ for(const kind of ['opening','journey']){
   const probe=spawnSync('ffprobe',['-v','error','-count_frames','-show_entries','stream=codec_name,width,height,r_frame_rate,nb_read_frames,has_b_frames,color_primaries,color_transfer,color_space','-of','json',temporary],{encoding:'utf8'});
   if(probe.status!==0)throw Error(`ffprobe failed for ${kind}`);
   const [stream]=JSON.parse(probe.stdout).streams;
-  if(stream.codec_name!=='h264'||stream.width!==1920||stream.height!==1080||stream.r_frame_rate!=='60/1'||Number(stream.nb_read_frames)!==manifest.clips[kind].frameCount||
+  if(stream.codec_name!=='h264'||stream.width!==manifest.width||stream.height!==manifest.height||stream.r_frame_rate!=='60/1'||Number(stream.nb_read_frames)!==manifest.clips[kind].frameCount||
     ['color_primaries','color_transfer','color_space'].some(key=>stream[key]!=='bt709')||seekable&&stream.has_b_frames!==0)throw Error(`Invalid ${kind} master`);
   const bytes=await readFile(temporary),sha256=createHash('sha256').update(bytes).digest('hex');
   const file=`entrance-${kind}-${sha256}.mp4`;
   await rename(temporary,join(output,file));
-  manifest.clips[kind]={...manifest.clips[kind],file,sha256,bytes:bytes.length,encoding:seekable?{keyframeInterval,bFrames:0,streamCopy:false}:{keyframeInterval:60,bFrames:stream.has_b_frames,streamCopy:true}};
+  manifest.clips[kind]={...manifest.clips[kind],file,sha256,bytes:bytes.length,encoding:seekable||ultra?{keyframeInterval,bFrames:0,streamCopy:ultra}:{keyframeInterval:60,bFrames:stream.has_b_frames,streamCopy:true}};
   console.log(`${file}: ${bytes.length} bytes`);
 }
-// Independent two-second containers keep reverse seeks local to a small blob.
+// Independent one-second 4K / two-second 1080p containers bound reverse-seek downloads.
 // Stream-copy preserves every encoded picture, including section boundaries.
 const sectionDir=await mkdtemp(join(output,'sections-'));
 try{
   const result=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(output,manifest.clips.journey.file),
-    '-c','copy','-map','0:v:0','-f','segment','-segment_time','2','-reset_timestamps','1','-segment_format_options','movflags=+faststart',join(sectionDir,'part-%03d.mp4')],{stdio:'inherit'});
+    '-c','copy','-map','0:v:0','-f','segment','-segment_time',ultra?'1':'2','-reset_timestamps','1','-segment_format_options','movflags=+faststart',join(sectionDir,'part-%03d.mp4')],{stdio:'inherit'});
   if(result.error)throw result.error;
   if(result.status!==0)throw Error('Journey sectioning failed');
   let firstFrame=manifest.firstFrame,description;const segments=[];
@@ -47,7 +49,7 @@ try{
     const probe=spawnSync('ffprobe',['-v','error','-count_frames','-show_packets','-show_entries','stream=nb_read_frames,width,height,r_frame_rate,has_b_frames:packet=pos,size,flags,pts_time','-of','json',path],{encoding:'utf8'});
     if(probe.status!==0)throw Error('Section probe failed');
     const parsed=JSON.parse(probe.stdout),[stream]=parsed.streams,frameCount=Number(stream.nb_read_frames);
-    if(stream.width!==1920||stream.height!==1080||stream.r_frame_rate!=='60/1'||stream.has_b_frames!==0||!Number.isInteger(frameCount)||frameCount<1||frameCount>120)throw Error('Invalid video section');
+    if(stream.width!==manifest.width||stream.height!==manifest.height||stream.r_frame_rate!=='60/1'||stream.has_b_frames!==0||!Number.isInteger(frameCount)||frameCount<1||frameCount>120)throw Error('Invalid video section');
     const bytes=await readFile(path),sha256=createHash('sha256').update(bytes).digest('hex'),file=`entrance-journey-${sha256}.mp4`;
     if(bytes.length>24*1024*1024)throw Error('Video section exceeds the browser buffer budget');
     const at=bytes.indexOf(Buffer.from('avcC'));
@@ -72,7 +74,7 @@ try{
 // A small complete motion proxy keeps cold, fast scrolls responsive. The full
 // resolution frame replaces it as soon as available, including every resting pose.
 const previewPath=join(output,'preview.mp4');
-const previewEncode=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(root,'work/entrance-video/journey-master.mp4'),
+const previewEncode=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(work,ultra?'rendered/journey.mp4':'journey-master.mp4'),
   '-an','-vf','scale=512:288','-c:v','libx264','-preset','slow','-crf','24','-g','12','-keyint_min','12','-sc_threshold','0','-bf','0','-pix_fmt','yuv420p',
   '-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',previewPath],{stdio:'inherit'});
 if(previewEncode.error||previewEncode.status!==0)throw Error('Motion preview encoding failed');
@@ -99,4 +101,4 @@ console.log(`${previewFile}: ${previewBytes.length} bytes (motion preview)`);
 const json=JSON.stringify(manifest,null,2)+'\n';
 const file=`entrance-manifest-${createHash('sha256').update(json).digest('hex')}.json`;
 await writeFile(join(output,file),json);
-console.log(`Upload the opening, full journey and every journey section first, then ${file}. Set ENTRANCE_VIDEO_MANIFEST_URL to its public HTTPS URL after verification.`);
+console.log(`Upload the opening, full journey and every journey section first, then ${file}. Set ${ultra?'ENTRANCE_VIDEO_4K_MANIFEST_URL':'ENTRANCE_VIDEO_MANIFEST_URL'} to its public HTTPS URL after verification.`);

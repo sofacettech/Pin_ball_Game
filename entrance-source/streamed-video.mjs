@@ -6,12 +6,18 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false},optimizeForLatency:true};
   try{if(!(await Decoder.isConfigSupported(config)).supported)return null}catch{return null}
   const interval=metadata.keyframeInterval??4;
+  // Keep the same decoded-pixel budget at 4K as twelve 1080p pictures.
+  // Prediction frames before the requested window are closed immediately.
+  const maxFrames=Math.max(1,Math.min(interval,Math.floor(1920*1080*12/(width*height))));
+  let keepFirst=0,keepLast=Infinity;
   const entries=new Map(),frames=new Map();let disposed=false,failure,activePart=0,lastIndex=0,direction=1,prefetchKey='',cacheWrites=Promise.resolve();
   const storage=globalThis.caches?caches.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   const decoder=new Decoder({output:frame=>{
     if(disposed||failure){frame.close();return}
     if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');return}
-    frames.set(Math.round(frame.timestamp*60/1e6),frame);
+    const index=Math.round(frame.timestamp*60/1e6);
+    if(index<keepFirst||index>=keepLast){frame.close();return}
+    frames.set(index,frame);
   },error:error=>{failure=error}});
   try{decoder.configure(config)}catch{decoder.close();return null}
   function save(segment,bytes){
@@ -105,8 +111,9 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
       else if((key-part)*direction<0)pause(entry);
     }
     const segment=segments[part],local=frame-segment.firstFrame,first=local-local%interval,last=Math.min(segment.frameCount,first+interval);
+    const retainFirst=Math.max(first,direction>0?Math.min(local,last-maxFrames):local-maxFrames+1),retainLast=Math.min(last,retainFirst+maxFrames);
     const start=segment.frames[first][0],entry=ensure(part,first===0?0:start);
-    const [offset,size]=segment.frames[last-1],end=offset+size;
+    const [offset,size]=segment.frames[retainLast-1],end=offset+size;
     if(entry.error)throw entry.error;
     if(!available(entry,start,end))await new Promise((resolve,reject)=>entry.waiters.add({start,end,resolve,reject}));
     if(disposed)throw new DOMException('Video decoder disposed','AbortError');
@@ -128,7 +135,8 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     }
     if(frames.has(index))return frames.get(index);
     for(const frame of frames.values())frame.close();frames.clear();
-    for(let i=first;i<last;i++){
+    keepFirst=segment.firstFrame-334+retainFirst;keepLast=segment.firstFrame-334+retainLast;
+    for(let i=first;i<retainLast;i++){
       const [start,length,sync]=segment.frames[i],sourceIndex=segment.firstFrame-334+i;
       decoder.decode(new Chunk({type:sync?'key':'delta',timestamp:Math.round(sourceIndex*1e6/60),duration:Math.round(1e6/60),data:entry.bytes.subarray(start,start+length)}));
     }

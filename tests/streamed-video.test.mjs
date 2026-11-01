@@ -7,8 +7,8 @@ function codec(){
  class Decoder{
   static async isConfigSupported(){return {supported:true}}
   constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured';this.needsKey=true}
-  configure(){this.state='configured'}
-  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:1920,displayHeight:1080,closed:false,close(){this.closed=true}};images.push(frame);this.callbacks.output(frame)}
+  configure(config){this.config=config;this.state='configured'}
+  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);this.callbacks.output(frame)}
   async flush(){flushes++;this.needsKey=true}
   close(){this.state='closed'}
  }
@@ -111,4 +111,18 @@ test('advancing pauses skipped downloads and stale prefetch cannot fill an activ
   assert.equal(firstSignal.aborted,true);assert.deepEqual(requests,['bytes=0-3','bytes=8-11']);
   tail();assert.equal(Math.round((await jump).timestamp*60/1e6),19);
  }finally{source.dispose()}
+});
+
+
+test('4K decoding bounds retained pictures while preserving exact forward and reverse targets',async()=>{
+ const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec();
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
+ try{
+  for(const index of [0,4,11,2]){
+   const frame=await source.frameAt(index);
+   assert.equal(Math.round(frame.timestamp*60/1e6),index);assert.equal(frame.displayWidth,3840);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3,'4K frames must fit the 1080p decoded-pixel budget');
+  }
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
 });

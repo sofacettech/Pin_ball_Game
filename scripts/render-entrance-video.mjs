@@ -13,13 +13,14 @@ import {JOURNEY_START_FRAME} from '../entrance-source/journey-scroll.mjs';
 // Offline frame capture: render time never determines animation time. The
 // production renderer supplies the authored poses, materials and camera path.
 const root=fileURLToPath(new URL('../',import.meta.url));
-const work=resolve(root,'work/entrance-video');
-const output=resolve(root,'assets/entrance-video');
+const ultra=process.argv.includes('--4k');
+const work=resolve(root,ultra?'work/entrance-video-4k':'work/entrance-video');
+const output=ultra?join(work,'rendered'):resolve(root,'assets/entrance-video');
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const ffmpeg=process.env.SOFACET_FFMPEG||'ffmpeg';
 const preview=process.argv.includes('--preview');
-const width=1920,height=1080,fps=60,lastFrame=2164;
+const width=ultra?3840:1920,height=ultra?2160:1080,fps=60,lastFrame=2164,crf=ultra?18:20,gop=ultra?12:24;
 await mkdir(work,{recursive:true});await mkdir(output,{recursive:true});
 const bundled=await build({absWorkingDir:root,stdin:{contents:`
   import {createJourneyRenderer} from './entrance-source/journey-renderer.mjs';
@@ -37,6 +38,7 @@ const bundled=await build({absWorkingDir:root,stdin:{contents:`
     return journey.renderer.domElement.toDataURL('image/png').split(',')[1];
   };
   window.captureReady=true;
+  window.captureDimensions={width:journey.renderer.domElement.width,height:journey.renderer.domElement.height};
 `,resolveDir:root,sourcefile:'capture.mjs'},bundle:true,format:'esm',target:'es2022',write:false});
 const server=createServer(async(req,res)=>{
   try{
@@ -53,7 +55,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 let browser,activeEncoder;
 const report={version:1,renderer:'production-threejs-reference',model:'assets/entrance-3d/journey-compact.glb',width,height,fps,
-  firstFrame:JOURNEY_START_FRAME,lastFrame,encoding:{codec:'h264',crf:20,keyframeInterval:24,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true},clips:{},sources:{}};
+  firstFrame:JOURNEY_START_FRAME,lastFrame,encoding:{codec:'h264',crf,keyframeInterval:gop,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true},clips:{},sources:{}};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 try{
   browser=await chromium.launch({args:process.platform==='darwin'?['--enable-gpu']:[]});
@@ -62,6 +64,8 @@ try{
   page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
   await page.goto(`http://127.0.0.1:${server.address().port}`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.captureReady,null,{timeout:180000});
+  const dimensions=await page.evaluate(()=>window.captureDimensions);
+  if(dimensions.width!==width||dimensions.height!==height)throw Error('The scene did not render at the requested native resolution');
   for(const [kind,frame] of [['opening',120],['journey',334],['journey',850],['journey',1100],['journey',1840],['journey',2164]]){
     const png=Buffer.from(await page.evaluate(([kind,frame])=>window.captureFrame(kind,frame),[kind,frame]),'base64');
     await writeFile(join(work,`${kind}-${frame}.png`),png);
@@ -71,8 +75,8 @@ try{
     for(const [kind,start,end] of [['opening',1,240],['journey',JOURNEY_START_FRAME,lastFrame]]){
       const webTemporary=join(output,kind+'.download.mp4'),masterTemporary=join(work,kind+'-master.download.mp4');
       const args=['-hide_banner','-loglevel','error','-y','-f','image2pipe','-framerate',String(fps),'-vcodec','png','-i','pipe:0','-an',
-        '-vf','scale=in_range=full:out_range=tv:out_color_matrix=bt709,format=yuv420p','-c:v','libx264','-preset','slow','-crf','20',
-        '-g','24','-keyint_min','24','-sc_threshold','0','-bf','0','-bsf:v','h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',webTemporary,
+        '-vf','scale=in_range=full:out_range=tv:out_color_matrix=bt709,format=yuv420p','-c:v','libx264','-preset','slow','-crf',String(crf),
+        '-g',String(gop),'-keyint_min',String(gop),'-sc_threshold','0','-bf','0','-bsf:v','h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0','-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',webTemporary,
         '-an','-vf','scale=in_range=full:out_range=tv:out_color_matrix=bt709,format=yuv420p','-c:v','libx264','-preset','fast','-crf','10','-g','60','-movflags','+faststart',masterTemporary];
       const encoder=spawn(ffmpeg,args,{stdio:['pipe','ignore','inherit']});
       activeEncoder=encoder;

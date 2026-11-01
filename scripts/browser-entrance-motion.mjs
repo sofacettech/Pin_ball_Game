@@ -63,17 +63,18 @@ try{for(const option of options){
   const active=samples.filter(r=>r.at>samples[0].at+300),updates=active.filter((r,i)=>i&&r.shown!==active[i-1].shown);
   const boundaries=[active[0].at,...updates.map(r=>r.at),active.at(-1).at];
   const intervals=boundaries.slice(1).map((at,i)=>at-boundaries[i]).sort((a,b)=>a-b);
-  const cropErrors=option==='2'?active.map(r=>Math.hypot(r.stageX-r.expectedX,r.stageY-r.expectedY)).sort((a,b)=>a-b):[];
+  const cropErrors=['2','3'].includes(option)?active.map(r=>Math.hypot(r.stageX-r.expectedX,r.stageY-r.expectedY)).sort((a,b)=>a-b):[];
   const frozenMoving=active.filter((r,i)=>i&&r.shown===active[i-1].shown&&Math.abs(r.stageX-active[i-1].stageX)>.1).length;
   const backwards=updates.filter((r,i)=>i&&(r.shown-updates[i-1].shown)*Math.sign(to-from)<-.5).length;
   const summary={from,to,updatesPerSecond:updates.length/((active.at(-1).at-active[0].at)/1000),p95UpdateGapMs:intervals[Math.floor(intervals.length*.95)],maxUpdateGapMs:Math.max(...intervals),cropErrorP95:cropErrors[Math.floor(cropErrors.length*.95)]??null,maxCropError:cropErrors.at(-1)??null,frozenImageMovingCropFrames:frozenMoving,backwards,previewFraction:active.filter(row=>row.preview).length/active.length};
   console.log(JSON.stringify({option,...summary}));runs.push({...summary,samples});
   await writeFile(new URL(`option-${option}.json`,out),JSON.stringify({option,engine,device:deviceName||null,runs,network,errors}));
-  if(option==='2'&&process.env.SOFACET_CHECK_MOTION==='1'){assert.ok(updates.length>0,'The video must present frames while scrolling');assert.ok(summary.maxCropError<1,'The crop must match the displayed frame');assert.equal(summary.frozenImageMovingCropFrames,0,'Frozen video must not slide across the viewport');assert.equal(summary.backwards,0,'Monotonic input must not reverse presented frames');}
-  if(process.env.SOFACET_MAX_VIDEO_STALL_MS&&option==='2')assert.ok(summary.maxUpdateGapMs<=Number(process.env.SOFACET_MAX_VIDEO_STALL_MS),`Video stalled for ${summary.maxUpdateGapMs}ms`);
-  if(option==='2'){
+  if(['2','3'].includes(option)&&process.env.SOFACET_CHECK_MOTION==='1'){assert.ok(updates.length>0,'The video must present frames while scrolling');assert.ok(summary.maxCropError<1,'The crop must match the displayed frame');assert.equal(summary.frozenImageMovingCropFrames,0,'Frozen video must not slide across the viewport');assert.equal(summary.backwards,0,'Monotonic input must not reverse presented frames');}
+  if(process.env.SOFACET_MAX_VIDEO_STALL_MS&&['2','3'].includes(option))assert.ok(summary.maxUpdateGapMs<=Number(process.env.SOFACET_MAX_VIDEO_STALL_MS),`Video stalled for ${summary.maxUpdateGapMs}ms`);
+  if(['2','3'].includes(option)){
    await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.3&&window.entrancePreview.settled,to,{timeout:30000});
    assert.notEqual(await page.evaluate(()=>window.entrancePreview.quality.previewVisible),true,'Every resting pose must refine to full resolution');
+   if(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH)assert.equal(await page.evaluate(()=>window.entrancePreview.quality.sourceWidth),Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH));
   }
  }
  await page.screenshot({path:new URL(`option-${option}.png`,out).pathname});
