@@ -1,7 +1,7 @@
 // Keep only the current two-second movie and two neighbours in each direction. Blob
 // URLs prevent WebKit from making a fresh network range request on each reverse
 // seek, while bounding compressed media memory instead of buffering the movie.
-export function createSegmentedVideoSource(segments,{fetcher=fetch}={}){
+export function createSegmentedVideoSource(segments,{fetcher=fetch,width=1920,height=1080}={}){
   const entries=new Map();let disposed=false,lastIndex=0,cacheWrites=Promise.resolve();
   const storage=globalThis.caches?caches.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   function save(segment,blob){
@@ -53,7 +53,7 @@ export function createSegmentedVideoSource(segments,{fetcher=fetch}={}){
       video.addEventListener('loadeddata',loaded,{once:true});video.addEventListener('error',failed,{once:true});signal.addEventListener('abort',aborted,{once:true});
       video.src=entry.url;video.load();
     });
-    if(video.videoWidth!==1920||video.videoHeight!==1080||Math.abs(video.duration-segment.frameCount/60)>.02)throw Error('Video section timeline mismatch');
+    if(video.videoWidth!==width||video.videoHeight!==height||Math.abs(video.duration-segment.frameCount/60)>.02)throw Error('Video section timeline mismatch');
     clearTimeout(entry.timer);return video;
   }
   async function frameAt(index){

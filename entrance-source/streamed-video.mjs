@@ -1,8 +1,8 @@
 // Decode a short prediction group as soon as its bytes arrive. Native
 // video remains the compatibility path; this path never waits for a whole MP4.
-export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk}={}){
+export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk,width=1920,height=1080}={}){
   if(!metadata||typeof Decoder!=='function'||typeof Chunk!=='function')return null;
-  const config={codec:metadata.codec,description:Uint8Array.from(metadata.description.match(/../g),hex=>parseInt(hex,16)),codedWidth:1920,codedHeight:1080,
+  const config={codec:metadata.codec,description:Uint8Array.from(metadata.description.match(/../g),hex=>parseInt(hex,16)),codedWidth:width,codedHeight:height,
     colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false},optimizeForLatency:true};
   try{if(!(await Decoder.isConfigSupported(config)).supported)return null}catch{return null}
   const interval=metadata.keyframeInterval??4;
@@ -10,7 +10,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   const storage=globalThis.caches?caches.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   const decoder=new Decoder({output:frame=>{
     if(disposed||failure){frame.close();return}
-    if(frame.displayWidth!==1920||frame.displayHeight!==1080){frame.close();failure=Error('Unexpected decoded video dimensions');return}
+    if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');return}
     frames.set(Math.round(frame.timestamp*60/1e6),frame);
   },error:error=>{failure=error}});
   try{decoder.configure(config)}catch{decoder.close();return null}

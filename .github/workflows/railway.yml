@@ -81,7 +81,7 @@ jobs:
           node scripts/browser-chess-transition.mjs
           node scripts/browser-entrance-video.mjs
           SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
-          SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_DEVICE='Desktop Chrome' SOFACET_MOTION_CHESS=1 SOFACET_MOTION_NAME=chess-desktop SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
+          SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_DEVICE='Desktop Chrome' SOFACET_MOTION_CHESS=1 SOFACET_MOTION_FAST_FIRST=1 SOFACET_MOTION_NAME=chess-desktop SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
           node scripts/browser-entrance-clarity.mjs
       - name: Upload entrance measurements and screenshots
         if: always()
