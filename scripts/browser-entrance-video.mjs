@@ -26,6 +26,11 @@ try{
     }
     await page.screenshot({path:new URL(`${engine}-${name}-opening.png`,output).pathname});
     assert.equal(requests.some(url=>/\.glb(?:\?|$)|camera-motion\.json/.test(url)),false,'Video entrance must not download a 3D model');
+    if(process.env.SOFACET_EXPECT_ENTRANCE_CDN){
+      const origin=new URL(process.env.SOFACET_EXPECT_ENTRANCE_CDN).origin;
+      for(const kind of ['opening','journey'])assert.ok(requests.some(url=>new URL(url).origin===origin&&new URL(url).pathname.includes(`entrance-${kind}-`)),`Expected ${kind} from the configured CDN`);
+      assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'A healthy CDN must not fall back to local video');
+    }
     for(const frame of [850,1100,1840,1000,334]){
       await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(frame));
       await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.2&&window.entrancePreview.settled&&Math.abs(window.entrancePreview.displayedFrame-frame)<1,frame,{timeout:15000});
@@ -38,8 +43,9 @@ try{
     await page.waitForFunction(()=>document.body.hasAttribute('data-game-loading')||window.entrancePreview.gameVisible,null,{timeout:15000});
     // The original loader owns the reward story and actual game readiness.
     await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
+    if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
     assert.deepEqual(errors,[]);
-    report.push({name,engine,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,errors});
+    report.push({name,engine,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
   // Ordinary visits still select 3D and do not prefetch the optional videos.
