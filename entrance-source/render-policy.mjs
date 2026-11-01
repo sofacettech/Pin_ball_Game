@@ -7,7 +7,7 @@ export function entranceRenderPolicy({quality, userAgent='', platform='', maxTou
   return Object.freeze({
     name:reference?'reference':mobile?'mobile':'desktop',
     mobile,
-    maxPixelRatio:mobile?1:2,
+    maxPixelRatio:mobile?3:2,
     // Antialias the scene in the composer, avoiding a second multisampled
     // framebuffer for the final full-screen output on mobile.
     canvasAntialias:!mobile,

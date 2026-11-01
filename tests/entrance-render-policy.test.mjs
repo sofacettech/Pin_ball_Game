@@ -8,7 +8,7 @@ test('iPhone gets the mobile buffer budget without losing the HDR colour pipelin
   assert.equal(p.mainSamples,0);
   assert.equal(p.reflectionSamples,0);
   assert.equal(p.canvasAntialias,false);
-  assert.equal(p.maxPixelRatio,1);
+  assert.equal(p.maxPixelRatio,3);
 });
 
 test('desktop-mode iPad is detected, an ordinary Mac and Android keep existing quality',()=>{

@@ -9,6 +9,7 @@ import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { entranceRenderPolicy } from './render-policy.mjs';
+import { createEntranceResolution, entranceResolutionBounds } from './entrance-resolution.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
 import { createAssemblyPoses, findAssemblyObjects } from './assembly-poses.mjs';
 import { JOURNEY_START_FRAME } from './journey-scroll.mjs';
@@ -24,7 +25,8 @@ const base='/assets/entrance-3d/';
 const policy=entranceRenderPolicy({quality:performanceMode?new URLSearchParams(location.search).get('quality'):'reference',
   userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints});
 const renderer=new THREE.WebGLRenderer({antialias:policy.canvasAntialias,powerPreference:'high-performance'});
-const chosenPixelRatio=()=>Math.min(policy.maxPixelRatio,Math.max(.5,pixelRatio()));
+let resolution=null,resolutionReady=false,lastResolutionFrame=null,lastResolutionPose=null,rendering=false;
+const chosenPixelRatio=()=>resolution?.pixelRatio??Math.min(policy.maxPixelRatio,Math.max(.5,pixelRatio()));
 renderer.setPixelRatio(chosenPixelRatio());renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 renderer.transmissionResolutionScale=performanceMode?.5:1;
@@ -62,6 +64,12 @@ const batchingMode=!performanceMode?'individual':policy.mobile||!renderer.extens
 let reflectionBindings=[],reflectionMaterials=new Map();
 let geometryStats=null;
 let lastReflectionFrame=null,entryReflectionTurn=0;
+if(performanceMode)resolution=createEntranceResolution({onChange:()=>{
+  resize();
+  if(renderRequested)cancelAnimationFrame(renderRequested);renderRequested=0;
+  // Resizing clears the canvas. Fill it in this same frame to avoid a flash.
+  if(!rendering&&resolutionReady)render();
+}});
 const q0=new THREE.Quaternion(),q1=new THREE.Quaternion();
 const lerp=THREE.MathUtils.lerp;
 function prepareStableLighting(){
@@ -127,7 +135,12 @@ function pollTimers(){
   for(let i=pendingTimers.length-1;i>=0;i--){const item=pendingTimers[i];if(disjoint||gl.getQueryParameter(item.query,gl.QUERY_RESULT_AVAILABLE)){if(!disjoint)item.timings['gpu_'+item.name]=gl.getQueryParameter(item.query,gl.QUERY_RESULT)/1e6;gl.deleteQuery(item.query);pendingTimers.splice(i,1);}}
 }
 
-function resize(){const rect=stage.getBoundingClientRect();renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;lastAssemblyReflectionPose=null;requestRender();}
+function resize(){
+  const rect=stage.getBoundingClientRect();if(rect.width<=0||rect.height<=0)return;
+  resolution?.setBounds(entranceResolutionBounds({width:rect.width,height:rect.height,devicePixelRatio:devicePixelRatio||1,maxPixelRatio:policy.maxPixelRatio}));
+  renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);
+  fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;lastAssemblyReflectionPose=null;requestRender();
+}
 const observer=new ResizeObserver(resize);observer.observe(stage);
 
 function sampleCamera(at){
@@ -185,6 +198,10 @@ function updateBallBatches(){
 }
 function render(){
   renderRequested=0;if(!model||preparing||suspended||disposed)return;
+  rendering=true;try{
+  if(resolutionReady&&(frame!==lastResolutionFrame||assemblyPose!==lastResolutionPose)){
+    lastResolutionFrame=frame;lastResolutionPose=assemblyPose;resolution?.motion();
+  }
   pollTimers();
   const timings={frame},started=profile?performance.now():0;let measured=started,query=null;
   const beginTimer=()=>{if(timerExtension){query=gl.createQuery();gl.beginQuery(timerExtension.TIME_ELAPSED_EXT,query);}};
@@ -220,6 +237,7 @@ function render(){
   mark('chamber');chess.capture(camera,frame);mark('gallery');composer.render();mark('main');
   if(profile){timings.total=performance.now()-started;timings.calls=renderer.info.render.calls;timings.triangles=renderer.info.render.triangles;timings.programs=renderer.info.programs.length;profileFrames.push(timings);if(profileFrames.length>1200)profileFrames.shift();}
   onRender({frame,triangles:renderer.info.render.triangles,calls:renderer.info.render.calls,width:renderer.domElement.width,height:renderer.domElement.height});
+  }finally{rendering=false;}
 }
 function requestRender(){if(!renderRequested&&!suspended&&!disposed)renderRequested=requestAnimationFrame(render);}
 function selectFrame(value){assemblyPose=null;assemblyBaseNeedsReset=true;lastAssemblyReflectionPose=null;frame=THREE.MathUtils.clamp(value,JOURNEY_START_FRAME,2164);}
@@ -242,7 +260,7 @@ function disposeModel(){
 }
 async function loadVariant(name,{download}={}){
   if(!['compact','baseline'].includes(name))throw Error('Unknown model');
-  const id=++loadID;preparing=true;disposeModel();onStatus('Loading the world…');
+  const id=++loadID;preparing=true;resolutionReady=false;resolution?.pause();disposeModel();onStatus('Loading the world…');
   const start=performance.now();
   try{
     const bytes=await (download||fetch(base+'journey-'+name+'.glb').then(response=>{if(!response.ok)throw Error('Export not available: '+response.status);return response.arrayBuffer();}));
@@ -277,18 +295,20 @@ async function loadVariant(name,{download}={}){
     preparing=false;assemblyBaseNeedsReset=true;
     for(const pose of [1,60,90,120,150,180,240,1])renderAssemblyAt(pose);
     gl.finish();
+    resolutionReady=true;lastResolutionFrame=frame;lastResolutionPose=assemblyPose;
     modelBytes=bytes.byteLength;loadMs=performance.now()-start;
     onStatus('');
     return {ready:true,variant:name,bytes:modelBytes,loadMs,animations:gltf.animations.length,metadata:(await metadataPromise)[name],look};
   }catch(error){preparing=false;renderer.setRenderTarget(null);throw error;}
 }
-function suspend(value=true){suspended=value;if(renderRequested)cancelAnimationFrame(renderRequested);renderRequested=0;if(!value)requestRender();}
+function suspend(value=true){suspended=value;if(value)resolution?.pause();else resolution?.settle();if(renderRequested)cancelAnimationFrame(renderRequested);renderRequested=0;if(!value)requestRender();}
 function dispose(){
-  if(disposed)return;disposed=true;loadID++;suspend();observer.disconnect();disposeModel();
+  if(disposed)return;disposed=true;loadID++;suspend();resolution?.dispose();observer.disconnect();disposeModel();
   for(const item of pendingTimers)gl.deleteQuery(item.query);pendingTimers.length=0;
   env.dispose();for(const pass of composer.passes)pass.dispose?.();composer.dispose();
   renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
 }
 return {setFrame,renderAt,renderAssemblyAt,requestRender,loadVariant,resize,suspend,dispose,renderer,scene,camera,composer,profileFrames,policy,batchingMode,
+  get resolution(){return resolution?{pixelRatio:renderer.getPixelRatio(),activePixelRatio:resolution.activePixelRatio,minPixelRatio:resolution.minPixelRatio,maxPixelRatio:resolution.maxPixelRatio}:null;},
   get model(){return model;},get mixer(){return mixer;},get frame(){return frame;},get geometryStats(){return geometryStats;}};
 }
