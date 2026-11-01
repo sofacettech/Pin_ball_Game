@@ -80,6 +80,7 @@ jobs:
           node scripts/browser-reflection-continuity.mjs
           node scripts/browser-chess-transition.mjs
           node scripts/browser-entrance-video.mjs
+          SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
           node scripts/browser-entrance-clarity.mjs
       - name: Upload entrance measurements and screenshots
         if: always()
@@ -91,6 +92,7 @@ jobs:
             work/reflections/
             work/chess-transition/
             work/entrance-video/
+            work/entrance-motion/
             work/entrance-clarity/
             ${{ runner.temp }}/entrance-server.log
           if-no-files-found: warn

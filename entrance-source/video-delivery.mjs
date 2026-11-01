@@ -25,13 +25,25 @@ export async function loadEntranceMedia(fetcher=fetch){
     const remote=await fetcher(url.href,{signal:AbortSignal.timeout(5000)});
     if(!remote.ok)throw Error('Entrance CDN unavailable');
     const higherQuality=validateEntranceManifest(await remote.json());
-    const urls={};
+    const urls={};let segments;
+    const validFile=(clip,kind)=>/^[a-f0-9]{64}$/.test(clip.sha256)&&clip.file===`entrance-${kind}-${clip.sha256}.mp4`&&Number.isSafeInteger(clip.bytes)&&clip.bytes>0;
     for(const kind of ['opening','journey']){
       const clip=higherQuality.clips[kind];
-      if(!/^[a-f0-9]{64}$/.test(clip.sha256)||clip.file!==`entrance-${kind}-${clip.sha256}.mp4`||!Number.isSafeInteger(clip.bytes)||clip.bytes<=0)throw Error('Invalid entrance CDN media');
+      if(!validFile(clip,kind))throw Error('Invalid entrance CDN media');
       urls[kind]=new URL(clip.file,url).href;
     }
+    if(higherQuality.clips.journey.segments){
+      const parts=higherQuality.clips.journey.segments;
+      if(!Array.isArray(parts)||parts.length>32||!parts.length)throw Error('Invalid video sections');
+      let next=334;
+      segments=parts.map(part=>{
+        if(!validFile(part,'journey')||part.bytes>24*1024*1024||!Number.isInteger(part.frameCount)||part.frameCount<1||part.frameCount>120||part.firstFrame!==next||part.lastFrame!==next+part.frameCount-1)throw Error('Invalid video section timeline');
+        next=part.lastFrame+1;return {...part,url:new URL(part.file,url).href};
+      });
+      if(next!==2165)throw Error('Incomplete video section timeline');
+    }
     for(const kind of ['opening','journey'])clips[kind].url=urls[kind];
+    if(segments)clips.journey.segments=segments;
   }catch{/* Local media keeps the entrance available if CDN configuration fails. */}
   return {manifest,clips};
 }
