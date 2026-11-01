@@ -25,7 +25,7 @@ export async function loadEntranceMedia(fetcher=fetch){
     const remote=await fetcher(url.href,{signal:AbortSignal.timeout(5000)});
     if(!remote.ok)throw Error('Entrance CDN unavailable');
     const higherQuality=validateEntranceManifest(await remote.json());
-    const urls={};let segments;
+    const urls={};let segments,preview;
     const validFile=(clip,kind)=>/^[a-f0-9]{64}$/.test(clip.sha256)&&clip.file===`entrance-${kind}-${clip.sha256}.mp4`&&Number.isSafeInteger(clip.bytes)&&clip.bytes>0;
     for(const kind of ['opening','journey']){
       const clip=higherQuality.clips[kind];
@@ -41,21 +41,30 @@ export async function loadEntranceMedia(fetcher=fetch){
         next=part.lastFrame+1;return {...part,url:new URL(part.file,url).href};
       });
       if(next!==2165)throw Error('Incomplete video section timeline');
-      const decoder=higherQuality.clips.journey.decoder;
-      if(decoder){
+      const validateIndex=(decoder,parts)=>{
         if(!/^avc1\.[a-f0-9]{6}$/.test(decoder.codec)||!/^01[a-f0-9]{14,4094}$/.test(decoder.description)||decoder.description.length%2)throw Error('Invalid video decoder configuration');
-        for(const part of segments){
+        const interval=decoder.keyframeInterval??4;
+        if(![4,12].includes(interval))throw Error('Invalid prediction group');
+        for(const part of parts){
           if(!Array.isArray(part.frames)||part.frames.length!==part.frameCount)throw Error('Incomplete video frame index');
           let end=0;
           for(const [i,sample] of part.frames.entries()){
-            if(!Array.isArray(sample)||sample.length!==3||!sample.every(Number.isSafeInteger)||sample[0]<end||sample[1]<=0||sample[0]+sample[1]>part.bytes||sample[2]!==Number(i%4===0))throw Error('Invalid video frame range');
+            if(!Array.isArray(sample)||sample.length!==3||!sample.every(Number.isSafeInteger)||sample[0]<end||sample[1]<=0||sample[0]+sample[1]>part.bytes||sample[2]!==Number(i%interval===0))throw Error('Invalid video frame range');
             end=sample[0]+sample[1];
           }
         }
+      };
+      const decoder=higherQuality.clips.journey.decoder;
+      if(decoder)validateIndex(decoder,segments);
+      const proxy=higherQuality.clips.journey.preview;
+      if(proxy){
+        if(!validFile(proxy,'journey')||proxy.bytes>12*1024*1024||proxy.width!==512||proxy.height!==288||proxy.frameCount!==1831||proxy.firstFrame!==334||proxy.lastFrame!==2164||!proxy.decoder)throw Error('Invalid motion preview');
+        validateIndex(proxy.decoder,[proxy]);preview={...proxy,url:new URL(proxy.file,url).href};
       }
     }
     for(const kind of ['opening','journey'])clips[kind].url=urls[kind];
     if(segments){clips.journey.segments=segments;clips.journey.decoder=higherQuality.clips.journey.decoder;}
+    if(preview)clips.journey.preview=preview;
   }catch{/* Local media keeps the entrance available if CDN configuration fails. */}
   return {manifest,clips};
 }

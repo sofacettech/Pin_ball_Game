@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
-async function fixture({cdn=false,segmentSource,streamSource}={}){
+async function fixture({cdn=false,segmentSource,streamSource,previewSource}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
     readyState=2;videoWidth=1920;videoHeight=1080;time=0;seeking=false;seeks=[];
@@ -18,7 +18,7 @@ async function fixture({cdn=false,segmentSource,streamSource}={}){
   let removed=false;
   const canvas={getContext:()=>({drawImage:video=>draws.push({video,index:Math.floor(video.time*60)})}),remove(){removed=true}};
   const manifest={version:1,width:1920,height:1080,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
-  const context={JOURNEY_START_FRAME:334,createStreamedVideoSource:async()=>streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',...((segmentSource||streamSource)&&kind==='journey'?{segments:[]}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
+  const context={JOURNEY_START_FRAME:334,createStreamedVideoSource:async(_parts,_metadata,size)=>size?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console};
   vm.runInNewContext(source.replace(/^import .*;\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},onError:error=>errors.push(error)});
@@ -37,6 +37,36 @@ test('video preserves source timing and coalesces rapid scroll/reversal into one
     assert.equal(f.draws.at(-1).index,1830);assert.equal(f.renderer.displayedFrame,2164);
     f.renderer.renderAt(334);video.complete();assert.equal(f.draws.at(-1).index,0);
   }finally{f.renderer.dispose()}
+});
+
+test('motion preview follows new targets while full resolution is loading and refines only the matching frame',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}},low={frameAt:async index=>({time:index/60,preview:true}),dispose(){}};
+ const f=await fixture({streamSource:high,previewSource:low}),pending=[];
+ high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
+ try{
+  f.renderer.renderAt(1700);await new Promise(r=>setImmediate(r));
+  assert.equal(f.renderer.displayedFrame,1700);assert.equal(f.renderer.policy.previewVisible,true);assert.equal(f.renderer.settled,false);
+  f.renderer.renderAt(2100);await new Promise(r=>setImmediate(r));assert.equal(f.renderer.displayedFrame,2100);
+  pending[0].resolve({time:pending[0].index/60});await new Promise(r=>setImmediate(r));
+  assert.equal(f.renderer.displayedFrame,2100,'stale full resolution must not rewind the motion preview');assert.equal(pending.length,2);
+  pending[1].resolve({time:pending[1].index/60});await f.renderer.whenSettled();
+  assert.equal(f.renderer.displayedFrame,2100);assert.equal(f.renderer.policy.previewVisible,false);assert.equal(f.draws.at(-1).video.preview,undefined);
+  f.renderer.renderAt(1900);await new Promise(r=>setImmediate(r));assert.equal(f.renderer.policy.previewVisible,true);
+  f.renderer.renderAt(2100);assert.equal(f.renderer.settled,false,'an earlier full-resolution frame is not the currently displayed preview');
+ }finally{f.renderer.dispose()}
+});
+
+test('a late or failed preview cannot replace a sharp frame or fail the entrance',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}},low={frameAt:async index=>({time:index/60}),dispose(){}};
+ const f=await fixture({streamSource:high,previewSource:low});let finishHigh,finishLow;
+ high.frameAt=index=>new Promise(resolve=>{finishHigh=()=>resolve({time:index/60})});
+ low.frameAt=index=>new Promise(resolve=>{finishLow=()=>resolve({time:index/60,preview:true})});
+ try{
+  f.renderer.renderAt(1700);await new Promise(r=>setImmediate(r));finishHigh();await f.renderer.whenSettled();
+  finishLow();await new Promise(r=>setImmediate(r));assert.equal(f.renderer.policy.previewVisible,false);assert.equal(f.draws.at(-1).video.preview,undefined);
+  low.frameAt=async()=>{throw Error('preview unavailable')};f.renderer.renderAt(1800);await new Promise(r=>setImmediate(r));
+  assert.equal(f.renderer.policy.preview,false);assert.equal(f.errors.length,0);finishHigh();await f.renderer.whenSettled();
+ }finally{f.renderer.dispose()}
 });
 
 test('section requests remain serialized across hide/show and a missing section falls back to local playback',async()=>{

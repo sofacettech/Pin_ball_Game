@@ -59,4 +59,17 @@ test('section manifests must be contiguous, bounded and immutable before any CDN
   remote.clips.journey.segments=structuredClone(indexed);change(remote.clips.journey.segments);
   const bad=await loadEntranceMedia(fetcher);assert.equal(bad.clips.journey.url,bad.clips.journey.local);
  }
+ remote.clips.journey.decoder.keyframeInterval=12;
+ remote.clips.journey.segments=indexed.map(part=>({...part,frames:part.frames.map(([offset,bytes],i)=>[offset,bytes,Number(i%12===0)])}));
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.decoder.keyframeInterval,12);
+ remote.clips.journey.decoder.keyframeInterval=120;
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.segments,undefined,'unbounded prediction chains must be rejected');
+ remote.clips.journey.decoder.keyframeInterval=12;
+ const proxy={...remote.clips.journey,width:512,height:288,firstFrame:334,lastFrame:2164,bytes:2000,frames:Array.from({length:1831},(_,i)=>[i,1,Number(i%12===0)])};
+ delete proxy.segments;remote.clips.journey.preview=proxy;
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.preview.width,512);
+ for(const change of [p=>p.width=1920,p=>p.frameCount=1800,p=>p.bytes=13*1024*1024,p=>p.frames.pop()]){
+  remote.clips.journey.preview=structuredClone(proxy);change(remote.clips.journey.preview);
+  assert.equal((await loadEntranceMedia(fetcher)).clips.journey.preview,undefined);
+ }
 });
