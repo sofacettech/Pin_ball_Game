@@ -14,7 +14,7 @@ try{
  await page.evaluate(()=>{
   const renderer=window.entrancePreview.renderer,draw=renderer.render.bind(renderer);
   renderer.render=(scene,camera)=>{
-   if(scene.type==='Scene'&&scene.children.length>4&&renderer.getRenderTarget()?.height===renderer.domElement.height){window.reflectionReviewScene=scene;window.reflectionReviewCamera=camera;}
+   if(scene.type==='Scene'&&scene.children.length>4&&Math.floor(renderer.getRenderTarget()?.height)===renderer.domElement.height){window.reflectionReviewScene=scene;window.reflectionReviewCamera=camera;}
    return draw(scene,camera);
   };
  });
@@ -22,8 +22,8 @@ try{
  for(const viewport of [{width:393,height:735},{width:852,height:393}]){
   await page.setViewportSize(viewport);
   await page.waitForFunction(({width,height})=>{
-   const canvas=window.entrancePreview.renderer.domElement;
-   return canvas.width===width&&canvas.height===height;
+   const renderer=window.entrancePreview.renderer,canvas=renderer.domElement,ratio=renderer.getPixelRatio();
+   return canvas.width===Math.floor(width*ratio)&&canvas.height===Math.floor(height*ratio);
   },viewport);
   for(const frame of [1260,1300,1340,1380,1420,1440,1420,1380,1340,1300,1260]){
    await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(frame));await page.waitForFunction(f=>Math.abs(window.entrancePreview.frame-f)<.2,frame);

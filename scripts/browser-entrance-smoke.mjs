@@ -171,14 +171,15 @@ try {
       }
       await page.setViewportSize({width: 852, height: 393});
       await page.waitForFunction(() => {
-        const canvas = window.entrancePreview?.renderer?.domElement;
+        const renderer=window.entrancePreview?.renderer,canvas=renderer?.domElement,ratio=renderer?.getPixelRatio();
         const bounds = canvas?.getBoundingClientRect();
-        return bounds && Math.abs(bounds.width - 852) < 2 && Math.abs(bounds.height - 393) < 2;
+        return bounds && Math.abs(bounds.width - 852) < 2 && Math.abs(bounds.height - 393) < 2
+          && canvas.width===Math.floor(852*ratio)&&canvas.height===Math.floor(393*ratio);
       });
       result.landscape = await readState(page);
       assert.ok(Math.abs(result.landscape.frame - 700) < 0.2, 'Rotation must preserve the current animation pose');
-      assert.ok(result.landscape.pixels[0] > 0 && result.landscape.pixels[0] <= 852
-        && result.landscape.pixels[1] > 0 && result.landscape.pixels[1] <= 393, 'Rotated mobile canvas must retain its one-device-pixel budget');
+      assert.ok(result.landscape.pixels[0] >= 1920 && result.landscape.pixels[0] <= 852*3
+        && result.landscape.pixels[1] >= 1080 && result.landscape.pixels[1] <= 393*3, 'Rotated mobile canvas must stay at Full HD or above');
       await screenshot('landscape');
       assert.deepEqual(result.pageErrors, [], 'The entrance must not throw browser errors');
       assert.deepEqual(result.shaderErrors, [], 'The entrance shaders must compile and link');

@@ -168,7 +168,7 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
-window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get batching(){return journey?.batchingMode;}};
+window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get resolution(){return journey?.resolution;},get batching(){return journey?.batchingMode;}};
 
 try{
   const pointsReady=fetch('/assets/ball-framing.json').then(r=>{if(!r.ok)throw Error('Camera framing unavailable');return r.json();}).then(points=>{framing=points;placeStage();});
