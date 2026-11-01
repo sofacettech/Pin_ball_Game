@@ -1,6 +1,7 @@
 import {JOURNEY_START_FRAME} from './journey-scroll.mjs';
 import {loadEntranceMedia} from './video-delivery.mjs';
 import {createSegmentedVideoSource} from './segmented-video.mjs';
+import {createStreamedVideoSource} from './streamed-video.mjs';
 
 // Short GOP media belongs to the browser decoder. The existing all-IDR
 // WebCodecs worker cannot decode these samples independently.
@@ -12,7 +13,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
   stage.prepend(canvas);
   const events=new AbortController(),videos={};
   const loadingTimers=new Set();
-  let segmented=clips.journey.segments?createSegmentedVideoSource(clips.journey.segments):null;
+  let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder)||createSegmentedVideoSource(clips.journey.segments)):null;
   let disposed=false,suspended=false,wanted=null,painted=null,pending=null,timeout=null,failure=null;
   let openingPlaying=false,openingCallback=null,autoplayBlocked=false;
   const waiters=new Set();
@@ -40,6 +41,9 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
         pending=null;paint(request,video);pump();
       }).catch(async()=>{
         if(disposed||pending!==request)return;
+        if(segmented?.engine==='webcodecs'){
+          pending=null;segmented.dispose();segmented=createSegmentedVideoSource(clips.journey.segments);pump();return;
+        }
         pending=null;segmented?.dispose();segmented=null;
         try{await loadNative('journey',true);pump()}catch(error){fail(error)}
       });
@@ -104,10 +108,17 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
       video.src=local?clips[kind].local:clips[kind].url;video.load();
     });
   }
+  async function prepareJourney(){
+    if(!segmented)return loadNative('journey');
+    try{await segmented.frameAt(0)}catch(error){
+      if(disposed)throw error;
+      const streaming=segmented.engine==='webcodecs';segmented.dispose();
+      segmented=streaming?createSegmentedVideoSource(clips.journey.segments):null;
+      return segmented?prepareJourney():loadNative('journey',true);
+    }
+  }
   async function loadVariant(){
-    const openingReady=loadNative('opening');
-    const journeyReady=segmented?segmented.frameAt(0).catch(()=>{segmented?.dispose();segmented=null;return loadNative('journey',true)}):loadNative('journey');
-    await Promise.all([openingReady,journeyReady]);
+    await Promise.all([loadNative('opening'),prepareJourney()]);
   }
   return {
     loadVariant,
@@ -131,7 +142,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}
       for(const waiter of waiters)waiter.reject(new DOMException('Entrance disposed','AbortError'));waiters.clear();canvas.remove();
     },
-    profileFrames:[],get policy(){return {video:true,segmented:!!segmented}},batchingMode:'video',
+    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs'}},batchingMode:'video',
     renderer:{domElement:canvas,getPixelRatio:()=>1,info:{render:{calls:0,triangles:0}}},
   };
 }

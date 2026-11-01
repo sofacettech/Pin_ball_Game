@@ -40,6 +40,7 @@ try{
     await page.waitForFunction(()=>window.entrancePreview.displayedFrame===1840&&window.entrancePreview.settled);
     await page.screenshot({path:new URL(`${engine}-${name}-chess.png`,output).pathname});
     if(process.env.SOFACET_EXPECT_ENTRANCE_SEGMENTS==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.segmented),true,'The complete journey must keep using buffered sections');
+    if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'The complete journey must keep using streamed decoding');
     await page.evaluate(y=>scrollTo(0,y),scroll.travel);
     await page.waitForFunction(()=>document.body.hasAttribute('data-game-loading')||window.entrancePreview.gameVisible,null,{timeout:15000});
     // The original loader owns the reward story and actual game readiness.

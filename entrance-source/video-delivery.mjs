@@ -41,9 +41,21 @@ export async function loadEntranceMedia(fetcher=fetch){
         next=part.lastFrame+1;return {...part,url:new URL(part.file,url).href};
       });
       if(next!==2165)throw Error('Incomplete video section timeline');
+      const decoder=higherQuality.clips.journey.decoder;
+      if(decoder){
+        if(!/^avc1\.[a-f0-9]{6}$/.test(decoder.codec)||!/^01[a-f0-9]{14,4094}$/.test(decoder.description)||decoder.description.length%2)throw Error('Invalid video decoder configuration');
+        for(const part of segments){
+          if(!Array.isArray(part.frames)||part.frames.length!==part.frameCount)throw Error('Incomplete video frame index');
+          let end=0;
+          for(const [i,sample] of part.frames.entries()){
+            if(!Array.isArray(sample)||sample.length!==3||!sample.every(Number.isSafeInteger)||sample[0]<end||sample[1]<=0||sample[0]+sample[1]>part.bytes||sample[2]!==Number(i%4===0))throw Error('Invalid video frame range');
+            end=sample[0]+sample[1];
+          }
+        }
+      }
     }
     for(const kind of ['opening','journey'])clips[kind].url=urls[kind];
-    if(segments)clips.journey.segments=segments;
+    if(segments){clips.journey.segments=segments;clips.journey.decoder=higherQuality.clips.journey.decoder;}
   }catch{/* Local media keeps the entrance available if CDN configuration fails. */}
   return {manifest,clips};
 }
