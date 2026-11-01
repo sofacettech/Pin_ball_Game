@@ -2,6 +2,7 @@ import {finishLoading} from '../assets/loading/intro.js';
 import {downloadModel} from './download-model.mjs';
 import {createLoadingCopy} from './loading-copy.mjs';
 import {setBrandText} from '../shared/brand-text.ts';
+import {selectEntranceOption} from './entrance-option.mjs';
 
 const controller = new AbortController();
 let lastProgress;
@@ -20,7 +21,7 @@ let releasePreparation;
 const prepared=new Promise(resolve=>{releasePreparation=resolve});
 export const completePreparation=()=>releasePreparation();
 export const presentationReady = finishLoading({ready:prepared});
-export const videoEntrance = new URLSearchParams(location.search).get('entrance') === '2';
+export const videoEntrance = selectEntranceOption(location.search)!=='1';
 export const modelDownload = videoEntrance ? Promise.resolve(null) : downloadModel('/assets/entrance-3d/journey-compact.glb', {
   signal: controller.signal,
   onProgress: value => setStartupStatus(value === null ? 'Loading the world…' : `Loading the world… ${value}%`, value),

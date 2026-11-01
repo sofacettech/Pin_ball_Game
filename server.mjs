@@ -113,7 +113,7 @@ const server=createServer(async(request,response)=>{
  try{
   const path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
   if(path==='/health'&&(request.method==='GET'||request.method==='HEAD'))return json(response,200,{status:'ok'});
-  if(path==='/api/media-config'&&request.method==='GET')return json(response,200,{baseURL:process.env.MEDIA_CDN_BASE_URL||'',entranceManifestURL:process.env.ENTRANCE_VIDEO_MANIFEST_URL||''});
+  if(path==='/api/media-config'&&request.method==='GET')return json(response,200,{baseURL:process.env.MEDIA_CDN_BASE_URL||'',entranceManifestURL:process.env.ENTRANCE_VIDEO_MANIFEST_URL||'',entrance4kManifestURL:process.env.ENTRANCE_VIDEO_4K_MANIFEST_URL||''});
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
   const relative=path==='/'||path==='/index.html'||/^\/entrance-3d\/?$/.test(path)?'entrance-3d.html':/^\/video\/?$/.test(path)?'index.html':path.slice(1),parts=relative.split('/');

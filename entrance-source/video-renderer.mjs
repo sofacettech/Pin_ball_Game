@@ -13,12 +13,14 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
   stage.prepend(canvas);
   const events=new AbortController(),videos={};
   const loadingTimers=new Set();
-  let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder)||createSegmentedVideoSource(clips.journey.segments)):null;
+  const size={width:manifest.width,height:manifest.height};
+  let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder,size)||createSegmentedVideoSource(clips.journey.segments,size)):null;
   const proxy=clips.journey.preview;
   const proxySize=proxy?{width:proxy.width,height:proxy.height}:undefined;
   let preview=proxy?(await createStreamedVideoSource([proxy],proxy.decoder,proxySize)||createSegmentedVideoSource([proxy],proxySize)):null;
   let disposed=false,suspended=false,wanted=null,painted=null,pending=null,timeout=null,failure=null;
   let displayed=null,previewPending=null,previewVisible=false,fullPaintSequence=0;
+  let sourceWidth=manifest.width,sourceHeight=manifest.height;
   let openingPlaying=false,openingCallback=null,autoplayBlocked=false;
   const waiters=new Set();
   const equal=(a,b)=>a&&b&&a.kind===b.kind&&a.index===b.index;
@@ -32,7 +34,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
     try{context.drawImage(video,0,0,canvas.width,canvas.height);}
     catch(error){fail(error);return;}
     displayed=request;previewVisible=lightweight;
-    if(!lightweight){painted=request;fullPaintSequence++;}
+    if(!lightweight){painted=request;fullPaintSequence++;sourceWidth=video.displayWidth||video.videoWidth||canvas.width;sourceHeight=video.displayHeight||video.videoHeight||canvas.height;}
     onRender({frame:request.kind==='opening'?JOURNEY_START_FRAME:JOURNEY_START_FRAME+request.index,width:canvas.width,height:canvas.height});
     if(settled()){for(const waiter of waiters)waiter.resolve();waiters.clear();}
   }
@@ -59,7 +61,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
       }).catch(async()=>{
         if(disposed||pending!==request)return;
         if(segmented?.engine==='webcodecs'){
-          pending=null;segmented.dispose();segmented=createSegmentedVideoSource(clips.journey.segments);pump();return;
+          pending=null;segmented.dispose();segmented=createSegmentedVideoSource(clips.journey.segments,size);pump();return;
         }
         pending=null;segmented?.dispose();segmented=null;
         try{await loadNative('journey',true);pump()}catch(error){fail(error)}
@@ -112,7 +114,8 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
       arm();
       events.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Entrance disposed','AbortError'));},{once:true});
       const loaded=()=>{
-        if(video.videoWidth!==canvas.width||video.videoHeight!==canvas.height||Math.abs(video.duration-manifest.clips[kind].frameCount/60)>.02){retryOrFail(Error('Rendered entrance media does not match its manifest'));return}
+        const width=local?(clips[kind].localWidth??1920):canvas.width,height=local?(clips[kind].localHeight??1080):canvas.height;
+        if(video.videoWidth!==width||video.videoHeight!==height||Math.abs(video.duration-manifest.clips[kind].frameCount/60)>.02){retryOrFail(Error('Rendered entrance media does not match its manifest'));return}
         clear();resolve();pump();
       };
       video.addEventListener('loadeddata',loaded,{signal:events.signal});
@@ -130,7 +133,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
     try{await segmented.frameAt(0)}catch(error){
       if(disposed)throw error;
       const streaming=segmented.engine==='webcodecs';segmented.dispose();
-      segmented=streaming?createSegmentedVideoSource(clips.journey.segments):null;
+      segmented=streaming?createSegmentedVideoSource(clips.journey.segments,size):null;
       return segmented?prepareJourney():loadNative('journey',true);
     }
   }
@@ -160,7 +163,7 @@ export async function createJourneyRenderer({stage,onRender=()=>{},onError=()=>{
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}
       for(const waiter of waiters)waiter.reject(new DOMException('Entrance disposed','AbortError'));waiters.clear();canvas.remove();
     },
-    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preview:!!preview,previewVisible}},batchingMode:'video',
+    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preview:!!preview,previewVisible,sourceWidth,sourceHeight}},batchingMode:'video',
     renderer:{domElement:canvas,getPixelRatio:()=>1,info:{render:{calls:0,triangles:0}}},
   };
 }

@@ -5,20 +5,20 @@ import vm from 'node:vm';
 import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
-async function fixture({cdn=false,segmentSource,streamSource,previewSource}={}){
+async function fixture({cdn=false,segmentSource,streamSource,previewSource,width=1920,height=1080}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
-    readyState=2;videoWidth=1920;videoHeight=1080;time=0;seeking=false;seeks=[];
+    readyState=2;videoWidth=width;videoHeight=height;time=0;seeking=false;seeks=[];
     constructor(){super();this.duration=videos.length?1831/60:4;videos.push(this)}
-    setAttribute(){}removeAttribute(){}pause(){}load(){queueMicrotask(()=>this.dispatchEvent(new Event('loadeddata')))}
+    setAttribute(){}removeAttribute(){}pause(){}load(){if(this.src?.startsWith('/local/')){this.videoWidth=1920;this.videoHeight=1080}queueMicrotask(()=>this.dispatchEvent(new Event('loadeddata')))}
     set currentTime(value){this.time=value;this.seeking=true;this.seeks.push(value)}
     get currentTime(){return this.time}
     complete(){this.seeking=false;this.dispatchEvent(new Event('seeked'))}
   }
   let removed=false;
   const canvas={getContext:()=>({drawImage:video=>draws.push({video,index:Math.floor(video.time*60)})}),remove(){removed=true}};
-  const manifest={version:1,width:1920,height:1080,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
-  const context={JOURNEY_START_FRAME:334,createStreamedVideoSource:async(_parts,_metadata,size)=>size?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
+  const manifest={version:1,width,height,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
+  const context={JOURNEY_START_FRAME:334,createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console};
   vm.runInNewContext(source.replace(/^import .*;\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},onError:error=>errors.push(error)});
@@ -183,4 +183,34 @@ test('higher-quality CDN media requires a complete matching timeline and immutab
     if(url==='/api/media-config')throw Error('offline');return {ok:true,json:async()=>local};
   });
   assert.equal(unavailable.clips.opening.url,unavailable.clips.opening.local);
+});
+
+
+test('4K native playback reports its decoded size and falls back to the 1080p timeline',async()=>{
+ const f=await fixture({cdn:true,width:3840,height:2160});
+ try{
+  f.renderer.renderAt(1840);f.videos[1].complete();await f.renderer.whenSettled();
+  assert.equal(f.renderer.renderer.domElement.width,3840);assert.equal(f.renderer.policy.sourceWidth,3840);assert.equal(f.renderer.policy.sourceHeight,2160);
+  f.renderer.renderAt(1900);f.videos[1].dispatchEvent(new Event('error'));await new Promise(r=>setImmediate(r));
+  f.videos[1].complete();await f.renderer.whenSettled();
+  assert.equal(f.renderer.displayedFrame,1900);assert.equal(f.renderer.policy.sourceWidth,1920);assert.equal(f.renderer.policy.sourceHeight,1080);assert.equal(f.errors.length,0);
+ }finally{f.renderer.dispose()}
+});
+
+test('option 3 selects verified 4K media while option 2 and unavailable 4K retain 1080p delivery',async()=>{
+ const local={version:1,width:1920,height:1080,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
+ const regular=structuredClone(local);
+ for(const kind of ['opening','journey'])regular.clips[kind]={...regular.clips[kind],file:`entrance-${kind}-${regular.clips[kind].sha256}.mp4`,bytes:100};
+ const ultra={...structuredClone(regular),width:3840,height:2160},calls=[];
+ let available=true;
+ const fetcher=async url=>{calls.push(url);return {ok:url!=='https://media.example/4k/manifest.json'||available,json:async()=>url==='/api/media-config'?{entranceManifestURL:'https://media.example/hd/manifest.json',entrance4kManifestURL:'https://media.example/4k/manifest.json'}:url==='https://media.example/4k/manifest.json'?ultra:url==='https://media.example/hd/manifest.json'?regular:local}};
+ const hd=await loadEntranceMedia(fetcher,{option:'2'});assert.equal(hd.manifest.width,1920);assert.equal(calls.some(url=>url.includes('/4k/')),false);
+ const selected=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(selected.manifest.width,3840);assert.match(selected.clips.journey.url,/\/4k\//);assert.equal(selected.clips.journey.localWidth,1920);
+ available=false;const missing=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(missing.manifest.width,1920);assert.match(missing.clips.journey.url,/\/hd\//);
+ available=true;ultra.width=1920;const wrongSize=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(wrongSize.manifest.width,1920);assert.match(wrongSize.clips.journey.url,/\/hd\//);
+});
+
+test('neutral entrance selectors retain the default and support the version alias',async()=>{
+ const {selectEntranceOption}=await import('../entrance-source/entrance-option.mjs');
+ for(const [query,expected] of [['','1'],['?entrance=1','1'],['?entrance=2','2'],['?entrance=3','3'],['?version=3','3'],['?version=3&entrance=2','2'],['?entrance=video','1'],['?entrance=4','1']])assert.equal(selectEntranceOption(query),expected);
 });
