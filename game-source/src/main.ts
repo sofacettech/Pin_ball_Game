@@ -56,7 +56,7 @@ howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!==
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false,resumeAfterLeaderboard=false;
 let membership:ReturnType<typeof connectMembership>|undefined;
-const rewards=connectPostGameRewards(result=>membership?.open($('rewards-register'),result),()=>$('start').click());
+const rewards=connectPostGameRewards(result=>membership?.open($('rewards-register'),result),()=>$('start').click(),showLeaderboard);
 const leaderboard=connectLeaderboard(()=>{const resume=resumeAfterLeaderboard&&loaded&&physics.active&&physics.state!=='finished';resumeAfterLeaderboard=false;if(resume)setGamePaused(false);else $('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;scorecard.update(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),(verify,pending)=>membership?.open(undefined,pending,verify));
 membership=connectMembership({
  beforeOpen(){resumeAfterMembership=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';clearKeys();if(resumeAfterMembership){holdCharge=physics.state==='charging';physics.setPaused(true);accumulator=0}rewards.dialog.close();closeSettings()},
@@ -72,7 +72,6 @@ function showLeaderboard(){
  clearKeys();closeNavigation();closeSettings();rewards.dialog.close();
  if(!leaderboard.dialog.open){resumeAfterLeaderboard=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';if(resumeAfterLeaderboard)setGamePaused(true);leaderboard.show()}
 }
-$('rewards-leaderboard').onclick=showLeaderboard;
 function showResult(){
  void leaderboard.ready.then(()=>{if(!loaded||starting||physics.state!=='finished'||registration.open||leaderboard.dialog.open)return;if(membership?.isMember()===false)rewards.show(physics.score,leaderboard.gameId);else showLeaderboard()});
 }

@@ -41,11 +41,11 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 }
 .menu-panel .menu-item:is(button){display:block;margin:0;padding:14px 0;border:0;border-radius:0;background:transparent;color:#fff;font:400 var(--site-menu-size)/1.2 Acumin,Arial,sans-serif;letter-spacing:-.02em;text-align:left;cursor:pointer}
 .menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;color:#d9ed37;font-size:18px;text-align:center}
-.menu-small-links{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
+.menu-small-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
 .menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:13px;letter-spacing:0}
 .menu-small-links [aria-disabled=true]{opacity:.6}
-.menu-panel .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#fff;opacity:.6}
-.social-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
+.menu-panel .menu-social-links .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#eeeaf3;opacity:1}
+.social-placeholder svg{width:22px;height:22px;fill:currentColor;stroke:#0b0e18;stroke-width:.55;stroke-linejoin:round}
 .menu-panel .brand-word{white-space:nowrap}
-.menu-social-links{display:flex;align-items:center;gap:8px;flex-basis:100%}
+.menu-social-links{display:flex;align-items:center;justify-content:center;gap:8px;flex-basis:100%}
 @media(max-width:700px){.menu-panel{padding-top:calc(76px + env(safe-area-inset-top,0px))}}

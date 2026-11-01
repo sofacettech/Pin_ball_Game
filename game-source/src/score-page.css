@@ -1,0 +1,70 @@
+@font-face{font-family:ScoreYeseva;src:url('/assets/fonts/sofacet-score-yeseva.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:ScoreJosefin;src:url('/assets/fonts/sofacet-score-josefin-regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:ScoreJosefin;src:url('/assets/fonts/sofacet-score-josefin-semibold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:ScoreActions;src:url('/assets/fonts/sofacet-score-actions.otf') format('opentype');font-weight:400;font-display:swap}
+#post-game-rewards[data-view="result"]{background:#07040c;color:#faf7f2}
+#post-game-rewards[data-view="result"] .rewards-panel{width:100%;margin:0;background:none;mask-image:none;overflow:visible}
+#post-game-rewards[data-view="result"] .rewards-floor{display:none}
+#rewards-result.score-page-host{width:100%;margin:0;padding:0}
+.score-page{position:relative;isolation:isolate;min-height:100svh;overflow:hidden;text-align:left;background:radial-gradient(ellipse 800px 550px at 50% 48%,#1b1029 0%,#0d0716 58%,#07040c 100%);font-family:ScoreJosefin,Acumin,Arial,sans-serif;font-variation-settings:normal;font-synthesis:none;color:#faf7f2}
+.score-page__art{position:absolute;z-index:-1;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.score-page__content{width:min(1155px,calc(100% - 160px));margin-inline:auto;padding:clamp(145px,23.3vh,221px) 0 80px}
+.score-page__eyebrow{display:flex;align-items:center;gap:80px;margin:0;font-family:SOFacetWordmark,Acumin,sans-serif;font-size:20px;line-height:26px;letter-spacing:1px;color:#c7ff22}
+.score-page__eyebrow i{width:112px;height:1px;background:linear-gradient(90deg,#c7ff22,transparent)}
+.score-page__sub{margin:16px 0 0;font-size:23px;line-height:32px;letter-spacing:.4px;color:#d3c6df}
+.score-page__body{display:grid;grid-template-columns:minmax(0,630px) minmax(0,1fr);gap:78px;align-items:start;margin-top:42px}
+#post-game-rewards .score-page #rewards-heading{margin:0 0 0 -6px;outline:none;font-family:ScoreYeseva,Georgia,serif;font-size:clamp(42px,4.4vw,73px);font-weight:400;font-style:normal;font-variation-settings:normal;line-height:1.05;letter-spacing:-1.3px;text-align:left;animation:score-copy-in 1.05s .3s both cubic-bezier(.16,1,.3,1)}
+.score-page__heading strong,.score-page__heading em{display:block;font:inherit}
+.score-page__heading em{font-size:1.027em;letter-spacing:-1.8px}
+.score-page__details{min-width:0}
+.score-page__amount{position:relative;isolation:isolate;display:flex;align-items:baseline;gap:12px;width:max-content;max-width:100%;margin:0 0 30px;font-family:ScoreYeseva,Georgia,serif;font-size:clamp(64px,6.75vw,112px);font-weight:400;line-height:1;letter-spacing:-2.5px;animation:score-copy-in 1.25s .5s both cubic-bezier(.16,1,.3,1)}
+.score-page__amount strong{font-weight:400;font-size:calc(5em / var(--score-digits));white-space:nowrap}
+.score-page__pts{font-family:ScoreJosefin,Acumin,sans-serif;font-size:.48em;letter-spacing:0;color:#d8cee1;transform:translateY(-.12em)}
+.score-page__arcs{position:absolute;z-index:-1;left:-7%;top:-26%;width:121%;height:160%;overflow:visible;pointer-events:none}
+.score-page__arcs path{stroke-dasharray:700;animation:score-arc-in 1.7s .6s both cubic-bezier(.2,.7,.2,1)}
+.score-page__arcs .score-page__arc-lower{animation-delay:.8s}
+.score-page__offer{width:max-content;max-width:calc(100vw - 40px);margin:0;font-size:24px;font-weight:400;line-height:36px;white-space:nowrap;animation:score-copy-in .85s .8s both ease-out}
+.score-page__offer strong{font-weight:600;color:#c7ff22}
+.score-page__offer .brand-word{font-size:22px!important;letter-spacing:.2px!important;margin-inline:4px;white-space:nowrap}
+.score-page__warning{margin:14px 0 0;font-size:17px;line-height:30px;letter-spacing:.1px;color:#b8a8c7;animation:score-copy-in .8s .9s both ease-out}
+.score-page__divider{height:1px;margin-top:63px;background:linear-gradient(90deg,transparent,rgba(233,210,255,.48) 16%,rgba(233,210,255,.48) 82%,transparent);animation:score-line-in 1.05s .9s both ease-out}
+.score-page__actions{display:flex;justify-content:center;gap:116px;margin:59px auto 0}
+#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){all:unset;position:relative;display:flex;justify-content:center;align-items:center;gap:12px;box-sizing:border-box;width:338px;height:61px;cursor:pointer;color:#faf7f2;font:400 23px/1.45 ScoreActions,Acumin,sans-serif;letter-spacing:2.1px;background:linear-gradient(90deg,transparent,#bc67ff 30%,#f4c9ff 50%,#bc67ff 70%,transparent) bottom/100% 2px no-repeat;transition:color .3s,background-size .35s;animation:score-copy-in .85s 1s both cubic-bezier(.16,1,.3,1)}
+#post-game-rewards .score-page #rewards-retry{width:278px;animation-delay:1.15s}
+#post-game-rewards .score-page #rewards-register::before,#post-game-rewards .score-page #rewards-register::after{content:none}
+.score-page__button svg{width:29px;height:29px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .55s}
+.score-page__arrow{color:#c7ff22;font:300 33px/1 Arial,sans-serif}
+.score-page__roll{display:inline-block;position:relative;overflow:hidden;height:1.45em;line-height:1.45;vertical-align:middle}
+.score-page__track{display:flex;flex-direction:column;transition:transform .52s cubic-bezier(.76,0,.24,1)}
+.score-page__track>span{display:block;height:1.45em;line-height:1.45;white-space:nowrap}
+.score-page__track [aria-hidden="true"]{color:#c7ff22}
+#post-game-rewards .score-page .score-page__leaderboard{display:block;min-height:44px;margin:64px auto 0;padding:10px 0;border:0;border-radius:0;background:transparent;color:#faf7f2;font:400 16px/1.45 ScoreActions,Acumin,sans-serif;letter-spacing:4px;cursor:pointer;animation:score-copy-in .8s 1.3s both ease-out}
+#post-game-rewards .score-page :is(button:focus-visible){outline:2px solid #b98bf5;outline-offset:6px}
+.score-page :is(button:hover,button:focus-visible) .score-page__track{transform:translateY(-1.45em)}
+#post-game-rewards .score-page :is(#rewards-register,#rewards-retry):hover{background-size:80% 2px;color:#e6d4ff}
+.score-page__button:hover svg{transform:rotate(-55deg)}
+@keyframes score-copy-in{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:translateX(0)}}
+@keyframes score-line-in{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes score-arc-in{from{opacity:0;stroke-dashoffset:700}to{opacity:1;stroke-dashoffset:0}}
+@media(max-width:1400px){.score-page__content{width:calc(100% - 120px)}.score-page__body{grid-template-columns:1.1fr 1fr;gap:70px}.score-page__offer{font-size:20px;white-space:normal;width:auto;line-height:1.5}.score-page__offer .brand-word{font-size:18px!important}.score-page__amount{margin-bottom:30px}.score-page__divider{margin-top:60px}.score-page__actions{gap:80px}}
+@media(max-width:900px){.score-page__content{width:calc(100% - 64px);padding-top:140px}.score-page__body{gap:40px}.score-page__eyebrow{gap:40px}.score-page__eyebrow i{width:70px}.score-page__amount{font-size:80px}.score-page__actions{gap:40px}.score-page__warning{font-size:15px}.score-page__leaderboard{letter-spacing:2px!important}}
+@media(max-width:700px){.score-page__content{width:calc(100% - 48px);padding-top:max(112px,var(--site-header-clearance));padding-bottom:max(48px,env(safe-area-inset-bottom,0px))}.score-page__art{object-fit:fill;opacity:.55}.score-page__eyebrow{gap:28px;font-size:15px;letter-spacing:.5px;line-height:22px}.score-page__eyebrow i{width:55px}.score-page__sub{font-size:16px;line-height:24px;margin-top:12px}.score-page__body{grid-template-columns:1fr;gap:40px;margin-top:30px}#post-game-rewards .score-page #rewards-heading{margin-left:0;font-size:43px;line-height:1.1}.score-page__amount{font-size:84px;margin:0 auto 30px}.score-page__offer{text-align:center;font-size:18px;line-height:1.5}.score-page__offer .brand-word{font-size:17px!important}.score-page__warning{text-align:center;font-size:14px;line-height:1.6;margin-top:14px}.score-page__divider{margin-top:24px}.score-page__actions{flex-direction:column;align-items:center;gap:16px;margin-top:24px}#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){width:min(100%,310px);height:55px;font-size:18px;letter-spacing:1px}#post-game-rewards .score-page .score-page__leaderboard{font-size:12px;letter-spacing:1.5px;margin-top:20px;padding-inline:4px}}
+@media(max-width:360px){.score-page__content{width:calc(100% - 40px)}#post-game-rewards .score-page #rewards-heading{font-size:38px}.score-page__amount{font-size:76px}.score-page__eyebrow{font-size:14px;gap:18px}}
+@media(min-width:901px){
+ .score-page__content{width:min(1155px,74.5vw);margin-left:16.5vw;margin-right:auto;padding-top:clamp(112px,20vh,190px);padding-bottom:clamp(32px,6vh,56px)}
+ .score-page__body{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(48px,5vw,78px);margin-top:clamp(20px,3.5vh,32px)}
+ #post-game-rewards .score-page #rewards-heading{margin-left:0;font-size:calc(clamp(42px,4.4vw,73px) - 1px)}
+ .score-page__heading em{font-size:calc(clamp(42px,4.4vw,73px) * 1.027 - 1px)}
+ .score-page__amount strong{font-size:calc(5em / var(--score-digits) - 1px)}
+ .score-page__eyebrow{font-size:19px}
+ .score-page__eyebrow>span{position:relative;top:6px;filter:brightness(.9)}
+ .score-page__sub{font-size:21px;filter:brightness(.9)}
+ .score-page__offer{width:auto;max-width:100%;white-space:normal;font-size:23px}
+ .score-page__warning{font-size:16px}
+ #post-game-rewards .score-page :is(#rewards-register,#rewards-retry){font-size:22px}
+ .score-page__divider{margin-top:clamp(20px,4.2vh,40px)}
+ .score-page__actions{margin-top:clamp(24px,4.2vh,40px)}
+ #post-game-rewards .score-page .score-page__leaderboard{font-size:15px;margin-top:clamp(16px,3.2vh,30px)}
+}
+@media(min-width:901px) and (max-width:1400px){.score-page__offer{font-size:19px}}
+@media(prefers-reduced-motion:reduce){#post-game-rewards .score-page *,#post-game-rewards .score-page #rewards-heading,#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){animation:none;transition:none}.score-page :is(button:hover,button:focus-visible) .score-page__track{transform:none}}

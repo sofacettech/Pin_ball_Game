@@ -9,7 +9,7 @@ import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('the 3D entrance shares copy, navigation and reveal without a video or a start button',()=>{
- const source=read('index.html').replace('FOR EVERY FACET','Updated approved copy,');
+ const source=read('index.html').replace('LAB-GROWN DIAMOND','Updated approved copy,');
  const html=withEntrancePresentation(read('entrance-source/entrance.html'),source);
  for(const selector of [/\bid="story-copy"/,/\bclass="[^"]*\bsite-brand\b/])assert.ok(html.includes(fragment(source,selector)));
  assert.doesNotMatch(html,/<video\b|id="enter"/);
@@ -49,6 +49,21 @@ test('buffering intro audio cannot pin the six-second logo animation',()=>{
  const cleanup=context.mountReveal(stage,()=>completed++);
  for(const now of [100,1100,3100,6100])callback(now);
  assert.equal(completed,1);assert.equal(stage.dataset.phase,'complete');assert.equal(audio.paused,true);cleanup();
+});
+
+test('the logo overlay requires real readiness and its existing reveal, with no message-duration gate',async()=>{
+ for(const readyFirst of [false,true]){
+  let reveal,release,removed=false,cleaned=false;
+  const ready=new Promise(resolve=>{release=resolve});
+  const overlay={querySelector:()=>({}),setAttribute(){},removeAttribute(){},classList:{add(){}},contains:()=>false,remove(){removed=true}};
+  const context={Promise,document:{querySelector:selector=>selector==='#site-loader'?overlay:{inert:true,removeAttribute(){}},documentElement:{hasAttribute:()=>false},body:{removeAttribute(){}}},mountReveal:(_stage,done)=>{reveal=done;return()=>{cleaned=true}},matchMedia:()=>({matches:true})};
+  vm.runInNewContext(read('assets/loading/intro.js').replace(/^import .*;\n/,'').replace('export function','function')+';this.finishLoading=finishLoading;',context);
+  const done=context.finishLoading({ready});
+  if(readyFirst)release();else reveal();
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(removed,false);
+  if(readyFirst)reveal();else release();
+  await done;assert.equal(removed,true);assert.equal(cleaned,true);
+ }
 });
 
 const source=read('entrance-source/entrance.mjs');

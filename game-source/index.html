@@ -161,20 +161,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <button id="rewards-close" class="rewards-close" type="button" aria-label="Close rewards">×</button>
   <div class="rewards-panel">
   <div class="rewards-floor" aria-hidden="true"></div>
-  <section class="rewards-content" id="rewards-result">
-   <div class="rewards-intro"><p class="flow-eyebrow"><span class="brand-word">SO/ UNLOCKED</span></p><p class="rewards-unlocked-copy">You unlocked a facet.</p></div>
-   <h1 id="rewards-heading" tabindex="-1">Here’s what’s yours.</h1>
-   <div class="rewards-divider" aria-hidden="true"></div>
-   <p class="rewards-score" id="rewards-score"><strong class="rewards-number" id="rewards-points">0</strong><span class="rewards-points-word">pts</span></p>
-   <p class="rewards-value-line" id="rewards-value-line">That’s <span id="rewards-value">₹0</span> off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
-   <p class="rewards-expiry" id="rewards-expiry">Unsaved points disappear when you leave this page.</p>
-   <div class="rewards-divider" aria-hidden="true"></div>
-   <div class="rewards-actions">
-    <button id="rewards-register" type="button"><span>Save my points</span><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M2 12h23m-9-8 9 8-9 8"/></svg></button>
-    <button id="rewards-retry" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 3v7h7"/></svg><span>Play again</span></button>
-   </div>
-   <button id="rewards-leaderboard" class="rewards-board-link" type="button">See full leaderboard →</button>
-  </section>
+  <section class="score-page-host" id="rewards-result"><div id="score-page-root"></div></section>
   <section class="rewards-content reward-flow" id="rewards-leave" hidden>
    <p class="flow-eyebrow">BEFORE YOU GO</p>
    <h1 id="rewards-leave-title" tabindex="-1"></h1>
@@ -257,7 +244,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 
 
  <script type="module" src="/src/main.ts"></script>
- <script defer src="../navigation.js?v=brand-c21220d0bb2d"></script>
+ <script defer src="../navigation.js?v=brand-e14e24a4ec52"></script>
 <!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen"><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Preparing your table. <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body></html>
 
 
