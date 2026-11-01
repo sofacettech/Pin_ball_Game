@@ -40,21 +40,33 @@ try{
     '-c','copy','-map','0:v:0','-f','segment','-segment_time','2','-reset_timestamps','1','-segment_format_options','movflags=+faststart',join(sectionDir,'part-%03d.mp4')],{stdio:'inherit'});
   if(result.error)throw result.error;
   if(result.status!==0)throw Error('Journey sectioning failed');
-  let firstFrame=manifest.firstFrame;const segments=[];
+  let firstFrame=manifest.firstFrame,description;const segments=[];
   for(const part of (await readdir(sectionDir)).filter(file=>file.endsWith('.mp4')).sort()){
     const path=join(sectionDir,part);
-    const probe=spawnSync('ffprobe',['-v','error','-count_frames','-show_entries','stream=nb_read_frames,width,height,r_frame_rate,has_b_frames','-of','json',path],{encoding:'utf8'});
+    const probe=spawnSync('ffprobe',['-v','error','-count_frames','-show_packets','-show_entries','stream=nb_read_frames,width,height,r_frame_rate,has_b_frames:packet=pos,size,flags,pts_time','-of','json',path],{encoding:'utf8'});
     if(probe.status!==0)throw Error('Section probe failed');
-    const [stream]=JSON.parse(probe.stdout).streams,frameCount=Number(stream.nb_read_frames);
+    const parsed=JSON.parse(probe.stdout),[stream]=parsed.streams,frameCount=Number(stream.nb_read_frames);
     if(stream.width!==1920||stream.height!==1080||stream.r_frame_rate!=='60/1'||stream.has_b_frames!==0||!Number.isInteger(frameCount)||frameCount<1||frameCount>120)throw Error('Invalid video section');
     const bytes=await readFile(path),sha256=createHash('sha256').update(bytes).digest('hex'),file=`entrance-journey-${sha256}.mp4`;
     if(bytes.length>24*1024*1024)throw Error('Video section exceeds the browser buffer budget');
+    const at=bytes.indexOf(Buffer.from('avcC'));
+    if(at<4)throw Error('Missing AVC configuration');
+    const length=bytes.readUInt32BE(at-4)-8,config=bytes.subarray(at+4,at+4+length).toString('hex');
+    if(length<8||length>2048||description&&description!==config)throw Error('Inconsistent AVC configuration');
+    description=config;
+    const frames=parsed.packets.map((packet,i)=>{
+      const key=packet.flags.includes('K');
+      if(Math.abs(Number(packet.pts_time)-i/60)>.00001||key!==(i%4===0))throw Error('Unexpected section frame timing');
+      return [Number(packet.pos),Number(packet.size),Number(key)];
+    });
+    if(frames.length!==frameCount)throw Error('Incomplete section frame index');
     await rename(path,join(output,file));
-    segments.push({file,sha256,bytes:bytes.length,firstFrame,lastFrame:firstFrame+frameCount-1,frameCount});firstFrame+=frameCount;
+    segments.push({file,sha256,bytes:bytes.length,firstFrame,lastFrame:firstFrame+frameCount-1,frameCount,frames});firstFrame+=frameCount;
     console.log(`${file}: ${bytes.length} bytes`);
   }
   if(firstFrame!==manifest.lastFrame+1)throw Error('Incomplete journey sections');
   manifest.clips.journey.segments=segments;
+  manifest.clips.journey.decoder={codec:'avc1.'+description.slice(2,8),description};
 }finally{await rm(sectionDir,{recursive:true,force:true})}
 const json=JSON.stringify(manifest,null,2)+'\n';
 const file=`entrance-manifest-${createHash('sha256').update(json).digest('hex')}.json`;

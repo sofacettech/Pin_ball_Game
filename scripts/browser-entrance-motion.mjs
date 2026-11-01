@@ -3,7 +3,10 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url),engine=process.env.SOFACET_BROWSER||'chromium';
-const {[engine]:type}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
+const {[engine]:type,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
+const deviceName=process.env.SOFACET_DEVICE;
+if(deviceName&&!devices[deviceName])throw Error('Unknown emulated device: '+deviceName);
+const {defaultBrowserType,...device}=deviceName?devices[deviceName]:{viewport:{width:393,height:852},deviceScaleFactor:1,hasTouch:true,isMobile:true};
 const base=process.env.SOFACET_MOTION_URL||process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8766/';
 const name=process.env.SOFACET_MOTION_NAME||'continuous';
 const options=(process.env.SOFACET_OPTIONS||'2').split(',');
@@ -12,7 +15,7 @@ const map=createJourneyScrollMap(),out=new URL(`../work/entrance-motion/${name}-
 const browser=await type.launch({...engine==='chromium'?{args:['--enable-gpu']}:{} });
 const report=[];
 try{for(const option of options){
- const context=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:1,hasTouch:true,isMobile:true,reducedMotion:'no-preference'});
+ const context=await browser.newContext({...device,reducedMotion:'no-preference'});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{
   const stats=window.motionVideoStats={draws:[],seeks:[]};
@@ -29,6 +32,7 @@ try{for(const option of options){
  const url=new URL(base);url.searchParams.set('entrance',option);
  await page.goto(url.href);
  await page.waitForFunction(()=>window.entrancePreview?.ready&&window.entrancePreview.phase==='idle',null,{timeout:180000});
+ if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true);
  const runs=[];
  const entry=process.env.SOFACET_MOTION_FULL_ENTRY==='1'?[[334,1100,12000],[1100,334,12000]]:[[600,1100,8000],[1100,600,8000]];
  for(const [from,to,duration] of [...entry,[1300,1740,6000],[1740,1300,6000]]){
@@ -60,7 +64,8 @@ try{for(const option of options){
  }
  await page.screenshot({path:new URL(`option-${option}.png`,out).pathname});
  assert.deepEqual(errors,[]);
- const result={option,engine,runs,video:await page.evaluate(()=>window.motionVideoStats),errors};
+ if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'Motion must stay on the streamed decoder');
+ const result={option,engine,device:deviceName||null,runs,video:await page.evaluate(()=>window.motionVideoStats),errors};
  report.push(result);await writeFile(new URL(`option-${option}.json`,out),JSON.stringify(result));await context.close();
 }}finally{await browser.close()}
-await writeFile(new URL('summary.json',out),JSON.stringify(report.map(({option,engine,runs,errors})=>({option,engine,runs:runs.map(({samples,...r})=>r),errors})),null,2));
+await writeFile(new URL('summary.json',out),JSON.stringify(report.map(({option,engine,device,runs,errors})=>({option,engine,device,runs:runs.map(({samples,...r})=>r),errors})),null,2));

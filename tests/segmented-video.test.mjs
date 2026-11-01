@@ -51,4 +51,12 @@ test('section manifests must be contiguous, bounded and immutable before any CDN
   remote.clips.journey.segments=structuredClone(segments);change(remote.clips.journey.segments);
   const bad=await loadEntranceMedia(fetcher);assert.equal(bad.clips.journey.url,bad.clips.journey.local);assert.equal(bad.clips.journey.segments,undefined);
  }
+ remote.clips.journey.decoder={codec:'avc1.64002a',description:'0164002affe10000'};
+ const indexed=segments.map(part=>({...part,bytes:200,frames:Array.from({length:part.frameCount},(_,i)=>[i,1,Number(i%4===0)])}));
+ remote.clips.journey.segments=indexed;
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.decoder.codec,'avc1.64002a');
+ for(const change of [s=>s[0].frames[0][0]=201,s=>s[0].frames[1][2]=1,s=>s[0].frames.pop()]){
+  remote.clips.journey.segments=structuredClone(indexed);change(remote.clips.journey.segments);
+  const bad=await loadEntranceMedia(fetcher);assert.equal(bad.clips.journey.url,bad.clips.journey.local);
+ }
 });
