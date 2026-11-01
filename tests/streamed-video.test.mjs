@@ -95,3 +95,20 @@ test('prefetch reserves only the next boundary before continuing without overlap
   assert.equal(Math.round((await source.frameAt(12)).timestamp*60/1e6),12);
  }finally{source.dispose()}
 });
+
+test('advancing pauses skipped downloads and stale prefetch cannot fill an active jump prefix',async()=>{
+ const next={...segment,url:segment.url+'?next',firstFrame:342,lastFrame:353,frameCount:12,bytes:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%4===0)])};
+ const requests=[];let firstSignal,tail;
+ const fetcher=async(url,options)=>{
+  if(url===segment.url){firstSignal=options.signal;return new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array(4));options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true})}}))}
+  const range=options.headers.Range;requests.push(range);const [,start,end]=/bytes=(\d+)-(\d+)/.exec(range);
+  const body=range==='bytes=8-11'?new ReadableStream({start(controller){tail=()=>{controller.enqueue(new Uint8Array(4));controller.close()}}}):new Uint8Array(Number(end)-Number(start)+1);
+  return new Response(body,{status:206,headers:{'Content-Range':`bytes ${start}-${end}/12`}});
+ };
+ const source=await createStreamedVideoSource([segment,next],metadata,{...codec(),fetcher});
+ try{
+  await source.frameAt(0);const jump=source.frameAt(19);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(firstSignal.aborted,true);assert.deepEqual(requests,['bytes=0-3','bytes=8-11']);
+  tail();assert.equal(Math.round((await jump).timestamp*60/1e6),19);
+ }finally{source.dispose()}
+});

@@ -40,7 +40,11 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   }
   function release(entry){
     notify(entry,new DOMException('Video download cancelled','AbortError'));
-    for(const job of entry.jobs){job.controller.abort();clearTimeout(job.timer)}
+    pause(entry);
+  }
+  function pause(entry){
+    for(const job of entry.jobs){job.cancelled=true;job.controller.abort();clearTimeout(job.timer)}
+    entry.jobs.clear();
   }
   function download(entry,segment,start,end){
     const job={start,end,controller:new AbortController()};entry.jobs.add(job);
@@ -70,7 +74,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
         if(position!==limit)throw Error('Incomplete video section');
         if(!cached&&!entry.saved&&available(entry,0,segment.bytes)){entry.saved=true;save(segment,entry.bytes)}
       }catch(error){await reader.cancel().catch(()=>{});throw error}finally{reader.releaseLock()}
-    })().catch(error=>{notify(entry,error)}).finally(()=>{clearTimeout(job.timer);entry.jobs.delete(job)});
+    })().catch(error=>{if(!job.cancelled)notify(entry,error)}).finally(()=>{clearTimeout(job.timer);entry.jobs.delete(job)});
     return job.done;
   }
   function ensure(part,start=0,limit=segments[part].bytes){
@@ -96,7 +100,10 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     const frame=334+index,part=segments.findIndex(s=>frame>=s.firstFrame&&frame<=s.lastFrame);
     if(part<0)throw Error('Frame outside video sections');
     direction=index<lastIndex?-1:1;lastIndex=index;activePart=part;
-    for(const [key,entry] of entries)if(Math.abs(key-part)>2){entries.delete(key);release(entry)}
+    for(const [key,entry] of entries){
+      if(Math.abs(key-part)>2){entries.delete(key);release(entry)}
+      else if((key-part)*direction<0)pause(entry);
+    }
     const segment=segments[part],local=frame-segment.firstFrame,first=local-local%interval,last=Math.min(segment.frameCount,first+interval);
     const start=segment.frames[first][0],entry=ensure(part,first===0?0:start);
     const [offset,size]=segment.frames[last-1],end=offset+size;
@@ -114,9 +121,9 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
         ensure(next,first===0?0:neighbour.frames[first][0],offset+size);
       }
       void entry.done?.then(()=>{
-        if(disposed||entry.error||prefetchKey!==key)return;
+        if(disposed||entry.error||prefetchKey!==key||activePart!==part)return;
         const ahead=segments[next]?ensure(next):null;
-        void ahead?.done?.then(()=>{if(!disposed&&!ahead.error&&prefetchKey===key&&segments[further]&&Math.abs(further-activePart)<=2)ensure(further)});
+        void ahead?.done?.then(()=>{if(!disposed&&!ahead.error&&prefetchKey===key&&activePart===part&&segments[further])ensure(further)});
       });
     }
     if(frames.has(index))return frames.get(index);
