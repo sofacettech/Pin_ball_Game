@@ -16,7 +16,13 @@ const browser=await type.launch({...engine==='chromium'?{args:['--enable-gpu']}:
 const report=[];
 try{for(const option of options){
  const context=await browser.newContext({...device,reducedMotion:'no-preference'});
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage();const errors=[],network=[];page.on('pageerror',e=>errors.push(e.message));
+ page.on('requestfinished',async request=>{const response=await request.response();network.push({url:request.url(),range:request.headers().range,status:response?.status(),bytes:response?.headers()['content-length'],timing:request.timing()})});
+ if(engine==='chromium'&&(process.env.SOFACET_NETWORK_MBPS||process.env.SOFACET_CPU_RATE)){
+  const session=await context.newCDPSession(page);
+  if(process.env.SOFACET_CPU_RATE)await session.send('Emulation.setCPUThrottlingRate',{rate:Number(process.env.SOFACET_CPU_RATE)});
+  if(process.env.SOFACET_NETWORK_MBPS)await session.send('Network.emulateNetworkConditions',{offline:false,latency:80,downloadThroughput:Number(process.env.SOFACET_NETWORK_MBPS)*1e6/8,uploadThroughput:1e6,connectionType:'cellular4g'});
+ }
  await page.addInitScript(()=>{
   const stats=window.motionVideoStats={draws:[],seeks:[]};
   const original=document.createElement.bind(document),videos=new WeakMap();
@@ -35,7 +41,8 @@ try{for(const option of options){
  if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true);
  const runs=[];
  const entry=process.env.SOFACET_MOTION_FULL_ENTRY==='1'?[[334,1100,12000],[1100,334,12000]]:[[600,1100,8000],[1100,600,8000]];
- for(const [from,to,duration] of [...entry,[1300,1740,6000],[1740,1300,6000]]){
+ const legs=process.env.SOFACET_MOTION_CHESS==='1'?[[1700,2163,8000],[2163,1700,8000],[1700,2163,2000],[2163,1700,2000]]:[...entry,[1300,1740,6000],[1740,1300,6000]];
+ for(const [from,to,duration] of legs){
   await page.evaluate(y=>scrollTo(0,y),map.scrollAtFrame(from));
   await page.waitForFunction(f=>Math.abs(window.entrancePreview.frame-f)<.3&&window.entrancePreview.settled,from,{timeout:30000});
   const points=Array.from({length:Math.ceil(duration/16)+1},(_,i)=>map.scrollAtFrame(from+(to-from)*Math.min(1,i*16/duration)));
@@ -59,13 +66,14 @@ try{for(const option of options){
   const backwards=updates.filter((r,i)=>i&&(r.shown-updates[i-1].shown)*Math.sign(to-from)<-.5).length;
   const summary={from,to,updatesPerSecond:updates.length/((active.at(-1).at-active[0].at)/1000),p95UpdateGapMs:intervals[Math.floor(intervals.length*.95)],maxUpdateGapMs:Math.max(...intervals),cropErrorP95:cropErrors[Math.floor(cropErrors.length*.95)]??null,maxCropError:cropErrors.at(-1)??null,frozenImageMovingCropFrames:frozenMoving,backwards};
   console.log(JSON.stringify({option,...summary}));runs.push({...summary,samples});
+  await writeFile(new URL(`option-${option}.json`,out),JSON.stringify({option,engine,device:deviceName||null,runs,network,errors}));
   if(option==='2'&&process.env.SOFACET_CHECK_MOTION==='1'){assert.ok(updates.length>0,'The video must present frames while scrolling');assert.ok(summary.maxCropError<1,'The crop must match the displayed frame');assert.equal(summary.frozenImageMovingCropFrames,0,'Frozen video must not slide across the viewport');assert.equal(summary.backwards,0,'Monotonic input must not reverse presented frames');}
   if(process.env.SOFACET_MAX_VIDEO_STALL_MS&&option==='2')assert.ok(summary.maxUpdateGapMs<=Number(process.env.SOFACET_MAX_VIDEO_STALL_MS),`Video stalled for ${summary.maxUpdateGapMs}ms`);
  }
  await page.screenshot({path:new URL(`option-${option}.png`,out).pathname});
  assert.deepEqual(errors,[]);
  if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'Motion must stay on the streamed decoder');
- const result={option,engine,device:deviceName||null,runs,video:await page.evaluate(()=>window.motionVideoStats),errors};
+ const result={option,engine,device:deviceName||null,runs,network,video:await page.evaluate(()=>window.motionVideoStats),errors};
  report.push(result);await writeFile(new URL(`option-${option}.json`,out),JSON.stringify(result));await context.close();
 }}finally{await browser.close()}
 await writeFile(new URL('summary.json',out),JSON.stringify(report.map(({option,engine,device,runs,errors})=>({option,engine,device,runs:runs.map(({samples,...r})=>r),errors})),null,2));

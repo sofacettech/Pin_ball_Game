@@ -44,11 +44,13 @@ export async function loadEntranceMedia(fetcher=fetch){
       const decoder=higherQuality.clips.journey.decoder;
       if(decoder){
         if(!/^avc1\.[a-f0-9]{6}$/.test(decoder.codec)||!/^01[a-f0-9]{14,4094}$/.test(decoder.description)||decoder.description.length%2)throw Error('Invalid video decoder configuration');
+        const interval=decoder.keyframeInterval??4;
+        if(![4,12].includes(interval))throw Error('Invalid prediction group');
         for(const part of segments){
           if(!Array.isArray(part.frames)||part.frames.length!==part.frameCount)throw Error('Incomplete video frame index');
           let end=0;
           for(const [i,sample] of part.frames.entries()){
-            if(!Array.isArray(sample)||sample.length!==3||!sample.every(Number.isSafeInteger)||sample[0]<end||sample[1]<=0||sample[0]+sample[1]>part.bytes||sample[2]!==Number(i%4===0))throw Error('Invalid video frame range');
+            if(!Array.isArray(sample)||sample.length!==3||!sample.every(Number.isSafeInteger)||sample[0]<end||sample[1]<=0||sample[0]+sample[1]>part.bytes||sample[2]!==Number(i%interval===0))throw Error('Invalid video frame range');
             end=sample[0]+sample[1];
           }
         }

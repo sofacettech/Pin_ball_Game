@@ -59,4 +59,9 @@ test('section manifests must be contiguous, bounded and immutable before any CDN
   remote.clips.journey.segments=structuredClone(indexed);change(remote.clips.journey.segments);
   const bad=await loadEntranceMedia(fetcher);assert.equal(bad.clips.journey.url,bad.clips.journey.local);
  }
+ remote.clips.journey.decoder.keyframeInterval=12;
+ remote.clips.journey.segments=indexed.map(part=>({...part,frames:part.frames.map(([offset,bytes],i)=>[offset,bytes,Number(i%12===0)])}));
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.decoder.keyframeInterval,12);
+ remote.clips.journey.decoder.keyframeInterval=120;
+ assert.equal((await loadEntranceMedia(fetcher)).clips.journey.segments,undefined,'unbounded prediction chains must be rejected');
 });

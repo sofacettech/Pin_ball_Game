@@ -9,14 +9,15 @@ import {join} from 'node:path';
 // and no B frames so reverse seeking does not stall Safari's decoder.
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output=join(root,'work/entrance-video/cdn');
+const crf=20,keyframeInterval=12;
 await mkdir(output,{recursive:true});
 const manifest=JSON.parse(await readFile(join(root,'assets/entrance-video/manifest.json'),'utf8'));
-manifest.encoding={codec:'h264',crf:10,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true,source:'saved-master'};
+manifest.encoding={codec:'h264',crf,pixelFormat:'yuv420p',colorSpace:'bt709',fastStart:true,source:'saved-master'};
 for(const kind of ['opening','journey']){
   const seekable=kind==='journey';
   const temporary=join(output,kind+'.mp4');
   const result=spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',join(root,`work/entrance-video/${kind}-master.mp4`),
-    '-an',...(seekable?['-c:v','libx264','-preset','slow','-crf','10','-g','4','-keyint_min','4','-sc_threshold','0','-bf','0','-pix_fmt','yuv420p']:['-c:v','copy']),
+    '-an',...(seekable?['-c:v','libx264','-preset','slow','-crf',String(crf),'-g',String(keyframeInterval),'-keyint_min',String(keyframeInterval),'-sc_threshold','0','-bf','0','-pix_fmt','yuv420p']:['-c:v','copy']),
     '-bsf:v','h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0',
     '-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv','-movflags','+faststart',temporary],{stdio:'inherit'});
   if(result.error)throw result.error;
@@ -29,7 +30,7 @@ for(const kind of ['opening','journey']){
   const bytes=await readFile(temporary),sha256=createHash('sha256').update(bytes).digest('hex');
   const file=`entrance-${kind}-${sha256}.mp4`;
   await rename(temporary,join(output,file));
-  manifest.clips[kind]={...manifest.clips[kind],file,sha256,bytes:bytes.length,encoding:seekable?{keyframeInterval:4,bFrames:0,streamCopy:false}:{keyframeInterval:60,bFrames:stream.has_b_frames,streamCopy:true}};
+  manifest.clips[kind]={...manifest.clips[kind],file,sha256,bytes:bytes.length,encoding:seekable?{keyframeInterval,bFrames:0,streamCopy:false}:{keyframeInterval:60,bFrames:stream.has_b_frames,streamCopy:true}};
   console.log(`${file}: ${bytes.length} bytes`);
 }
 // Independent two-second containers keep reverse seeks local to a small blob.
@@ -56,7 +57,7 @@ try{
     description=config;
     const frames=parsed.packets.map((packet,i)=>{
       const key=packet.flags.includes('K');
-      if(Math.abs(Number(packet.pts_time)-i/60)>.00001||key!==(i%4===0))throw Error('Unexpected section frame timing');
+      if(Math.abs(Number(packet.pts_time)-i/60)>.00001||key!==(i%keyframeInterval===0))throw Error('Unexpected section frame timing');
       return [Number(packet.pos),Number(packet.size),Number(key)];
     });
     if(frames.length!==frameCount)throw Error('Incomplete section frame index');
@@ -66,7 +67,7 @@ try{
   }
   if(firstFrame!==manifest.lastFrame+1)throw Error('Incomplete journey sections');
   manifest.clips.journey.segments=segments;
-  manifest.clips.journey.decoder={codec:'avc1.'+description.slice(2,8),description};
+  manifest.clips.journey.decoder={codec:'avc1.'+description.slice(2,8),description,keyframeInterval};
 }finally{await rm(sectionDir,{recursive:true,force:true})}
 const json=JSON.stringify(manifest,null,2)+'\n';
 const file=`entrance-manifest-${createHash('sha256').update(json).digest('hex')}.json`;
