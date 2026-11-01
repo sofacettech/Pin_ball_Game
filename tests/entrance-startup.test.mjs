@@ -74,7 +74,7 @@ async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
  const model=deferred(),nodes=new Map(),rendered=[],assemblyRendered=[],copyFrames=[];let removed=0,disposed=0,aborted=0,handoffs=0,redirect,prepared=0;
  const element=()=>({hidden:true,dataset:{},removeAttribute(){},setAttribute(){},load(){},remove(){removed++}});
  const renderer={loadVariant:()=>model.promise,resize(){},renderAt(frame){rendered.push(frame)},renderAssemblyAt(frame){assemblyRendered.push(frame)},dispose(){disposed++}};
- const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
+ const context={console:{error(){}},URLSearchParams,Promise,parameters:new URLSearchParams(),videoEntrance:false,performanceMode:true,stage:{},renderView:{},placement:{width:1920,height:1080},devicePixelRatio:1,
   $:id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
   document:{body:{dataset:{}}},fetch:async()=>({ok:true,json:async()=>({points:[]})}),
   gameRequested:false,startupFailed:false,ready:false,firstFrame:334,assembly:createAssemblyClock({reducedMotion:reduced}),

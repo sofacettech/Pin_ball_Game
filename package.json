@@ -19,7 +19,9 @@
     "build:about": "node scripts/build-about.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "build:account": "node scripts/build-account.mjs",
-    "build:entrance": "node scripts/build-entrance.mjs"
+    "build:entrance": "node scripts/build-entrance.mjs",
+    "render:entrance-video": "node scripts/render-entrance-video.mjs",
+    "encode:entrance-video": "node scripts/encode-entrance-video.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
