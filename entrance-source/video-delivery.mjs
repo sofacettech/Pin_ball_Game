@@ -18,7 +18,7 @@ export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOpti
   const manifest=validateEntranceManifest(await response.json());
   const clips=Object.fromEntries(['opening','journey'].map(kind=>{
     const local=localBase+kind+'.mp4?v='+manifest.clips[kind].sha256;
-    return [kind,{url:local,local,localWidth:manifest.width,localHeight:manifest.height}];
+    return [kind,{url:local,local,bytes:manifest.clips[kind].bytes,localBytes:manifest.clips[kind].bytes,localWidth:manifest.width,localHeight:manifest.height}];
   }));
   const candidates=[...(option==='3'?[{url:config.entrance4kManifestURL,width:3840,height:2160}]:[]),{url:config.entranceManifestURL,width:1920,height:1080}];
   for(const candidate of candidates.filter(item=>item.url))try{
@@ -64,7 +64,7 @@ export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOpti
         validateIndex(proxy.decoder,[proxy]);preview={...proxy,url:new URL(proxy.file,url).href};
       }
     }
-    for(const kind of ['opening','journey'])clips[kind].url=urls[kind];
+    for(const kind of ['opening','journey']){clips[kind].url=urls[kind];clips[kind].bytes=higherQuality.clips[kind].bytes;}
     if(segments){clips.journey.segments=segments;clips.journey.decoder=higherQuality.clips.journey.decoder;}
     if(preview)clips.journey.preview=preview;
     return {manifest:higherQuality,clips};

@@ -1,9 +1,9 @@
 // Keep only the current two-second movie and two neighbours in each direction. Blob
 // URLs prevent WebKit from making a fresh network range request on each reverse
 // seek, while bounding compressed media memory instead of buffering the movie.
-export function createSegmentedVideoSource(segments,{fetcher=fetch,width=1920,height=1080}={}){
+export function createSegmentedVideoSource(segments,{fetcher=fetch,cacheStorage=globalThis.caches,width=1920,height=1080}={}){
   const entries=new Map();let disposed=false,lastIndex=0,cacheWrites=Promise.resolve();
-  const storage=globalThis.caches?caches.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
+  const storage=cacheStorage?cacheStorage.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   function save(segment,blob){
     cacheWrites=cacheWrites.then(async()=>{
       const cache=await storage;if(!cache||disposed)return;

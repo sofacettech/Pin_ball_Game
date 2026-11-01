@@ -1,6 +1,6 @@
 // Decode a short prediction group as soon as its bytes arrive. Native
 // video remains the compatibility path; this path never waits for a whole MP4.
-export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk,width=1920,height=1080}={}){
+export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,cacheStorage=globalThis.caches,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk,width=1920,height=1080}={}){
   if(!metadata||typeof Decoder!=='function'||typeof Chunk!=='function')return null;
   const config={codec:metadata.codec,description:Uint8Array.from(metadata.description.match(/../g),hex=>parseInt(hex,16)),codedWidth:width,codedHeight:height,
     colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false},optimizeForLatency:true};
@@ -11,7 +11,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   const maxFrames=Math.max(1,Math.min(interval,Math.floor(1920*1080*12/(width*height))));
   let keepFirst=0,keepLast=Infinity;
   const entries=new Map(),frames=new Map();let disposed=false,failure,activePart=0,lastIndex=0,direction=1,prefetchKey='',cacheWrites=Promise.resolve();
-  const storage=globalThis.caches?caches.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
+  const storage=cacheStorage?cacheStorage.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   const decoder=new Decoder({output:frame=>{
     if(disposed||failure){frame.close();return}
     if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');return}
