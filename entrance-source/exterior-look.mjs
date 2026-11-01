@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
+import { copyReflectionCamera } from './reflection-camera.mjs';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 const sourceLights=await fetch('/assets/entrance-3d/exterior-lights.json').then(r=>r.json());
 
@@ -339,9 +340,11 @@ export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(
         }
       }
     }
-    reflectionCamera.copy(camera,false);
-    reflectionCamera.projectionMatrix.elements[0]*=Math.min(.7,.84/extentX);
-    reflectionCamera.projectionMatrix.elements[5]*=Math.min(.7,.84/extentY);
+    copyReflectionCamera(camera,reflectionCamera);
+    const xScale=Math.min(.7,.84/extentX),yScale=Math.min(.7,.84/extentY);
+    // Overscan the shifted frustum around its own centre as well as its lens.
+    for(const index of [0,8])reflectionCamera.projectionMatrix.elements[index]*=xScale;
+    for(const index of [5,9])reflectionCamera.projectionMatrix.elements[index]*=yScale;
     reflectionCamera.projectionMatrixInverse.copy(reflectionCamera.projectionMatrix).invert();
   }
   function update(camera,frame,refreshReflection=true){
