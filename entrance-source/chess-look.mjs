@@ -54,22 +54,27 @@ export function createChessLook(scene,renderer,{performanceMode=false,captureRef
         shader.uniforms.uChessMirror={value:mirror.getRenderTarget().texture};shader.uniforms.uChessMatrix=matrix;
         shader.uniforms.uChessStrength=strength;shader.uniforms.uChessCapturing=capturing;
         shader.uniforms.uChessPlaneNormal={value:normal};
+        // Preserve the original literal precision, but supply these as material
+        // uniforms so different mirrors can share the same compiled program.
+        shader.uniforms.uChessAmount={value:Number(weight.toFixed(3))};
+        shader.uniforms.uChessLOD={value:Number(lod.toFixed(2))};
+        shader.uniforms.uChessTint={value:new THREE.Vector3(...tint)};
         shader.vertexShader='varying vec3 vChessWorld,vChessNormal;\n'+shader.vertexShader;
         shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',`#include <worldpos_vertex>
           vChessWorld=(modelMatrix*vec4(transformed,1.)).xyz;vChessNormal=normalize(mat3(modelMatrix)*objectNormal);`);
-        shader.fragmentShader='uniform sampler2D uChessMirror;uniform mat4 uChessMatrix;uniform float uChessStrength,uChessCapturing;uniform vec3 uChessPlaneNormal;varying vec3 vChessWorld,vChessNormal;\n'+shader.fragmentShader;
+        shader.fragmentShader='uniform sampler2D uChessMirror;uniform mat4 uChessMatrix;uniform float uChessStrength,uChessCapturing,uChessAmount,uChessLOD;uniform vec3 uChessPlaneNormal,uChessTint;varying vec3 vChessWorld,vChessNormal;\n'+shader.fragmentShader;
         shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
           if(uChessStrength>0.&&uChessCapturing<.5){
             vec4 p=uChessMatrix*vec4(vChessWorld,1.);vec2 uv=p.xy/max(p.w,.0001);
             float border=min(min(uv.x,1.-uv.x),min(uv.y,1.-uv.y));
             float aligned=smoothstep(.8,.98,abs(dot(normalize(vChessNormal),uChessPlaneNormal)));
-            float amount=${weight.toFixed(3)}*uChessStrength*aligned*smoothstep(0.,.015,border);
-            vec3 reflected=textureLod(uChessMirror,uv,${lod.toFixed(2)}).rgb;
-            outgoingLight=mix(outgoingLight,reflected*vec3(${tint.join(',')}),amount);
+            float amount=uChessAmount*uChessStrength*aligned*smoothstep(0.,.015,border);
+            vec3 reflected=textureLod(uChessMirror,uv,uChessLOD).rgb;
+            outgoingLight=mix(outgoingLight,reflected*uChessTint,amount);
           }
           #include <opaque_fragment>`);
       };
-      m.customProgramCacheKey=()=>cacheKey()+`-chess-planar-${width}-${lod}-${weight}-${tint}`;m.needsUpdate=true;
+      m.customProgramCacheKey=()=>cacheKey()+'-chess-planar-uniforms';m.needsUpdate=true;
     }
   }
 

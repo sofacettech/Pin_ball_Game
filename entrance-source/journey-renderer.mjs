@@ -9,6 +9,7 @@ import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { cacheAreaLighting, canShareAreaCoat } from './area-light-cache.mjs';
+import { prepareVisibleShaders } from './shader-preparation.mjs';
 import { entranceRenderPolicy } from './render-policy.mjs';
 import { createEntranceResolution, entranceResolutionBounds } from './entrance-resolution.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
@@ -296,17 +297,23 @@ async function loadVariant(name,{download}={}){
     openingFraming=createOpeningFraming(model,assemblyObjects);
     if(performanceMode)preparedTransforms=createPreparedTransforms(model,gltf.animations,{dynamicObjects:assemblyObjects.objects});
     onStatus('Preparing the lights…');
-    // Prepare real camera, HDR, transmission and reflection passes. Compiling
-    // the entire world for every room also compiled hidden/off-screen materials
-    // in lighting combinations they never use. Warming actual draws avoids that
-    // extra work. Include the first gallery-light frame, before it leaves view.
-    for(const warmFrame of [JOURNEY_START_FRAME,720,850,1000,1480,1521,1655,1680,1800,2100]){
-      mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
-      interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
-      interior.capture(camera);chess.capture(camera,warmFrame);composer.render();
-      await new Promise(resolve=>requestAnimationFrame(resolve));
-      if(id!==loadID||disposed)return;
+    const cancelled=()=>id!==loadID||disposed;
+    async function warmViews(){
+      for(const warmFrame of [JOURNEY_START_FRAME,720,850,1000,1480,1521,1655,1680,1800,2100]){
+        if(cancelled())return;
+        mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
+        interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
+        interior.capture(camera);chess.capture(camera,warmFrame);composer.render();
+        await new Promise(resolve=>requestAnimationFrame(resolve));
+      }
     }
+    // Queue visible shader variants together, instead of serially stalling each
+    // first draw. Then draw the real Full HD views to prepare textures, buffers,
+    // transmission and native GPU pipelines before releasing the loader.
+    await prepareVisibleShaders(renderer,warmViews,{cancelled});
+    if(cancelled())return;
+    await warmViews();
+    if(cancelled())return;
     // Draw the actual relocated facet poses too, including batch texture uploads
     // and reflection/composer targets, before releasing the startup loader.
     preparing=false;assemblyBaseNeedsReset=true;
