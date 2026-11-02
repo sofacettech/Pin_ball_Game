@@ -49,3 +49,14 @@ test('browsers without parallel compilation still restore normal drawing',async(
   await prepareVisibleShaders(f.renderer,()=>f.renderer.render(f.scene,f.camera));
   assert.equal(f.renderer.render,f.render);assert.deepEqual(f.queried,[]);
 });
+
+test('an overlapping replacement cannot restore a cancelled compile callback as the renderer',async()=>{
+  const f=fixture();f.add();let releaseOld,releaseNew;
+  const old=prepareVisibleShaders(f.renderer,()=>new Promise(resolve=>{releaseOld=resolve;}));
+  const newer=prepareVisibleShaders(f.renderer,()=>new Promise(resolve=>{releaseNew=resolve;}));
+  releaseOld();await old;
+  f.renderer.render(f.scene,f.camera);
+  assert.equal(f.compiled.length,1,'new preparation remains active after the old one finishes');
+  releaseNew();await newer;
+  assert.equal(f.renderer.render,f.render);
+});
