@@ -233,7 +233,9 @@ export function createExteriorLook(scene,renderer,{captureReflection=draw=>draw(
         outgoingLight=mix(outgoingLight,reflected*vec3(.95,.72,.92),uJourneyReflectionWeight*fresnel*horizontal*edge);
         #include <opaque_fragment>`);
     };
-    material.customProgramCacheKey=()=>`journey-planar-${strength}-${blur}-${ripple}-${water}`;
+    // These settings are uniforms, not shader source. Share the program while
+    // each material retains its own reflection strength, ripple and blur.
+    material.customProgramCacheKey=()=>'journey-planar-uniforms';
     material.needsUpdate=true;
   }
   function install(model){
