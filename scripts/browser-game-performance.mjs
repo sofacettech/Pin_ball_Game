@@ -35,15 +35,15 @@ try{
     const observer=new MutationObserver(records=>mutations+=records.length);observer.observe(document.querySelector('#stage'),{subtree:true,attributes:true,childList:true,characterData:true});
     await new Promise(resolve=>{const start=performance.now();function tick(now){frames++;intervals.push(now-previous);previous=now;if(now-start<1200)requestAnimationFrame(tick);else resolve()}requestAnimationFrame(tick)});
     observer.disconnect();intervals.sort((a,b)=>a-b);const canvas=document.querySelector('#game');
-    return{mutations,frames,p95FrameMs:intervals[Math.floor(intervals.length*.95)],board:box('viewport'),panel:box('scorecard-panel'),launch:box('touch-launch'),buffer:[canvas.width,canvas.height]};
+    return{mutations,frames,p95FrameMs:intervals[Math.floor(intervals.length*.95)],board:box('viewport'),panel:box('scorecard-panel'),launch:box('touch-launch'),buffer:[canvas.width,canvas.height],layout:[document.querySelector('#viewport').clientWidth,document.querySelector('#viewport').clientHeight]};
    });
    const result={engine,name,version,...await measure(),errors};results.push(result);
    await page.screenshot({path:resolve(output,`${engine}-${name}-${version}.png`)});
    if(version==='current'){
     assert.equal(result.panel.height,96,'portrait launch/score panel leaves room inside the score borders');
     assert.ok(result.board.height<=(viewport.width-20)*1.2+1,'extra height does not expand the WebGL buffer');
-    assert.ok(result.buffer[0]*result.buffer[1]<=Math.ceil(result.board.width*2)*Math.ceil(result.board.height*2),'Full phone pixels stay within the 2x drawing budget');
-    assert.ok(result.buffer[0]>=Math.floor(result.board.width*2),'Full phone view uses 2x pixels for crisp rails and lettering');
+    assert.ok(result.buffer[0]*result.buffer[1]<=result.layout[0]*3*result.layout[1]*3,'Full phone pixels stay within the native 3x drawing budget');
+    assert.ok(result.buffer[0]>=result.layout[0]*3,'Full phone view uses native 3x pixels for crisp rails and lettering');
     assert.ok(result.launch.height>=44&&result.launch.bottom<=viewport.height,'launch control is reachable and onscreen');
     assert.ok(result.mutations<=5,`stationary gameplay must not rewrite unchanged UI (${result.mutations} mutations)`);
     await page.locator('#pause').click();assert.equal(await page.locator('#pause').getAttribute('aria-label'),'Resume game');

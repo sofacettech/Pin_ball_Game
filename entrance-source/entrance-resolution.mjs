@@ -35,9 +35,9 @@ export function createEntranceResolution({minPixelRatio=2.75,maxPixelRatio=3,onC
  function monitor(time){
   raf=0;if(disposed)return;
   const idle=time-lastMotion;
-  // One sharp frame after settling; keep the measured movement budget for
-  // the next swipe. The redraw itself must not restart this monitor.
-  if(idle>=650){reset();apply(maxPixelRatio);return;}
+  // Keep the same Full-HD-or-better buffer between swipes. Restoring native
+  // density at every pause caused two expensive HDR reallocations per swipe.
+  if(idle>=650){reset();return;}
   // A slow GPU can leave more than 120ms between moving frames. Keep sampling
   // until the scene truly settles; idle RAF opportunities themselves stay fast.
   sample(time);
@@ -48,7 +48,7 @@ export function createEntranceResolution({minPixelRatio=2.75,maxPixelRatio=3,onC
   motion(){if(disposed)return;lastMotion=now();apply(levels[level]);if(!raf)raf=requestFrame(monitor);},
   // Called by the renderer's resize transaction; do not recursively notify it.
   setBounds(bounds){if(bounds.minPixelRatio===minPixelRatio&&bounds.maxPixelRatio===maxPixelRatio)return;({minPixelRatio,maxPixelRatio}=bounds);levels=makeLevels();level=levels.length-1;pixelRatio=maxPixelRatio;reset();},
-  pause,settle(){if(disposed)return;pause();apply(maxPixelRatio);},dispose(){disposed=true;pause();},
+  pause,settle(){if(disposed)return;pause();},dispose(){disposed=true;pause();},
   get pixelRatio(){return pixelRatio;},get activePixelRatio(){return levels[level];},get minPixelRatio(){return minPixelRatio;},get maxPixelRatio(){return maxPixelRatio;},
  };
 }
