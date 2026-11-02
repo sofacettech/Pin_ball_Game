@@ -8,6 +8,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { cacheAreaLighting, canShareAreaCoat } from './area-light-cache.mjs';
 import { entranceRenderPolicy } from './render-policy.mjs';
 import { createEntranceResolution, entranceResolutionBounds } from './entrance-resolution.mjs';
 import { createAnimatedMeshBatch } from './animated-mesh-batch.mjs';
@@ -33,6 +34,7 @@ const chosenPixelRatio=()=>resolution?.pixelRatio??Math.min(policy.maxPixelRatio
 renderer.setPixelRatio(chosenPixelRatio());renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 renderer.transmissionResolutionScale=performanceMode?.5:1;
+if(performanceMode)renderer.setOpaqueSort((a,b)=>a.groupOrder-b.groupOrder||a.renderOrder-b.renderOrder||a.z-b.z||a.material.id-b.material.id||a.id-b.id);
 stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#101827');
 const pmrem=new THREE.PMREMGenerator(renderer);const envScene=new RoomEnvironment();
@@ -83,16 +85,17 @@ function prepareStableLighting(){
   model.traverse(object=>{
     for(const material of object.material?(Array.isArray(object.material)?object.material:[object.material]):[]){
       if(!material.isMeshStandardMaterial||done.has(material))continue;done.add(material);
-      const compile=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
+      const compile=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material),shareCoat=canShareAreaCoat(material);
       material.onBeforeCompile=shader=>{
         compile(shader);
+        cacheAreaLighting(shader,shareCoat);
         // Some facade/water hooks already expanded this chunk. Apply guards
         // after those hooks too, so inactive room lights do no BRDF work.
         shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_begin>',THREE.ShaderChunk.lights_fragment_begin)
           .replaceAll('RE_Direct( directLight,','if ( directLight.visible ) RE_Direct( directLight,')
           .replaceAll('RE_Direct_RectArea( rectAreaLight,','if ( any( greaterThan( rectAreaLight.color, vec3( 0.0 ) ) ) ) RE_Direct_RectArea( rectAreaLight,');
       };
-      material.customProgramCacheKey=()=>key()+'-stable-light-slots-v2';material.needsUpdate=true;
+      material.customProgramCacheKey=()=>key()+'-stable-light-slots-ltc-cache-v4-'+shareCoat;material.needsUpdate=true;
     }
   });
 }
@@ -297,7 +300,7 @@ async function loadVariant(name,{download}={}){
     // the entire world for every room also compiled hidden/off-screen materials
     // in lighting combinations they never use. Warming actual draws avoids that
     // extra work. Include the first gallery-light frame, before it leaves view.
-    for(const warmFrame of [JOURNEY_START_FRAME,720,850,1000,1480,1521,1655,1680,1800]){
+    for(const warmFrame of [JOURNEY_START_FRAME,720,850,1000,1480,1521,1655,1680,1800,2100]){
       mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
       interior.capture(camera);chess.capture(camera,warmFrame);composer.render();

@@ -76,6 +76,7 @@ jobs:
             sleep 1
           done
           # Record timing without treating hosted-runner emulation as iPhone certification.
+          node scripts/browser-area-light-cache.mjs
           node scripts/browser-entrance-smoke.mjs
           node scripts/browser-entrance-preparation.mjs
           node scripts/browser-reflection-continuity.mjs
