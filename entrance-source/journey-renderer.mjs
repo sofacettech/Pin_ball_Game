@@ -27,6 +27,7 @@ const base='/assets/entrance-3d/';
 const policy=entranceRenderPolicy({quality:performanceMode?new URLSearchParams(location.search).get('quality'):'reference',
   userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints});
 const renderer=new THREE.WebGLRenderer({antialias:policy.canvasAntialias,powerPreference:'high-performance'});
+let drawingWidth=0,drawingHeight=0,drawingRatio=0;
 let resolution=null,resolutionReady=false,lastResolutionFrame=null,lastResolutionPose=null,rendering=false;
 const chosenPixelRatio=()=>resolution?.pixelRatio??Math.min(policy.maxPixelRatio,Math.max(.5,pixelRatio()));
 renderer.setPixelRatio(chosenPixelRatio());renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -44,7 +45,7 @@ const camera=new THREE.PerspectiveCamera(45,16/9,.05,5000);
 const exterior=createExteriorLook(scene,renderer,{captureReflection,performanceMode,reflectionSamples:policy.reflectionSamples,reflectionWidth:policy.exteriorReflectionWidth});
 const interior=createInteriorLook(scene,renderer,{reflectionPass:exterior.reflectionPass,captureReflection,performanceMode,reflectionWidth:policy.chamberReflectionWidth});
 const chess=createChessLook(scene,renderer,{captureReflection,performanceMode,reflectionSamples:policy.reflectionSamples,reflectionScale:policy.chessReflectionScale});
-const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:Math.min(policy.mainSamples,renderer.capabilities.maxSamples)}));composer.addPass(new RenderPass(scene,camera));
+const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,samples:Math.min(policy.mainSamples,renderer.capabilities.maxSamples)}));composer.setPixelRatio(1);composer.addPass(new RenderPass(scene,camera));
 composer.addPass(new UnrealBloomPass(new THREE.Vector2(1024,576),.035,.05,2.2));
 // Blend subpixel neon edges after bloom, in linear color before display output.
 if(!performanceMode)composer.addPass(new SMAAPass());
@@ -140,7 +141,13 @@ function pollTimers(){
 function resize(){
   const rect=stage.getBoundingClientRect();if(rect.width<=0||rect.height<=0)return;
   resolution?.setBounds(entranceResolutionBounds({width:rect.width,height:rect.height,devicePixelRatio:devicePixelRatio||1,maxPixelRatio:policy.maxPixelRatio}));
-  renderer.setPixelRatio(chosenPixelRatio());renderer.setSize(rect.width,rect.height,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(rect.width,rect.height);
+  const ratio=chosenPixelRatio();
+  if(rect.width===drawingWidth&&rect.height===drawingHeight&&ratio===drawingRatio)return;
+  // Allocate each physical buffer once. Separate density/size setters used to
+  // resize the HDR targets twice, including on every idle-to-scroll change.
+  renderer.setDrawingBufferSize(rect.width,rect.height,ratio);
+  composer.setSize(renderer.domElement.width,renderer.domElement.height);
+  drawingWidth=rect.width;drawingHeight=rect.height;drawingRatio=ratio;
   fxaa?.uniforms.resolution.value.set(1/renderer.domElement.width,1/renderer.domElement.height);camera.aspect=motion.aspect;camera.updateProjectionMatrix();lastReflectionFrame=null;lastAssemblyReflectionPose=null;requestRender();
 }
 const observer=new ResizeObserver(resize);observer.observe(stage);
@@ -286,23 +293,21 @@ async function loadVariant(name,{download}={}){
     openingFraming=createOpeningFraming(model,assemblyObjects);
     if(performanceMode)preparedTransforms=createPreparedTransforms(model,gltf.animations,{dynamicObjects:assemblyObjects.objects});
     onStatus('Preparing the lights…');
-    // Prepare each active-room light layout in the actual HDR, transmission
-    // and mirror passes. Zero-energy room lights can then leave the shader
-    // entirely during scrolling. 1655 includes the gallery environment switch
-    // while chamber lights still overlap; 1680 prepares the gallery alone.
-    for(const warmFrame of [JOURNEY_START_FRAME,720,780,850,940,1000,1480,1520,1600,1655,1680,1800]){
+    // Prepare real camera, HDR, transmission and reflection passes. Compiling
+    // the entire world for every room also compiled hidden/off-screen materials
+    // in lighting combinations they never use. Warming actual draws avoids that
+    // extra work. Include the first gallery-light frame, before it leaves view.
+    for(const warmFrame of [JOURNEY_START_FRAME,720,850,1000,1480,1521,1655,1680,1800]){
       mixer.setTime(warmFrame/motion.fps);ballHandoff.apply(warmFrame);updateBallBatches();sampleCamera(warmFrame);
       interior.update(warmFrame);chess.update(warmFrame);exterior.update(camera,warmFrame);
-      renderer.setRenderTarget(composer.renderTarget1);
-      await renderer.compileAsync(scene,camera);
-      if(id!==loadID||disposed)return;
-      renderer.setRenderTarget(null);
       interior.capture(camera);chess.capture(camera,warmFrame);composer.render();
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      if(id!==loadID||disposed)return;
     }
     // Draw the actual relocated facet poses too, including batch texture uploads
     // and reflection/composer targets, before releasing the startup loader.
     preparing=false;assemblyBaseNeedsReset=true;
-    for(const pose of [1,60,90,120,150,180,240,1])renderAssemblyAt(pose);
+    for(const pose of [1,240,1])renderAssemblyAt(pose);
     gl.finish();
     resolutionReady=true;lastResolutionFrame=frame;lastResolutionPose=assemblyPose;
     modelBytes=bytes.byteLength;loadMs=performance.now()-start;

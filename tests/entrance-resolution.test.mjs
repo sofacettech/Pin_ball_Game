@@ -16,11 +16,11 @@ test('sustained sub-30fps movement lowers one tier at a time with a clear minimu
  f.run(20,1.5);assert.equal(f.quality.pixelRatio,2.75);
  f.run(20,10);assert.equal(f.quality.pixelRatio,2.75);assert.deepEqual(f.changes,[2.75]);
 });
-test('a pause restores a sharp still frame and the next swipe reuses the measured budget',()=>{
+test('pauses and resumed swipes keep the Full HD buffer without reallocating',()=>{
  const f=fixture();f.run(20,3);assert.equal(f.quality.activePixelRatio,2.75);
- f.run(60,1,false);assert.equal(f.quality.pixelRatio,3);assert.equal(f.frames.size,0);
+ f.run(60,1,false);assert.equal(f.quality.pixelRatio,2.75);assert.equal(f.frames.size,0);
  f.quality.motion();assert.equal(f.quality.pixelRatio,2.75);assert.equal(f.quality.activePixelRatio,2.75);
- f.quality.pause();f.quality.settle();assert.equal(f.quality.pixelRatio,3);assert.equal(f.frames.size,0);
+ f.quality.pause();f.quality.settle();assert.equal(f.quality.pixelRatio,2.75);assert.deepEqual(f.changes,[2.75]);assert.equal(f.frames.size,0);
 });
 test('sparse input, idle time and a background gap cannot be mistaken for poor rendering',()=>{
  const f=fixture();

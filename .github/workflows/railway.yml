@@ -85,6 +85,8 @@ jobs:
           SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
           SOFACET_MOTION_URL="$SOFACET_ENTRANCE_URL" SOFACET_DEVICE='Desktop Chrome' SOFACET_MOTION_CHESS=1 SOFACET_MOTION_FAST_FIRST=1 SOFACET_MOTION_NAME=chess-desktop SOFACET_CHECK_MOTION=1 node scripts/browser-entrance-motion.mjs
           node scripts/browser-entrance-clarity.mjs
+          SOFACET_GAME_URL="$SOFACET_ENTRANCE_URL" node scripts/browser-game-performance.mjs
+          SOFACET_GAME_URL="$SOFACET_ENTRANCE_URL" node scripts/browser-game-quality.mjs
       - name: Upload entrance measurements and screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,6 +101,7 @@ jobs:
             work/entrance-video/
             work/entrance-motion/
             work/entrance-clarity/
+            work/game-performance/
             ${{ runner.temp }}/entrance-server.log
           if-no-files-found: warn
           retention-days: 14

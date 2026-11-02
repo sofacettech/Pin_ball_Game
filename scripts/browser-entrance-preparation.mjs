@@ -20,6 +20,11 @@ try{
  await page.goto(url.href);await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:120000});
  const state=()=>page.evaluate(()=>{const p=window.entrancePreview,r=p.renderer;return{frame:p.frame,counts:{...window.gpuPreparation},programs:r.info.programs.length,memory:{...r.info.memory},buffer:[r.domElement.width,r.domElement.height]};});
  const initial=await state();
+ // Exercise the intervening poses too, not just light-transition boundaries.
+ await page.evaluate(travel=>new Promise(resolve=>{let start;function tick(now){start??=now;const t=Math.min(1,(now-start)/10000);scrollTo(0,travel*t);if(t<1)requestAnimationFrame(tick);else resolve();}requestAnimationFrame(tick);}),map.scrollAtFrame(2140));
+ const travelled=await state();
+ assert.deepEqual(travelled.counts,initial.counts,'the first continuous scroll must use only prepared GPU resources');
+
  // Cover both sides of every light, transmission and environment-map change,
  // including fractional doorway poses and reverse travel after the last room.
  const frames=[500,561,680,720,779,781,850,928,941,1000,1380,1479,1481,1521,1600,1640,1655,1661,1680,1800,2080,2140];
