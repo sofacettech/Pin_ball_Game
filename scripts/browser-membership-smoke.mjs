@@ -32,21 +32,37 @@ try {
         } else {
           await frame.locator('#front-name').fill('Test Member');
           await frame.locator('#phone').fill('9876543210');
-          await frame.locator('#email').fill('test@example.invalid');
         }
-        if (!returningMember) await frame.locator('#terms').check();
-        await frame.getByRole('button', { name: 'Save my points', exact: true }).click();
-        await frame.locator('#final-otp').waitFor({ state: 'visible' });
+        const claim = frame.getByRole('button', { name: 'Save my SO/ Coins', exact: true });
+        await claim.click();
+        if (!returningMember) {
+          await frame.locator('#terms').check();
+          await frame.getByRole('button', {name:'Send code', exact:true}).click();
+        }
+        await frame.locator('#final-otp:enabled').waitFor({ state: 'visible' });
         assert.match(await frame.locator('#confirmation-copy').innerText(), /WhatsApp/);
         assert.match(await frame.getByRole('button', { name: /Resend code/ }).innerText(), /0:[56]\d|1:00/);
         await frame.locator('#final-otp').fill('000000');
-        await frame.getByRole('button', { name: 'Confirm', exact: true }).click();
-        await frame.locator('.confirmation-status').filter({ hasText: 'That code doesn’t match' }).waitFor();
+        await frame.getByRole('button', { name: 'Verify code', exact: true }).click();
+        await frame.locator('.connection-status').filter({ hasText: 'That code doesn’t match' }).waitFor();
         assert.equal(awards.size, 0);
         await frame.locator('#final-otp').fill('012345');
-        await frame.getByRole('button', { name: 'Confirm', exact: true }).click();
+        await frame.getByRole('button', { name: 'Verify code', exact: true }).click();
+        if (!returningMember) {
+          await frame.locator('#save-details').waitFor({state:'visible'});
+          assert.equal(awards.size,0);
+          assert.equal(await frame.locator('#save-name').inputValue(),'Test Member');
+          assert.equal(await frame.locator('#save-dob').isDisabled(),true);
+          await frame.locator('#save-email').fill('test@example.invalid');
+          await frame.locator('#save-city').fill('Delhi');
+          await frame.getByRole('link',{name:'Return to landing page'}).click();
+          await frame.getByRole('button',{name:'Save my points',exact:true}).click();
+          assert.equal(await frame.locator('#save-city').inputValue(),'Delhi');
+          await frame.locator('#save-details').getByRole('button',{name:'Save my SO/ Coins',exact:true}).click();
+        }
         await frame.locator('#success').waitFor({ state: 'visible' });
         assert.match(await frame.locator('#success').innerText(), /3,200 points/);
+        if (!returningMember) assert.ok(events.some(item=>item.path==='/rewards/profile'&&item.body?.city==='Delhi'));
         assert.deepEqual(events.filter(item => ['/rewards/auth','/rewards/auth/verify'].includes(item.path)).map(item=>item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/auth/verify']);
         assert.ok(events.some(item=>item.path==='/rewards/profile'));
         assert.equal(awards.size, 1); assert.deepEqual(errors, []);

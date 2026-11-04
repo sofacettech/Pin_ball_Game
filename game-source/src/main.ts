@@ -56,11 +56,21 @@ howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!==
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false,resumeAfterLeaderboard=false;
 let membership:ReturnType<typeof connectMembership>|undefined;
-const rewards=connectPostGameRewards(result=>membership?.open($('rewards-register'),result),()=>$('start').click(),showLeaderboard);
+const rewards=connectPostGameRewards((result,opener)=>membership?.open(opener,result),()=>$('start').click(),showLeaderboard);
 const leaderboard=connectLeaderboard(()=>{const resume=resumeAfterLeaderboard&&loaded&&physics.active&&physics.state!=='finished';resumeAfterLeaderboard=false;if(resume)setGamePaused(false);else $('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;scorecard.update(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),(verify,pending)=>membership?.open(undefined,pending,verify));
 membership=connectMembership({
  beforeOpen(){resumeAfterMembership=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';clearKeys();if(resumeAfterMembership){holdCharge=physics.state==='charging';physics.setPaused(true);accumulator=0}rewards.dialog.close();closeSettings()},
- afterClose(completed){const resume=resumeAfterMembership&&loaded;if(resume){physics.setPaused(false);accumulator=0}resumeAfterMembership=false;if(loaded)sync();if(!completed&&loaded&&physics.state==='finished')showResult();if(resume)canvas.focus()},
+ afterClose(completed,returnToScore){
+  const resume=resumeAfterMembership&&loaded;
+  if(resume){physics.setPaused(false);accumulator=0}
+  resumeAfterMembership=false;
+  if(loaded)sync();
+  if(!completed&&loaded&&physics.state==='finished'){
+   if(returnToScore)rewards.show(physics.score,leaderboard.gameId);
+   else showResult();
+  }
+  if(resume)canvas.focus();
+ },
  refreshPlayer:()=>leaderboard.memberChanged(),
  onReplay:()=>$('start').click(),
  onLeaderboard:showLeaderboard,

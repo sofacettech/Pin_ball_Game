@@ -36,14 +36,14 @@ test('country menus put India first without changing alphabetical order for othe
 
 test('early-access signup requires both displayed consents without recording unaccepted Terms',()=>{
  const source=readFileSync(new URL('../membership-source/src/main.jsx',import.meta.url),'utf8');
- const validation=source.slice(source.indexOf('  function validate()'),source.indexOf('  async function sendCode'));
- const submission=source.slice(source.indexOf('  function begin('),source.indexOf('  async function confirm('));
+ const validation=source.slice(source.indexOf('  function validate('),source.indexOf('  async function sendCode'));
+ const submission=source.slice(source.indexOf('  function begin('),source.indexOf('  function confirm('));
  let errors,status,requests=0;
- const context={joining:true,reauth:false,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
+ const context={joining:true,reauth:false,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,seconds:0,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
  const form=vm.runInNewContext(validation+submission+';({validate,begin})',context);
- assert.equal(form.validate(),false);assert.ok(errors.terms);assert.ok(errors.marketing);
- context.details.privacyAccepted=true;assert.equal(form.validate(),false);assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
- context.details.marketingConsent=true;assert.equal(form.validate(),true);
+ form.begin({preventDefault(){}});assert.ok(errors.terms);assert.ok(errors.marketing);
+ context.details.privacyAccepted=true;form.begin({preventDefault(){}});assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
+ context.details.marketingConsent=true;
  form.begin({preventDefault(){}});assert.equal(requests,0);assert.match(status,/not available yet/);assert.equal(context.details.termsAccepted,false);
  context.joining=false;context.details.termsAccepted=true;context.details.marketingConsent=false;
  form.begin({preventDefault(){}});assert.equal(requests,1,'normal points registration retains optional marketing consent and its existing API flow');

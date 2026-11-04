@@ -1,70 +1,264 @@
-@font-face{font-family:ScoreYeseva;src:url('/assets/fonts/sofacet-score-yeseva.ttf') format('truetype');font-weight:400;font-display:swap}
-@font-face{font-family:ScoreJosefin;src:url('/assets/fonts/sofacet-score-josefin-regular.ttf') format('truetype');font-weight:400;font-display:swap}
-@font-face{font-family:ScoreJosefin;src:url('/assets/fonts/sofacet-score-josefin-semibold.ttf') format('truetype');font-weight:600;font-display:swap}
-@font-face{font-family:ScoreActions;src:url('/assets/fonts/sofacet-score-actions.otf') format('opentype');font-weight:400;font-display:swap}
-#post-game-rewards[data-view="result"]{background:#07040c;color:#faf7f2}
-#post-game-rewards[data-view="result"] .rewards-panel{width:100%;margin:0;background:none;mask-image:none;overflow:visible}
-#post-game-rewards[data-view="result"] .rewards-floor{display:none}
-#rewards-result.score-page-host{width:100%;margin:0;padding:0}
-.score-page{position:relative;isolation:isolate;min-height:100svh;overflow:hidden;text-align:left;background:radial-gradient(ellipse 800px 550px at 50% 48%,#1b1029 0%,#0d0716 58%,#07040c 100%);font-family:ScoreJosefin,Acumin,Arial,sans-serif;font-variation-settings:normal;font-synthesis:none;color:#faf7f2}
-.score-page__art{position:absolute;z-index:-1;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
-.score-page__content{width:min(1155px,calc(100% - 160px));margin-inline:auto;padding:clamp(145px,23.3vh,221px) 0 80px}
-.score-page__eyebrow{display:flex;align-items:center;gap:80px;margin:0;font-family:SOFacetWordmark,Acumin,sans-serif;font-size:20px;line-height:26px;letter-spacing:1px;color:#c7ff22}
-.score-page__eyebrow i{width:112px;height:1px;background:linear-gradient(90deg,#c7ff22,transparent)}
-.score-page__sub{margin:16px 0 0;font-size:23px;line-height:32px;letter-spacing:.4px;color:#d3c6df}
-.score-page__body{display:grid;grid-template-columns:minmax(0,630px) minmax(0,1fr);gap:78px;align-items:start;margin-top:42px}
-#post-game-rewards .score-page #rewards-heading{margin:0 0 0 -6px;outline:none;font-family:ScoreYeseva,Georgia,serif;font-size:clamp(42px,4.4vw,73px);font-weight:400;font-style:normal;font-variation-settings:normal;line-height:1.05;letter-spacing:-1.3px;text-align:left;animation:score-copy-in 1.05s .3s both cubic-bezier(.16,1,.3,1)}
-.score-page__heading strong,.score-page__heading em{display:block;font:inherit}
-.score-page__heading em{font-size:1.027em;letter-spacing:-1.8px}
-.score-page__details{min-width:0}
-.score-page__amount{position:relative;isolation:isolate;display:flex;align-items:baseline;gap:12px;width:max-content;max-width:100%;margin:0 0 30px;font-family:ScoreYeseva,Georgia,serif;font-size:clamp(64px,6.75vw,112px);font-weight:400;line-height:1;letter-spacing:-2.5px;animation:score-copy-in 1.25s .5s both cubic-bezier(.16,1,.3,1)}
-.score-page__amount strong{font-weight:400;font-size:calc(5em / var(--score-digits));white-space:nowrap}
-.score-page__pts{font-family:ScoreJosefin,Acumin,sans-serif;font-size:.48em;letter-spacing:0;color:#d8cee1;transform:translateY(-.12em)}
-.score-page__arcs{position:absolute;z-index:-1;left:-7%;top:-26%;width:121%;height:160%;overflow:visible;pointer-events:none}
-.score-page__arcs path{stroke-dasharray:700;animation:score-arc-in 1.7s .6s both cubic-bezier(.2,.7,.2,1)}
-.score-page__arcs .score-page__arc-lower{animation-delay:.8s}
-.score-page__offer{width:max-content;max-width:calc(100vw - 40px);margin:0;font-size:24px;font-weight:400;line-height:36px;white-space:nowrap;animation:score-copy-in .85s .8s both ease-out}
-.score-page__offer strong{font-weight:600;color:#c7ff22}
-.score-page__offer .brand-word{font-size:22px!important;letter-spacing:.2px!important;margin-inline:4px;white-space:nowrap}
-.score-page__warning{margin:14px 0 0;font-size:17px;line-height:30px;letter-spacing:.1px;color:#b8a8c7;animation:score-copy-in .8s .9s both ease-out}
-.score-page__divider{height:1px;margin-top:63px;background:linear-gradient(90deg,transparent,rgba(233,210,255,.48) 16%,rgba(233,210,255,.48) 82%,transparent);animation:score-line-in 1.05s .9s both ease-out}
-.score-page__actions{display:flex;justify-content:center;gap:116px;margin:59px auto 0}
-#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){all:unset;position:relative;display:flex;justify-content:center;align-items:center;gap:12px;box-sizing:border-box;width:338px;height:61px;cursor:pointer;color:#faf7f2;font:400 23px/1.45 ScoreActions,Acumin,sans-serif;letter-spacing:2.1px;background:linear-gradient(90deg,transparent,#bc67ff 30%,#f4c9ff 50%,#bc67ff 70%,transparent) bottom/100% 2px no-repeat;transition:color .3s,background-size .35s;animation:score-copy-in .85s 1s both cubic-bezier(.16,1,.3,1)}
-#post-game-rewards .score-page #rewards-retry{width:278px;animation-delay:1.15s}
-#post-game-rewards .score-page #rewards-register::before,#post-game-rewards .score-page #rewards-register::after{content:none}
-.score-page__button svg{width:29px;height:29px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .55s}
-.score-page__arrow{color:#c7ff22;font:300 33px/1 Arial,sans-serif}
-.score-page__roll{display:inline-block;position:relative;overflow:hidden;height:1.45em;line-height:1.45;vertical-align:middle}
-.score-page__track{display:flex;flex-direction:column;transition:transform .52s cubic-bezier(.76,0,.24,1)}
-.score-page__track>span{display:block;height:1.45em;line-height:1.45;white-space:nowrap}
-.score-page__track [aria-hidden="true"]{color:#c7ff22}
-#post-game-rewards .score-page .score-page__leaderboard{display:block;min-height:44px;margin:64px auto 0;padding:10px 0;border:0;border-radius:0;background:transparent;color:#faf7f2;font:400 16px/1.45 ScoreActions,Acumin,sans-serif;letter-spacing:4px;cursor:pointer;animation:score-copy-in .8s 1.3s both ease-out}
-#post-game-rewards .score-page :is(button:focus-visible){outline:2px solid #b98bf5;outline-offset:6px}
-.score-page :is(button:hover,button:focus-visible) .score-page__track{transform:translateY(-1.45em)}
-#post-game-rewards .score-page :is(#rewards-register,#rewards-retry):hover{background-size:80% 2px;color:#e6d4ff}
-.score-page__button:hover svg{transform:rotate(-55deg)}
-@keyframes score-copy-in{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:translateX(0)}}
-@keyframes score-line-in{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
-@keyframes score-arc-in{from{opacity:0;stroke-dashoffset:700}to{opacity:1;stroke-dashoffset:0}}
-@media(max-width:1400px){.score-page__content{width:calc(100% - 120px)}.score-page__body{grid-template-columns:1.1fr 1fr;gap:70px}.score-page__offer{font-size:20px;white-space:normal;width:auto;line-height:1.5}.score-page__offer .brand-word{font-size:18px!important}.score-page__amount{margin-bottom:30px}.score-page__divider{margin-top:60px}.score-page__actions{gap:80px}}
-@media(max-width:900px){.score-page__content{width:calc(100% - 64px);padding-top:140px}.score-page__body{gap:40px}.score-page__eyebrow{gap:40px}.score-page__eyebrow i{width:70px}.score-page__amount{font-size:80px}.score-page__actions{gap:40px}.score-page__warning{font-size:15px}.score-page__leaderboard{letter-spacing:2px!important}}
-@media(max-width:700px){.score-page__content{width:calc(100% - 48px);padding-top:max(112px,var(--site-header-clearance));padding-bottom:max(48px,env(safe-area-inset-bottom,0px))}.score-page__art{object-fit:fill;opacity:.55}.score-page__eyebrow{gap:28px;font-size:15px;letter-spacing:.5px;line-height:22px}.score-page__eyebrow i{width:55px}.score-page__sub{font-size:16px;line-height:24px;margin-top:12px}.score-page__body{grid-template-columns:1fr;gap:40px;margin-top:30px}#post-game-rewards .score-page #rewards-heading{margin-left:0;font-size:43px;line-height:1.1}.score-page__amount{font-size:84px;margin:0 auto 30px}.score-page__offer{text-align:center;font-size:18px;line-height:1.5}.score-page__offer .brand-word{font-size:17px!important}.score-page__warning{text-align:center;font-size:14px;line-height:1.6;margin-top:14px}.score-page__divider{margin-top:24px}.score-page__actions{flex-direction:column;align-items:center;gap:16px;margin-top:24px}#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){width:min(100%,310px);height:55px;font-size:18px;letter-spacing:1px}#post-game-rewards .score-page .score-page__leaderboard{font-size:12px;letter-spacing:1.5px;margin-top:20px;padding-inline:4px}}
-@media(max-width:360px){.score-page__content{width:calc(100% - 40px)}#post-game-rewards .score-page #rewards-heading{font-size:38px}.score-page__amount{font-size:76px}.score-page__eyebrow{font-size:14px;gap:18px}}
-@media(min-width:901px){
- .score-page__content{width:min(1155px,74.5vw);margin-left:16.5vw;margin-right:auto;padding-top:clamp(112px,20vh,190px);padding-bottom:clamp(32px,6vh,56px)}
- .score-page__body{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(48px,5vw,78px);margin-top:clamp(20px,3.5vh,32px)}
- #post-game-rewards .score-page #rewards-heading{margin-left:0;font-size:calc(clamp(42px,4.4vw,73px) - 1px)}
- .score-page__heading em{font-size:calc(clamp(42px,4.4vw,73px) * 1.027 - 1px)}
- .score-page__amount strong{font-size:calc(5em / var(--score-digits) - 1px)}
- .score-page__eyebrow{font-size:19px}
- .score-page__eyebrow>span{position:relative;top:6px;filter:brightness(.9)}
- .score-page__sub{font-size:21px;filter:brightness(.9)}
- .score-page__offer{width:auto;max-width:100%;white-space:normal;font-size:23px}
- .score-page__warning{font-size:16px}
- #post-game-rewards .score-page :is(#rewards-register,#rewards-retry){font-size:22px}
- .score-page__divider{margin-top:clamp(20px,4.2vh,40px)}
- .score-page__actions{margin-top:clamp(24px,4.2vh,40px)}
- #post-game-rewards .score-page .score-page__leaderboard{font-size:15px;margin-top:clamp(16px,3.2vh,30px)}
+#post-game-rewards[data-view="result"] { background: #08040d; overflow-x: hidden; overflow-y: auto; }
+#post-game-rewards[data-view="result"] .rewards-panel { width: 100%; margin: 0; background: none; mask-image: none; overflow: visible; }
+#post-game-rewards[data-view="result"] .rewards-floor { display: none; }
+#rewards-result.score-page-host { width: 100%; margin: 0; padding: 0; }
+#post-game-rewards .score-page { position: relative; isolation: isolate; min-height: 100svh; background: #08040d; text-align: left; font-variation-settings: normal; }
+#post-game-rewards .score-page .mesh-layer { position: fixed; inset: 0; min-height: 100svh; background: #08040d; }
+#post-game-rewards .score-page .mesh-layer canvas { display: block; width: 100%; height: 100%; }
+#post-game-rewards .score-page .mesh-layer:focus-visible { outline: 1px solid #89739f; outline-offset: -6px; }
+#post-game-rewards .score-page .mesh-caption { position: absolute; inset: auto 0 32px; margin: 0; color: #b8aec7; text-align: center; font: 400 9px ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; pointer-events: none; user-select: none; opacity: .65; }
+#post-game-rewards .score-page .mesh-touch-hint { display: none; }
+@media (pointer: coarse) {
+ #post-game-rewards .score-page .mesh-mouse-hint { display: none; }
+ #post-game-rewards .score-page .mesh-touch-hint { display: inline; }
 }
-@media(min-width:901px) and (max-width:1400px){.score-page__offer{font-size:19px}}
-@media(prefers-reduced-motion:reduce){#post-game-rewards .score-page *,#post-game-rewards .score-page #rewards-heading,#post-game-rewards .score-page :is(#rewards-register,#rewards-retry){animation:none;transition:none}.score-page :is(button:hover,button:focus-visible) .score-page__track{transform:none}}
+#post-game-rewards .score-page .coin-brand { color: inherit; font-weight: 400; }
+#post-game-rewards .score-page .coin-leaderboard { pointer-events: auto; min-height: 44px; border: 0; padding: 0; align-items: flex-start; border-radius: 0; background: transparent; cursor: pointer; }
+#post-game-rewards .score-page .btn { border-radius: 0; box-shadow: none; }
+#post-game-rewards .score-page #rewards-register::before,
+#post-game-rewards .score-page #rewards-register::after { content: none; }
+#post-game-rewards .score-page .page.text-layer{padding:0;max-width:none;margin:0;color:#f5f2ed;font-family:Brilliant,Arial,sans-serif;}
+@font-face { font-family: Brilliant; src: url("/assets/score-coins/brilliant-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: Brilliant; src: url("/assets/score-coins/brilliant-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: Fancy; src: url("/assets/score-coins/fancy-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: SOFacetWordmark; src: url("/assets/fonts/sofacet-wordmark.otf") format("opentype"); font-weight: 400; font-display: swap; }
+#post-game-rewards .score-page .text-layer, #post-game-rewards .score-page .text-layer *{box-sizing: border-box;}
+
+
+#post-game-rewards .score-page .page.text-layer{min-height: 100vh; position: relative; isolation: isolate; overflow: hidden;}
+
+#post-game-rewards .score-page .text-layer .coin-brand{position: absolute; left: 6.2%; top: 5.1%; display: flex; align-items: center; gap: 28px; font-family: SOFacetWordmark, Arial, sans-serif; font-size: 17px; white-space: nowrap; letter-spacing: 1px;}
+#post-game-rewards .score-page .text-layer .coin-brand::after{content: ""; height: 1px; width: 62px; background: transparent;}
+#post-game-rewards .score-page .text-layer .reward{position: relative; margin-left: 49%; width: 47%; padding-top: clamp(110px, 15vh, 170px); padding-bottom: 55px; text-align: center; max-width: 770px;}
+
+#post-game-rewards .score-page .text-layer .eyebrow{font: 400 14px / 1.5 Fancy, Georgia, serif; color: rgb(170, 163, 169); margin: 0px 0px 17px;}
+#post-game-rewards .score-page .text-layer #rewards-heading{font: 400 calc(clamp(39px, 4.25vw, 63px) - 2px) / 1.13 Brilliant, Arial, sans-serif; letter-spacing: -1.1px; margin: 0px 0px 22px;}
+#post-game-rewards .score-page .text-layer #rewards-heading span{display: block;}
+#post-game-rewards .score-page .text-layer .amount-line{display: flex; justify-content: center; align-items: baseline; gap: 16px; margin: 0px 0px 8px;}
+#post-game-rewards .score-page .text-layer .amount{font: 400 calc(clamp(92px, 9.3vw, 143px) - 3px) / 1 Fancy, Georgia, serif; letter-spacing: -3px;}
+#post-game-rewards .score-page .text-layer .coins{font: 600 calc(clamp(16px, 1.7vw, 25px) - 2px) / 1.2 Brilliant, Arial, sans-serif; letter-spacing: 0.6px; color: rgb(170, 163, 170); white-space: nowrap;}
+#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .notice{font: 400 14px / 1.55 Fancy, Georgia, serif; color: rgb(167, 160, 167); margin: 0px;}
+#post-game-rewards .score-page .text-layer .wordmark{font-family: SOFacetWordmark, Arial, sans-serif; letter-spacing: 0px; font-size: 0.95em; white-space: nowrap;}
+#post-game-rewards .score-page .text-layer .rule{border-width: 1px 0px 0px; border-style: solid none none; border-color: rgb(64, 55, 66) currentcolor currentcolor; border-image: none; margin: 23px 0px 20px;}
+#post-game-rewards .score-page .text-layer .notice{margin: 0px 0px 21px;}
+#post-game-rewards .score-page .text-layer .buttons{display: flex; gap: 14px; width: 100%;}
+#post-game-rewards .score-page .text-layer .btn{flex: 1 1 0%; min-width: 0px; height: 54px; background: transparent; border: 1px solid rgb(136, 129, 138); color: rgb(247, 244, 242); padding: 0px 17px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; cursor: pointer; font: 600 10px / 18px Brilliant, Arial, sans-serif; letter-spacing: 0.7px; transition: background 0.25s, color 0.25s, border-color 0.25s;}
+#post-game-rewards .score-page .text-layer .btn:hover,#post-game-rewards .score-page .text-layer .btn:focus-visible,#post-game-rewards .score-page .text-layer .btn:active{background: rgb(255, 255, 255); color: rgb(0, 0, 0); border-color: rgb(255, 255, 255);}
+#post-game-rewards .score-page .text-layer .btn svg{width: 19px; height: 19px; flex: 0 0 auto;}
+#post-game-rewards .score-page .text-layer .coin-leaderboard{display: inline-flex; position: relative; margin-top: 26px; color: rgb(140, 132, 145); text-decoration: none; font: 600 10px / 18px Brilliant, Arial, sans-serif; letter-spacing: 2px; padding-bottom: 8px;}
+#post-game-rewards .score-page .text-layer .coin-leaderboard::after{content: ""; position: absolute; left: 0px; top: 25px; width: 100%; height: 1px; background: currentcolor; transform: scaleX(0); transform-origin: left center; transition: transform 0.38s;}
+#post-game-rewards .score-page .text-layer .coin-leaderboard:hover::after,#post-game-rewards .score-page .text-layer .coin-leaderboard:focus-visible::after{transform: scaleX(1);}
+@keyframes coin-score-enter {
+  0% { opacity: 0; transform: translateX(-42px); }
+  100% { opacity: 1; transform: translateX(0px); }
+}
+#post-game-rewards .score-page .text-layer .coin-brand,#post-game-rewards .score-page .text-layer .eyebrow,#post-game-rewards .score-page .text-layer #rewards-heading,#post-game-rewards .score-page .text-layer .amount-line,#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .rule,#post-game-rewards .score-page .text-layer .notice,#post-game-rewards .score-page .text-layer .buttons,#post-game-rewards .score-page .text-layer .coin-leaderboard{animation: 0.85s cubic-bezier(0.2, 0.75, 0.2, 1) 0s 1 normal both running coin-score-enter;}
+#post-game-rewards .score-page .text-layer .coin-brand{animation-delay: 0.05s;}
+#post-game-rewards .score-page .text-layer .eyebrow{animation-delay: 0.15s;}
+#post-game-rewards .score-page .text-layer #rewards-heading{animation-delay: 0.25s;}
+#post-game-rewards .score-page .text-layer .amount-line{animation-delay: 0.36s;}
+#post-game-rewards .score-page .text-layer .conversion{animation-delay: 0.46s;}
+#post-game-rewards .score-page .text-layer .rule{animation-delay: 0.53s;}
+#post-game-rewards .score-page .text-layer .notice{animation-delay: 0.61s;}
+#post-game-rewards .score-page .text-layer .buttons{animation-delay: 0.7s;}
+#post-game-rewards .score-page .text-layer .coin-leaderboard{animation-delay: 0.8s;}
+@media (max-width: 767px){#post-game-rewards .score-page .page.text-layer{min-height: 100svh;}
+
+#post-game-rewards .score-page .text-layer .coin-brand{position: relative; top: auto; left: auto; padding: 30px 6%; font-size: 14px;}
+#post-game-rewards .score-page .text-layer .reward{margin: 0px auto; width: 90%; padding: 100px 0px 50px; }
+#post-game-rewards .score-page .text-layer #rewards-heading{font-size: calc(clamp(38px, 8vw, 56px) - 2px); text-align: left;}
+
+#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .notice{font-size: 12px;}}
+@media (max-width: 520px){#post-game-rewards .score-page .text-layer .reward{padding-top: 75px;}
+#post-game-rewards .score-page .text-layer .amount{font-size: 91px;}
+#post-game-rewards .score-page .text-layer .coins{font-size: 13px;}
+}
+@media (prefers-reduced-motion: reduce){#post-game-rewards .score-page .text-layer .coin-brand,#post-game-rewards .score-page .text-layer .eyebrow,#post-game-rewards .score-page .text-layer #rewards-heading,#post-game-rewards .score-page .text-layer .amount-line,#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .rule,#post-game-rewards .score-page .text-layer .notice,#post-game-rewards .score-page .text-layer .buttons,#post-game-rewards .score-page .text-layer .coin-leaderboard{animation: auto ease 0s 1 normal none running none;}
+#post-game-rewards .score-page .text-layer .btn,#post-game-rewards .score-page .text-layer .coin-leaderboard::after{transition: none;}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .reward{padding-top: clamp(112px, 16vh, 150px); padding-bottom: 26px;}
+#post-game-rewards .score-page .text-layer .reward .eyebrow{font-size: 12px; margin-bottom: 12px;}
+#post-game-rewards .score-page .text-layer .reward #rewards-heading{font-size: calc(clamp(37px, 3.6vw, 54px) - 2px); line-height: 1.12; margin-bottom: 13px;}
+#post-game-rewards .score-page .text-layer .reward .amount-line{gap: 12px; margin-bottom: 10px;}
+#post-game-rewards .score-page .text-layer .reward .amount{font-size: calc(clamp(80px, 7.7vw, 116px) - 3px); line-height: 1;}
+#post-game-rewards .score-page .text-layer .reward .coins{font-size: calc(clamp(14px, 1.35vw, 20px) - 2px);}
+#post-game-rewards .score-page .text-layer .reward .conversion,#post-game-rewards .score-page .text-layer .reward .notice{font-size: 12px; line-height: 1.45;}
+#post-game-rewards .score-page .text-layer .reward .rule{margin: 18px 0px 15px;}
+#post-game-rewards .score-page .text-layer .reward .notice{margin-bottom: 19px;}
+#post-game-rewards .score-page .text-layer .reward .buttons .btn{height: 51px; font-size: 9px;}
+#post-game-rewards .score-page .text-layer .reward .coin-leaderboard{font-size: 9px; margin-top: 20px;}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .reward{margin-left: 49%; width: 47%; padding-top: clamp(112px, 16vh, 150px);}
+#post-game-rewards .score-page .text-layer .headline-pair{display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); column-gap: 28px; align-items: center; width: calc(188%); margin-left: -88%; margin-bottom: 26px; text-align: left;}
+#post-game-rewards .score-page .text-layer .headline-left{min-width: 0px;}
+#post-game-rewards .score-page .text-layer .headline-right{min-width: 0px; text-align: center;}
+#post-game-rewards .score-page .text-layer .headline-left #rewards-heading{font-size: calc(clamp(37px, 3.6vw, 54px) - 2px); margin-bottom: 0px;}
+#post-game-rewards .score-page .text-layer .headline-right .amount-line{justify-content: center; gap: 10px; white-space: nowrap;}
+#post-game-rewards .score-page .text-layer .headline-right .amount{font-size: calc(clamp(78px, 7.5vw, 112px) - 3px);}
+#post-game-rewards .score-page .text-layer .headline-right .coins{font-size: calc(clamp(13px, 1.25vw, 19px) - 2px);}
+#post-game-rewards .score-page .text-layer .headline-right .conversion{font-size: calc(clamp(12px, 1vw, 14px) - 2px); white-space: nowrap;}}
+@media (max-width: 767px){#post-game-rewards .score-page .text-layer .headline-pair{display: block;}
+#post-game-rewards .score-page .text-layer .headline-right{text-align: left;}
+#post-game-rewards .score-page .text-layer .amount-line{justify-content: flex-start;}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .reward{margin-left: 49%; width: 47%; padding-top: clamp(160px, 20vh, 205px); padding-bottom: 22px;}
+#post-game-rewards .score-page .text-layer .reward .headline-pair{display: grid; grid-template-columns: minmax(0px, 0.95fr) minmax(0px, 1.05fr); gap: 22px; align-items: center; width: 100%; margin-left: 0px; margin-bottom: 24px; text-align: left;}
+#post-game-rewards .score-page .text-layer .reward .headline-left,#post-game-rewards .score-page .text-layer .reward .headline-right{min-width: 0px;}
+#post-game-rewards .score-page .text-layer .reward .headline-left #rewards-heading{font-size: calc(clamp(32px, 3vw, 47px) - 2px); line-height: 1.12; letter-spacing: -0.7px; margin: 0px;}
+#post-game-rewards .score-page .text-layer .reward .headline-left .eyebrow{font-size: 11px; margin: 0px 0px 15px;}
+#post-game-rewards .score-page .text-layer .reward .headline-right{text-align: center;}
+#post-game-rewards .score-page .text-layer .reward .headline-right .amount-line{display: flex; align-items: baseline; justify-content: center; gap: 8px; white-space: nowrap; margin-bottom: 13px;}
+#post-game-rewards .score-page .text-layer .reward .headline-right .amount{font-size: calc(clamp(68px, 6.5vw, 100px) - 3px); letter-spacing: -2px;}
+#post-game-rewards .score-page .text-layer .reward .headline-right .coins{font-size: calc(clamp(12px, 1.1vw, 17px) - 2px);}
+#post-game-rewards .score-page .text-layer .reward .headline-right .conversion{font-size: calc(clamp(11px, 0.9vw, 13px) - 2px); white-space: normal; line-height: 1.45;}
+#post-game-rewards .score-page .text-layer .reward .rule{margin: 18px 0px 16px;}
+#post-game-rewards .score-page .text-layer .reward .notice{margin-bottom: 19px;}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .coin-brand{top: 7%; left: 6.2%;}
+#post-game-rewards .score-page .text-layer .reward{padding-top: clamp(200px, 25vh, 255px);}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .reward{padding-top: clamp(235px, 28vh, 285px);}
+#post-game-rewards .score-page .text-layer .reward > .coin-brand{position: relative; top: auto; left: auto; display: flex; width: max-content; margin: 0px 0px 25px; font-size: 15px; gap: 25px;}
+#post-game-rewards .score-page .text-layer .reward .headline-pair{margin-bottom: 18px;}
+#post-game-rewards .score-page .text-layer .reward .headline-left .eyebrow{margin-bottom: 13px;}
+#post-game-rewards .score-page .text-layer .reward .rule{margin: 17px 0px 14px;}
+#post-game-rewards .score-page .text-layer .reward .notice{margin-bottom: 17px;}
+#post-game-rewards .score-page .text-layer .reward .coin-leaderboard{margin-top: 17px;}}
+@media (max-width: 767px){#post-game-rewards .score-page .text-layer .reward > .coin-brand{position: relative; top: auto; left: auto; padding: 0px; margin: 0px 0px 26px;}}
+@media (min-width: 768px){#post-game-rewards .score-page .text-layer .reward{padding-top: clamp(255px, 30vh, 310px);}
+#post-game-rewards .score-page .text-layer .reward > .coin-brand{margin-bottom: 34px;}
+#post-game-rewards .score-page .text-layer .reward .headline-pair{margin-bottom: 29px;}
+#post-game-rewards .score-page .text-layer .reward .headline-left .eyebrow{margin-bottom: 20px;}
+#post-game-rewards .score-page .text-layer .reward .headline-right .amount-line{margin-bottom: 20px;}
+#post-game-rewards .score-page .text-layer .reward .rule{margin: 25px 0px 23px;}
+#post-game-rewards .score-page .text-layer .reward .notice{margin-bottom: 24px;}
+#post-game-rewards .score-page .text-layer .reward .coin-leaderboard{margin-top: 25px;}}
+@media(max-width:767px){#post-game-rewards .score-page .page.text-layer{padding-bottom:max(300px,calc(98vw - 34px));}}
+
+#post-game-rewards .score-page .mesh-layer{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;}
+#post-game-rewards .score-page .art-layer{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:grid;place-items:center;overflow:clip;pointer-events:none;mix-blend-mode:screen;}
+#post-game-rewards .score-page .art-layer picture{display:block;width:min(100%,1671px);}
+#post-game-rewards .score-page .art-layer img{display:block;width:100%;height:auto;}
+#post-game-rewards .score-page .page{position:relative;z-index:2;max-width:1671px;min-height:100svh;pointer-events:none;padding:clamp(30px,5.4vh,61px) 6.2% 48px;}
+#post-game-rewards .score-page .coin-brand{position:relative;}
+#post-game-rewards .score-page .eyebrow{margin-bottom:20px;}
+#post-game-rewards .score-page .reward{padding-top:26px;}
+#post-game-rewards .score-page .amount-line{justify-content:center;}
+#post-game-rewards .score-page .conversion{margin-top:17px;}
+#post-game-rewards .score-page .notice{margin-bottom:22px;}
+#post-game-rewards .score-page .buttons{gap:14px;}
+#post-game-rewards .score-page .btn{width:50%;padding:0 22px;pointer-events:auto;}
+#post-game-rewards .score-page .coin-leaderboard{margin-top:27px;pointer-events:auto;}
+@media(min-width:768px) and (max-height:800px){
+  #post-game-rewards .score-page .page{padding-top:30px;padding-bottom:30px;}
+  #post-game-rewards .score-page .eyebrow{margin-bottom:13px;}
+  #post-game-rewards .score-page .reward{padding-top:17px;}
+  #post-game-rewards .score-page .notice{margin-bottom:18px;}
+  #post-game-rewards .score-page .coin-leaderboard{margin-top:22px;}
+}
+@media(min-width:768px) and (max-width:1100px){
+  #post-game-rewards .score-page .amount{font-size:calc(clamp(95px,11vw,145px) - 3px);}
+  #post-game-rewards .score-page .btn{font-size:11px;letter-spacing:1px;padding:0 16px;}
+  #post-game-rewards .score-page .conversion{font-size:13px;}
+}
+@media(max-width:767px){
+  #post-game-rewards .score-page .art-layer{grid-template-rows:minmax(0,1fr);align-items:end;}
+  #post-game-rewards .score-page .page{padding:30px 7% max(300px,calc(98vw - 34px));min-height:100svh;pointer-events:auto;touch-action:pan-y;}
+  #post-game-rewards .score-page .eyebrow{font-size:12px;margin-bottom:22px;}
+  #post-game-rewards .score-page .reward{padding-top:34px;}
+  #post-game-rewards .score-page .amount{font-size:calc(clamp(90px,22vw,135px) - 3px);letter-spacing:-5px;}
+  #post-game-rewards .score-page .conversion{font-size:13px;line-height:1.5;margin-top:20px;}
+  #post-game-rewards .score-page .notice{font-size:12px;line-height:1.5;}
+  #post-game-rewards .score-page .text-layer .buttons{gap:10px;}
+  #post-game-rewards .score-page .text-layer .btn{height:44px;gap:4px;padding:0 8px;font-size:9px;letter-spacing:.15px;text-align:left;}
+  #post-game-rewards .score-page .text-layer .btn svg{width:14px;height:14px;}
+  #post-game-rewards .score-page .text-layer .rule{margin-top:11px;}
+  #post-game-rewards .score-page .text-layer .coin-leaderboard{margin-top:12px;}
+}
+
+
+/* Quiet ambient movement; layout and hinge rotation live on separate wrappers. */
+#post-game-rewards .score-page .art-layer .art-canvas{position:relative;width:min(100%,1671px);aspect-ratio:1671/941;--sway-angle:.9deg;--left-fold:18deg;--right-fold:22deg;--purple-left-fold:25.3deg;--purple-right-fold:29.9deg;}
+#post-game-rewards .score-page .art-layer .motion-scene,#post-game-rewards .score-page .art-layer .plant-rig{position:absolute;inset:0;width:100%;height:100%;}
+#post-game-rewards .score-page .art-layer .plant-plate{display:block;position:absolute;inset:0;width:100%;height:100%;}
+#post-game-rewards .score-page .art-layer .motion-scene{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.motion-ready .motion-scene{visibility:visible;}
+#post-game-rewards .score-page .art-layer .scene-mobile{display:none;}
+#post-game-rewards .score-page .art-layer .plant-rig{transform-origin:var(--root-x) var(--root-y);}
+#post-game-rewards .score-page .art-layer .white-butterfly{position:absolute;perspective:800px;transform-style:preserve-3d;}
+#post-game-rewards .score-page .art-layer .white-butterfly img{position:absolute;inset:0;width:100%;height:100%;}
+#post-game-rewards .score-page .art-layer .wing{transform-origin:var(--hinge-x) var(--hinge-y);backface-visibility:hidden;}
+#post-game-rewards .score-page .art-layer .butterfly-body{transform:translateZ(1px);}
+#post-game-rewards .score-page .art-layer .purple-butterfly,#post-game-rewards .score-page .art-layer .plant-visibility{position:absolute;display:block;}
+#post-game-rewards .score-page .art-layer .purple-butterfly{perspective:450px;transform-style:preserve-3d;visibility:hidden;}
+#post-game-rewards .score-page .art-layer.purple-positioned .purple-butterfly{visibility:visible;}
+#post-game-rewards .score-page .art-layer .purple-butterfly img{position:absolute;inset:0;width:100%;height:100%;}
+#post-game-rewards .score-page .art-layer .purple-wing,#post-game-rewards .score-page .art-layer .purple-body{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.motion-ready .purple-wing,#post-game-rewards .score-page .art-layer.motion-ready .purple-body{visibility:visible;}
+#post-game-rewards .score-page .art-layer.motion-ready .purple-rest{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.reduced-motion .purple-wing,#post-game-rewards .score-page .art-layer.reduced-motion .purple-body{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.reduced-motion .purple-rest{visibility:visible;}
+#post-game-rewards .score-page .art-layer .purple-wing{transform-origin:var(--purple-hinge-x) var(--purple-hinge-y);backface-visibility:hidden;}
+#post-game-rewards .score-page .art-layer .purple-body{transform:translateZ(1px);}
+#post-game-rewards .score-page .art-layer.ambient-active .plant-rig{animation:plant-breeze 14s cubic-bezier(.37,0,.63,1) -3.5s infinite;}
+#post-game-rewards .score-page .art-layer.ambient-active .wing-left{animation:wing-left-flex 7s cubic-bezier(.37,0,.63,1) -.5s infinite;}
+#post-game-rewards .score-page .art-layer.ambient-active .wing-right{animation:wing-right-flex 7s cubic-bezier(.37,0,.63,1) -.5s infinite;}
+#post-game-rewards .score-page .art-layer.ambient-active .purple-wing-left{animation:purple-left-flex 7s cubic-bezier(.37,0,.63,1) -1.7s infinite;}
+#post-game-rewards .score-page .art-layer.ambient-active .purple-wing-right{animation:purple-right-flex 7s cubic-bezier(.37,0,.63,1) -1.7s infinite;}
+#post-game-rewards .score-page .art-layer.ambient-paused .plant-rig,#post-game-rewards .score-page .art-layer.ambient-paused .wing,#post-game-rewards .score-page .art-layer.ambient-paused .purple-wing,#post-game-rewards .score-page .art-layer.plant-paused .plant-rig,#post-game-rewards .score-page .art-layer.plant-paused .wing,#post-game-rewards .score-page .art-layer.purple-paused .purple-wing{animation-play-state:paused;}
+#post-game-rewards .score-page .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .plant-rig,#post-game-rewards .score-page .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .wing,#post-game-rewards .score-page .art-layer.ambient-active:not(.ambient-paused):not(.purple-paused) .purple-wing{will-change:transform;}
+#post-game-rewards .score-page .art-layer.reduced-motion .motion-scene{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.reduced-motion .plant-rig,#post-game-rewards .score-page .art-layer.reduced-motion .wing,#post-game-rewards .score-page .art-layer.reduced-motion .purple-wing{animation:none;}
+@keyframes plant-breeze{0%,100%{transform:rotate(calc(0deg - var(--sway-angle)))}50%{transform:rotate(var(--sway-angle))}}
+@keyframes wing-left-flex{0%,14.285714%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}50%{transform:rotate3d(.45,.89,0,var(--left-fold))}}
+@keyframes wing-right-flex{0%,14.285714%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}50%{transform:rotate3d(.45,.89,0,calc(0deg - var(--right-fold)))}}
+@keyframes purple-left-flex{0%,85.714286%,100%{transform:rotate3d(.45,.89,0,-5deg)}42.857143%{transform:rotate3d(.45,.89,0,var(--purple-left-fold))}}
+@keyframes purple-right-flex{0%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}42.857143%{transform:rotate3d(.45,.89,0,calc(0deg - var(--purple-right-fold)))}}
+@media(max-width:767px){
+  #post-game-rewards .score-page .art-layer .art-canvas{aspect-ratio:853/1844;--sway-angle:.65deg;--left-fold:16deg;--right-fold:18deg;--purple-left-fold:23deg;--purple-right-fold:27.6deg;}
+  #post-game-rewards .score-page .art-layer .scene-desktop{display:none;}
+  #post-game-rewards .score-page .art-layer .scene-mobile{display:block;}
+}
+@media(prefers-reduced-motion:reduce){
+  #post-game-rewards .score-page .art-layer .motion-scene{visibility:hidden!important;}
+  #post-game-rewards .score-page .art-layer .purple-wing,#post-game-rewards .score-page .art-layer .purple-body{visibility:hidden!important;}
+  #post-game-rewards .score-page .art-layer .purple-rest{visibility:visible!important;}
+  #post-game-rewards .score-page .art-layer .plant-rig,#post-game-rewards .score-page .art-layer .wing,#post-game-rewards .score-page .art-layer .purple-wing{animation:none!important;}
+}
+
+
+/* Each separate flower keeps its source orientation and pivots at its own stem base. */
+#post-game-rewards .score-page .art-layer.independent-flowers .flower-rig{position:absolute;inset:0;pointer-events:none;}
+#post-game-rewards .score-page .art-layer.independent-flowers .flower-image{position:absolute;display:block;max-width:none;}
+#post-game-rewards .score-page .art-layer.independent-flowers .flower-top{z-index:3;}
+#post-game-rewards .score-page .art-layer.independent-flowers .flower-right{z-index:2;}
+#post-game-rewards .score-page .art-layer.independent-flowers .flower-left{z-index:1;}
+#post-game-rewards .score-page .art-layer.independent-flowers .leaf-rig{z-index:0;}
+#post-game-rewards .score-page .petal-surface{position:absolute;display:block;pointer-events:none;}
+#post-game-rewards .score-page .flower-image.petal-rendered{visibility:hidden;}
+#post-game-rewards .score-page .art-layer.independent-flowers .motion-scene{visibility:visible!important;}
+#post-game-rewards .score-page .art-layer.ambient-active .flower-rig{animation:individual-flower-sway var(--flower-cycle) cubic-bezier(.37,0,.63,1) infinite;}
+#post-game-rewards .score-page .flower-top{--flower-cycle:14s;--flower-direction:1;}
+#post-game-rewards .score-page .flower-right{--flower-cycle:16s;--flower-direction:-1;}
+#post-game-rewards .score-page .flower-left{--flower-cycle:12s;--flower-direction:1;}
+#post-game-rewards .score-page .flower-rig{--sway-first:calc(var(--sway-angle) + 1deg);--sway-second:calc(0deg - var(--sway-angle));}
+#post-game-rewards .score-page .flower-rig.flower-right{--sway-first:calc(0deg - var(--sway-angle));--sway-second:calc(var(--sway-angle) + 1deg);}
+@keyframes individual-flower-sway{0%,50%,100%{transform:rotate(0deg)}25%{transform:rotate(var(--sway-first))}75%{transform:rotate(var(--sway-second))}}
+#post-game-rewards .score-page .art-layer.ambient-paused .flower-rig,#post-game-rewards .score-page .art-layer.plant-paused .flower-rig{animation-play-state:paused;}
+#post-game-rewards .score-page .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .flower-rig{will-change:transform;}
+#post-game-rewards .score-page .art-layer.reduced-motion .flower-rig{animation:none!important;}
+@media(prefers-reduced-motion:reduce){#post-game-rewards .score-page .art-layer .flower-rig{animation:none!important;}}
+
+
+#post-game-rewards .score-page .art-layer .white-hover{position:absolute;inset:0;z-index:4;transform:translateY(-14px);pointer-events:none;}
+#post-game-rewards .score-page .art-layer.ambient-active .white-hover{animation:butterfly-hover 6s ease-in-out infinite;}
+#post-game-rewards .score-page .art-layer.ambient-paused .white-hover,#post-game-rewards .score-page .art-layer.plant-paused .white-hover{animation-play-state:paused;}
+#post-game-rewards .score-page .art-layer.reduced-motion .white-hover{animation:none!important;}
+@keyframes butterfly-hover{0%,100%{transform:translate3d(0,-14px,0) rotate(-.4deg)}50%{transform:translate3d(3px,-22px,0) rotate(.4deg)}}
+@media(prefers-reduced-motion:reduce){#post-game-rewards .score-page .art-layer .white-hover{animation:none!important;}}
+
+
+#post-game-rewards .score-page.wave-intro-pending .text-layer :is(.coin-brand,.eyebrow,#rewards-heading,.amount-line,.conversion,.rule,.notice,.buttons,.coin-leaderboard){animation-play-state:paused!important;}
+@media(prefers-reduced-motion:reduce){#post-game-rewards .score-page.wave-intro-pending .text-layer :is(.coin-brand,.eyebrow,#rewards-heading,.amount-line,.conversion,.rule,.notice,.buttons,.coin-leaderboard){animation:none!important;}}
+
+/* Preserve legibility when a real score is wider than the supplied sample. */
+#post-game-rewards .score-page .text-layer .reward .headline-right .long-amount .amount { font-size: calc(clamp(24px, 4vw, 60px) - 3px); }
+@media (max-width: 767px) {
+ #post-game-rewards .score-page .text-layer .reward .headline-right .long-amount .amount { font-size: calc(clamp(24px, 10vw, 56px) - 3px); }
+ #post-game-rewards .score-page .page.text-layer { overflow: visible; }
+}
