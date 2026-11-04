@@ -344,7 +344,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
         if (percent !== preparationPercent) {
           preparationProgress.value = percent; preparationPercent = percent;
         }
-        const message = elapsed > 20 ? 'Taking a little longer. You can retry or skip to the game.' : 'Preparing your journey';
+        const message = elapsed > 20 ? 'Taking a little longer. You can try again or skip to the game.' : 'Preparing your journey';
         if (preparationStatus.textContent !== message) preparationStatus.textContent = message;
         preparationRetry.hidden = elapsed < 20;
         if (readiness.ready) {

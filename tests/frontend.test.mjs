@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {normalisePhone,countries,phoneCountry,maskedPhone} from '../membership-source/src/phone.js';
-import {formatPoints,rewardMoney,resultHeadline,leaveCopy,birthDateState,splitPlayerName,publicPlayerName,validPlayerName,validPublicName} from '../game-source/src/player-copy.ts';
+import {capitaliseName,formatPoints,rewardMoney,resultHeadline,leaveCopy,birthDateState,splitPlayerName,publicPlayerName,validPlayerName,validPublicName} from '../game-source/src/player-copy.ts';
 
 test('result and leave copy preserves exact scores without rounding money upwards',()=>{
  assert.equal(formatPoints(3200),'3,200');assert.equal(rewardMoney(3205),'₹320.5');assert.equal(rewardMoney(9),'₹0.9');assert.equal(rewardMoney(-5),'₹0');
@@ -18,6 +18,9 @@ test('international phone fields normalize real numbering plans and reject inval
  assert.equal(phoneCountry('+442079460018'),'GB');assert.equal(maskedPhone('+442079460018'),'+44 ••••••0018');assert.equal(maskedPhone(''),'');assert.ok(countries.length>200);
 });
 test('single name field and public suggestion accept Unicode and reject HTML',()=>{
+ assert.equal(capitaliseName('asha Kapoor'),'Asha Kapoor');
+ assert.equal(capitaliseName('  élodie de Vries'),'  Élodie de Vries');
+ assert.equal(capitaliseName('अनन्या'),'अनन्या');
  assert.deepEqual(splitPlayerName('  Asha  Kapoor '),{firstName:'Asha',lastInitial:'K'});assert.equal(publicPlayerName('Asha','K'),'Asha K.');assert.equal(publicPlayerName('Asha','K.'),'Asha K.');
  assert.equal(validPlayerName('Élodie'),true);assert.equal(validPlayerName('Asha Kapoor'),true);assert.equal(validPublicName('Asha'),true);
  assert.equal(validPublicName('Asha K.'),true);assert.equal(validPublicName('Élodie D.'),true);assert.equal(validPublicName('Guest123'),false);assert.equal(validPublicName('<script> A.'),false);assert.equal(validPublicName('A'.repeat(31)+' K.'),false);
@@ -45,6 +48,4 @@ test('early-access signup requires both displayed consents without recording una
  context.details.privacyAccepted=true;form.begin({preventDefault(){}});assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
  context.details.marketingConsent=true;
  form.begin({preventDefault(){}});assert.equal(requests,0);assert.match(status,/not available yet/);assert.equal(context.details.termsAccepted,false);
- context.joining=false;context.details.termsAccepted=true;context.details.marketingConsent=false;
- form.begin({preventDefault(){}});assert.equal(requests,1,'normal points registration retains optional marketing consent and its existing API flow');
 });

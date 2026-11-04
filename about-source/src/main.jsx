@@ -121,7 +121,7 @@ function App() {
     <div className="reading-progress" aria-hidden="true"><span/></div>
 <main id="about-content" tabIndex={-1}>
   <section className="intro scene" aria-labelledby="intro-title">
-    <p className="intro-label" data-reveal>About Us</p>
+    <p className="intro-label" data-reveal>About <Wordmark/></p>
     <h1 id="intro-title" data-reveal style={{'--order':1}}><span>Diamonds,</span><span>made for who you are.</span></h1>
     <p className="intro-copy" data-reveal style={{'--order':2}}><Wordmark/> is a lab-grown diamond jewellery house from India. Real diamonds, grown instead of mined.</p>
   </section>
@@ -159,8 +159,9 @@ function App() {
   </section>
 
   <section className="closing scene" aria-labelledby="closing-title">
+    <p className="closing-intro" data-reveal>Until then, this world is our first hello. Explore it, play a round, and keep what you win.</p>
     <p data-reveal>The doors open soon.</p>
-    <h2 id="closing-title" data-reveal style={{'--order':1}}><Wordmark/><span className="closing-question">What’s yours?</span></h2>
+    <h2 id="closing-title" data-reveal style={{'--order':1}}><Wordmark/><span className="closing-question">So/ what’s yours?</span></h2>
     <div className="closing-actions" data-reveal style={{'--order':2}}>
       <a className="action-button" href="/" target="_top">Back to the world</a>
       <a className="action-button action-primary" href="/play.html" target="_top">Play the game <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>

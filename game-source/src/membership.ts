@@ -1,7 +1,7 @@
 import {setBrandText} from '../../shared/brand-text.ts';
 import type {Player} from './leaderboard';
 import type {CompletedGameResult} from './post-game-rewards';
-import {validPublicName} from './player-copy';
+import {capitaliseName,validPublicName} from './player-copy';
 
 type Options={beforeOpen:()=>void;afterClose:(completed:boolean,returnToScore:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void;pendingResult:()=>CompletedGameResult|null};
 
@@ -92,6 +92,7 @@ export function connectMembership(options:Options){
   editStatus.textContent=profileUpdateUrl?'Your public name appears with your score and rank. Changes may be reviewed.':'Name changes are coming soon. Your current name has not changed.';
  };
  $('profile-edit-cancel').onclick=()=>{if(!editing){editForm.hidden=true;edit.focus()}};
+ editName.addEventListener('input',()=>{const name=capitaliseName(editName.value);if(name!==editName.value)editName.value=name});
  editForm.onsubmit=async event=>{
   event.preventDefault();if(editing||!player?.member)return;
   if(!validPublicName(editName.value)){editName.setAttribute('aria-invalid','true');editStatus.textContent='Choose a name using letters (up to 30 characters).';editName.focus();return}

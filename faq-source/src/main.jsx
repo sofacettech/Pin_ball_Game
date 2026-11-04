@@ -151,7 +151,10 @@ function App() {
     <a className="faq-skip" href="#faqs">Skip to FAQs</a>
     <a className="site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a>
     <main className={'faq-main'+(selected?' is-open':'')} id="faqs" ref={main} tabIndex={-1}>
-      <h1>FAQs</h1>
+      <div className="faq-intro">
+        <h1>HOW POINTS WORK / FAQ</h1>
+        <p><BrandText>A little more about the game, your points and SO/ FACET.</BrandText></p>
+      </div>
       <nav className="help-grid" aria-label="Help topics">
         {topics.map((topic,index) => <button className="tile" key={topic.id} id={'topic-'+topic.alias} type="button"
           ref={node => {buttons.current[index]=node}} aria-pressed={selected===topic.id} aria-controls={topic.id}

@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request} from '../../membership-source/src/api.js';
 import {countries,normalisePhone,phoneCountry,phoneParts} from '../../membership-source/src/phone.js';
-import {validPlayerName,validPublicName} from '../../game-source/src/player-copy.ts';
+import {capitaliseName,validPlayerName,validPublicName} from '../../game-source/src/player-copy.ts';
 import {brandText} from '../../shared/brand-react.jsx';
 import {accountHref,membershipHref,accountNavigationHref} from '../../shared/account-session.js';
 import {AccessScene} from './access-scene.jsx';
@@ -45,7 +45,11 @@ function App(){
  function open(type){opener.current=document.activeElement;setError('');setConfirmation('');setModal(type)}
  function close(){if(!busy){setModal(null);setError('')}}
  const phoneNumber=normalisePhone(phone,country),newPhone=draft&&normalisePhone(draft.phoneNumber,draft.country),changedPhone=!!draft&&newPhone!==account?.phoneNumber;
- function edit(key,value){setDraft(current=>({...current,[key]:value}));setError('');setNotice('Unsaved changes.');if(key==='phoneNumber'||key==='country'){setVerifiedPhone('');setMobileChallenge(null);setMobileCode('')}}
+ function edit(key,value){
+  const next=key==='name'||key==='leaderboardName'?capitaliseName(value):value;
+  setDraft(current=>({...current,[key]:next}));setError('');setNotice('Unsaved changes.');
+  if(key==='phoneNumber'||key==='country'){setVerifiedPhone('');setMobileChallenge(null);setMobileCode('')}
+ }
  async function send(event){
   event?.preventDefault();if(!phoneNumber){setError('Enter a valid phone number for the selected country.');document.getElementById('phone').focus();return}
   await run(async signal=>{

@@ -12,7 +12,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 [hidden]{display:none!important}
 
 .faq-main{max-width:1130px;width:calc(100% - 80px);margin:0 auto;padding:calc(var(--site-header-clearance, 78px) + 36px) 0 88px}
-.faq-main h1{text-align:center;font-size:22px;font-weight:600;margin:0 0 64px}
+.faq-intro{grid-column:1/-1;text-align:center;margin:0 0 64px}
+.faq-intro h1{font-size:22px;font-weight:600;margin:0}
+.faq-intro p{color:var(--muted);font-size:14px;line-height:1.5;letter-spacing:normal;margin:12px 0 0}
 .help-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;justify-items:center}
 .tile{width:min(210px,100%);height:152px;border:1px solid #555;background:transparent;color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:16px 10px;letter-spacing:inherit;cursor:pointer;transition:border-color .2s,background-color .2s}
 .tile:hover{border-color:var(--paper);background:#111}
@@ -21,7 +23,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .tile svg{width:48px;height:48px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:square;stroke-linejoin:miter}
 .tile-label{line-height:1.6;text-transform:uppercase;text-align:center}
 .faq-main.is-open{display:grid;grid-template-columns:220px minmax(0,1fr);gap:0 70px;align-items:start}
-.is-open h1{grid-column:1/-1;margin:0 0 64px}
 .is-open .help-grid{display:flex;flex-direction:column;align-items:stretch;gap:8px}
 .is-open .tile{width:100%;height:auto;min-height:52px;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 0;border:0;background:transparent;color:#aaa7a1;text-align:left}
 .is-open .tile:hover,.is-open .tile[aria-pressed="true"]{color:var(--paper)}
@@ -92,13 +93,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 }
 @media(max-width:700px){
   .faq-main{width:auto;margin:0;padding:calc(var(--site-header-clearance, 71px) + 26px) max(20px,env(safe-area-inset-right,0px)) 64px max(20px,env(safe-area-inset-left,0px))}
-  .faq-main h1{font-weight:600;margin:0 0 40px}
+  .faq-intro{margin-bottom:40px}
   .help-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .tile{width:100%;height:142px;gap:18px}
   .tile img,.tile svg{width:36px;height:36px}
   .tile-label{font-size:13px}
   .faq-main.is-open{display:block;padding-bottom:56px}
-  .is-open h1{margin:0 0 28px}
+  .is-open .faq-intro{margin-bottom:28px}
   .is-open .help-grid{gap:0;margin:0 0 36px}
   .is-open .tile{min-height:44px;padding:8px 0}
   .faq-panel summary{font-size:16px;gap:20px}
@@ -146,7 +147,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
  :root{--background:white;--paper:black;--muted:#333;color-scheme:light}
  .faq-navbar-background,.site-brand,.standalone-navigation,.faq-skip,.help-grid,.site-footer,.faq-panel summary::after{display:none!important}
  .faq-main,.faq-main.is-open{display:block;width:100%;margin:0;padding:0}
- .faq-main h1{margin:0 0 24px;text-align:left}
+ .faq-intro{margin:0 0 24px;text-align:left}
  .faq-shell[hidden],.faq-panel[hidden]{display:block!important}
  .faq-shell{animation:none}
  .faq-panel{margin:0 0 28px}

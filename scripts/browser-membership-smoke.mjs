@@ -27,17 +27,18 @@ try {
         await frame.locator(returningMember ? '#phone' : '#front-name').waitFor({ state: 'visible' });
         if (returningMember) {
           assert.equal(await frame.locator('#front-name').count(), 0);
-          await frame.locator('#phone').fill('9876543210');
           assert.equal((await request('/api/membership/rewards', { gameId })).data.code, 'rewards_verification_required');
-        } else {
-          await frame.locator('#front-name').fill('Test Member');
           await frame.locator('#phone').fill('9876543210');
-        }
-        const claim = frame.getByRole('button', { name: 'Save my SO/ Coins', exact: true });
-        await claim.click();
-        if (!returningMember) {
-          await frame.locator('#terms').check();
-          await frame.getByRole('button', {name:'Send code', exact:true}).click();
+        } else {
+          const terms = frame.locator('#terms');
+          assert.equal(await terms.isVisible(), true);
+          assert.equal(await terms.isChecked(), false);
+          await frame.locator('#front-name').fill('test Member');
+          assert.equal(await frame.locator('#front-name').inputValue(), 'Test Member');
+          await frame.locator('#phone').fill('9876543210');
+          await page.waitForTimeout(850);
+          assert.equal(events.some(item => item.path==='/rewards/auth'), false);
+          await terms.check();
         }
         await frame.locator('#final-otp:enabled').waitFor({ state: 'visible' });
         assert.match(await frame.locator('#confirmation-copy').innerText(), /WhatsApp/);
@@ -70,8 +71,8 @@ try {
         assert.ok(!storage.includes('fixture-signature') && !storage.includes('fixture-partner-key'));
         console.log(engine + ': ' + (returningMember ? 'returning-member re-verification' : 'save-my-points registration') + ' passed');
         await page.goto(origin + '/account.html');
-        await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Updated Member');
-        await page.getByRole('textbox', { name: 'Leaderboard name', exact: true }).fill('Updated M.');
+        await page.getByRole('textbox', { name: 'Name', exact: true }).fill('updated Member');
+        await page.getByRole('textbox', { name: 'Leaderboard name', exact: true }).fill('updated M.');
         await page.getByRole('textbox', { name: 'Email', exact: true }).fill('updated@example.invalid');
         await page.getByRole('button', { name: 'Save changes', exact: true }).click();
         await page.getByRole('status').filter({ hasText: 'Your details are updated.' }).waitFor();

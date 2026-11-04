@@ -1,9 +1,9 @@
 import {brandText} from '../../shared/brand-react.jsx';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useEffectEvent, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request, pendingResult} from './api.js';
 import {countries, normalisePhone, phoneCountry, maskedPhone} from './phone.js';
-import {splitPlayerName,publicPlayerName,validPlayerName,leaveCopy,exitCopy} from '../../game-source/src/player-copy.ts';
+import {capitaliseName,splitPlayerName,publicPlayerName,validPlayerName,leaveCopy,exitCopy} from '../../game-source/src/player-copy.ts';
 import {BrandText} from '../../assets/brand-text.jsx';
 import {accountHref,accountSignInHref,accountNavigationHref} from '../../shared/account-session.js';
 import {ClaimButterfly, ClaimScene} from './claim-scene.jsx';
@@ -41,7 +41,7 @@ function selectShareCopy(element) {
 }
 function App() {
   const [identity,setIdentity]=useState({phone:'',country:'IN'}),[details,setDetails]=useState(initialDetails);
-  const [stage,setStage]=useState('identity'),[showConsent,setShowConsent]=useState(false);
+  const [stage,setStage]=useState('identity'),[requestedPhones,setRequestedPhones]=useState(()=>new Set());
   const [errors,setErrors]=useState({}),[status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   const [pending,setPending]=useState(null),[config,setConfig]=useState(null),[challenge,setChallenge]=useState(null),[proof,setProof]=useState(null);
   const [otp,setOtp]=useState(''),[resendAt,setResendAt]=useState(0),[seconds,setSeconds]=useState(0),[changing,setChanging]=useState(false),[newPhone,setNewPhone]=useState('');
@@ -53,6 +53,12 @@ function App() {
   const controller=useRef(null),locked=useRef(false),policyDialog=useRef(null),mounted=useRef(true),pendingRef=useRef(null),exitHandler=useRef(null),exitDestination=useRef('/');
   const joining=firstCutsJoin&&!pending;
   const reauth=renewVerification&&!joining;
+  const phoneNumber=normalisePhone(identity.phone,identity.country);
+  const otpReady=!!phoneNumber&&(reauth||(details.termsAccepted&&validPlayerName(details.name)));
+  const policiesMissing=config?.otpAvailable&&(!config.policies?.terms||!config.policies?.privacy);
+  const codeRequested=requestedPhones.has(phoneNumber);
+  const canSend=stage==='identity'&&!joining&&!exit&&!dialog&&memberCheck==='guest'
+    &&otpReady&&!!config&&!policiesMissing&&!seconds&&!busy;
   const hasUnsaved=()=>!!pendingRef.current&&pendingRef.current.points>=10&&!saved;
   function requestExit(destination='/') {
     if(locked.current){setStatus('Please wait for the current request to finish.');return}
@@ -98,9 +104,9 @@ function App() {
   useEffect(()=>{if(!hasUnsaved())return;const guard=event=>{event.preventDefault();event.returnValue=''};addEventListener('beforeunload',guard);return()=>removeEventListener('beforeunload',guard)},[pending,saved]);
   useEffect(()=>{if(exit)document.getElementById('exit-title')?.focus({preventScroll:true})},[exit]);
   useEffect(()=>{
-    if(!resendAt)return;
     const tick=()=>setSeconds(Math.max(0,Math.ceil((resendAt-Date.now())/1000)));
-    tick();const timer=setInterval(tick,1000);return ()=>clearInterval(timer);
+    tick();
+    if(resendAt){const timer=setInterval(tick,1000);return ()=>clearInterval(timer)}
   },[resendAt]);
   useEffect(()=>{
     const target=stage==='confirmation'?(changing?'new-phone':'final-otp'):stage==='details'?'save-heading':stage==='success'?'success':null;
@@ -111,7 +117,8 @@ function App() {
   useEffect(()=>{if(dialog&&!policyDialog.current.open)policyDialog.current.showModal()},[dialog]);
   const clear=id=>setErrors(current=>({...current,[id]:''}));
   const change=(key,id)=>event=>{
-    const value=event.target.type==='checkbox'?event.target.checked:event.target.value;
+    const {type,checked,value:input}=event.target;
+    const value=type==='checkbox'?checked:key==='name'?capitaliseName(input):input;
     setDetails(current=>({...current,[key]:value}));clear(id);
   };
   async function run(action) {
@@ -138,27 +145,30 @@ function App() {
     if(result.success!==true||typeof result.challengeId!=='string'||!Number.isFinite(result.expiresIn)||result.expiresIn<=0)throw new Error('We couldn’t send your code. Please try again.');
     setIdentity(current=>({...current,phone,country:phoneCountry(phone,current.country)}));setChallenge({id:result.challengeId,expiresAt:Date.now()+result.expiresIn*1000,channel:result.deliveryChannel});setProof(null);setOtp('');setResendAt(Date.now()+(result.resendAfter??60)*1000);setChanging(false);setStage('confirmation');
   }
+  function requestInitialCode() {
+    if(!canSend||locked.current)return;
+    void run(signal=>{
+      setRequestedPhones(current=>new Set(current).add(phoneNumber));
+      return sendCode(signal,phoneNumber);
+    });
+  }
+  const sendAutomaticCode=useEffectEvent(requestInitialCode);
+  useEffect(()=>{
+    if(!canSend||codeRequested)return;
+    const timer=setTimeout(sendAutomaticCode,700);
+    return ()=>clearTimeout(timer);
+  },[canSend,codeRequested,phoneNumber,details.name]);
   function begin(event) {
     event.preventDefault();
     if(busy||seconds>0)return;
+    if(!joining){if(codeRequested)requestInitialCode();return}
     const found={};
-    if(!reauth&&!validPlayerName(details.name))found['front-name']='Please enter your full name.';
+    if(!validPlayerName(details.name))found['front-name']='Please enter your full name.';
     if(!normalisePhone(identity.phone,identity.country))found.phone='Enter a valid number for the selected country, or include + and your country code.';
-    if(joining){
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()))found.email='Enter a valid email address.';
-      if(!details.privacyAccepted)found.terms='Please agree to the Privacy Policy to continue.';
-      if(!details.marketingConsent)found.marketing='Please confirm updates and early access to join.';
-    }
-    if(!validate(found))return;
-    if(joining){setStatus('Joining the early-access list is not available yet. Please try again later.');return}
-    if(config?.otpAvailable&&(!config.policies?.terms||!config.policies?.privacy)){setStatus('Account terms are not available yet. Please try again later.');return}
-    if(!reauth&&!details.termsAccepted){
-      setShowConsent(true);
-      setStatus('Please accept the terms to receive a verification code.');
-      requestAnimationFrame(()=>document.getElementById('terms')?.focus());
-      return;
-    }
-    void run(signal=>sendCode(signal));
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()))found.email='Enter a valid email address.';
+    if(!details.privacyAccepted)found.terms='Please agree to the Privacy Policy to continue.';
+    if(!details.marketingConsent)found.marketing='Please confirm updates and early access to join.';
+    if(validate(found))setStatus('Joining the early-access list is not available yet. Please try again later.');
   }
   function confirm(event) {
     event.preventDefault();if(busy)return;
@@ -256,8 +266,8 @@ function App() {
             {joining?<Field id="email" label="Email" name="email" type="email" placeholder="Email" autoComplete="email" maxLength={254} required value={details.email} error={errors.email} onChange={change('email','email')}/>:<Field id="final-otp" label="Six-digit verification code" name="confirmationCode" placeholder="OTP" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required disabled={!verifying||busy} value={otp} error={errors['final-otp']} onChange={event=>{setOtp(event.target.value.replace(/\D/g,'').slice(0,6));clear('final-otp')}}/>}
             <p className="claim-signin">Already saved your So/ Coins? <a href={accountSignInHref} target="_top">Sign in</a></p>
             <p className="claim-help" id="confirmation-copy">{verifying?<>We’ve sent a 6-digit code by {challenge?.channel==='whatsapp'?'WhatsApp':'SMS'} to {maskedPhone(normalisePhone(identity.phone,identity.country))}.</>:<>We’ll send a code by WhatsApp or SMS to confirm it’s you. So/ Coins can be used once our shop opens and expire 6 months after it opens. Terms apply.</>}</p>
-            {!verifying&&(showConsent||joining)&&consent}
-            <CrystalButton className="claim-action" type="submit" arrow disabled={busy||!verifying&&seconds>0}>{busy?'Please wait…':verifying?'Verify code':showConsent?(seconds?'Try again in '+seconds+'s':'Send code'):joining?'Join THE FIRST CUT':'Save my SO/ Coins'}</CrystalButton>
+            {!verifying&&!reauth&&consent}
+            <CrystalButton className="claim-action" type="submit" arrow disabled={busy||(!verifying&&!joining&&(!codeRequested||!canSend))}>{busy?(verifying?'Please wait…':'Sending code…'):joining?'Join THE FIRST CUT':!verifying&&codeRequested?(seconds?'Try again in '+seconds+'s':'Try again'):'Verify code'}</CrystalButton>
             {verifying&&<div className="confirmation-links"><button className="text-link" type="button" disabled={busy||seconds>0} onClick={()=>void run(async signal=>{await sendCode(signal);setStatus('A new code is on its way. Check your messages.')})}>{seconds?'Resend code (in '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0')+')':'Resend code'}</button><span aria-hidden="true">·</span><button className="text-link" type="button" disabled={busy} onClick={()=>{setNewPhone(identity.phone);setNewCountry(identity.country);setChanging(true);setStatus('')}}>Change number</button></div>}
           </form>
           <form className="change-number" hidden={!changing} onSubmit={event=>{event.preventDefault();const phone=normalisePhone(newPhone,newCountry);if(!phone){validate({'new-phone':'Enter a valid number with its country code.'});return}void run(signal=>sendCode(signal,phone))}} noValidate><PhoneField id="new-phone" compact country={newCountry} onCountry={setNewCountry} disabled={busy} value={newPhone} error={errors['new-phone']} onChange={event=>{setNewPhone(event.target.value);clear('new-phone')}}/><div className="confirmation-links"><button className="text-link" type="submit" disabled={busy}>Send code</button><button className="text-link" type="button" disabled={busy} onClick={()=>setChanging(false)}>Cancel</button></div></form>
@@ -277,7 +287,7 @@ function App() {
             <p className="closing-line">Keep them before they disappear.</p>
           </form>
         </>}
-        {(codeScreen||saving)&&<><p className="connection-status" role="status">{status}</p>{!joining&&<button className="text-link claim-replay" type="button" onClick={replay} disabled={busy}>Play again</button>}</>}
+        {(codeScreen||saving)&&<><p className="connection-status" role="status">{status||(!joining&&stage==='identity'&&otpReady&&policiesMissing?'Account terms are not available yet. Please try again later.':'')}</p>{!joining&&<button className="text-link claim-replay" type="button" onClick={replay} disabled={busy}>Play again</button>}</>}
             <section className="success" id="success" hidden={stage!=='success'} aria-labelledby="success-title" tabIndex={-1}>
               <p className="step-eyebrow">{saved?.pointsSaved?<span className="brand-word">SO/ SAVED</span>:'ACCOUNT ACTIVE'}</p><h2 className="step-title" id="success-title">It’s yours, <span>{details.name.trim().split(/\s+/)[0]}.</span></h2>
               <p className="step-copy">You made “THE FIRST CUT”.</p>
