@@ -1,68 +1,190 @@
-import {brandText} from '../../shared/brand-react.jsx';
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
-import {sections} from './questions';
 import {BrandText} from '../../assets/brand-text.jsx';
+import {sections} from './questions';
 import './style.css';
 
-const hashIndex = () => Math.max(0,sections.findIndex(section=>'#'+section.id===location.hash));
+const topics = [
+  {...sections[0], icon: 'basics.png', alias: 'basics'},
+  {...sections[1], navTitle: 'The game & your points', icon: 'game.svg', alias: 'games'},
+  {...sections[2], icon: 'details.png', alias: 'details'},
+  {id: 'contact', navTitle: 'Contact us', alias: 'contact'},
+];
+const topicFromHash = () => {
+  const hash = location.hash.slice(1);
+  if (!hash || hash === 'faqs') return null;
+  return topics.find(topic => [topic.id, 'topic-'+topic.alias, 'faq-'+topic.alias].includes(hash))?.id;
+};
+
+const socials = [
+  {name: 'Instagram', icon: <><rect x="3" y="3" width="26" height="26" rx="7"/><circle cx="16" cy="16" r="6"/><circle className="fill" cx="24" cy="8" r="2"/></>},
+  {name: 'Facebook', icon: <path className="fill" d="M19 31V17h4l1-5h-5V9c0-1.4.4-2 2-2h3V2h-4c-4.5 0-7 2.7-7 7v3H9v5h4v14z"/>},
+  {name: 'X', href: 'https://x.com/so_facet?s=11&t=MpVMDpjvxy77_g81vQ3U7w', icon: <path className="fill" d="M25.2 1.5h4.9L19.4 13.8 32 30.5h-9.9l-7.7-10.1-8.8 10.1H.6l11.5-13.1L0 1.5h10.1l7 9.2Zm-1.7 26h2.7L8.6 4.3H5.7Z"/>},
+  {name: 'YouTube', href: 'https://youtube.com/@so_facet?si=_lCL7Q40ECeZ60g1', icon: <><rect className="fill" x="1" y="5" width="30" height="22" rx="5"/><path className="cutout" d="m13 10 10 6-10 6z"/></>},
+  {name: 'LinkedIn', href: 'https://www.linkedin.com/company/so-facet/', icon: <><rect className="fill" x="2" y="2" width="28" height="28" rx="2"/><circle className="cutout" cx="9" cy="10" r="2"/><path className="cutout-stroke" d="M9 15v11m7 0V15m0 5c0-7 9-7 9 0v6"/></>},
+];
+
+function FooterColumn({title, mobile, children}) {
+  return mobile
+    ? <details className="footer-column"><summary>{title}</summary><ul>{children}</ul></details>
+    : <section className="footer-column"><h2>{title}</h2><ul>{children}</ul></section>;
+}
+
+function Footer({mobile, onTopic}) {
+  function topicLink(event, id) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    onTopic(id);
+  }
+  return <footer className="site-footer">
+    <div className="footer-inner">
+      <section className="newsletter" aria-labelledby="newsletter-title">
+        <h2 id="newsletter-title">Subscribe to our newsletter</h2>
+        <div className="newsletter-signup">
+          <div className="email">
+            <input type="email" placeholder="Email (required field) *" aria-label="Email" autoComplete="email" aria-describedby="newsletter-note" disabled />
+            <button className="newsletter-submit" type="button" disabled>Proceed</button>
+          </div>
+          <p className="footer-note" id="newsletter-note">Newsletter signup is coming soon.</p>
+        </div>
+      </section>
+      <div className="footer-menu">
+        <FooterColumn title="Customer" mobile={mobile}>
+          <li><a href="#contact" onClick={event => topicLink(event,'contact')}>Contact us</a></li>
+          <li><a href="mailto:hello@sofacet.com">Email us</a></li>
+          <li><a href="#faqs" onClick={event => topicLink(event,null)}>Help &amp; FAQs</a></li>
+        </FooterColumn>
+        <FooterColumn title="Our company" mobile={mobile}>
+          <li><a href="#the-basics" onClick={event => topicLink(event,'the-basics')}><BrandText>About SO/ FACET</BrandText></a></li>
+          <li><a href="#game-and-points" onClick={event => topicLink(event,'game-and-points')}>The game &amp; your points</a></li>
+          <li><a href="#your-details" onClick={event => topicLink(event,'your-details')}>Your details</a></li>
+        </FooterColumn>
+        <FooterColumn title="Legal and privacy" mobile={mobile}>
+          <li><span>Terms</span></li>
+          <li><span>Privacy</span></li>
+          <li><a href="mailto:privacy@sofacet.com">Data requests</a></li>
+        </FooterColumn>
+        <section className="footer-social">
+          <h2>Follow us</h2>
+          <div className="social-icons" role="group" aria-label="Social media">
+            {socials.map(({name,href,icon}) => {
+              const svg = <svg viewBox="0 0 32 32" aria-hidden="true">{icon}</svg>;
+              return href
+                ? <a key={name} href={href} target="_blank" rel="noopener noreferrer" aria-label={name}>{svg}</a>
+                : <span key={name} role="img" aria-label={name}>{svg}</span>;
+            })}
+          </div>
+        </section>
+      </div>
+      <div className="footer-bottom">
+        <div className="footer-contact"><span>Still have a question?</span><a href="mailto:hello@sofacet.com">hello@sofacet.com <span aria-hidden="true">↗</span></a></div>
+        <a className="pinball" href="/play.html" target="_top">Play Pinball <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </footer>;
+}
 
 function App() {
-  const [selected,setSelected]=useState(hashIndex);
-  const [narrow,setNarrow]=useState(matchMedia('(max-width:560px)').matches);
-  const [openQuestions,setOpenQuestions]=useState(()=>new Set(['the-basics-0']));
-  const [printing,setPrinting]=useState(false);
-  const tabs=useRef([]);
-  useEffect(()=>{
-    const media=matchMedia('(max-width:560px)'),resize=event=>setNarrow(event.matches);
-    const hash=()=>setSelected(hashIndex());
-    const beforePrint=()=>flushSync(()=>setPrinting(true)),afterPrint=()=>flushSync(()=>setPrinting(false));
-    media.addEventListener('change',resize);window.addEventListener('hashchange',hash);
-    window.addEventListener('beforeprint',beforePrint);window.addEventListener('afterprint',afterPrint);
-    return ()=>{media.removeEventListener('change',resize);window.removeEventListener('hashchange',hash);window.removeEventListener('beforeprint',beforePrint);window.removeEventListener('afterprint',afterPrint)};
+  const [selected,setSelected] = useState(() => topicFromHash() ?? null);
+  const [mobile,setMobile] = useState(() => matchMedia('(max-width: 700px)').matches);
+  const [openQuestions,setOpenQuestions] = useState(() => new Set(sections[0].questions.map((_, index) => 'the-basics-'+index)));
+  const [printing,setPrinting] = useState(false);
+  const main = useRef(null);
+  const buttons = useRef([]);
+
+  useEffect(() => {
+    const media = matchMedia('(max-width: 700px)');
+    const resize = event => setMobile(event.matches);
+    const hash = () => {
+      const id = topicFromHash();
+      if (id !== undefined) setSelected(id);
+    };
+    const beforePrint = () => flushSync(() => setPrinting(true));
+    const afterPrint = () => flushSync(() => setPrinting(false));
+    media.addEventListener('change',resize);
+    addEventListener('hashchange',hash);
+    addEventListener('beforeprint',beforePrint);
+    addEventListener('afterprint',afterPrint);
+    return () => {
+      media.removeEventListener('change',resize);
+      removeEventListener('hashchange',hash);
+      removeEventListener('beforeprint',beforePrint);
+      removeEventListener('afterprint',afterPrint);
+    };
   },[]);
-  function select(index,focus=false) {
-    setSelected(index);history.replaceState(null,'','#'+sections[index].id);
-    if(focus)tabs.current[index].focus();
+
+  function select(id,fromFooter=false) {
+    setSelected(id);
+    history.replaceState(history.state,'','#'+(id || 'faqs'));
+    if (fromFooter) {
+      main.current.focus({preventScroll:true});
+      main.current.scrollIntoView({block:'start'});
+    }
   }
-  function tabKey(event,index) {
+
+  function topicKey(event,index) {
     let next;
-    if(['ArrowRight','ArrowDown'].includes(event.key))next=(index+1)%sections.length;
-    if(['ArrowLeft','ArrowUp'].includes(event.key))next=(index+sections.length-1)%sections.length;
-    if(event.key==='Home')next=0;
-    if(event.key==='End')next=sections.length-1;
-    if(event.key===' ')next=index;
-    if(next!==undefined){event.preventDefault();select(next,true)}
+    if (['ArrowRight','ArrowDown'].includes(event.key)) next = (index + 1) % topics.length;
+    if (['ArrowLeft','ArrowUp'].includes(event.key)) next = (index + topics.length - 1) % topics.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = topics.length - 1;
+    if (next === undefined) return;
+    event.preventDefault();
+    buttons.current[next].focus();
+    select(topics[next].id);
   }
-  function toggle(id,open) {
-    if(printing)return;
-    setOpenQuestions(previous=>{
-      if(previous.has(id)===open)return previous;
-      const next=new Set(previous);if(open)next.add(id);else next.delete(id);return next;
+
+  function toggleQuestion(id,open) {
+    if (printing) return;
+    setOpenQuestions(previous => {
+      if (previous.has(id) === open) return previous;
+      const next = new Set(previous);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
     });
   }
-  return brandText(<>
-    <a className="skip-link" href="#faq-content">Skip to questions</a>
-    <div className="page enhanced">
-      <header className="masthead"><a className="faq-brand site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a><div className="breadcrumb">How points work · FAQ</div></header>
-      <main>
-        <section className="hero" aria-labelledby="page-title"><h1 id="page-title">Good questions.<em>Clear answers.</em></h1><p className="intro"><BrandText>A little more about the game, your points and SO/ FACET.</BrandText></p></section>
-        <div className="faq-layout" id="faq-content" tabIndex={-1}>
-          <nav className="section-nav" aria-label="FAQ sections" role="tablist" aria-orientation={narrow?'horizontal':'vertical'}>
-            {sections.map((section,index)=><a key={section.id} ref={element=>{tabs.current[index]=element}} id={section.tabId} href={'#'+section.id} role="tab" aria-controls={section.id} aria-selected={selected===index} tabIndex={selected===index?0:-1} onClick={event=>{event.preventDefault();select(index)}} onKeyDown={event=>tabKey(event,index)}><span aria-hidden="true">0{index+1}</span><span className="nav-title">{section.navTitle}</span></a>)}
-          </nav>
-          <div className="panels">
-            {sections.map((section,index)=><section key={section.id} className="faq-panel" id={section.id} aria-labelledby={section.tabId} role="tabpanel" tabIndex={0} hidden={selected!==index&&!printing}>
-              <h2 className="panel-title">{section.title}</h2>
-              {section.questions.map((question,i)=>{const id=section.id+'-'+i;return <details key={id} open={printing||openQuestions.has(id)} onToggle={event=>toggle(id,event.currentTarget.open)}><summary><span><BrandText>{question.question}</BrandText></span></summary><div className="answer"><p>{question.answer.map((part,j)=>typeof part==='string'?<BrandText key={j}>{part}</BrandText>:<a key={j} href={part.href}>{part.text}</a>)}</p></div></details>})}
-            </section>)}
-          </div>
-        </div>
-      </main>
-      <footer><p>Still have a question?</p><a className="contact" href="mailto:hello@sofacet.com">hello@sofacet.com<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 13 13 3M3 3h10v10" stroke="currentColor" strokeWidth="1.3"/></svg></a><a className="faq-play" href="/play.html" target="_top">Play Pinball →</a></footer>
-    </div>
-  </>);
+
+  return <>
+    <div className="faq-navbar-background" aria-hidden="true"/>
+    <a className="faq-skip" href="#faqs">Skip to FAQs</a>
+    <a className="site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a>
+    <main className={'faq-main'+(selected?' is-open':'')} id="faqs" ref={main} tabIndex={-1}>
+      <h1>FAQs</h1>
+      <nav className="help-grid" aria-label="Help topics">
+        {topics.map((topic,index) => <button className="tile" key={topic.id} id={'topic-'+topic.alias} type="button"
+          ref={node => {buttons.current[index]=node}} aria-pressed={selected===topic.id} aria-controls={topic.id}
+          onClick={() => select(topic.id)} onKeyDown={event => topicKey(event,index)}>
+          {topic.icon
+            ? <img src={'/assets/faq/'+topic.icon} width="48" height="48" alt=""/>
+            : <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="11" width="42" height="27"/><path d="M3 12 24 30 45 12"/></svg>}
+          <span className="tile-number" aria-hidden="true">0{index+1}</span><span className="tile-label">{topic.navTitle}</span>
+        </button>)}
+      </nav>
+      <div className="faq-shell" hidden={!selected&&!printing}>
+        {topics.map(topic => <section className="faq-panel" key={topic.id} id={topic.id} aria-labelledby={'topic-'+topic.alias} hidden={selected!==topic.id&&!printing}>
+          {topic.questions ? <>
+            <h2 className="faq-panel-title">{topic.title}</h2>
+            {topic.questions.map((question,index) => {
+              const id = topic.id+'-'+index;
+              return <details key={id} open={printing||openQuestions.has(id)} onToggle={event=>toggleQuestion(id,event.currentTarget.open)}>
+                <summary><span><BrandText>{question.question}</BrandText></span></summary>
+                <p>{question.answer.map((part,i) => typeof part==='string'
+                  ? <BrandText key={i}>{part}</BrandText>
+                  : <a key={i} href={part.href}>{part.text}</a>)}</p>
+              </details>;
+            })}
+          </> : <>
+            <h2>Still have a question?</h2>
+            <p>Email us at <a href="mailto:hello@sofacet.com">hello@sofacet.com</a>.</p>
+            <p>For updates or data requests, email <a href="mailto:privacy@sofacet.com">privacy@sofacet.com</a>.</p>
+          </>}
+        </section>)}
+      </div>
+    </main>
+    <Footer mobile={mobile} onTopic={id => select(id,true)}/>
+  </>;
 }
 
 createRoot(document.getElementById('faq-root')).render(<App/>);
