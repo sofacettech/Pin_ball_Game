@@ -5,5 +5,5 @@ export function RewardArtwork() {
 }
 
 export function RewardMesh() {
-  return (<iframe className="mesh-layer" title="Interactive purple mesh — click or tap to reveal" src="/assets/collective/meshes/rewards.html"></iframe>);
+  return (<iframe className="mesh-layer" title="Interactive purple mesh — click or tap to reveal" src="/assets/collective/meshes/rewards.html?v=rules-20261106"></iframe>);
 }

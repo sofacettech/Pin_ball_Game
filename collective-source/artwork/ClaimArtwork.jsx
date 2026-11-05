@@ -5,5 +5,5 @@ export function ClaimArtwork() {
 }
 
 export function ClaimMesh() {
-  return (<div id="mesh" className="mesh-layer" aria-hidden="true">{"\n"}<canvas aria-hidden="true"></canvas>{"\n"}<p className="caption" aria-hidden="true"><span className="mouse-hint">{"CLICK TO REVEAL · ENTER / SPACE"}</span><span className="touch-hint">{"TAP TO REVEAL"}</span></p>{"\n"}</div>);
+  return (<div id="mesh" className="mesh-layer" aria-hidden="true">{"\n"}<canvas aria-hidden="true"></canvas>{"\n"}<p className="caption" aria-hidden="true"><span className="mouse-hint">{"CLICK TO REVEAL · ENTER OR SPACE"}</span><span className="touch-hint">{"TAP TO REVEAL"}</span></p>{"\n"}</div>);
 }

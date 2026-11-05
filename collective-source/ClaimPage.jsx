@@ -31,10 +31,10 @@ export default function ClaimPage({name = '',phone = '',dialCode = '+91',challen
             <label style={{flex:1,minWidth:0}}><span className="sr-only">Mobile number</span><input autoComplete="tel-national" className="field" inputMode="tel" name="mobile" placeholder="Mobile number" type="tel" value={mobile} onChange={event=>setMobile(event.target.value)} disabled={working} /></label>
           </div>
           <label className="otp-field"><span className="sr-only">Six-digit confirmation code</span><input id="final-otp" autoComplete="one-time-code" className="field" inputMode="numeric" maxLength={6} name="otp" placeholder="OTP" value={otp} onChange={event=>setOtp(event.target.value.replace(/\D/g,''))} disabled={working} /></label>
-          <p className="signin">Already saved your <span className="inline-coins">SO/ Coins</span>? {onSignIn&&<button className="claim-sign-in" type="button" disabled={working} onClick={onSignIn}>Sign in</button>}</p>
+          <p className="signin">Already saved your <span className="inline-coins">coins</span>? {onSignIn&&<button className="claim-sign-in" type="button" disabled={working} onClick={onSignIn}>Sign in</button>}</p>
           <p className="help">{changed?'Your number changed. Send a new code to verify it.':'Enter the code sent by WhatsApp or SMS to confirm it’s you.'}</p>
           <p className="help">Your points can be used after the launch and expire 6 months after the launch. Terms apply.</p>
-          <div className="buttons"><button className="btn" type="submit" disabled={working || busy || changed && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':changed?'SEND NEW CODE':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
+          <div className="buttons"><button className="btn" type="submit" disabled={working || busy || changed && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':changed?'SEND NEW CODE':'SAVE MY COINS'}</span><Arrow /></button></div>
           <div className="claim-resend"><button type="button" disabled={working || busy || resendSeconds>0 || changed} onClick={()=>void submit(onResend,{},'Please request another code later.')}>{resendSeconds>0?'Resend code in '+resendSeconds+'s':'Resend code'}</button></div>
           <p aria-live="polite" className="feedback" id="feedback" role="status">{status || message}</p>
         </form>

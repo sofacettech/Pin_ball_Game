@@ -15,6 +15,11 @@ const results=[];
 const sizes=[[320,568],[375,667],[390,844],[430,932],[768,1024],[820,1180],[844,390],[1440,900]];
 const mobile=width=>width<=900;
 async function shot(page,name){if(output)await page.screenshot({path:resolve(output,engine+'-'+name+'.png'),fullPage:true});}
+async function minimumText(page,selector,size){
+ const values=await page.locator(selector).evaluateAll(nodes=>nodes.filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({text:(e.textContent||e.id).trim().slice(0,80),size:parseFloat(getComputedStyle(e).fontSize)})));
+ assert.ok(values.length,'Visible text found: '+selector);
+ assert.ok(values.every(value=>value.size>=size),selector+' meets '+size+'px minimum: '+JSON.stringify(values));
+}
 async function fits(page,selector){
  await page.locator(selector).evaluate(async e=>{await Promise.all(e.getAnimations({subtree:true}).filter(a=>Number.isFinite(a.effect.getComputedTiming().endTime)).map(a=>a.finished.catch(()=>{})));});
  const metrics=await page.locator(selector).evaluate(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,width:innerWidth,scroll:document.documentElement.scrollWidth};});
@@ -23,7 +28,12 @@ async function fits(page,selector){
 }
 async function createClaim(page,origin){
  await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();
+ if(mobile(page.viewportSize().width))await minimumText(page,'.design-account .small-button',11);
  await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
+ if(mobile(page.viewportSize().width)){
+  await minimumText(page,'#create-form .checkbox-row',13);
+  await minimumText(page,'.design-account .tab',11);
+ }
  await page.locator('input[name="title"][value="Ms"]').check();await page.locator('#new-name').fill('Test Member');
  await page.locator('#day').selectOption('1');await page.locator('#month').selectOption('1');await page.locator('#year').selectOption('1990');
  await page.locator('#new-city').fill('Delhi');await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
@@ -56,6 +66,9 @@ try{await withRewardsSite(async({origin})=>{
     assert.deepEqual(desktop,{position:'absolute',right:'0px',bottom:'0px',opacity:'1'});results.push({page:'claim',width,height,desktopUnchanged:true});
    }
    await fits(page,'.design-claim .content');
+   assert.ok(!(await page.locator('.design-claim .signin').innerText()).includes('/'),'Claim question has no decorative slash');
+   assert.equal(await page.locator('.claim-form button[type="submit"]').innerText(),'SAVE MY COINS');
+   if(mobile(width)){await minimumText(page,'.design-claim .help',14);await minimumText(page,'.design-claim .signin',13);}
    if(width===1440)await page.locator('.design-claim .art-layer.art-landed').waitFor();
    if([390,844,1440].includes(width))await shot(page,width+'-claim-final');
    await page.locator('#final-otp').fill('012345');assert.equal(await page.locator('#final-otp').inputValue(),'012345');
@@ -64,11 +77,15 @@ try{await withRewardsSite(async({origin})=>{
    await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();await fits(page,'#create-panel');
    results.push({page:'account',width,height,registeredAndCreateFit:true});
    await page.goto(origin+'/launching-soon.html');await page.locator('.design-launch[data-scene-ready="true"]').waitFor();await fits(page,'.action-group');
+   assert.match(await page.locator('.design-launch .description').innerText(),/Join “THE FIRST CUT”/);
+   assert.equal(await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).count(),1);
    await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await fits(page,'#join');
    await page.locator('#email').fill('mobile@example.invalid');await page.getByRole('button',{name:'Close signup'}).click();
+   assert.match(await page.frameLocator('.mesh-layer').locator('.mouse-hint').textContent(),/ENTER OR SPACE/);
    results.push({page:'launch',width,height,dialogFits:true});
    console.log(engine+': Claim opening/position, Account tabs and Launch fit '+width+'×'+height);
   }
+  await page.goto(origin+'/faq.html');await page.locator('h1').waitFor();assert.equal(await page.locator('h1').innerText(),'HOW POINTS WORK');
   if(engine==='webkit'){
    // Test the actual Reward React component in its existing shipped shell.
    // The Windows WebKit game-loader stall is outside this mobile UI change.
@@ -85,6 +102,9 @@ try{await withRewardsSite(async({origin})=>{
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    await fits(page,'.design-rewards .reward');
+   assert.equal(await page.locator('#rewards-register').innerText(),'SAVE MY COINS');
+   assert.ok(!(await page.locator('#rewards-expiry').innerText()).includes('/'),'Reward supporting copy has no decorative slash');
+   if(mobile(width)){await minimumText(page,'.design-rewards .conversion',14);await minimumText(page,'.design-rewards .notice',13);}
    if(engine==='webkit'){
     const art=await page.locator('.design-rewards .art-layer').evaluate(e=>({quality:e.dataset.petalQuality,visible:[...e.querySelectorAll('.flower-image')].filter(i=>i.getBoundingClientRect().width>0&&getComputedStyle(i).visibility==='visible').length}));
     assert.equal(art.quality,'css-motion');assert.equal(art.visible,3,'Safari keeps every flower visible after resize');

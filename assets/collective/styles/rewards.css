@@ -231,6 +231,9 @@
 }
 
 /* Each separate flower keeps its source orientation and pivots at its own stem base. */
+@media(max-width:900px){
+ #post-game-rewards .react-page-root.design-rewards .text-layer .reward .headline-right .conversion{font-size:14px;}
+}
 #post-game-rewards .design-rewards .art-layer.independent-flowers .flower-rig{position:absolute;inset:0;pointer-events:none;}
 #post-game-rewards .design-rewards .art-layer.independent-flowers .flower-image{position:absolute;display:block;max-width:none;}
 #post-game-rewards .design-rewards .art-layer.independent-flowers .flower-top{z-index:3;}
