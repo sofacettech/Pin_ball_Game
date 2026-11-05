@@ -72,3 +72,11 @@ test('close, keep, leave-anyway, replay and leaderboard retain their established
  fixture.node('rewards-exit-play').click();assert.equal(fixture.replays.length,1);
  fixture.controller.clear();fixture.controller.show(9);fixture.node('rewards-close').click();assert.equal(fixture.captured.destination,'/');
 });
+
+test('Skip game checks an unfinished score without treating it as a completed reward',async()=>{
+ const f=await controllerFixture();f.controller.requestLeave('/launching-soon.html',25);
+ assert.equal(f.controller.dialog.dataset.view,'leave');assert.equal(f.controller.result,null);
+ f.node('rewards-keep').click();assert.equal(f.controller.dialog.open,false);assert.equal(f.registered.length,0);
+ f.controller.requestLeave('/launching-soon.html',25);f.controller.dialog.oncancel({preventDefault(){}});assert.equal(f.controller.dialog.open,false);
+ f.controller.requestLeave('/launching-soon.html',0);assert.equal(f.captured.destination,'/launching-soon.html');
+});

@@ -168,6 +168,8 @@ function sync(p=physics.pose()){
  if(view.scoreboard.update(p.score,highScore??0,p.lives))view.needsRender=true;
  scorecard.update(p.score,highScore);applyScoreboardLayout();
  syncPlaybackControls();
+ settings.disabled=!loaded||starting;
+ $('pause-panel').hidden=!(physics.active&&p.state!=='finished'&&p.paused&&menu.hidden&&!tutorial?.active&&!rewards.dialog.open);
  const showHold=mobile&&physics.active&&p.state!=='finished';
  if(!launchReady&&p.state==='playing'&&document.activeElement===launchButton)canvas.focus({preventScroll:true});
  launchButton.hidden=!(showHold||launchReady);launchButton.disabled=!launchReady;launchButton.inert=!launchReady;
@@ -175,6 +177,7 @@ function sync(p=physics.pose()){
  const scoreVisible=String(!mobile||p.state==='playing'||!physics.active||p.state==='finished');
  if(scorecardPanel.dataset.scoreVisible!==scoreVisible)scorecardPanel.dataset.scoreVisible=scoreVisible;
  stage.classList.toggle('launch-ready',launchReady);
+ $('table-intro').hidden=physics.active;$('table-help').hidden=physics.active;
  $('start').hidden=physics.active&&p.state!=='finished';$<HTMLButtonElement>('start').disabled=starting;$('start-label').textContent=starting?'Preparing…':physics.active?'Play again':'Play';
  $('action').hidden=!menu.hidden||mobile&&physics.active&&p.state!=='finished'||physics.active&&(p.state==='playing'||p.state==='draining'||p.state==='spring_return')&&!p.paused;
  $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table is ready.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Hold the launch button or Space to continue charging.':'Release the launch button or Space to launch.':'Hold the launch button or Space to charge.';
@@ -186,7 +189,10 @@ function updateOverlay(){const opacity=Number($<HTMLInputElement>('overlay').val
 if(import.meta.env.DEV)$<HTMLInputElement>('overlay').oninput=updateOverlay;
 function setGamePaused(value:boolean){if(!loaded||inspecting||tutorial?.active)return;clearKeys();accumulator=0;if(value)holdCharge=physics.state==='charging';else closeSettings();physics.setPaused(value);sync();if(!value)(rewards.dialog.open?navToggle:canvas).focus()}
 function togglePause(){if(!loaded||inspecting||!physics.active||physics.state==='finished')return;setGamePaused(!physics.paused)}
-$('pause').onclick=togglePause;
+$('pause').onclick=()=>{togglePause();if(!$('pause-panel').hidden)$('pause-title').focus()};
+ $('pause-resume').onclick=()=>setGamePaused(false);
+ $('pause-help').onclick=()=>openPractice('replay');
+ $('table-help').onclick=()=>openPractice('onboarding');
 settings.onclick=()=>{if(!menu.hidden){resumeGame();return}closeNavigation();if(inspecting)toggleInspection();menu.hidden=false;settings.setAttribute('aria-expanded','true');setGamePaused(true);$('menu-title').focus({preventScroll:true})};
 function resumeGame(){closeSettings();closeNavigation();setGamePaused(false)}
 $('menu-close').onclick=resumeGame;
@@ -200,7 +206,10 @@ async function beginGame(){if(!loaded||starting)return;sound.unlock();sound.setM
  finally{starting=false;if(loaded)sync()}
 }
 $('start').onclick=()=>{if(!loaded||starting||tutorial?.active)return;if(!tutorial!.seen)openPractice('onboarding');else void beginGame()};
-$('restart').onclick=()=>{if(loaded&&!starting&&physics.active&&physics.state!=='finished')$('start').click()};
+$('restart').onclick=()=>{closeSettings();$('pause-panel').hidden=true;if(loaded&&!starting&&physics.active&&physics.state!=='finished')$('start').click()};
+let resumeAfterLeave=false;
+ $('skip-game').onclick=event=>{if(!loaded)return;const points=rewards.result?.points??physics.score;if(points<=0)return;event.preventDefault();resumeAfterLeave=physics.active&&!physics.paused&&physics.state!=='finished';if(resumeAfterLeave)setGamePaused(true);rewards.requestLeave(($('skip-game') as HTMLAnchorElement).href,points)};
+ rewards.dialog.addEventListener('close',()=>{if(resumeAfterLeave){resumeAfterLeave=false;setGamePaused(false)}});
 const playKeys=new Set(['ArrowLeft','ArrowRight','KeyA','KeyD','Space']);
 addEventListener('keydown',event=>{
  if(starting||tutorial?.active||registration.open||rewards.dialog.open||leaderboard.dialog.open)return;
