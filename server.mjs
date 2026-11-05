@@ -4,6 +4,7 @@ import {createReadStream,mkdirSync,existsSync,readFileSync,writeFileSync,renameS
 import {stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {normalisePhone} from './membership-source/src/phone.js';
 import {ServiceError,rewardsLeaderboard,awardPoints} from './rewards.mjs';
 import {validateInputs,verifyGame} from './verify-game.mjs';
 import {REPLAY_VERSION} from './game-source/src/simulation.ts';
@@ -46,6 +47,19 @@ async function api(request,response,path){
  rateLimit(request);
  if(path==='/api/internal/rewards/award'&&request.method==='POST'){trusted(request);const data=await body(request);return json(response,200,await awardPoints(data))}
  if(request.method==='POST')sameOrigin(request);
+ if(path==='/api/first-cuts'&&request.method==='POST'){
+  const data=await body(request,2048);
+  if(!data||typeof data!=='object'||Object.keys(data).some(key=>!['fullName','phoneNumber','email','adultPrivacyAccepted','marketingConsent'].includes(key)))fail(400,'Please submit the signup fields only.');
+  const fullName=typeof data.fullName==='string'?data.fullName.trim().replace(/\s+/g,' '):'';
+  if(!fullName||fullName.length>80||/[<>\x00-\x1f\x7f]/.test(fullName))fail(400,'Please enter your full name.');
+  const phoneNumber=normalisePhone(data.phoneNumber);if(!phoneNumber)fail(400,'Please enter a valid mobile number.');
+  const email=typeof data.email==='string'?data.email.trim().toLowerCase():'';
+  if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail(400,'Please enter a valid email address.');
+  if(data.adultPrivacyAccepted!==true||data.marketingConsent!==true)fail(400,'Please confirm both required checkboxes.');
+  const key=createHash('sha256').update(email).digest('hex');
+  if(!store.firstCuts?.[key])commit(()=>{store.firstCuts??={};store.firstCuts[key]={fullName,phoneNumber,email,adultPrivacyAccepted:true,marketingConsent:true,joinedAt:Date.now()}});
+  return json(response,200,{success:true});
+ }
  if(path==='/api/game-load-failure'&&request.method==='POST'){
   const data=await body(request,512);
   if(!data||!['module','styles','table','collision','physics','first-frame'].includes(data.phase)||!['memory','graphics','wasm','asset','runtime'].includes(data.code)||typeof data.embedded!=='boolean'||Object.keys(data).some(key=>!['phase','code','embedded'].includes(key)))fail(400,'Invalid startup report.');

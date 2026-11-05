@@ -86,10 +86,10 @@ try{
       await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();await page.setViewportSize({width:390,height:844});await capture(page,'03-account-registered-mobile');await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();await capture(page,'02-account-create-mobile');
       for(const [width,height,label] of [[1440,900,'desktop'],[390,844,'mobile']]){
         await page.setViewportSize({width,height});await page.goto(origin+'/launching-soon.html');await page.locator('.design-launch[data-scene-ready="true"]').waitFor();await capture(page,'05-launch-'+label);
-        await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await capture(page,'06-join-dialog-'+label);await page.locator('#email').fill('launch@example.invalid');await page.getByRole('button',{name:'Continue',exact:true}).click();await page.locator('#new-email').waitFor();assert.equal(await page.locator('#new-email').inputValue(),'launch@example.invalid');assert.ok(!page.url().includes('launch@example'));
-        await page.getByRole('button',{name:'← Back',exact:true}).click();await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).waitFor();
+        await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await capture(page,'06-join-dialog-'+label);await page.locator('#join-name').fill('Launch Member');await page.locator('#join-phone').fill('9876543210');await page.locator('#email').fill('launch@example.invalid');await page.locator('#join-privacy').check();await page.locator('#join-updates').check();await page.locator('#join-form button[type=submit]').click();await page.waitForURL('**/first-cuts-confirmation.html');await page.getByRole('link',{name:'Back to the world',exact:true}).waitFor();await page.goto(origin+'/launching-soon.html');await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await page.getByRole('button',{name:'Close signup',exact:true}).click();
+        await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).waitFor();
       }
-      await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');console.log(engine+': launch → Join → prefilled account, Back and Play Pinball passed');
+      await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');console.log(engine+': launch → Join → saved signup, confirmation and Play Pinball passed');
     }finally{await context.close();}
   });
   await withRewardsSite(async({origin})=>{

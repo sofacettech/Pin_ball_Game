@@ -34,3 +34,12 @@ body:has(:is(#account-root,#membership-root,#launch-root) :is(.design-account,.d
 .auth-flow-signoff{font-size:14px;line-height:1.5;margin-top:24px}
 :is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap{flex-basis:120px!important}
 :is(#account-root,#membership-root,#launch-root) .design-account .country-select{width:120px!important;max-width:120px;min-width:0}
+
+#launch-root .design-launch #join{box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;padding:28px}
+#launch-root .design-launch #join h2{padding-right:26px;font-size:28px;line-height:1.2;margin:0 0 22px}
+#launch-root .design-launch #join-form>input{box-sizing:border-box;display:block;width:100%;min-height:44px;margin:0 0 16px;padding:9px 0;background:transparent;border:0;border-bottom:1px solid #897e91;border-radius:0;color:#f3f0eb;font-size:16px;line-height:1.4;font-family:inherit}
+#launch-root .design-launch #join-form .join-consent{display:flex;align-items:flex-start;gap:10px;margin:14px 0;font-size:14px;line-height:1.5;color:#eee7f2}
+#launch-root .design-launch #join-form .join-consent input{flex:0 0 18px;width:18px;height:18px;min-height:0;margin:2px 0 0;accent-color:#d9ed37}
+#launch-root .design-launch #join-form .join-consent a{color:inherit;text-underline-offset:3px}
+@media(max-width:480px){#launch-root .design-launch #join{padding:24px 20px}#launch-root .design-launch #join h2{font-size:25px}}
+#launch-root .design-launch #join-form .join-consent input{appearance:auto;-webkit-appearance:checkbox;border:initial;background:initial;padding:0;box-shadow:none}

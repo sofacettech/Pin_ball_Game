@@ -13,10 +13,8 @@ function JoinDialog({open, onClose, onJoin}) {
   }, [open, setMessage]);
   function join(event) {
     event.preventDefault();
-    const email = new FormData(event.currentTarget).get('email').trim();
-    if (onJoin) {void submit(onJoin, {email}, ''); return;}
-    try {localStorage.setItem('sofacet-interest',email); setMessage('Saved on this device. You have not been subscribed to emails.');}
-    catch {setMessage('Your browser could not save this email. Please allow local storage and try again.');}
+    const values = new FormData(event.currentTarget);
+    void submit(onJoin,{fullName:values.get('fullName').trim(),phoneNumber:values.get('phoneNumber').trim(),email:values.get('email').trim(),adultPrivacyAccepted:values.get('adultPrivacyAccepted')==='on',marketingConsent:values.get('marketingConsent')==='on'},'Signup is unavailable. Please try again later.');
   }
   function backdrop(event) {
     if (event.target !== dialog.current) return;
@@ -25,10 +23,15 @@ function JoinDialog({open, onClose, onJoin}) {
   }
   return <dialog ref={dialog} aria-labelledby="join-title" id="join" onClose={onClose} onClick={backdrop}>
     <button aria-label="Close signup" className="icon-button dialog-close" type="button" onClick={onClose}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 4 16 16M20 4 4 20" /></svg></button>
-    <p className="dialog-label">The first cut</p><h2 id="join-title">Be part of the beginning.</h2>
-    <p>Updates and early access to <span className="brand-inline">SO/ FACET</span>.</p>
-    <p className="preview-note">{onJoin?'Continue to create your account and verify your number.':'Standalone preview: your email is saved only on this device. This does not subscribe you to emails.'}</p>
-    <form id="join-form" onSubmit={join}><label className="field-label" htmlFor="email">Email address</label><input autoComplete="email" id="email" name="email" placeholder="you@example.com" required type="email" /><button className="dialog-action" type="submit" disabled={busy}>{busy ? 'Please wait…' : onJoin ? 'Continue' : 'Save my interest'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p></form>
+    <h2 id="join-title">Join “THE FIRST CUT”.</h2>
+    <form id="join-form" onSubmit={join}>
+      <label className="field-label" htmlFor="join-name">Full name</label><input autoComplete="name" id="join-name" name="fullName" maxLength={80} required disabled={busy}/>
+      <label className="field-label" htmlFor="join-phone">Mobile number</label><input autoComplete="tel" id="join-phone" name="phoneNumber" type="tel" inputMode="tel" maxLength={30} required disabled={busy}/>
+      <label className="field-label" htmlFor="email">Email</label><input autoComplete="email" id="email" name="email" required type="email" maxLength={254} disabled={busy}/>
+      <label className="join-consent"><input id="join-privacy" name="adultPrivacyAccepted" type="checkbox" required disabled={busy}/><span>I'm 18 or older and I agree to the <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span></label>
+      <label className="join-consent"><input id="join-updates" name="marketingConsent" type="checkbox" required disabled={busy}/><span>Send me <span className="brand-word">SO/ FACET</span> updates and early access.</span></label>
+      <button className="dialog-action" type="submit" disabled={busy}>{busy?'Please wait…':'Join THE FIRST CUT'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p>
+    </form>
   </dialog>;
 }
 
@@ -39,7 +42,7 @@ export default function LaunchPage({onJoin, onPlay}) {
     <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching soon"><div className="copy">
       <p className="eyebrow brand"><span>LAUNCHING SOON</span></p>
       <h1><span>Your diamond</span><em>is being cut.</em></h1>
-      <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> Join “THE FIRST CUT” for updates and early access.</p>
+      <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> Join “THE FIRST CUT” for updates and early access, before anyone else.</p>
       <div className="action-group">
         <button className="join-button" type="button" onClick={() => setJoinOpen(true)}><span>JOIN THE FIRST CUT</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball page coming soon'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>
