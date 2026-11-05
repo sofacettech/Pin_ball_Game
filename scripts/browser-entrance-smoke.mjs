@@ -14,6 +14,7 @@ const engine = process.env.SOFACET_BROWSER || 'webkit';
 assert.ok(['webkit', 'chromium'].includes(engine), 'SOFACET_BROWSER must be webkit or chromium');
 const {[engine]: browserType, devices} = require(process.env.SOFACET_PLAYWRIGHT_PATH || 'playwright');
 const url = new URL(process.env.SOFACET_ENTRANCE_URL || 'http://127.0.0.1:8766/');
+url.searchParams.set('entrance','1');
 const diagnostics = ['debug','debug/1','perf'].some(key => url.searchParams.has(key));
 assert.equal(url.searchParams.has('quality'), false, 'Omit quality overrides to test automatic iPhone selection');
 if(process.env.SOFACET_ENTRANCE_FULL_INTRO !== '1')url.hash = '#experience';

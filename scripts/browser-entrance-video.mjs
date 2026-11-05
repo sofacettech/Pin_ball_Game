@@ -6,7 +6,7 @@ const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'chromium';
 const {[engine]:browserType}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const base=process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8766/';
-const option=process.env.SOFACET_ENTRANCE_OPTION||'2';
+const option=process.env.SOFACET_ENTRANCE_OPTION||'default';
 const expectedWidth=Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH||1920);
 const output=new URL(`../work/entrance-video${option==='3'?'-4k':''}/`,import.meta.url);
 await mkdir(output,{recursive:true});
@@ -18,7 +18,9 @@ try{
     const page=await context.newPage(),requests=[],errors=[];
     page.on('request',request=>requests.push(request.url()));
     page.on('pageerror',error=>errors.push(error.message));
-    const url=new URL(base);url.searchParams.set(process.env.SOFACET_ENTRANCE_PARAMETER||'entrance',option);url.hash='experience';
+    const url=new URL(base);url.searchParams.delete('entrance');url.searchParams.delete('version');
+    if(option!=='default')url.searchParams.set(process.env.SOFACET_ENTRANCE_PARAMETER||'entrance',option);
+    url.hash='experience';
     await page.goto(url.href);
     await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:180000});
     assert.equal(await page.locator('body').getAttribute('data-error'),null);
@@ -56,11 +58,12 @@ try{
     report.push({name,engine,option,quality,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
-  // Ordinary visits still select 3D and do not prefetch the optional videos.
+  // The explicit live 3D alternative must not prefetch video media.
   const context=await browser.newContext();const page=await context.newPage(),requested=[];
   page.on('request',request=>requested.push(request.url()));
   const modelRequested=page.waitForRequest(request=>request.url().includes('journey-compact.glb'));
-  await page.goto(base);
+  const liveURL=new URL(base);liveURL.searchParams.set('entrance','1');
+  await page.goto(liveURL.href);
   await modelRequested;
   assert.equal(requested.some(url=>url.includes('/assets/entrance-video/')),false);
   await context.close();

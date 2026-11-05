@@ -29,8 +29,8 @@ try{
   const html=await res.text();
   assert.match(html,/<html/i,path);
   if(path==='/'||path==='/index.html'||path.startsWith('/entrance-3d')){
-   assert.match(html,/\/assets\/entrance-3d\//,'Default route serves the Three.js entrance');
-   assert.doesNotMatch(html,/node_modules|\/work\/|\/experiments\//,'3D route uses deployable assets only');
+   assert.match(html,/\/assets\/entrance-3d\//,'Default route serves the shared entrance shell');
+   assert.doesNotMatch(html,/node_modules|\/work\/|\/experiments\//,'Entrance route uses deployable assets only');
   }else if(path.startsWith('/video')){
    assert.match(html,/<base href="\/">/,'Video aliases resolve relative assets from the site root');
    assert.match(html,/id="story-copy"/,'Shared video presentation remains available');

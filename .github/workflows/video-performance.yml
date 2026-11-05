@@ -1,6 +1,6 @@
 name: Video performance benchmarks
 
-# The production default is the Three.js entrance. Keep the older /video
+# The production default is the version 3 entrance. Keep the older /video
 # performance experiments available on demand without running them on every PR.
 # Functional video recovery/debug checks remain in Site validation.
 on:

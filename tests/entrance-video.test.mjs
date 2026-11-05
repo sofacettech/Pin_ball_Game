@@ -204,14 +204,14 @@ test('option 3 selects verified 4K media while option 2 and unavailable 4K retai
  let available=true;
  const fetcher=async url=>{calls.push(url);return {ok:url!=='https://media.example/4k/manifest.json'||available,json:async()=>url==='/api/media-config'?{entranceManifestURL:'https://media.example/hd/manifest.json',entrance4kManifestURL:'https://media.example/4k/manifest.json'}:url==='https://media.example/4k/manifest.json'?ultra:url==='https://media.example/hd/manifest.json'?regular:local}};
  const hd=await loadEntranceMedia(fetcher,{option:'2'});assert.equal(hd.manifest.width,1920);assert.equal(calls.some(url=>url.includes('/4k/')),false);
- const selected=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(selected.manifest.width,3840);assert.match(selected.clips.journey.url,/\/4k\//);assert.equal(selected.clips.journey.localWidth,1920);
+ const selected=await loadEntranceMedia(fetcher);assert.equal(selected.manifest.width,3840);assert.match(selected.clips.journey.url,/\/4k\//);assert.equal(selected.clips.journey.localWidth,1920);
  available=false;const missing=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(missing.manifest.width,1920);assert.match(missing.clips.journey.url,/\/hd\//);
  available=true;ultra.width=1920;const wrongSize=await loadEntranceMedia(fetcher,{option:'3'});assert.equal(wrongSize.manifest.width,1920);assert.match(wrongSize.clips.journey.url,/\/hd\//);
 });
 
-test('neutral entrance selectors retain the default and support the version alias',async()=>{
+test('entrance selectors default to version 3 and retain explicit alternatives and aliases',async()=>{
  const {selectEntranceOption}=await import('../entrance-source/entrance-option.mjs');
- for(const [query,expected] of [['','1'],['?entrance=1','1'],['?entrance=2','2'],['?entrance=3','3'],['?version=3','3'],['?version=3&entrance=2','2'],['?entrance=video','1'],['?entrance=4','1']])assert.equal(selectEntranceOption(query),expected);
+ for(const [query,expected] of [['','3'],['?debug=1','3'],['?entrance=1','1'],['?entrance=2','2'],['?entrance=3','3'],['?version=1','1'],['?version=2','2'],['?version=3','3'],['?version=3&entrance=2','2'],['?version=1&entrance=3','3'],['?entrance=video','3'],['?entrance=4','3']])assert.equal(selectEntranceOption(query),expected);
 });
 
 test('failed CDN preloading retries the complete bundled journey before it becomes ready',async()=>{

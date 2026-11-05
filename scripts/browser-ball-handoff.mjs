@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 const {webkit,chromium,devices}=createRequire(import.meta.url)(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
-const engine=process.env.SOFACET_BROWSER||'webkit',url=new URL(process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8890/');url.hash='experience';
+const engine=process.env.SOFACET_BROWSER||'webkit',url=new URL(process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8890/');url.searchParams.set('entrance','1');url.hash='experience';
 const browser=await ({webkit,chromium}[engine]).launch(engine==='chromium'?{args:['--enable-gpu']}:{}),scroll=createJourneyScrollMap(),results=[];
 await mkdir('work/ball-handoff',{recursive:true});
 try{

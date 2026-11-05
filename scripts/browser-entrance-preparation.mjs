@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 const {chromium,webkit,devices}=createRequire(import.meta.url)(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
-const engine=process.env.SOFACET_BROWSER||'webkit',url=new URL(process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8892/');url.hash='experience';
+const engine=process.env.SOFACET_BROWSER||'webkit',url=new URL(process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8892/');url.searchParams.set('entrance','1');url.hash='experience';
 const browser=await ({chromium,webkit}[engine]).launch(engine==='chromium'?{args:['--enable-gpu']}:{}),map=createJourneyScrollMap(),results=[];
 await mkdir('work/entrance-preparation',{recursive:true});
 try{

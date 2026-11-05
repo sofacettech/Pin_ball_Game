@@ -10,7 +10,7 @@ try{
  const page=await browser.newPage({...devices['iPhone 13'],viewport:{width:393,height:735}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  page.on('console',m=>{if(m.type()==='error'&&/THREE\.WebGLProgram|GL_INVALID_|shader.*error/i.test(m.text()))errors.push(m.text())});
- const url=new URL(origin);url.hash='experience';await page.goto(url.href);await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:120000});
+ const url=new URL(origin);url.searchParams.set('entrance','1');url.hash='experience';await page.goto(url.href);await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:120000});
  await page.evaluate(()=>{
   const renderer=window.entrancePreview.renderer,draw=renderer.render.bind(renderer);
   renderer.render=(scene,camera)=>{
