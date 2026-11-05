@@ -36,7 +36,9 @@ function JoinDialog({open, onClose, onJoin}) {
 }
 
 export default function LaunchPage({onJoin, onPlay}) {
-  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(()=>location.hash==='#join');
+  useEffect(()=>{const update=()=>setJoinOpen(location.hash==='#join');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
+  function closeJoin(){setJoinOpen(false);if(location.hash==='#join')history.replaceState(null,'',location.pathname+location.search);}
   return <PageShell scene="launch" initialize={initialize} title="SO/FACET — Launching Soon">
     <LaunchMesh /><LaunchArtwork />
     <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching soon"><div className="copy">
@@ -48,6 +50,6 @@ export default function LaunchPage({onJoin, onPlay}) {
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball page coming soon'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>
       </div>
     </div></section></main>
-    <div className="launch-scope"><JoinDialog open={joinOpen} onClose={() => setJoinOpen(false)} onJoin={onJoin} /></div>
+    <div className="launch-scope"><JoinDialog open={joinOpen} onClose={closeJoin} onJoin={onJoin} /></div>
   </PageShell>;
 }

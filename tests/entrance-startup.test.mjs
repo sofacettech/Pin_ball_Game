@@ -57,7 +57,7 @@ test('the logo overlay requires real readiness and its existing reveal, with no 
   const ready=new Promise(resolve=>{release=resolve});
   const overlay={querySelector:()=>({}),setAttribute(){},removeAttribute(){},classList:{add(){}},contains:()=>false,remove(){removed=true}};
   const context={Promise,document:{querySelector:selector=>selector==='#site-loader'?overlay:{inert:true,removeAttribute(){}},documentElement:{hasAttribute:()=>false},body:{removeAttribute(){}}},mountReveal:(_stage,done)=>{reveal=done;return()=>{cleaned=true}},matchMedia:()=>({matches:true})};
-  vm.runInNewContext(read('assets/loading/intro.js').replace(/^import .*;\n/,'').replace('export function','function')+';this.finishLoading=finishLoading;',context);
+  vm.runInNewContext(read('assets/loading/intro.js').replace(/^import .*;\r?\n/,'').replace('export function','function')+';this.finishLoading=finishLoading;',context);
   const done=context.finishLoading({ready});
   if(readyFirst)release();else reveal();
   await new Promise(resolve=>setImmediate(resolve));assert.equal(removed,false);

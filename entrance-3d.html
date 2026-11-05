@@ -6,7 +6,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=frames-f0ecae8f7c60">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+  <style data-shared-style="./style.css?v=menu-0475ed4cb659">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -58,6 +58,8 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 .menu-panel .brand-word{white-space:nowrap}
 .menu-social-links{display:flex;align-items:center;justify-content:center;gap:8px;flex-basis:100%}
 @media(max-width:700px){.menu-panel{padding-top:calc(76px + env(safe-area-inset-top,0px))}}
+
+@media(max-width:700px){body[data-menu-open] .site-sound{visibility:hidden;pointer-events:none}}
 
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
@@ -506,10 +508,10 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
       <a id="skip-game" class="play-now" href="./play.html">Play Pinball</a>
       <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
       <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
-          <a class="menu-item" href="./account.html" target="_top" data-account-link>My Account</a>
+          <a class="menu-item" href="./account.html" target="_top" data-account-link>My points</a>
           <a class="menu-item" href="./about.html" target="_top">About</a>
-          <a class="menu-item" href="./faq.html" target="_top">FAQs</a>
-          <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
+          <a class="menu-item" href="./faq.html" target="_top">How points work</a>
+          <a class="menu-item" href="./privacy.html" target="_top">Privacy</a>
         </nav>
     </header>
     <div class="social-links">
@@ -531,7 +533,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <iframe id="game-page" title="SO/ FACET pinball game" aria-hidden="true" inert></iframe>
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-e14e24a4ec52"></script>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=menu-fe13cd32bdd4"></script>
   <script type="module" src="./assets/social-links.js?v=d6b72e7497e9"></script>
   <script type="module" src="/assets/entrance-3d/entry-6DBFHENL.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
