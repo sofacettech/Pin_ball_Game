@@ -89,22 +89,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
    <div id="nav-panel" class="menu-panel" data-menu-panel aria-label="Game navigation" aria-hidden="true" inert>
     <div id="navbar-extras" class="navbar-extras"><button id="member" data-menu-close class="menu-item" type="button" hidden>Leaderboard</button></div>
 
-    <div id="profile-navigation" class="profile-navigation">
-     <button id="profile" class="menu-item nav-icon" type="button" aria-label="Profile" aria-controls="profile-menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Profile</span></button>
-     <section id="profile-menu" class="profile-menu" aria-label="Profile options" hidden>
-      <button id="profile-close" type="button" aria-label="Close profile options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-      <h2 id="profile-name">Your profile</h2><p id="profile-status">Checking your account…</p>
-      <button id="profile-retry" type="button" hidden>Try again</button>
-      <button id="profile-edit" type="button" hidden>Edit leaderboard name</button>
-      <form id="profile-edit-form" hidden novalidate>
-       <label for="profile-display-name">Leaderboard name</label>
-       <input id="profile-display-name" name="leaderboardName" autocomplete="nickname" maxlength="30" aria-describedby="profile-edit-help profile-edit-status" required>
-       <p id="profile-edit-help">Choose the name shown with your score and rank. Keep it respectful.</p>
-       <div class="profile-edit-actions"><button id="profile-save" type="submit">Save name</button><button id="profile-edit-cancel" type="button">Cancel</button></div>
-       <p id="profile-edit-status" role="status" aria-live="polite"></p>
-      </form>
-     </section>
-    </div>
     <a class="menu-item" href="/account.html" target="_top" data-account-link>My Account</a>
     <a class="menu-item" href="./about.html" target="_top">About</a>
     <a class="menu-item" href="./faq.html" target="_top">FAQs</a>

@@ -83,10 +83,10 @@ function App(){
  const signingIn=stage==='signin'||stage==='code', codeSent=stage==='code';
  function changeNumber(){setStage('signin');setChallenge(null);setCode('');setResendAt(0);setError('');requestAnimationFrame(()=>document.getElementById('phone')?.focus())}
  const errors=<p className="error" id="account-error" role="alert">{error}</p>;
- if(stage==='signin'||stage==='code')return <AuthFlow initialTab="registered" checkMembership={false} forceVerification onComplete={async()=>{const abort=new AbortController();controller.current=abort;try{await load(abort.signal);}catch(error){setError(error.message);setStage('error');}}}/>;
+ if(stage==='signin'||stage==='code')return <AuthFlow pointsContext initialTab="registered" checkMembership={false} forceVerification onComplete={async()=>{const abort=new AbortController();controller.current=abort;try{await load(abort.signal);}catch(error){setError(error.message);setStage('error');}}}/>;
  return brandText(<><a className="skip" href="#main">Skip to content</a><main className="shell" id="main" tabIndex={-1}>
   {stage==='loading'?<section className="screen loading" aria-live="polite"><div className="loading-line" aria-hidden="true"/><p>Checking your points…</p></section>:null}
-  {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1>{errors}<button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
+  {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1><p className="supporting">Please try again.</p><button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
   {signingIn&&<>
     <section className="screen access-screen" aria-labelledby="signin-title">
       <h1 id="signin-title" tabIndex={-1}>Welcome back</h1>

@@ -1,46 +1,23 @@
-import {setBrandText} from '../../shared/brand-text.ts';
 import type {Player} from './leaderboard';
 import type {CompletedGameResult} from './post-game-rewards';
-import {capitaliseName,validPublicName} from './player-copy';
 
 type Options={beforeOpen:()=>void;afterClose:(completed:boolean,returnToScore:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void;pendingResult:()=>CompletedGameResult|null};
 
 export function connectMembership(options:Options){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
  const dialog=$<HTMLDialogElement>('registration-dialog'),frame=$<HTMLIFrameElement>('registration-frame');
- const profile=$<HTMLButtonElement>('profile'),profileMenu=$('profile-menu'),profileArea=$('profile-navigation');
- const profileRetry=$<HTMLButtonElement>('profile-retry');
  const member=$<HTMLButtonElement>('member'),menuMember=$<HTMLButtonElement>('menu-member');
- const edit=$<HTMLButtonElement>('profile-edit'),editForm=$<HTMLFormElement>('profile-edit-form'),editName=$<HTMLInputElement>('profile-display-name'),editStatus=$('profile-edit-status'),editSave=$<HTMLButtonElement>('profile-save');
- let profileUpdateUrl:string|null=null,editing=false;
- let player:Player|null=null,checking=true,completed=false,opener:HTMLElement=profile;
+ let player:Player|null=null,checking=true,completed=false,opener:HTMLElement=$('nav-toggle');
  let pendingReward:CompletedGameResult|null=null;
  frame.addEventListener('load',()=>{if(dialog.open&&pendingReward)frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin)});
 
- function paint(){
-  const registered=player?.member===true,guest=player?.member===false;
-  profile.classList.toggle('is-member',registered);
-  profile.setAttribute('aria-label',registered?'Profile for '+player!.display_name:'Profile');
-  profile.title='Profile';
-  $('profile-name').textContent=registered?player!.display_name:'Your profile';
-  setBrandText($('profile-status'),checking?'Checking your account…':registered?'Your SO/ FACET account is active.':guest?'Save your points and keep playing.':'We couldn’t load your account. Please try again.');
-  profileRetry.hidden=checking||player!==null;
-  edit.hidden=!registered;
-  if(!registered){editing=false;editForm.hidden=true}
-  member.hidden=menuMember.hidden=!registered;
- }
+ function paint(){member.hidden=menuMember.hidden=player?.member!==true}
  function updatePlayer(next:Player|null){checking=false;player=next;paint()}
- function closeProfile(restoreFocus=false){if(editing)return;profileMenu.hidden=true;profile.setAttribute('aria-expanded','false');if(restoreFocus)profile.focus()}
- function showProfile(){
-  if(!profileMenu.hidden){closeProfile(true);return}
-  profileMenu.hidden=false;profile.setAttribute('aria-expanded','true');
-  (profileRetry.hidden?$('profile-close'):profileRetry).focus();
- }
- async function open(source:HTMLElement=profile,pending:CompletedGameResult|null=null,verify=false){
+ async function open(source:HTMLElement=$('nav-toggle'),pending:CompletedGameResult|null=null,verify=false){
   if(dialog.open)return;
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
-  if(player.member&&!verify){closeProfile();options.onLeaderboard();return}
-  opener=source;pendingReward=pending??options.pendingResult();completed=false;closeProfile();options.beforeOpen();
+  if(player.member&&!verify){options.onLeaderboard();return}
+  opener=source;pendingReward=pending??options.pendingResult();completed=false;options.beforeOpen();
   frame.src='/membership.html?nav=game'+(verify?'&verify=1':'');dialog.showModal();document.body.classList.add('membership-open');
  }
  function close(returnToScore=false){
@@ -49,10 +26,7 @@ export function connectMembership(options:Options){
   (!opener.isConnected||opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
   options.afterClose(completed,returnToScore);
  }
- profile.onclick=showProfile;
- $('profile-close').onclick=()=>closeProfile(true);
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
- profileRetry.onclick=async()=>{checking=true;paint();await options.refreshPlayer()};
  const requestExit=()=>frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);
  dialog.oncancel=event=>{event.preventDefault();requestExit()};
  dialog.addEventListener('click',event=>{
@@ -60,8 +34,6 @@ export function connectMembership(options:Options){
   const rect=dialog.getBoundingClientRect();
   if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)requestExit();
  });
- document.addEventListener('pointerdown',event=>{if(!profileMenu.hidden&&!profileArea.contains(event.target as Node))closeProfile()});
- document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!profileMenu.hidden){event.preventDefault();event.stopPropagation();closeProfile(true)}});
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}
@@ -80,33 +52,6 @@ export function connectMembership(options:Options){
    }
   }
  });
- edit.onclick=async()=>{
-  editForm.hidden=false;editName.value=player?.display_name||'';editName.setAttribute('aria-invalid','false');editStatus.textContent='Checking name changes…';editSave.disabled=true;editName.focus();
-  try{
-   const response=await fetch('/api/membership/config',{signal:AbortSignal.timeout(10000)}),config=await response.json();
-   const url=typeof config.profileUpdateUrl==='string'?new URL(config.profileUpdateUrl,location.origin):null;
-   profileUpdateUrl=response.ok&&url?.origin===location.origin&&url.pathname.startsWith('/api/')?url.href:null;
-  }catch{profileUpdateUrl=null}
-  if(editForm.hidden)return;
-  editSave.disabled=false;
-  editStatus.textContent=profileUpdateUrl?'Your public name appears with your score and rank. Changes may be reviewed.':'Name changes are coming soon. Your current name has not changed.';
- };
- $('profile-edit-cancel').onclick=()=>{if(!editing){editForm.hidden=true;edit.focus()}};
- editName.addEventListener('input',()=>{const name=capitaliseName(editName.value);if(name!==editName.value)editName.value=name});
- editForm.onsubmit=async event=>{
-  event.preventDefault();if(editing||!player?.member)return;
-  if(!validPublicName(editName.value)){editName.setAttribute('aria-invalid','true');editStatus.textContent='Choose a name using letters (up to 30 characters).';editName.focus();return}
-  editName.setAttribute('aria-invalid','false');
-  if(!profileUpdateUrl){editStatus.textContent='Name changes are coming soon. Your current name has not changed.';return}
-  editing=true;editSave.disabled=editName.disabled=true;editStatus.textContent='Saving your name…';
-  try{
-   const response=await fetch(profileUpdateUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leaderboardName:editName.value.trim()}),signal:AbortSignal.timeout(30000)}),result=await response.json();
-   if(!response.ok||result.success!==true||!['saved','pending'].includes(result.status))throw Error(result.message||'Your name was not changed. Please try again.');
-   if(result.status==='saved'){await options.refreshPlayer();if(player?.display_name!==editName.value.trim())throw Error('Your updated name could not be confirmed. Please refresh your profile.');editStatus.textContent='Your leaderboard name was updated.'}
-   else editStatus.textContent='Your name was submitted for review. Your current name stays visible until it is approved.';
-  }catch(error){editStatus.textContent=error instanceof Error?error.message:'Your name was not changed. Please try again.'}
-  finally{editing=false;editSave.disabled=editName.disabled=false}
- };
  paint();
  return {updatePlayer,open,close,isMember:()=>player?.member};
 }

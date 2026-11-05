@@ -43,3 +43,9 @@ body:has(:is(#account-root,#membership-root,#launch-root) :is(.design-account,.d
 #launch-root .design-launch #join-form .join-consent a{color:inherit;text-underline-offset:3px}
 @media(max-width:480px){#launch-root .design-launch #join{padding:24px 20px}#launch-root .design-launch #join h2{font-size:25px}}
 #launch-root .design-launch #join-form .join-consent input{appearance:auto;-webkit-appearance:checkbox;border:initial;background:initial;padding:0;box-shadow:none}
+
+:is(#account-root,#membership-root) .design-account .points-label{font-size:12px;line-height:1.5;letter-spacing:.14em;margin:0 0 12px}
+:is(#account-root,#membership-root) .design-account .points-play{display:inline-flex;align-items:center;min-height:44px;margin:0 0 12px;color:#eee6f4;font-size:14px;line-height:1.5;text-underline-offset:4px}
+:is(#account-root,#membership-root) .design-account .points-notes{margin-top:20px;color:#d0c5d7;font-size:13px;line-height:1.5}
+:is(#account-root,#membership-root) .design-account .points-notes p{margin:0 0 6px;font-size:13px}
+:is(#account-root,#membership-root) .design-account .points-notes a{display:inline-flex;align-items:center;min-height:44px;color:inherit;font-size:13px;text-underline-offset:4px}

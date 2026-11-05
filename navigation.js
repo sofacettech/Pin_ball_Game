@@ -22,7 +22,7 @@ if (gamePage) {
   document.getElementById('gameplay-controls').append(settings);
   document.body.append(document.getElementById('game-menu'));
   const inactive = document.createElement('div');inactive.hidden = true;
-  inactive.append(document.getElementById('navbar-extras'), document.getElementById('profile-navigation'));
+  inactive.append(document.getElementById('navbar-extras'));
   document.body.append(inactive);
 }
 function menuLink(label, href, className = 'menu-item') {
