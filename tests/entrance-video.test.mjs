@@ -20,7 +20,7 @@ async function fixture({cdn=false,segmentSource,streamSource,previewSource,width
   const manifest={version:1,width,height,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
   const context={JOURNEY_START_FRAME:334,createPreloadedVideo:()=>({load:async()=>{if(preloadFailure){preloadFailure=false;throw Error('CDN unavailable')}},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:100}),createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>({manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))}),document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console};
-  vm.runInNewContext(source.replace(/^import .*;\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
+  vm.runInNewContext(source.replace(/^import .*;\r?\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},onError:error=>errors.push(error)});
   await renderer.loadVariant();
   return{renderer,videos,draws,errors,get removed(){return removed}};
