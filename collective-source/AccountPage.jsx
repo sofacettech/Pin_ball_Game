@@ -2,6 +2,7 @@ import React, {useRef, useState} from 'react';
 import PageShell from './PageShell.jsx';
 import {AccountArtwork, AccountMesh} from './artwork/AccountArtwork.jsx';
 import initialize from './scenes/account.js';
+import {countries} from '../membership-source/src/phone.js';
 import {Arrow} from './icons.jsx';
 import {validPhone, validateAccount} from './validation.js';
 import {formValues, showValidation, useSubmission} from './form-actions.js';
@@ -73,7 +74,7 @@ export default function AccountPage({initialTab = 'registered', activeTab, onTab
             </div></div>
             <div className="field-group"><label className="field-title" htmlFor="new-city">City</label><input autoComplete="address-level2" className="text-line" id="new-city" name="city" defaultValue={defaults.city || ''} required /></div>
           </div>
-          <div className="field-group"><label className="field-title" htmlFor="new-phone">Mobile no.</label><div className="phone-line"><select aria-label="Country code" className="select country-select" name="country" defaultValue={defaults.country || '+91'}>{['+91','+1','+44','+971'].map(code => <option key={code}>{code}</option>)}</select><input autoComplete="tel-national" className="text-line" id="new-phone" inputMode="tel" name="phone" pattern="[0-9]{7,15}" placeholder="Phone" defaultValue={defaults.phone || ''} required type="tel" /></div></div>
+          <div className="field-group"><label className="field-title" htmlFor="new-phone">Mobile no.</label><div className="phone-line"><select aria-label="Country code" className="select country-select" name="country" defaultValue={defaults.country || '+91'}>{countries.map(country => <option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select><input autoComplete="tel-national" className="text-line" id="new-phone" inputMode="tel" name="phone" pattern="[0-9]{7,15}" placeholder="Phone" defaultValue={defaults.phone || ''} required type="tel" /></div></div>
           <div className="field-group"><label className="field-title" htmlFor="new-email">Email address</label><input autoComplete="email" className="text-line" id="new-email" name="email" defaultValue={defaults.email || ''} required type="email" /></div>
           <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" type="checkbox" defaultChecked={!!defaults.updates} /><span>Send me <span className="wm">SO/ FACET</span> news and launch updates.</span></label></div>
           <button className="cta" type="submit" disabled={create.busy || working}>{create.busy || working ? 'PLEASE WAIT…' : 'CREATE ACCOUNT'} <Arrow /></button><p aria-live="polite" className="feedback" id="create-feedback" role="status">{status || create.message}</p>

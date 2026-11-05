@@ -46,7 +46,7 @@ try{
         await capture(page,'02-account-create-desktop');await frame.getByRole('tab',{name:'ALREADY REGISTERED?'}).click();
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);await frame.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
         await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();
-        await frame.getByText('Join “THE SO/COLEECTIVE”',{exact:true}).waitFor();assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
+        await frame.getByText('Join “THE FIRST CUT”.',{exact:true}).waitFor();assert.match(await frame.locator('.claim-score').innerText(),/3,205 pts · ₹320\.5 off SO\/ FACET diamond jewellery/);assert.equal(await frame.locator('.design-claim .brand').innerText(),'GAME COMPLETE');assert.match(await frame.locator('[name=\"dialCode\"] option').first().innerText(),/India \(\+91\)/);assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
         await capture(page,'04-claim-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'04-claim-mobile');await page.setViewportSize({width:1440,height:900});
         await frame.getByRole('button',{name:'← Back',exact:true}).click();assert.equal(await frame.locator('#new-name').inputValue(),'Test Member');assert.ok(await frame.locator('[name="terms"]').isChecked());
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
@@ -56,7 +56,7 @@ try{
         await frame.locator('#feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
         await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       }
-      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
+      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();await frame.getByText('You made “THE FIRST CUT”.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
       assert.equal(awards.size,1);assert.deepEqual([...awards.values()],[320]);assert.equal(events.filter(e=>e.path==='/rewards/auth').length,1);assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,2);
       const storage=await frame.locator('body').evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));for(const v of ['fixture-signature','fixture-partner-key','test@example.invalid','9876543210'])assert.ok(!storage.includes(v));
       await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('textbox',{name:'Name',exact:true}).fill('Updated Member');await page.getByRole('textbox',{name:'Leaderboard name',exact:true}).fill('Updated M.');await page.getByRole('textbox',{name:'Email',exact:true}).fill('updated@example.invalid');

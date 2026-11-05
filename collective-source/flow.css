@@ -22,7 +22,15 @@
  :is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:80px}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .help{font-size:14px}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell :is(#create-form,#login-form) :is(.text-line,.select){font-size:16px!important}
- :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell #create-form .checkbox-row{font-size:13px!important;line-height:1.5!important}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell #create-form .checkbox-row{font-size:14px!important;line-height:1.5!important}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell .tab{font-size:clamp(13px,2.6vw,20px)!important;letter-spacing:.03em!important}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell .small-button{font-size:11px!important}
 }
+
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell #create-form .checkbox-row{font-size:14px!important;line-height:1.5!important}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-score{font-size:14px;line-height:1.5;color:#e3d9eb;margin:0 0 22px}
+body:has(:is(#account-root,#membership-root,#launch-root) :is(.design-account,.design-claim))::before{content:"";position:fixed;inset:0 0 auto;height:var(--site-header-clearance,78px);background:#08050d;z-index:3;pointer-events:none}
+.auth-flow-updates{display:inline-flex;align-items:center;min-height:44px;margin-top:20px;font-size:14px;line-height:1.5;color:#e2d6ec;text-underline-offset:4px}
+.auth-flow-signoff{font-size:14px;line-height:1.5;margin-top:24px}
+:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap{flex-basis:120px!important}
+:is(#account-root,#membership-root,#launch-root) .design-account .country-select{width:120px!important;max-width:120px;min-width:0}

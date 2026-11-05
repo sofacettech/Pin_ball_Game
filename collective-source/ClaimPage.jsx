@@ -2,11 +2,13 @@ import React, {useState} from 'react';
 import PageShell from './PageShell.jsx';
 import {ClaimArtwork, ClaimMesh} from './artwork/ClaimArtwork.jsx';
 import initialize from './scenes/claim.js';
+import {countries} from '../membership-source/src/phone.js';
+import {formatPoints,rewardMoney} from '../game-source/src/player-copy.ts';
 import {Arrow} from './icons.jsx';
 import {normaliseDesignPhone} from './auth-values.js';
 import {useSubmission} from './form-actions.js';
 
-export default function ClaimPage({name = '',phone = '',dialCode = '+91',challengePhone,onClaim,onResend,onBack,onSignIn,status = '',resendSeconds = 0,working = false}) {
+export default function ClaimPage({result,name = '',phone = '',dialCode = '+91',challengePhone,onClaim,onResend,onBack,onSignIn,status = '',resendSeconds = 0,working = false}) {
   const [mobile,setMobile] = useState(phone),[dial,setDial] = useState(dialCode),[otp,setOtp] = useState('');
   const {message,setMessage,busy,submit} = useSubmission();
   const changed = normaliseDesignPhone(mobile,dial) !== challengePhone;
@@ -21,13 +23,14 @@ export default function ClaimPage({name = '',phone = '',dialCode = '+91',challen
     <main className="page text-layer">
       <ClaimArtwork />
       {onBack && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
-      <header className="brand"><span className="wordmark">GAME COMPLETE</span></header>
+      <header className="brand"><span className="wordmark">{result?'GAME COMPLETE':'THE FIRST CUT'}</span></header>
       <section aria-label="Claim your reward — OTP verification" className="content">
-        <p className="claim-invitation">Join “THE SO/COLEECTIVE”</p>
+        <p className="claim-invitation">Join “THE FIRST CUT”.</p>
+        {result&&<p className="claim-score">{formatPoints(result.points)} pts · {rewardMoney(result.points)} off <span className="brand-word">SO/ FACET</span> diamond jewellery</p>}
         <form className="claim-form" id="claim" noValidate onSubmit={save}>
           <label><span className="sr-only">Full name</span><input autoComplete="name" className="field" name="fullName" placeholder="Full name" value={name} readOnly /></label>
           <div className="phone-row">
-            <label className="dial-wrap"><span className="sr-only">Country code</span><select className="dial" name="dialCode" value={dial} onChange={event=>setDial(event.target.value)} disabled={working}>{['+91','+1','+44','+971'].map(code=><option key={code}>{code}</option>)}</select></label>
+            <label className="dial-wrap"><span className="sr-only">Country code</span><select className="dial" name="dialCode" value={dial} onChange={event=>setDial(event.target.value)} disabled={working}>{countries.map(country=><option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select></label>
             <label style={{flex:1,minWidth:0}}><span className="sr-only">Mobile number</span><input autoComplete="tel-national" className="field" inputMode="tel" name="mobile" placeholder="Mobile number" type="tel" value={mobile} onChange={event=>setMobile(event.target.value)} disabled={working} /></label>
           </div>
           <label className="otp-field"><span className="sr-only">Six-digit confirmation code</span><input id="final-otp" autoComplete="one-time-code" className="field" inputMode="numeric" maxLength={6} name="otp" placeholder="OTP" value={otp} onChange={event=>setOtp(event.target.value.replace(/\D/g,''))} disabled={working} /></label>
