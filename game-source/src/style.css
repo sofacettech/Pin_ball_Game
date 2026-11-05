@@ -477,3 +477,9 @@ body>#game-menu{position:fixed;z-index:45;top:calc(var(--site-header-clearance) 
 #game-menu #menu-close{float:right;min-height:44px}#game-menu select{font-size:16px}
 body:has(#table-intro:not([hidden])) #stage .side-panel #message{display:none}
 @media(max-height:700px){#table-intro h1{font-size:20px;margin:6px 0}#table-intro .table-facts{margin-bottom:8px}}
+#leaderboard-save{min-height:44px;padding:10px 20px;border:1px solid #d9ed37;background:transparent;color:#e9f59e;font-size:14px}
+@media(max-width:600px){
+ .leaderboard-table th:first-child{width:24%;font-size:11px;letter-spacing:0;text-overflow:clip}
+ .leaderboard-table th:last-child{width:34%}
+ .leaderboard-actions :is(#leaderboard-save,#leaderboard-play){flex:1;min-width:0;width:auto;padding:10px;font-size:13px;white-space:nowrap}
+}

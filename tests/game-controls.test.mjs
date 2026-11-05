@@ -91,3 +91,10 @@ test('pregame hides an empty scorecard, restores saved best scores, and shows li
  panel.setPhoneStage(false);panel.update(0,0);assert.equal(panel.hidden,false);assert.equal(best.textContent,'0');
  panel.update(0,null);assert.equal(panel.hidden,true); // No saved score for the current player.
 });
+
+test('the score screen leaderboard action is available to guests without opening registration',()=>{
+ const source=readFileSync(new URL('../game-source/src/main.ts',import.meta.url),'utf8');
+ const code=source.slice(source.indexOf('function showLeaderboard(){'),source.indexOf('function showResult(){'));
+ let shown=0,joined=0;const context={membership:{isMember:()=>false,open:()=>joined++},clearKeys(){},closeNavigation(){},closeSettings(){},rewards:{dialog:{close(){}}},leaderboard:{dialog:{open:false},show:()=>shown++},loaded:true,physics:{active:false,state:'finished'},resumeAfterLeaderboard:false,setGamePaused(){}};
+ vm.runInNewContext(code+';showLeaderboard()',context);assert.equal(shown,1);assert.equal(joined,0);
+});

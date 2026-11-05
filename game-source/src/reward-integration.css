@@ -5,3 +5,17 @@
 #post-game-rewards .design-rewards .leaderboard{background:none;border:0;border-radius:0;cursor:pointer}
 #post-game-rewards .design-rewards .btn{position:relative;box-shadow:none;border-radius:0}
 #post-game-rewards .design-rewards .btn::before,#post-game-rewards .design-rewards .btn::after{content:none}
+#post-game-rewards .design-rewards .reward .eyebrow{font-size:16px!important}
+#post-game-rewards .design-rewards .reward .notice{font-size:14px!important}
+#post-game-rewards .design-rewards .leaderboard-preview{margin-top:26px;padding:20px 0 0;border-top:1px solid #403742;text-align:left;font-size:14px;line-height:1.5}
+#post-game-rewards .design-rewards .leaderboard-preview h2{margin:0 0 12px;font-size:20px;font-weight:400}
+#post-game-rewards .design-rewards .leaderboard-preview .preview-you{margin:0 0 12px;padding:10px 12px;background:#9d73c126;color:#f5eefb;border:1px solid #89739f}
+#post-game-rewards .design-rewards .leaderboard-preview ol{list-style:none;padding:0;margin:0}
+#post-game-rewards .design-rewards .leaderboard-preview li{display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:7px 0;border-bottom:1px solid #403742}
+#post-game-rewards .design-rewards .preview-save{margin:14px 0 0;color:#d0c5d7;font-size:14px}
+#post-game-rewards .design-rewards #rewards-leaderboard{font-size:13px;letter-spacing:.06em;min-height:44px}
+#post-game-rewards .design-rewards .leaderboard-preview{margin-top:18px;padding-top:12px}
+#post-game-rewards .design-rewards .leaderboard-preview h2{margin-bottom:8px}
+#post-game-rewards .design-rewards .leaderboard-preview .preview-you{padding-block:8px;margin-bottom:8px}
+#post-game-rewards .design-rewards .leaderboard-preview li{padding-block:5px}
+#post-game-rewards .design-rewards .preview-save{margin-top:10px}
