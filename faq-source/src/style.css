@@ -119,6 +119,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   .social-icons{justify-content:center}
   .footer-bottom{align-items:center;flex-direction:column;gap:22px;padding:24px 0 max(24px,env(safe-area-inset-bottom,0px));background:#101010;text-align:center}
   .footer-contact{flex-direction:column;gap:8px}
+  .footer-contact>span{font-size:14px}
   .footer-contact>a>span{margin-left:6px}
   .pinball{gap:18px}
 }
