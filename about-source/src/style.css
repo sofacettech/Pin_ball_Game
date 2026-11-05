@@ -52,6 +52,7 @@ h2{font-size:clamp(38px,4.25vw,62px);font-weight:250;line-height:1.08;letter-spa
 .image-caption{display:flex;justify-content:space-between;gap:20px;font-size:11px;line-height:1.5;font-weight:400;letter-spacing:.06em;padding-top:13px}
 .closing{text-align:center;padding:170px 24px 150px}
 .closing>p{font-size:21px;margin-bottom:35px}
+.closing-intro{max-width:580px;margin-inline:auto;line-height:1.4;text-wrap:pretty}
 .closing h2{display:flex;flex-direction:column;align-items:center;gap:35px;text-transform:none}
 .closing .wordmark{font-size:clamp(42px,6vw,80px)}
 .closing-question{font-size:clamp(28px,3vw,42px);font-weight:250}

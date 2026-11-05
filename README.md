@@ -116,6 +116,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 - The chess-to-game transition keeps the moving ball and shows two messages in sequence: “Next: a game of pinball.” and “Score points. Save them for SO/ FACET diamond jewellery.” The text is white, regular-weight and at least 20px. The table opens after the final message and actual game readiness; reduced motion uses static text.
 - Skip game opens `launching-soon.html`, built from `launch-source`. Its Join THE FIRST CUT dialog carries the entered email in memory into the create-account tab; verified account creation opens the existing confirmation page. Play Pinball opens the game.
 - The shared menu contains Play Pinball (Back to game in game context), My points, How points work, About SO/ FACET and Join THE FIRST CUT. Terms and Privacy remain unavailable pending approved content. I’ve connected the official LinkedIn, X and YouTube links; each opens in a new tab. Instagram and Facebook remain unlinked until I provide their URLs. The mobile drawer uses compact spacing. Its footer links and the five social icons are centered in separate rows, with equal spacing and no frames around the icons. Settings is available from the game controls rather than the drawer, and My points replaces the old profile panel.
+- How points work retains its updated introduction, four topic cards and expandable answers. About SO/ FACET retains its restored closing paragraph and sign-off; newsletter signup remains disabled until connected.
 - Rewards and confirmation screens use SO/ UNLOCKED and SO/ SAVED, with Play again as the replay action. Claim uses the requested spelling “THE SO/COLEECTIVE”; launch retains THE FIRST CUT. Score sharing and the full leaderboard keep the same reward rules and membership requirement.
 - The supplied four HTML designs now live as shared React components in `collective-source`: the floral Reward page, Claim, Account (registered/create tabs), and Launch with its Join dialog. `game-source/src/score-page.jsx` uses the actual completed result and game ID, preserves 10 points = ₹1, and calls the existing registration, replay and leaderboard handlers. Low-score behavior and unsaved-points exit checks remain in place.
 - Registered players skip membership screens and can open the leaderboard. Unregistered players enter registration before any leaderboard request; both leaderboard API routes enforce membership.
@@ -161,14 +162,14 @@ All writes require JSON and the configured exact Origin. Keep the frontend and A
 | `GET /api/membership/config` | Public OTP availability, approved policy URLs and `pointsPerRupee: 10` |
 | `POST /api/membership/otp/request` | `{phoneNumber, name, consent: true, dateOfBirth?}` → `{success, challengeId, expiresIn, resendAfter, deliveryChannel}` |
 | `POST /api/membership/otp/verify` | `{phoneNumber, otp, challengeId}` → `{verified, verificationToken}` |
-| `POST /api/membership` | `{name, leaderboardName, email, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
+| `POST /api/membership` | `{name, leaderboardName, email, city?, termsAccepted, marketingConsent, phoneNumber, verificationToken, gameId?}` → player and saved-reward status |
 | `POST /api/membership/rewards` | Existing member with a verified, unexpired rewards session sends `{gameId}` → `{success, pointsSaved, savedPoints, bestPoints, remainingPoints}` |
 | `GET /api/leaderboard` | Member-only game ranking with `entries` and `me` |
 | `GET /api/rewards/leaderboard` | Member-only external rewards ranking; requires rewards configuration |
 
 The legacy phone-only `/api/member` route returns 410. Use `/api/membership` after OTP verification; there is no phone-only authentication fallback.
 
-The save-points form has one **Full name** field, **Mobile number** and **Email**. Its initial leaderboard name is derived from the full name. Saving requires the 18+ declaration, accepted terms and confirmed phone verification. Marketing consent is optional and defaults off on this form. The country list places India first, with the remaining countries alphabetical. Date of birth and city are not collected by this frontend.
+I’ve kept phone verification first in the save flow. The player enters their full name and mobile number, accepts the 18+ declaration and terms, then verifies the code. On the details step they add their email and city. Date of birth is visible as a disabled field for now. The initial leaderboard name comes from the full name. Marketing consent is optional and defaults off, and the country list shows India first.
 
 The OTP verification token is a short-lived internal proof bound to the current session, phone and registered name/date of birth. It is not the external rewards JWT. Form details, codes and verification proofs are not persisted in browser storage. The upstream JWT stays in server memory until expiry; a process restart or expired/invalid JWT requires a new OTP. The game opens the verification form again while retaining the completed game. Keep this service on one process with persistent player/game/award storage, as described above.
 
@@ -274,7 +275,7 @@ Before collecting memberships publicly, configure the rewards key and approved p
 
 ## My points
 
-`account-source/` contains the React sign-in and saved-points page. A guest opening My points sees sign-in; an existing authenticated session sees its real points and details. The sign-in page links new players to Play Pinball. There is no public demo-code sign-in path. Links opened from game context retain `nav=game`, and Back to game closes the current drawer without restarting an active game.
+I’ve updated the My points sign-in with the butterfly artwork and put the mobile number, Generate OTP and Log in controls on the same screen. The page uses our existing WhatsApp or SMS verification. Signed-in players see their saved points and account details, and new players can go straight to Play Pinball. Links opened from game context retain `nav=game`, so Back to game can return players to their active game.
 
 `collective-source/AuthFlow.jsx` connects the create tab to Claim and the registered tab to existing account OTP sign-in. Back returns to the collected details and reuses an unexpired challenge for the same phone, name and birth date. A changed number requires a new OTP after the resend cooldown. A pending game stays in memory across these steps; only its game ID is submitted for server-verified rewards. Profile management after sign-in remains in `account-source`.
 

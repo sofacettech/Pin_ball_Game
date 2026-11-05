@@ -80,7 +80,7 @@ export const sections = [
       {
         "question": "How do I save my points?",
         "answer": [
-          "After your game, enter your full name, mobile number and email, then confirm with the code we send you by SMS. Unsaved points disappear when you leave the page."
+          "After your game, enter your full name, mobile number and email, then confirm with the code we send you by WhatsApp or SMS. Unsaved points disappear when you leave the page."
         ]
       },
       {

@@ -107,10 +107,9 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 @media(max-width:380px){:root{--nav-height:150px}header nav{flex-wrap:wrap;gap:2px 4px}header #member{right:10px;max-width:150px}}
 
 #game-menu{max-height:calc(100svh - 32px);overflow:auto}
-#game-menu h2{padding-right:44px}
-#menu-close{position:absolute;top:16px;right:16px;display:grid;place-items:center;width:44px;height:44px;padding:10px;border:0;background:transparent}
+#game-menu h2{padding-right:112px}
+#menu-close{position:absolute;top:16px;right:16px;min-height:44px;padding:8px 10px;border:0;background:transparent;font-size:14px;white-space:nowrap}
 #menu-close:hover{background:#342340}
-#menu-close svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .controls-guide{display:flex;flex-direction:column;gap:12px;color:var(--muted);font-size:13px}
 .controls-guide kbd{display:inline-block;padding:3px 7px}
 .how-to-play{margin:16px 0;border:1px solid #554466;border-radius:10px;padding:14px}
@@ -194,12 +193,12 @@ body header nav #nav-panel #member{position:static;max-width:none;color:#fff;bor
 body header nav #nav-panel button:is(#restart,#settings,#profile){flex:none;height:auto;touch-action:manipulation}
 body header nav #nav-panel{scroll-padding-top:88px}
 #nav-panel #game-menu{position:relative;width:100%;height:auto;max-height:none;margin:0;padding:16px 0 20px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible;color:#ede4f8;font-size:14px}
-#nav-panel #game-menu h2{margin:0 0 10px;padding-right:44px;font-size:20px;outline:none}
+#nav-panel #game-menu h2{margin:0 0 10px;padding-right:112px;font-size:20px;outline:none}
 #nav-panel #game-menu p{margin:0 0 20px;font-size:14px;line-height:1.5;color:var(--muted)}
 #nav-panel #game-menu button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:auto;min-height:44px;margin:0;padding:10px 14px;border:1px solid #ffffff30;border-radius:6px;background:#ffffff06;color:inherit;font-size:14px;line-height:1.4;font-weight:400;white-space:normal}
 #nav-panel #game-menu button:hover:not(:disabled){background:#ffffff0d;color:#fff}
 #nav-panel #game-menu select{width:100%;max-width:none;min-height:44px;padding:10px 44px 10px 14px;font-size:14px}
-#nav-panel #game-menu #menu-close{position:absolute;top:10px;right:0;width:36px;min-height:36px;padding:7px;border:0;background:transparent}
+#nav-panel #game-menu #menu-close{position:absolute;top:10px;right:0;width:auto;min-height:44px;padding:8px 10px;border:0;background:transparent}
 #nav-panel #game-menu #inspect,#nav-panel #game-menu #sound{margin-top:10px}
 #nav-panel #game-menu #how-to-play-toggle{justify-content:space-between;min-height:28px;padding:0;border:0;background:transparent;font-weight:600;text-align:left}
 #nav-panel #game-menu #menu-member{margin-bottom:12px}

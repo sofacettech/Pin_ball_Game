@@ -18,7 +18,8 @@ function elements(node){return React.isValidElement(node)?[node,...React.Childre
 
 test('React score screen uses the game result and preserves exact rupee conversion',()=>{
  const html=renderToStaticMarkup(React.createElement(ScorePage,{result:result(3205)}));
- assert.match(html,/id="rewards-points">3,205<\/strong>/);assert.match(html,/₹320\.5 off/);
+ assert.match(html,/id="rewards-points">3,205<\//);assert.match(html.replace(/<[^>]+>/g,''),/₹320\.5 off/);
+ assert.match(html,/SO\/ COINS/);assert.doesNotMatch(html,/>pts</);
  assert.match(html,/id="rewards-register"/);assert.match(html,/id="rewards-leaderboard"/);
  assert.doesNotMatch(html,/<nav|<header|4,800|₹480|href="#"/);
 });
@@ -49,24 +50,24 @@ async function controllerFixture(){
  const context={exports,module:{exports},Date,Math,Number,URL,location:{origin:'http://test.local',href:'http://test.local/play.html'},
   document:{getElementById:node,querySelector:()=>node('header'),body:{prepend(){}},addEventListener:(key,fn)=>events.set(key,fn)},
   ResizeObserver:class{observe(){}disconnect(){}},addEventListener:(key,fn)=>events.set(key,fn),leaveCopy,
-  mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
+  mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
  };
  vm.runInNewContext(compiled.code,context);
- const registered=[],replays=[],boards=[];
- const controller=context.module.exports.connectPostGameRewards(value=>registered.push(value),()=>replays.push(true),()=>boards.push(true));
- return {controller,node,captured,registered,replays,boards};
+ const registered=[],openers=[],replays=[],boards=[];
+ const controller=context.module.exports.connectPostGameRewards((value,opener)=>{registered.push(value);openers.push(opener.id)},()=>replays.push(true),()=>boards.push(true));
+ return {controller,node,captured,registered,openers,replays,boards};
 }
 test('score controller passes the immutable completed result and game ID into registration',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(3205,'real-game-id');
  assert.equal(fixture.captured.result.points,3205);assert.equal(fixture.captured.result.rewardValue,320.5);assert.equal(Object.isFrozen(fixture.captured.result),true);
- fixture.captured.actions.onSave();assert.equal(fixture.registered[0],fixture.captured.result);assert.equal(fixture.registered[0].gameId,'real-game-id');
+ fixture.captured.actions.onSave();assert.equal(fixture.registered[0],fixture.captured.result);assert.equal(fixture.registered[0].gameId,'real-game-id');assert.equal(fixture.openers[0],'rewards-register');
 });
 test('close, keep, leave-anyway, replay and leaderboard retain their established flow',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(4800,'game');
  fixture.captured.actions.onLeaderboard();assert.equal(fixture.boards.length,1);
- fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'leave');
- fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'result');
- fixture.node('rewards-close').click();fixture.node('rewards-keep').click();assert.equal(fixture.registered[0].points,4800);
+ fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'leave');assert.equal(fixture.captured.scoreVisible,false);
+ fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'result');assert.equal(fixture.captured.scoreVisible,true);
+ fixture.node('rewards-close').click();fixture.node('rewards-keep').click();assert.equal(fixture.registered[0].points,4800);assert.equal(fixture.openers[0],'rewards-keep');
  fixture.controller.show();fixture.node('rewards-close').click();fixture.node('rewards-leave-anyway').click();assert.equal(fixture.controller.dialog.dataset.view,'exit');
  fixture.node('rewards-exit-play').click();assert.equal(fixture.replays.length,1);
  fixture.controller.clear();fixture.controller.show(9);fixture.node('rewards-close').click();assert.equal(fixture.captured.destination,'/');

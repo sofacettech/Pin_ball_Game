@@ -1,9 +1,9 @@
 import {setBrandText} from '../../shared/brand-text.ts';
 import type {Player} from './leaderboard';
 import type {CompletedGameResult} from './post-game-rewards';
-import {validPublicName} from './player-copy';
+import {capitaliseName,validPublicName} from './player-copy';
 
-type Options={beforeOpen:()=>void;afterClose:(completed:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void;pendingResult:()=>CompletedGameResult|null};
+type Options={beforeOpen:()=>void;afterClose:(completed:boolean,returnToScore:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void;pendingResult:()=>CompletedGameResult|null};
 
 export function connectMembership(options:Options){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
@@ -43,11 +43,11 @@ export function connectMembership(options:Options){
   opener=source;pendingReward=pending??options.pendingResult();completed=false;closeProfile();options.beforeOpen();
   frame.src='/membership.html?nav=game'+(verify?'&verify=1':'');dialog.showModal();document.body.classList.add('membership-open');
  }
- function close(){
+ function close(returnToScore=false){
   if(!dialog.open)return;
   dialog.close();frame.removeAttribute('src');pendingReward=null;document.body.classList.remove('membership-open');
-  (opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
-  options.afterClose(completed);
+  (!opener.isConnected||opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
+  options.afterClose(completed,returnToScore);
  }
  profile.onclick=showProfile;
  $('profile-close').onclick=()=>closeProfile(true);
@@ -65,7 +65,7 @@ export function connectMembership(options:Options){
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}
-  if(event.data?.type==='contest-registration:close'){close();return}
+  if(event.data?.type==='contest-registration:close'){close(event.data.returnToScore===true&&pendingReward!==null);return}
   if(event.data?.type==='sofacet:reward-discarded'){pendingReward=null;options.onDiscard();return}
   if(event.data?.type==='sofacet:membership-replay'){close();options.onReplay();return}
   if(event.data?.type==='sofacet:membership-existing'){
@@ -92,6 +92,7 @@ export function connectMembership(options:Options){
   editStatus.textContent=profileUpdateUrl?'Your public name appears with your score and rank. Changes may be reviewed.':'Name changes are coming soon. Your current name has not changed.';
  };
  $('profile-edit-cancel').onclick=()=>{if(!editing){editForm.hidden=true;edit.focus()}};
+ editName.addEventListener('input',()=>{const name=capitaliseName(editName.value);if(name!==editName.value)editName.value=name});
  editForm.onsubmit=async event=>{
   event.preventDefault();if(editing||!player?.member)return;
   if(!validPublicName(editName.value)){editName.setAttribute('aria-invalid','true');editStatus.textContent='Choose a name using letters (up to 30 characters).';editName.focus();return}

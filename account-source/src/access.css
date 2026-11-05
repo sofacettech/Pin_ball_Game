@@ -1,0 +1,132 @@
+@font-face {
+  font-family: Access Brilliant;
+  src: url('/assets/score-coins/brilliant-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Access Brilliant;
+  src: url('/assets/score-coins/brilliant-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: Access Fancy;
+  src: url('/assets/score-coins/fancy-400.woff2') format('woff2');
+  font-display: swap;
+}
+
+.shell.account-access {
+  --access-text: #f3f0eb;
+  --access-muted: #c4bdc7;
+  --access-line: #9a939e;
+  --access-sans: 'Access Brilliant', Arial, sans-serif;
+  --access-serif: 'Access Fancy', Georgia, serif;
+  max-width: none;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: max(calc(var(--site-header-clearance,78px) + 36px),clamp(132px,18vh,165px)) 0 58px;
+  color: var(--access-text);
+  background: #08040d;
+}
+.access-screen { position: relative; z-index: 2; width: min(36vw,580px); margin-left: 14.2vw; }
+.access-screen h1 {
+  margin: 0 0 26px;
+  font: 600 clamp(35px,3.4vw,52px)/1.12 var(--access-sans);
+  letter-spacing: -.7px;
+  text-transform: uppercase;
+}
+.access-links { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; margin-bottom: 34px; }
+.access-links > * {
+  display: flex; align-items: center; min-height: 44px; padding-bottom: 8px;
+  color: var(--access-muted); border-bottom: 1px solid transparent; text-transform: uppercase;
+  font: 400 clamp(13px,1.09vw,18px)/1.35 var(--access-sans); text-decoration: none;
+}
+.access-links [aria-current], .access-links a:is(:hover,:focus-visible) { border-color: var(--access-text); color: var(--access-text); }
+.access-links [aria-current] { font-weight: 600; }
+.access-intro, .access-help { margin: 0 0 18px; font: 400 16px/1.5 var(--access-serif); }
+.access-field { margin-bottom: 16px; }
+.access-field label { display: block; margin-bottom: 4px; font: 400 clamp(16px,1.18vw,19px)/1.35 var(--access-serif); }
+.access-screen .access-phone, .access-screen .access-code input {
+  border: 0; border-bottom: 1px solid var(--access-line); background: transparent; border-radius: 0;
+}
+.access-screen .access-phone, .access-screen .access-phone input, .access-screen .access-code input,
+.access-screen .calling-code-value, .access-screen .calling-code select { min-height: 44px; }
+.access-screen .access-phone input, .access-screen .access-code input {
+  padding: 0 0 0 10px; font: 400 16px/1.4 var(--access-sans); color: var(--access-text);
+}
+.access-screen .access-phone .calling-code { flex-basis: 76px; border-right-color: #5f5668; }
+.access-screen .calling-code-value { color: var(--access-muted); padding: 0 10px 0 0; }
+.access-code { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: end; }
+.access-screen .access-code input { padding-left: 0; letter-spacing: .18em; }
+.access-screen input:disabled { opacity: .65; }
+.access-button {
+  position: relative; display: grid; place-items: center; min-height: 44px; padding: 0 12px;
+  border: 1px solid #a8a4ac; border-radius: 0; background: transparent; color: var(--access-text);
+  font: 600 11px/1.3 var(--access-sans); letter-spacing: .045em; text-transform: uppercase;
+  transition: background-color .2s, color .2s;
+}
+.access-button:not(:disabled):is(:hover,:focus-visible) { background: var(--access-text); color: #08040d; }
+.access-submit { width: 100%; min-height: 51px; padding-inline: 38px; }
+.access-submit svg { position: absolute; right: 16px; width: 18px; height: 18px; pointer-events: none; }
+.access-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; margin: -7px 0 4px; }
+.access-tools .text-button { color: var(--access-text); font: 400 16px/1.3 var(--access-serif); }
+.access-help { color: var(--access-muted); }
+.access-screen .under-form { flex-wrap: wrap; align-items: center; gap: 0 16px; margin-top: 8px; }
+
+.access-mesh { position: fixed; inset: 0; pointer-events: none; }
+.access-mesh canvas { display: block; width: 100%; height: 100%; }
+.access-mesh-key {
+  position: fixed; z-index: 3; bottom: 12px; right: 16px; min-height: 44px; color: var(--access-text);
+  background: #130b1d; border: 1px solid var(--access-line); opacity: 0; pointer-events: none;
+}
+.access-mesh-key:focus-visible { opacity: 1; pointer-events: auto; }
+.access-butterfly {
+  --butterfly-art: url('/assets/account/butterfly-960.webp');
+  position: fixed; z-index: 1; top: 27vh; right: 2.2vw;
+  width: min(33.6vw,62svh); aspect-ratio: 1 / .93; margin: 0; pointer-events: none;
+}
+.access-butterfly .butterfly-rig { position: relative; width: 100%; height: 100%; perspective: 900px; transform-style: preserve-3d; }
+.access-butterfly .piece, .butterfly-reflection { position: absolute; inset: 0; background: var(--butterfly-art) center/100% 100% no-repeat; }
+.access-butterfly .piece { backface-visibility: hidden; }
+.access-butterfly .facet-wing { transform-origin: 55% 57%; animation: access-wing 8s ease-in-out infinite; }
+.access-butterfly .wing-top { clip-path: polygon(16% 0,58% 0,59% 52%,52% 61%,15% 50%); --fold: 20deg; --lift: -7deg; }
+.access-butterfly .wing-left { clip-path: polygon(0 38%,55% 48%,57% 60%,28% 82%,0 76%); --fold: 20deg; --lift: 5deg; }
+.access-butterfly .wing-right { clip-path: polygon(54% 47%,100% 39%,100% 80%,53% 69%,51% 59%); --fold: -20deg; --lift: -6deg; }
+.access-butterfly .wing-bottom { clip-path: polygon(48% 57%,67% 61%,69% 97%,27% 100%,26% 85%); --fold: -20deg; --lift: 6deg; }
+.access-butterfly .butterfly-body { z-index: 1; clip-path: polygon(50% 48%,63% 48%,68% 58%,52% 78%,30% 91%,33% 78%); }
+.access-butterfly .antenna { transform-origin: 57% 55%; animation: access-antenna 8s ease-in-out infinite; }
+.access-butterfly .antenna-one { clip-path: polygon(54% 55%,58% 30%,66% 30%,61% 58%); --sway: -4deg; }
+.access-butterfly .antenna-two { clip-path: polygon(54% 54%,72% 38%,80% 38%,77% 45%,60% 60%); --sway: 4deg; }
+.access-butterfly .butterfly-reflection { inset: 93% 5% auto; height: 34%; opacity: .24; filter: blur(7px); transform: scaleY(-1); mask-image: linear-gradient(transparent,#000 95%); }
+@keyframes access-wing { 0%,97.5%,100% { transform: none; } 50% { transform: rotateY(var(--fold)) rotateX(var(--lift)); } }
+@keyframes access-antenna { 50% { transform: rotate(var(--sway)); } }
+
+@media (max-width: 1180px) {
+  .access-screen { width: min(45vw,580px); margin-left: 9vw; }
+  .access-butterfly { width: 37vw; right: 1vw; top: 29vh; }
+}
+@media (max-width: 900px) {
+  .shell.account-access {
+    padding: calc(var(--site-header-clearance,78px) + 26px)
+      max(20px,6%,env(safe-area-inset-right,0px)) 52px max(20px,6%,env(safe-area-inset-left,0px));
+  }
+  .access-screen { width: min(57vw,580px); margin: 0; }
+  .access-butterfly { right: 0; top: 33vh; opacity: .82; }
+}
+@media (max-width: 700px) {
+  .access-screen { width: 100%; }
+  .access-screen h1 { font-size: clamp(28px,8vw,40px); margin-bottom: 18px; }
+  .access-links { gap: 12px; margin-bottom: 21px; }
+  .access-butterfly {
+    --butterfly-art: url('/assets/account/butterfly-512.webp');
+    position: relative; inset: auto; width: min(70vw,300px); margin: 12px 0 24px auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .access-butterfly .butterfly-rig { background: var(--butterfly-art) center/100% 100% no-repeat; }
+  .access-butterfly .piece { display: none; }
+}
+@media (forced-colors: active) {
+  .access-button, .access-screen .access-phone, .access-screen .access-code input { border-color: ButtonText; }
+}

@@ -2,9 +2,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request} from '../../membership-source/src/api.js';
 import {countries,normalisePhone,phoneCountry,phoneParts} from '../../membership-source/src/phone.js';
-import {validPlayerName,validPublicName} from '../../game-source/src/player-copy.ts';
+import {capitaliseName,validPlayerName,validPublicName} from '../../game-source/src/player-copy.ts';
 import {brandText} from '../../shared/brand-react.jsx';
 import {accountHref,membershipHref,accountNavigationHref} from '../../shared/account-session.js';
+import {AccessScene} from './access-scene.jsx';
 import './style.css';
 import AuthFlow from '../../collective-source/AuthFlow.jsx';
 
@@ -44,7 +45,11 @@ function App(){
  function open(type){opener.current=document.activeElement;setError('');setConfirmation('');setModal(type)}
  function close(){if(!busy){setModal(null);setError('')}}
  const phoneNumber=normalisePhone(phone,country),newPhone=draft&&normalisePhone(draft.phoneNumber,draft.country),changedPhone=!!draft&&newPhone!==account?.phoneNumber;
- function edit(key,value){setDraft(current=>({...current,[key]:value}));setError('');setNotice('Unsaved changes.');if(key==='phoneNumber'||key==='country'){setVerifiedPhone('');setMobileChallenge(null);setMobileCode('')}}
+ function edit(key,value){
+  const next=key==='name'||key==='leaderboardName'?capitaliseName(value):value;
+  setDraft(current=>({...current,[key]:next}));setError('');setNotice('Unsaved changes.');
+  if(key==='phoneNumber'||key==='country'){setVerifiedPhone('');setMobileChallenge(null);setMobileCode('')}
+ }
  async function send(event){
   event?.preventDefault();if(!phoneNumber){setError('Enter a valid phone number for the selected country.');document.getElementById('phone').focus();return}
   await run(async signal=>{
@@ -75,19 +80,51 @@ function App(){
  function deleteAccount(event){event.preventDefault();if(confirmation.trim()!=='DELETE'){setError('Type DELETE to confirm.');return}void run(async signal=>{const result=await request('/api/account/delete',{confirm:true},signal);if(result.success!==true)throw Error('Your account has not been deleted.');setModal(null);setAccount(null);setStage('removed')})}
  const shareText=account?'I scored '+number.format(account.bestPoints)+' pts on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/':'';
  async function copy(){try{await navigator.clipboard.writeText(shareText);setNotice('Your score was copied.')}catch{setNotice('Automatic copy is unavailable. Select and copy the score text below.')}}
+ const signingIn=stage==='signin'||stage==='code', codeSent=stage==='code';
+ function changeNumber(){setStage('signin');setChallenge(null);setCode('');setResendAt(0);setError('');requestAnimationFrame(()=>document.getElementById('phone')?.focus())}
  const errors=<p className="error" id="account-error" role="alert">{error}</p>;
  if(stage==='signin'||stage==='code')return <AuthFlow initialTab="registered" checkMembership={false} forceVerification onComplete={async()=>{const abort=new AbortController();controller.current=abort;try{await load(abort.signal);}catch(error){setError(error.message);setStage('error');}}}/>;
  return brandText(<><a className="skip" href="#main">Skip to content</a><main className="shell" id="main" tabIndex={-1}>
   {stage==='loading'?<section className="screen loading" aria-live="polite"><div className="loading-line" aria-hidden="true"/><p>Checking your points…</p></section>:null}
   {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1>{errors}<button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
-  {stage==='signin'||stage==='code'?<section className="screen auth-screen" aria-labelledby="signin-title"><div className="sign-in-grid"><div className={'intro '+(stage==='code'?'code-intro':'')}><p className="eyebrow">MY POINTS</p><h1 id="signin-title" tabIndex={-1}>{stage==='code'?<>One code. <em>You’re back.</em></>:<>Welcome <em>back.</em></>}</h1><p className="supporting">{stage==='code'?`Enter the code sent by ${challenge?.channel==='whatsapp'?'WhatsApp':'SMS'}.`:'Enter your phone number to receive a verification code by WhatsApp or SMS.'}</p><a className="text-button" href={accountNavigationHref('/play.html')}>New here? Play Pinball to earn points <span aria-hidden="true">→</span></a></div><div>
-   {stage==='code'?<button className="text-button back-button" disabled={busy} onClick={()=>{setStage('signin');setChallenge(null);setCode('');setResendAt(0);setError('')}}>Change number</button>:null}
-   <form className="form-frame" onSubmit={stage==='code'?verify:send} noValidate aria-busy={busy}><div className="form-top"><h2 className="form-title">{stage==='code'?'VERIFY YOUR NUMBER':'SIGN IN'}</h2><span className="step-count" aria-label={'Step '+(stage==='code'?2:1)+' of 2'}>{stage==='code'?'02':'01'} of 02</span></div><div className="steps" aria-hidden="true"><i className="current"/><i className={stage==='code'?'current':''}/></div>
-    {stage==='signin'?<><label htmlFor="phone">Mobile number</label><div className="phone-wrap"><CallingCode id="phone" value={country} disabled={busy} onChange={value=>{setCountry(value);setError('')}}/><input id="phone" name="phoneNumber" type="tel" autoComplete="tel-national" inputMode="tel" maxLength={30} placeholder="Mobile number" required disabled={busy} aria-describedby="phone-help account-error" value={phone} onChange={event=>{setPhone(event.target.value);if(event.target.value.trim().startsWith('+'))setCountry(phoneCountry(event.target.value,country));setError('')}}/></div><p className="hint" id="phone-help">Use the number you saved your points with.</p></>:<><p className="code-help">Enter the 6-digit code for<br/><strong>{formatPhone(challenge?.phoneNumber||phoneNumber||'')}</strong>.</p><label htmlFor="code">6-digit code</label><input className="otp-input" id="code" name="confirmationCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" required disabled={busy} aria-describedby="account-error" value={code} onChange={event=>{setCode(event.target.value.replace(/\D/g,'').slice(0,6));setError('')}}/></>}
-    {errors}<button className="primary" type="submit" disabled={busy}>{busy?(stage==='code'?'Signing in…':'Sending…'):stage==='code'?'Sign in':'Send code'}</button>
-    {stage==='signin'?<p className="form-foot">No password to remember.</p>:<div className="resend-row"><span>Didn’t get a code?</span><button className="text-button" type="button" disabled={busy||seconds>0} onClick={()=>void send()}>{seconds?'Resend in '+seconds+'s':'Resend code'}</button></div>}
-   </form><div className="under-form"><span>Your best score stays yours.</span><button className="text-button" onClick={()=>open('points')}>How points work</button></div>
-  </div></div></section>:null}
+  {signingIn&&<>
+    <section className="screen access-screen" aria-labelledby="signin-title">
+      <h1 id="signin-title" tabIndex={-1}>Welcome back</h1>
+      <nav className="access-links" aria-label="Account access">
+        <span aria-current="page">Already registered?</span>
+        <a href={membershipHref}>Create your account</a>
+      </nav>
+      <p className="access-intro">If you are already registered with SO/ FACET, log in here:</p>
+      <form className="access-form" onSubmit={codeSent?verify:send} noValidate aria-busy={busy}>
+        <div className="access-field">
+          <label htmlFor="phone">Mobile number</label>
+          <div className="phone-wrap access-phone">
+            <CallingCode id="phone" value={country} disabled={busy||codeSent} onChange={value=>{setCountry(value);setError('')}}/>
+            <input id="phone" name="phoneNumber" type="tel" autoComplete="tel-national" inputMode="tel" maxLength={30} required readOnly={codeSent} disabled={busy} aria-describedby="account-error" value={phone} onChange={event=>{setPhone(event.target.value);if(event.target.value.trim().startsWith('+'))setCountry(phoneCountry(event.target.value,country));setError('')}}/>
+          </div>
+        </div>
+        <div className="access-field">
+          <label htmlFor="code">OTP</label>
+          <div className="access-code">
+            <input id="code" name="confirmationCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required disabled={busy||!codeSent} aria-describedby="access-code-help account-error" value={code} onChange={event=>{setCode(event.target.value.replace(/\D/g,'').slice(0,6));setError('')}}/>
+            <button className="access-button access-generate" type={codeSent?'button':'submit'} disabled={busy||codeSent}>{busy&&!codeSent?'Sending…':'Generate OTP'}</button>
+          </div>
+        </div>
+        <div className="access-tools">
+          <button className="text-button" type="button" disabled={busy||!codeSent||seconds>0} onClick={()=>void send()}>{codeSent&&seconds?'Resend in '+seconds+'s':'Resend OTP'}</button>
+          {codeSent&&<button className="text-button" type="button" disabled={busy} onClick={changeNumber}>Change number</button>}
+        </div>
+        <p id="access-code-help" className="access-help">{codeSent?<>Enter the 6-digit code sent by {challenge?.channel==='whatsapp'?'WhatsApp':'SMS'} to {formatPhone(challenge?.phoneNumber||phoneNumber||'')}.</>:'We’ll send a verification code by WhatsApp or SMS. No password to remember.'}</p>
+        {errors}
+        <button className="access-button access-submit" type="submit" disabled={busy||!codeSent}>{busy&&codeSent?'Signing in…':'Log in'}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.7"/></svg></button>
+      </form>
+      <div className="under-form">
+        <a className="text-button" href={accountNavigationHref('/play.html')}>New here? Play Pinball to earn points <span aria-hidden="true">→</span></a>
+        <button className="text-button" type="button" onClick={()=>open('points')}>How points work</button>
+      </div>
+    </section>
+    <AccessScene/>
+  </>}
   {stage==='account'&&account&&draft?<section id="account-screen" className="screen" aria-labelledby="account-title"><div className="account-toolbar"><h1 className="eyebrow" id="account-title" tabIndex={-1}>MY POINTS</h1><button className="text-button signout" type="button" disabled={busy} onClick={signOut}>Sign out</button></div>
    <div className="account-grid"><section className="profile-section" aria-labelledby="profile-title"><h2 className="section-heading" id="profile-title">Personal details</h2><p className="section-copy">Keep your profile and leaderboard identity up to date.</p><form id="profile-form" onSubmit={save} noValidate aria-busy={busy}><div className="field-grid">
     <div className="field"><label htmlFor="member-name">Name</label><input id="member-name" name="name" autoComplete="name" maxLength={80} required disabled={busy} value={draft.name} onChange={event=>edit('name',event.target.value)} aria-describedby="account-error"/></div>

@@ -56,11 +56,21 @@ howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!==
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false,resumeAfterLeaderboard=false;
 let membership:ReturnType<typeof connectMembership>|undefined;
-const rewards=connectPostGameRewards(result=>membership?.open($('rewards-register'),result),()=>$('start').click(),showLeaderboard);
+const rewards=connectPostGameRewards((result,opener)=>membership?.open(opener,result),()=>$('start').click(),showLeaderboard);
 const leaderboard=connectLeaderboard(()=>{const resume=resumeAfterLeaderboard&&loaded&&physics.active&&physics.state!=='finished';resumeAfterLeaderboard=false;if(resume)setGamePaused(false);else $('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;scorecard.update(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),(verify,pending)=>membership?.open(undefined,pending,verify));
 membership=connectMembership({
  beforeOpen(){resumeAfterMembership=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';clearKeys();if(resumeAfterMembership){holdCharge=physics.state==='charging';physics.setPaused(true);accumulator=0}rewards.dialog.close();closeSettings()},
- afterClose(completed){const resume=resumeAfterMembership&&loaded;if(resume){physics.setPaused(false);accumulator=0}resumeAfterMembership=false;if(loaded)sync();if(!completed&&loaded&&physics.state==='finished')showResult();if(resume)canvas.focus()},
+ afterClose(completed,returnToScore){
+  const resume=resumeAfterMembership&&loaded;
+  if(resume){physics.setPaused(false);accumulator=0}
+  resumeAfterMembership=false;
+  if(loaded)sync();
+  if(!completed&&loaded&&physics.state==='finished'){
+   if(returnToScore)rewards.show(physics.score,leaderboard.gameId);
+   else showResult();
+  }
+  if(resume)canvas.focus();
+ },
  refreshPlayer:()=>leaderboard.memberChanged(),
  onReplay:()=>$('start').click(),
  onLeaderboard:showLeaderboard,
@@ -151,7 +161,6 @@ function sync(p=physics.pose()){
  }
  applyNavigationLayout();stage.classList.toggle('showing-play',!physics.active||p.state==='finished');
  sound.setMusic(physics.active&&!p.paused&&p.state!=='finished'&&!registration.open&&!leaderboard.dialog.open);
- $('menu-description').textContent=physics.active&&p.state!=='finished'?'Game paused. Your progress is saved here.':'Game settings.';
  if(p.state==='finished'&&!completedRunRecorded){completedRunRecorded=true;
   clearKeys();holdCharge=false;showResult();
   void leaderboard.finish().catch(error=>console.warn('Completed game remains pending verification.',error));
@@ -168,7 +177,7 @@ function sync(p=physics.pose()){
  stage.classList.toggle('launch-ready',launchReady);
  $('start').hidden=physics.active&&p.state!=='finished';$<HTMLButtonElement>('start').disabled=starting;$('start-label').textContent=starting?'Preparing…':physics.active?'Play again':'Play';
  $('action').hidden=!menu.hidden||mobile&&physics.active&&p.state!=='finished'||physics.active&&(p.state==='playing'||p.state==='draining'||p.state==='spring_return')&&!p.paused;
- $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table, ready to play.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Game paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Hold the launch button or Space to continue charging.':'Release the launch button or Space to launch.':'Hold the launch button or Space to charge.';
+ $('message').textContent=starting?'Preparing your game…':!physics.active?'Your table is ready.':p.state==='finished'?`Three balls down. Final score: ${formatPoints(p.score)}.`:p.paused?'Paused.':p.state==='resetting'?'Returning to the launcher…':p.state==='draining'?'':p.state==='spring_return'?'Settling at the spring…':touchInput.matches?p.state==='charging'&&!holdCharge?'Release the launch button to launch.':'Hold the launch button to charge.':p.state==='charging'?holdCharge?'Hold the launch button or Space to continue charging.':'Release the launch button or Space to launch.':'Hold the launch button or Space to charge.';
 }
 function toggleInspection(){if(!loaded)return;inspecting=!inspecting;clearKeys();if(physics.active&&physics.state!=='finished')physics.setPaused(true);
  document.body.classList.toggle('inspect-mode',inspecting);$('inspection').hidden=!inspecting;view.setInspect(inspecting);applyScoreboardLayout();applyInspectionLayout();if(import.meta.env.DEV)updateOverlay();sync();if(!inspecting&&physics.state==='finished')showResult()}
