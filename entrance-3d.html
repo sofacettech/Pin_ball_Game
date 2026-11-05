@@ -6,7 +6,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=frames-df0137d19226">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+  <style data-shared-style="./style.css?v=frames-f0ecae8f7c60">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -37,8 +37,8 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:28px}}
 @media(max-height:500px) and (orientation:landscape){.menu-panel{padding-top:76px;padding-bottom:20px;gap:0}}
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-backdrop{transition:none}}
-@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf') format('opentype');font-display:swap}
-.brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important}
+@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/sofacet-wordmark.otf?v=bb41dc4a526a') format('opentype');font-display:swap}
+.brand-word{font-family:SOFacetWordmark,Acumin,Arial,sans-serif!important;font-synthesis:none;white-space:nowrap}
 .brand-word:not(.opening-brand){font-size:inherit!important;font-style:normal!important;font-weight:400!important;letter-spacing:0!important;font-variation-settings:normal!important;font-synthesis:none;line-height:inherit!important;color:inherit!important}
 :root #game-header .site-nav{gap:16px}
 :root #game-header .skip-game{display:inline-flex;align-items:center;justify-content:center;height:36px;min-height:36px;padding:0 24px;border:1px solid #fff;border-radius:999px;background:#f6f2ff;color:#13121a;font-family:Acumin,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.035em;white-space:nowrap;opacity:1;cursor:pointer;text-decoration:none}
@@ -232,6 +232,26 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 .story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
 .story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
 :root .site-nav .play-now{font-size:13px}
+
+/* Desktop links and the mobile Socials disclosure share the same profile links. */
+.social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}
+.social-profiles{display:flex;align-items:center;gap:24px}
+.social-links a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;text-decoration:none;font:400 18px/1.2 Biarty;font-synthesis:none;white-space:nowrap}
+.social-links a>svg{display:block;flex:none;width:19px;height:19px}
+.social-links a:hover{text-decoration:underline;text-underline-offset:4px}
+.social-trigger{display:none}
+.social-links :is(a,button):focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+body[data-loading] .social-links,body[data-game="visible"] .social-links{visibility:hidden;pointer-events:none}
+@media(max-width:600px){
+ .social-links{right:calc(16px + env(safe-area-inset-right,0px))}
+ .social-trigger{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-height:44px;padding:0;border:0;background:transparent;color:#fff;font:400 16px/1.2 Biarty;font-synthesis:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+ .social-trigger>svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5}
+ .social-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
+ .social-profiles{display:none;position:absolute;right:0;bottom:52px;flex-direction:column;align-items:stretch;gap:0;min-width:174px;padding:7px 13px;background:#100b1af2;border:1px solid #bda5d433;border-radius:8px;box-shadow:0 8px 22px #0006}
+ .social-links[data-open] .social-profiles{display:flex}
+ .social-profiles a{display:flex;gap:10px;font-size:16px}
+ .social-profiles a>svg{width:17px;height:17px}
+}
 </style>
 <style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
 [data-skip-intro] #site-loader{display:none}
@@ -357,7 +377,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
-</style><link rel="preload" href="/assets/game-loader.js?v=a5735df1a965" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=a5735df1a965" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
+</style><link rel="preload" href="/assets/game-loader.js?v=abab9993ead4" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=abab9993ead4" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --></head>
 <body data-phase="buffering" data-loading>
   <div id="site-loader" role="region" aria-label="Loading SO/ FACET">
     <div id="loading-stage" tabindex="0" aria-label="SO/ FACET logo reveal" aria-describedby="loading-instructions">
@@ -448,7 +468,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     </svg>
     </div>
   <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress><span data-video-progress hidden></span></div></div>
-  <script type="module" src="/assets/entrance-3d/entry-SQQH3QKV.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-V7FB6PFO.js"></script>
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
@@ -492,6 +512,13 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
           <a class="menu-item" href="./privacy.html" target="_top">Privacy Policies</a>
         </nav>
     </header>
+    <div class="social-links">
+      <button class="social-trigger" type="button" aria-expanded="false" aria-controls="social-profiles">Socials<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button>
+      <nav id="social-profiles" class="social-profiles" aria-label="Follow SO/FACET">
+      <a href="https://www.instagram.com/so.facet" target="_blank" rel="noopener noreferrer" aria-label="SO/FACET on Instagram (opens in a new tab)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram</span></a>
+      <a href="https://www.linkedin.com/company/so-facet" target="_blank" rel="noopener noreferrer" aria-label="SO/FACET on LinkedIn (opens in a new tab)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.85H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.35-1.53 2.79-1.53 2.98 0 3.58 1.96 3.58 4.51v5.27Z"/></svg><span>LinkedIn</span></a>
+      </nav>
+    </div>
     <div id="scene-loading-status"><span data-scene-status role="status">Growing the diamonds…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
     <section id="journey-preparation" aria-label="Preparing your journey" hidden>
       <h2>A world taking shape.</h2>
@@ -505,6 +532,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=brand-e14e24a4ec52"></script>
-  <script type="module" src="/assets/entrance-3d/entry-EFXA3GDW.js"></script>
+  <script type="module" src="./assets/social-links.js?v=d6b72e7497e9"></script>
+  <script type="module" src="/assets/entrance-3d/entry-6DBFHENL.js"></script>
 <!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><canvas aria-hidden="true"></canvas><p class="loading-statement" aria-live="polite" aria-atomic="true" hidden><span class="loading-phrase"></span></p><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

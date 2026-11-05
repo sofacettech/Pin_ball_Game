@@ -6,6 +6,7 @@ test('brand copy is canonical inside sentences without touching email or web add
  const parts=brandParts('So/Facet, SOFACET and SO FACET. Visit https://sofacet.com or hello@sofacet.com.');
  assert.deepEqual(parts.filter(part=>part.brand).map(part=>part.text),['SO/ FACET','SO/ FACET','SO/ FACET']);
  assert.equal(parts.map(part=>part.text).join(''),'SO/ FACET, SO/ FACET and SO/ FACET. Visit https://sofacet.com or hello@sofacet.com.');
+ for(const value of ['/assets/sofacet-wordmark.svg','sofacet:membership-ready','SO/ UNLOCKED','SO/ SAVED'])assert.deepEqual(brandParts(value),[{text:value,brand:false}]);
  assert.deepEqual(brandParts('Every 10 points = ₹1. What’s yours?'),[{text:'Every 10 points = ₹1. What’s yours?',brand:false}]);
 });
 

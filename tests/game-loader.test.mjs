@@ -123,3 +123,12 @@ test('startup errors retain a failure stage and report categories once without e
   assert.equal(view.reports[0].credentials,'omit');assert.equal(view.reports[0].keepalive,true);
  }
 });
+
+test('shared navigation stylesheet URLs are versioned even when the input has no query',()=>{
+ const plain=withGameLoader('<html><head><link rel="stylesheet" href="/assets/navigation.css"></head><body></body></html>');
+ const stale=withGameLoader('<html><head><link rel="stylesheet" href="/assets/navigation.css?v=old"></head><body></body></html>');
+ const version=plain.match(/href="(\/assets\/navigation\.css\?v=[a-f0-9]{12})"/)?.[1];
+ assert.ok(version,'Unversioned CSS must not reuse a cached font definition');
+ assert.ok(stale.includes('href="'+version+'"'),'A stale query must be replaced with the same current version');
+ assert.equal((withGameLoader(plain).match(/navigation\.css\?v=/g)||[]).length,1);
+});
