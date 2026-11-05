@@ -31,7 +31,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult)=>
   if(!unsaved()){world();return}
   const copy=leaveCopy(result!.points);$('rewards-leave-title').textContent=copy.title;$('rewards-leave-copy').textContent=copy.support;setView('leave');
  }
- dialog.addEventListener('close',()=>{if(dialog.open)return;resize.disconnect();if(toggle.getAttribute('aria-expanded')==='true')toggle.click();document.body.prepend(header)});
+ dialog.addEventListener('close',()=>{if(dialog.open)return;resize.disconnect();scorePage.clear?.();if(toggle.getAttribute('aria-expanded')==='true')toggle.click();document.body.prepend(header)});
  $('rewards-keep').onclick=register;
  $('rewards-leave-anyway').onclick=()=>{discarded=true;setView('exit')};$('rewards-exit-play').onclick=replay;$('rewards-exit-world').onclick=world;
  $('rewards-close').onclick=()=>current==='leave'?setView('result'):current==='exit'?world():leave();

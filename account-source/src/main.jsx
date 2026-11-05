@@ -6,6 +6,7 @@ import {validPlayerName,validPublicName} from '../../game-source/src/player-copy
 import {brandText} from '../../shared/brand-react.jsx';
 import {accountHref,membershipHref,accountNavigationHref} from '../../shared/account-session.js';
 import './style.css';
+import AuthFlow from '../../collective-source/AuthFlow.jsx';
 
 const number=new Intl.NumberFormat('en-IN'),formatPhone=value=>phoneParts(value).formatted;
 const draftOf=a=>{const {country,nationalNumber}=phoneParts(a.phoneNumber);return{name:a.name,leaderboardName:a.leaderboardName||a.name,email:a.email||'',country,phoneNumber:nationalNumber,marketingConsent:a.marketingConsent}};
@@ -75,6 +76,7 @@ function App(){
  const shareText=account?'I scored '+number.format(account.bestPoints)+' pts on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/':'';
  async function copy(){try{await navigator.clipboard.writeText(shareText);setNotice('Your score was copied.')}catch{setNotice('Automatic copy is unavailable. Select and copy the score text below.')}}
  const errors=<p className="error" id="account-error" role="alert">{error}</p>;
+ if(stage==='signin'||stage==='code')return <AuthFlow initialTab="registered" checkMembership={false} forceVerification onComplete={async()=>{const abort=new AbortController();controller.current=abort;try{await load(abort.signal);}catch(error){setError(error.message);setStage('error');}}}/>;
  return brandText(<><a className="skip" href="#main">Skip to content</a><main className="shell" id="main" tabIndex={-1}>
   {stage==='loading'?<section className="screen loading" aria-live="polite"><div className="loading-line" aria-hidden="true"/><p>Checking your points…</p></section>:null}
   {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1>{errors}<button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}

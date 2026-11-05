@@ -1,0 +1,7 @@
+#post-game-rewards[data-view="result"] .rewards-panel{width:100%;margin:0;background:none;mask-image:none;overflow:visible}
+#post-game-rewards[data-view="result"] .rewards-floor{display:none}
+#rewards-result.score-page-host{width:100%;margin:0;padding:0}
+#post-game-rewards .design-rewards .amount{font-weight:400;white-space:nowrap}
+#post-game-rewards .design-rewards .leaderboard{background:none;border:0;border-radius:0;cursor:pointer}
+#post-game-rewards .design-rewards .btn{position:relative;box-shadow:none;border-radius:0}
+#post-game-rewards .design-rewards .btn::before,#post-game-rewards .design-rewards .btn::after{content:none}

@@ -4,6 +4,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
 :root .site-brand{position:fixed;z-index:4;top:calc(var(--site-brand-top) + env(safe-area-inset-top,0px));left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));display:block;width:var(--site-brand-width);height:auto;margin:0;padding:0;line-height:0;flex:none;color:#fff;text-decoration:none}
 :root .site-brand img{display:block;width:100%;height:auto}
+:root .site-brand:focus{outline:none}
 :root .site-nav{position:fixed;z-index:40;top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));right:calc(var(--site-nav-right) + env(safe-area-inset-right,0px));left:auto;display:flex;align-items:center;justify-content:flex-end;width:auto;height:44px;min-height:0;margin:0;padding:0;border:0;background:transparent;font-family:Acumin,Arial,sans-serif;font-style:normal;font-variation-settings:"slnt" 0}
 @media(max-width:600px){:root{--site-brand-left:20px;--site-brand-top:21px;--site-brand-width:118px;--site-nav-top:7px;--site-nav-right:12px}}
 body[data-menu-open]{overflow:hidden}

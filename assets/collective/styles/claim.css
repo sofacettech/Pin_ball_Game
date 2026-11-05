@@ -1,0 +1,750 @@
+@font-face{font-family:'BrilliantRegular';src:url(/assets/collective/71ea450f47efdb271f0e.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'BrilliantMedium';src:url(/assets/collective/efb754d1e2ba00e37492.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Fancy';src:url(/assets/collective/493b16e633873e0340e2.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Wordmark';src:url(/assets/collective/d671b0e99463e8090b89.otf) format('opentype');font-weight:400;font-display:swap}
+:is(#account-root,#membership-root,#launch-root) .design-claim{color-scheme:dark;--white:#f3f0eb;--muted:#a5a3a1;--line:#555}:is(#account-root,#membership-root,#launch-root) .design-claim *{box-sizing:border-box}:is(#account-root,#membership-root,#launch-root) .design-claim,:is(#account-root,#membership-root,#launch-root) .design-claim{margin:0;min-height:100%;background:#000;color:var(--white)}:is(#account-root,#membership-root,#launch-root) .design-claim{font-family:'BrilliantRegular',Arial,sans-serif;-webkit-font-smoothing:antialiased}:is(#account-root,#membership-root,#launch-root) .design-claim button,:is(#account-root,#membership-root,#launch-root) .design-claim input{font:inherit}:is(#account-root,#membership-root,#launch-root) .design-claim .page{min-height:100vh;max-width:1480px;margin:auto;padding:58px 6.2% 120px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{display:flex;align-items:center;gap:24px;font-size:16px;letter-spacing:.7px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand:after{content:"";width:57px;height:1px;background:#343434}:is(#account-root,#membership-root,#launch-root) .design-claim .wordmark{font-family:'Wordmark','BrilliantRegular',sans-serif;font-weight:400;letter-spacing:0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{word-spacing:5px;white-space:nowrap}:is(#account-root,#membership-root,#launch-root) .design-claim .content{width:min(100%,620px);margin:85px 0 0 6.3%}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{font-family:'BrilliantMedium',sans-serif;font-size:11px;letter-spacing:2.5px;color:#969492;margin:0 0 19px}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(44px,4.6vw,64px);font-weight:400;line-height:1.08;letter-spacing:-1.5px;margin:0 0 20px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{font-size:16px;color:#c6c3c0;margin:0 0 65px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark{font-size:1.04em}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .field{display:block;width:100%;height:46px;border:0;border-bottom:1px solid #5c5b5a;border-radius:0;background:transparent;color:#f3f0eb;outline:0;font-family:'Fancy',Georgia,serif;font-size:19px;padding:6px 0 11px}:is(#account-root,#membership-root,#launch-root) .design-claim .field::placeholder{color:#aaa7a4;opacity:1}:is(#account-root,#membership-root,#launch-root) .design-claim .field:focus{border-bottom-color:#eee}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row{display:flex;align-items:center;gap:18px;margin-top:20px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap{position:relative;flex:0 0 90px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial{appearance:none;background:#000;color:#eee;border:1px solid #696969;width:100%;height:42px;padding:0 25px 0 12px;font-size:14px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap:after{content:'⌄';position:absolute;right:12px;top:8px;pointer-events:none;color:#ddd}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row .field{flex:1;min-width:0}:is(#account-root,#membership-root,#launch-root) .design-claim .signin{font-size:14px;color:#aaa7a4;margin:27px 0 18px}:is(#account-root,#membership-root,#launch-root) .design-claim .signin a,:is(#account-root,#membership-root,#launch-root) .design-claim .consent a{color:#dedbd7;text-underline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-family:'Fancy',Georgia,serif;font-size:15px;line-height:1.55;color:#aaa7a4;margin:0 0 27px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent{display:flex;align-items:flex-start;gap:13px;font-family:'Fancy',Georgia,serif;font-size:14px;line-height:1.55;color:#aaa7a4;margin:0 0 17px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input{appearance:none;flex:0 0 17px;width:17px;height:17px;margin:3px 0 0;border:1px solid #666;background:transparent;cursor:pointer;display:grid;place-content:center}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:checked:before{content:'✓';color:#fff;font-size:14px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:focus-visible{outline:2px solid white;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{display:flex;gap:14px;margin-top:35px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{height:55px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:transparent;border:1px solid #aaa;color:#f3f0eb;padding:0 22px;cursor:pointer;font-family:'BrilliantMedium',sans-serif;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;transition:background-color .25s,color .25s,border-color .25s}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child{flex:1}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:205px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:hover,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:active,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{background:#fff;color:#000;border-color:#fff}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{outline:2px solid #aaa;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn svg{width:17px;height:17px;flex-shrink:0}:is(#account-root,#membership-root,#launch-root) .design-claim .feedback{min-height:22px;color:#ddd;font-family:'Fancy',Georgia,serif;font-size:14px;margin:14px 0 0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:slide .85s cubic-bezier(.2,.75,.2,1) both}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{animation-delay:.05s}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{animation-delay:.17s}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{animation-delay:.27s}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{animation-delay:.39s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation-delay:.5s}@keyframes slide{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}@media(max-width:700px){:is(#account-root,#membership-root,#launch-root) .design-claim .page{padding:30px 7% 80px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{font-size:12px}:is(#account-root,#membership-root,#launch-root) .design-claim .content{margin:100px 0 0;width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(40px,9vw,60px)}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{margin-bottom:50px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{flex-direction:column}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:100%;flex:auto}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-size:14px}}@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:none}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{transition:none}}
+
+/* Match Page 1: staggered entrance, 42px travel, 850ms ease. */
+@keyframes enterFromLeft{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
+:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > *{animation:enterFromLeft .85s cubic-bezier(.2,.75,.2,1) both}
+:is(#account-root,#membership-root,#launch-root) .design-claim .brand{animation-delay:.05s}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{animation-delay:.17s}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{animation-delay:.27s}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{animation-delay:.39s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:none}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(1){animation-delay:.49s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(2){animation-delay:.56s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(3){animation-delay:.62s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(4){animation-delay:.68s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(5){animation-delay:.74s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(6){animation-delay:.80s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(7){animation-delay:.86s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(8){animation-delay:.92s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > :nth-child(n+9){animation-delay:.98s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .btn{transition:background-color .25s ease,color .25s ease,border-color .25s ease}
+:is(#account-root,#membership-root,#launch-root) .design-claim .btn:hover,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:active{background:#fff;color:#000;border-color:#fff}
+@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form > *{animation:none!important}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{transition:none!important}}
+
+
+/* Fit the entire claim form comfortably within the indicated desktop area. */
+@media (min-width:701px){
+ :is(#account-root,#membership-root,#launch-root) .design-claim .page{padding-top:52px;padding-bottom:55px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .content{margin-top:76px;width:min(100%,600px)}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{font-size:10px;margin-bottom:16px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(40px,4vw,54px);line-height:1.08;margin-bottom:17px;letter-spacing:-1.1px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .summary{font-size:14px;margin-bottom:46px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .field{height:40px;font-size:17px;padding-bottom:8px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .phone-row{margin-top:15px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .dial{height:39px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .signin{font-size:12px;margin:22px 0 15px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .help{font-size:13px;line-height:1.5;margin-bottom:21px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .consent{font-size:12px;line-height:1.5;margin-bottom:13px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .buttons{margin-top:25px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .btn{height:49px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .feedback{margin-top:9px}
+}
+@media (max-width:700px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(36px,8vw,50px)}:is(#account-root,#membership-root,#launch-root) .design-claim .content{margin-top:76px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{font-size:14px}:is(#account-root,#membership-root,#launch-root) .design-claim .field{font-size:17px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{margin-top:25px}}
+
+
+/* Reward summary uses the same Fancy Cut Pro Regular as the Email field.
+   Brand names retain their original SO/FACET wordmark face. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family: 'Fancy', Georgia, serif; font-weight: 400; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark { font-family: 'Wordmark', 'BrilliantRegular', sans-serif; font-weight: 400; }
+
+
+/* OTP claim page — matches the approved compact Page 2 typography. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .content { width:min(100%, 600px); }
+:is(#account-root,#membership-root,#launch-root) .design-claim .otp-field { display:block; margin-top:25px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .otp-field .field { font-family:'Fancy',Georgia,serif; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .signin { margin-top:25px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .help { margin-bottom:28px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons { margin-top:27px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { width:100%; flex:1; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark, :is(#account-root,#membership-root,#launch-root) .design-claim .signin .wordmark, :is(#account-root,#membership-root,#launch-root) .design-claim .help .wordmark {
+  font-family:'Wordmark','BrilliantRegular',sans-serif;
+  font-weight:400;
+}
+@media(min-width:701px){
+ :is(#account-root,#membership-root,#launch-root) .design-claim .page { padding-top:52px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .content { margin-top:76px; margin-left:6.3%; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-size:clamp(40px,4vw,54px); }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .summary { margin-bottom:48px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .otp-field { margin-top:24px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .signin { margin:24px 0 17px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .help { margin-bottom:28px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .buttons { margin-top:29px; }
+}
+@media(max-width:700px){
+ :is(#account-root,#membership-root,#launch-root) .design-claim .content { margin:75px 0 0; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .otp-field { margin-top:23px; }
+ :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { width:100%; }
+}
+
+
+/* Changes limited to typography, button alignment, and country-code divider. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'Fancy',Georgia,serif !important; font-weight:400; letter-spacing:-.025em; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .inline-coins { font-family:'Fancy',Georgia,serif !important; font-size:inherit; font-weight:400; letter-spacing:inherit; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family:'Fancy',Georgia,serif; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { position:relative; justify-content:center !important; text-align:center; padding-left:44px; padding-right:44px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn > span { display:block; width:100%; text-align:center; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn > svg { position:absolute; right:20px; top:50%; transform:translateY(-50%); }
+:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row { gap:16px; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap { flex:0 0 76px; border-right:1px solid #696969; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .dial { border:0 !important; border-radius:0; background:transparent; padding-left:0; padding-right:21px; width:100%; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap:after { right:12px; }
+
+
+/* Match HERE’S what’s yours. from the preceding page */
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular',Arial,sans-serif !important;font-weight:400;}
+/* Match the Email field typography, including the SO/ COINS phrase and sign-in link */
+:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .signin .inline-coins,:is(#account-root,#membership-root,#launch-root) .design-claim .signin a {font-family:'Fancy',Georgia,serif !important;font-weight:400;}
+
+:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{font-family:'Wordmark','BrilliantRegular',sans-serif!important;font-weight:400}
+    :is(#account-root,#membership-root,#launch-root) .design-claim .artwork {
+      --art-scale: var(--desktop-art-scale, 1);
+      position: absolute;
+      z-index: 0;
+      width: calc(824px * var(--art-scale));
+      height: calc(873px * var(--art-scale));
+      right: 0;
+      bottom: 0;
+      background-image: url("/assets/collective/deead4a28b1e9729aa6e.png");
+      background-size: calc(1568px * var(--art-scale)) calc(1003px * var(--art-scale));
+      background-position: calc(-744px * var(--art-scale)) calc(-130px * var(--art-scale));
+      background-repeat: no-repeat;
+      mask-image: linear-gradient(to right, transparent, #000 36px);
+      pointer-events: none;
+    }
+
+:is(#account-root,#membership-root,#launch-root) .design-claim,:is(#account-root,#membership-root,#launch-root) .design-claim{min-height:100%;background:#08050d}
+:is(#account-root,#membership-root,#launch-root) .design-claim{background:radial-gradient(ellipse at 63% 75%,#13091e 0,#0a0610 34%,#08050d 70%);}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page{position:relative;isolation:isolate;min-height:100vh;max-width:none;overflow:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork{pointer-events:none;--desktop-art-scale:1;opacity:1;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand,:is(#account-root,#membership-root,#launch-root) .design-claim .page>.content{position:relative;z-index:1;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.content{max-width:600px;}
+@media(max-width:1100px){:is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork{--desktop-art-scale:.78;opacity:.72;}}
+@media(max-width:700px){:is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork{--desktop-art-scale:.52;opacity:.42;right:-100px;bottom:0}:is(#account-root,#membership-root,#launch-root) .design-claim .page{padding-bottom:80px;}}
+
+
+/* Reference-marked composition: artwork remains proportional and sits within right-side region. */
+@media (min-width: 901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page { min-height:100vh; padding:0; overflow:hidden; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork { --desktop-art-scale:.79; right:0; bottom:0; opacity:1; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand { position:absolute; left:11.7%; top:25.5vh; margin:0; z-index:2; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content { position:relative; left:11.7%; top:calc(25.5vh + 43px); margin:0; width:40.8%; max-width:668px; padding:0 0 28px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'BrilliantRegular',Arial,sans-serif!important; font-size:clamp(32px,2.6vw,43px)!important; line-height:1.1; white-space:nowrap; letter-spacing:-1px; margin:0 0 13px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-size:13px; margin-bottom:34px!important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .field { height:39px; font-size:16px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .phone-row { margin-top:13px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .otp-field { margin-top:18px!important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .signin { margin:19px 0 12px!important; font-size:12px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .help { font-size:12px; line-height:1.48; margin-bottom:20px!important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .buttons { margin-top:21px!important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { height:49px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .feedback { margin-top:7px; }
+}
+@media (min-width:901px) and (max-height:750px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {top:14vh}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content {top:calc(14vh + 43px)}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .summary {margin-bottom:22px!important}
+}
+@media (min-width:701px) and (max-width:900px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page {padding:36px 6% 70px;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork {--desktop-art-scale:.62;opacity:.65;right:-65px;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {position:relative;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content {position:relative;margin:70px 0 0;width:70%;max-width:600px;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-size:clamp(29px,4vw,39px)!important;white-space:nowrap;}
+}
+@media (max-width:700px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {position:relative;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content {position:relative;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-size:clamp(25px,6.4vw,39px)!important;white-space:nowrap;letter-spacing:-.8px;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork {--desktop-art-scale:.45;opacity:.35;}
+}
+
+
+/* Page 1 typography and animation guide applied to OTP claim page.
+   Artwork sizing/placement and left-column composition are unchanged. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {font-family:'Wordmark','BrilliantRegular',sans-serif;font-size:17px;letter-spacing:0;gap:25px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular',Arial,sans-serif!important;font-weight:400;letter-spacing:-.7px;line-height:1.12;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .help,:is(#account-root,#membership-root,#launch-root) .design-claim .field {font-family:'Fancy',Georgia,serif;font-weight:400;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .btn {font-family:'BrilliantMedium','BrilliantRegular',Arial,sans-serif;font-weight:600;font-size:11px;letter-spacing:.7px;height:51px;}
+@media(min-width:901px){
+ :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {top:23vh;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content {top:calc(23vh + 46px);}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-size:clamp(32px,3vw,47px)!important;margin-bottom:18px;white-space:nowrap;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .summary {font-size:13px;margin-bottom:29px!important;line-height:1.45;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .field {font-size:16px;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .signin {font-size:12px;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .help {font-size:13px;line-height:1.45;}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn {height:51px;}
+}
+@media(max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand{font-size:17px}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{line-height:1.12;letter-spacing:-.7px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn{height:51px}}
+/* Keep Page 1 stagger and its reduced-motion accessibility behavior. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .brand{animation-delay:.05s}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{animation-delay:.25s}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{animation-delay:.46s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(1){animation-delay:.53s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(2){animation-delay:.61s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(3){animation-delay:.70s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(4){animation-delay:.78s}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(5){animation-delay:.86s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form>:nth-child(6){animation-delay:.94s}
+
+
+/* Explicit heading face: Brilliant Cut Pro Regular, per Page 1 guide. */
+:is(#account-root,#membership-root,#launch-root) .design-claim h1.heading, :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'BrilliantRegular', 'Brilliant', Arial, sans-serif !important; font-weight:400 !important; font-style:normal !important; }
+
+
+/* Match the two-line Page 1 heading treatment, preserving original casing. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular','Brilliant',Arial,sans-serif!important;font-weight:400!important;font-style:normal!important;line-height:1.12!important;letter-spacing:-.7px!important;white-space:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line {display:block;white-space:nowrap;}
+@media(min-width:901px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,3vw,47px)!important;}}
+@media(max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,5.5vw,47px)!important;}}
+@media(max-width:520px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,8vw,47px)!important;}}
+/* Prevent mobile flex sizing or inherited overrides from compressing CTA height. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn {height:51px!important;min-height:51px!important;flex:0 0 51px;box-sizing:border-box;align-self:stretch;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{align-items:stretch;}
+
+/* Desktop-only width restoration. Preserve mobile 51px height and existing mobile sizing. */
+@media (min-width:901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .buttons { width:100%; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { width:100%; flex:1 1 auto; min-width:0; }
+}
+
+
+/* Match Page 1 headline typography, casing, weight, color and rhythm. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular','Brilliant',Arial,sans-serif!important;font-weight:400!important;font-style:normal!important;font-size:clamp(32px,3vw,47px)!important;line-height:1.12!important;letter-spacing:-.7px!important;color:#f3f0eb!important;text-transform:none!important;margin:0 0 20px!important;white-space:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line{display:block;white-space:nowrap;font-weight:400!important;}
+/* Page 1's reward typography: large Fancy number, Brilliant semibold coins, Fancy conversion. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary{display:flex!important;flex-direction:column;align-items:flex-start;text-align:left;gap:0;font-family:'Fancy', 'FancyRegular',Georgia,serif!important;color:#f3f0eb!important;margin:0 0 30px!important;line-height:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-amount-line{display:flex;align-items:baseline;gap:10px;white-space:nowrap;margin:0 0 12px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-family:'Fancy','FancyRegular',Georgia,serif!important;font-weight:400;font-size:clamp(68px,6.5vw,100px);line-height:1;letter-spacing:-2px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-coins{font-family:'Brilliant','BrilliantMedium','BrilliantRegular',Arial,sans-serif!important;font-weight:600;font-size:clamp(12px,1.1vw,17px);line-height:1.2;letter-spacing:.6px;color:#aaa3aa;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-conversion{font-family:'Fancy','FancyRegular',Georgia,serif!important;font-size:clamp(11px,.9vw,13px);line-height:1.45;color:#aaa3aa;white-space:normal;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-facet{font-family:'SOFacetWordmark','Wordmark',Arial,sans-serif;letter-spacing:0;}
+/* Keep all form/button dimensions and art exactly as before. */
+@media(max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,5.5vw,47px)!important}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-size:clamp(68px,10vw,94px)}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-coins{font-size:15px}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-conversion{font-size:13px}}
+@media(max-width:520px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,8vw,47px)!important}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-size:clamp(65px,18vw,90px)}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary{margin-bottom:26px!important}}
+
+
+/* Only desktop: move the reward to the marked area beside the headline. */
+@media (min-width: 901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content { position: relative; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary {
+    position: absolute !important;
+    left: 54% !important;
+    top: -34px !important;
+    width: 50% !important;
+    max-width: 350px;
+    margin: 0 !important;
+    z-index: 3;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line:first-child {
+    font-size: calc(clamp(32px, 3vw, 47px) + 1px) !important;
+  }
+}
+/* On tablet and mobile keep the reward in the normal document flow. */
+@media (max-width: 900px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary { position: static !important; width: auto !important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line:first-child {
+    font-size: calc(clamp(32px, 5.5vw, 47px) + 1px) !important;
+  }
+}
+@media (max-width: 520px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line:first-child {
+    font-size: calc(clamp(32px, 8vw, 47px) + 1px) !important;
+  }
+}
+
+/* Positioning based on the supplied black-and-white layout reference.
+   Only desktop placement changes; fonts, imagery, animations, and responsive
+   tablet/mobile behavior stay as they were. */
+@media (min-width: 901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .heading { margin-bottom: 62px !important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .reward-summary {
+    position: absolute !important;
+    left: 58% !important;
+    top: 0 !important;
+    width: 48% !important;
+    max-width: 350px;
+    margin: 0 !important;
+  }
+}
+
+
+/* Mirror Page 1's paired headline / reward arrangement while keeping the
+   OTP page's entire composition anchored in its existing left-side location. */
+@media (min-width: 901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content { position:relative; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .heading {
+    width: 56%;
+    margin: 0 0 74px !important;
+    text-align:left;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .reward-summary {
+    position:absolute !important;
+    left:57% !important;
+    top:24px !important;
+    width:43% !important;
+    max-width:none;
+    margin:0 !important;
+    display:flex !important;
+    align-items:center;
+    text-align:center;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .reward-amount-line {
+    justify-content:center;
+    gap:8px;
+    margin-bottom:17px;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .reward-conversion {
+    text-align:center;
+    width:100%;
+  }
+}
+/* Tablet and mobile keep their existing vertically stacked content and CTA. */
+
+
+/* Align the complete reward (900, SO/ COINS, and its conversion line)
+   one visual row higher, matching the Page 1 pairing. Desktop only. */
+@media (min-width:901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .reward-summary {
+    top:-42px !important; /* formerly 24px; shifts the whole group 66px up */
+  }
+}
+
+/* Compact only the desktop whitespace between headline/reward and form. */
+@media (min-width:901px) {
+ :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content .heading { margin-bottom:28px !important; }
+}
+/* Add optical separation between the slash and F without changing wordmark font. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-facet { white-space:nowrap; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-facet .facet-name { display:inline-block; margin-left:.22em; }
+
+
+/* Remove the separate rewards display; retain the left-anchored claim composition. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading {
+  width:100% !important;
+  max-width:none !important;
+  white-space:nowrap !important;
+  text-align:left;
+  margin-bottom:28px !important;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading .heading-line {
+  display:inline !important;
+  white-space:nowrap !important;
+}
+/* On narrow phones only, scale the unbroken heading to fit the content area. */
+@media (max-width:700px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading {
+    font-size:clamp(23px,6.6vw,36px) !important;
+    margin-bottom:26px !important;
+  }
+}
+
+
+/* Heading update: CLAIM in Brilliant Cut Pro Medium, what's yours in lowercase same style */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading{
+  white-space:nowrap !important;
+  display:block;
+  font-size:clamp(32px,3vw,47px) !important;
+  line-height:1.12 !important;
+  letter-spacing:-.7px !important;
+  margin:0 0 20px !important;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading .claim-medium{
+  font-family:'BrilliantMedium','BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-weight:500 !important;
+  font-style:normal !important;
+  text-transform:uppercase;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading .claim-rest{
+  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-weight:400 !important;
+  font-style:normal !important;
+  text-transform:none;
+}
+@media(max-width:900px){
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-form .btn:hover:not(:active):not(:focus-visible){background:transparent!important;color:#f3f0eb!important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading{font-size:clamp(28px,5.2vw,47px)!important;white-space:normal!important;}
+}
+@media(max-width:520px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading{font-size:clamp(24px,7vw,40px)!important;}
+}
+
+
+/* Additional copy below the heading, within the existing left-side content area. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading { margin-bottom: 13px !important; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+  margin:0 0 8px;
+  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif;
+  font-weight:400;
+  font-size:clamp(15px,1.25vw,18px);
+  line-height:1.4;
+  letter-spacing:0;
+  color:#f3f0eb;
+}
+/* Fancy Cut Pro Regular, the same face used for the Email field on Page 1. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail {
+  margin:0 0 27px;
+  font-family:'Fancy',Georgia,serif;
+  font-weight:400;
+  font-size:14px;
+  line-height:1.5;
+  letter-spacing:0;
+  color:#aaa7a4;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail {
+  animation:enterFromLeft .85s cubic-bezier(.2,.75,.2,1) both;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {animation-delay:.34s;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail {animation-delay:.41s;}
+@media(max-width:700px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation{font-size:15px;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail{font-size:13px;margin-bottom:25px;}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail{animation:none!important;}
+}
+
+
+/* Screenshot reference: only GAME COMPLETE, invitation and the claim form. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+  font-family:'BrilliantRegular',Arial,sans-serif !important;
+  font-size:clamp(30px,2.8vw,44px) !important;
+  font-weight:400 !important;
+  letter-spacing:-.7px !important;
+  line-height:1.16 !important;
+  color:#f3f0eb !important;
+  margin:0 0 40px !important;
+  white-space:nowrap;
+}
+@media (min-width:901px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {top:calc(25.5vh + 110px) !important;}
+}
+@media (min-width:901px) and (max-height:750px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {top:calc(14vh + 100px) !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation{margin-bottom:28px !important;}
+}
+@media (min-width:701px) and (max-width:900px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content{margin-top:80px !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation{font-size:clamp(27px,4vw,37px) !important;margin-bottom:32px !important;}
+}
+@media (max-width:700px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation{font-size:clamp(23px,5.6vw,34px) !important;white-space:normal;margin-bottom:30px !important;}
+}
+
+
+/* Place invitation and all form content together inside the marked desktop rectangle. */
+@media (min-width:901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content { top:calc(25.5vh + 36px) !important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation { margin-bottom:40px !important; }
+}
+@media (min-width:901px) and (max-height:750px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content { top:calc(14vh + 26px) !important; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation { margin-bottom:28px !important; }
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+  font-family:'BrilliantMedium','BrilliantRegular',Arial,sans-serif !important;
+  font-weight:500 !important;
+  font-style:normal !important;
+}
+/* Equal one-pixel border on every side, without a doubled bottom edge. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:hover,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:focus-visible {
+  border-width:1px !important;
+  border-style:solid !important;
+  box-shadow:none !important;
+  outline:none;
+  background-clip:padding-box;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn { border-color:#aaa !important; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:hover,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:focus-visible { border-color:#fff !important; }
+
+
+/* Match SO/FACET Page 1's arrival motion and interactive states.
+   These rules do not alter layout, typography, sizes, or artwork. */
+@keyframes soFacetEntrance {
+  from { opacity:0; transform:translate3d(-42px,0,0); }
+  to   { opacity:1; transform:translate3d(0,0,0); }
+}
+/* A single entrance per element (no parent + child double animations). */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > * {
+  animation-name:soFacetEntrance !important;
+  animation-duration:.85s !important;
+  animation-timing-function:cubic-bezier(.2,.75,.2,1) !important;
+  animation-fill-mode:both !important;
+  animation-iteration-count:1 !important;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content, :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form {animation:none !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand {animation-delay:.05s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {animation-delay:.25s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(1){animation-delay:.36s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(2){animation-delay:.46s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(3){animation-delay:.53s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(4){animation-delay:.61s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(5){animation-delay:.66s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(6){animation-delay:.70s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(7){animation-delay:.70s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(n+8){animation-delay:.80s !important;}
+/* Page 1 CTA: 250ms white background/black type, with all 1px sides even. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn {
+  border:1px solid #aaa !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  color:#f3f0eb !important;
+  transition:background-color .25s ease,color .25s ease,border-color .25s ease !important;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:hover,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:focus-visible,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn:active {
+  background:#fff !important;
+  color:#000 !important;
+  border:1px solid #fff !important;
+  box-shadow:none !important;
+}
+/* Small, non-layout-changing feedback for form fields and links. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .field{transition:border-color .25s ease,color .25s ease;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .field:focus{border-bottom-color:#f3f0eb !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a{text-underline-offset:4px;transition:color .25s ease;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a:hover,:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a:focus-visible{color:#fff !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .dial:focus-visible{outline:1px solid #f3f0eb;outline-offset:3px;}
+@media (prefers-reduced-motion:reduce){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand,
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > *{animation:none !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn,:is(#account-root,#membership-root,#launch-root) .design-claim .page .field,:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a{transition:none !important;}
+}
+
+
+/* Page 1 headline typography: Brilliant Cut Pro Regular. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-weight:400 !important;
+  font-style:normal !important;
+  font-size:clamp(32px,3vw,47px) !important;
+  line-height:1.12 !important;
+  letter-spacing:-.7px !important;
+  color:#F3F0EB !important;
+  text-transform:none !important;
+}
+/* +1px compared with the existing 12px sign-in copy. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin {font-size:13px !important;}
+/* Bring the wordmark and invitation slightly lower together, while tightening
+   the space underneath the invitation (without displacing the form artwork). */
+@media (min-width:901px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand {top:calc(25.5vh + 18px) !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {top:calc(25.5vh + 54px) !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:12px !important;}
+}
+@media (min-width:901px) and (max-height:750px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand {top:calc(14vh + 18px) !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {top:calc(14vh + 44px) !important;}
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:10px !important;}
+}
+@media (min-width:701px) and (max-width:900px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:16px !important;}
+}
+@media (max-width:700px){
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+    font-size:clamp(23px,5.6vw,34px) !important;
+    margin-bottom:17px !important;
+    white-space:normal;
+  }
+}
+
+
+/* A modest visual pause before Full name, without moving the heading or artwork. */
+@media (min-width:901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:24px !important;}
+}
+@media (min-width:901px) and (max-height:750px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:20px !important;}
+}
+@media (min-width:701px) and (max-width:900px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:22px !important;}
+}
+@media (max-width:700px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {margin-bottom:21px !important;}
+}
+/* Gentle brightness lift, not pure white. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin {color:#c4c0c3 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin .inline-coins {color:inherit !important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a {color:#dedbd7 !important;}
+
+/* The supplied fonts, copy and form retain their existing rules. */
+:is(#account-root,#membership-root,#launch-root) .design-claim,:is(#account-root,#membership-root,#launch-root) .design-claim{background:#08040d;min-height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-claim{isolation:isolate;background:transparent;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .mesh-layer{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer{z-index:1;isolation:auto;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork.art-layer{z-index:1;background:none;mask-image:none;pointer-events:none;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand,:is(#account-root,#membership-root,#launch-root) .design-claim .page>.content{z-index:3;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-stage{position:relative;width:100%;height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-entrance,:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-float{width:100%;height:100%;position:relative;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-arrival,:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-float{position:absolute;inset:0;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.art-ready .art-entrance{animation:p2-crystal-entrance 1.6s cubic-bezier(.2,.75,.2,1) var(--arrival-delay) both;}
+@keyframes p2-crystal-entrance{from{opacity:0;transform:translate3d(42px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.art-landed .art-entrance{animation:none;}
+:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .art-entrance,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.ambient-paused .art-entrance{animation-play-state:paused!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.ambient-active .crystal-float{animation:p2-crystal-float 10s ease-in-out infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.ambient-paused .crystal-float{animation-play-state:paused!important;}
+@keyframes p2-crystal-float{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(1.5px,var(--crystal-drift,5px),0)}}
+:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;mix-blend-mode:screen;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .original-art-fallback{position:absolute;width:190.291262%;height:114.89118%;max-width:none;left:-90.291262%;top:-14.89118%;clip-path:inset(12.961116% 0 0 47.44898%);mix-blend-mode:screen;visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.static-fallback .original-art-fallback{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.art-ready .original-art-fallback{display:none;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.art-ready .crystal-canvas{opacity:1;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position{position:absolute;visibility:hidden;--left-fold:18deg;--right-fold:-22deg;--open:0deg;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.small{--left-fold:25.3deg;--right-fold:-29.9deg;--open:-5deg;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position[data-flight=red]{--hover-duration:7.2s;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position[data-flight=cyan]{--hover-duration:8.6s;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position[data-flight=yellow]{--hover-duration:6.4s;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.art-ready.flights-prepared .butterfly-position{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-arrival,:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-hover,:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-rig{width:100%;height:100%;position:relative;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-arrival{transform-origin:var(--hinge-x) var(--hinge-y);}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-rig{perspective:800px;transform-style:preserve-3d;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-rig img{position:absolute;inset:0;width:100%;height:100%;transform-origin:var(--hinge-x) var(--hinge-y);-webkit-backface-visibility:hidden;backface-visibility:hidden;image-rendering:auto;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-body{transform:translateZ(.3px);}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-left{transform:rotate3d(var(--ax),var(--ay),0,var(--open));}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.butterfly-settled .butterfly-hover{animation:p2-hover var(--hover-duration) ease-in-out infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.butterfly-settled .butterfly-left{animation:p2-left 7s cubic-bezier(.37,0,.63,1) infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.butterfly-settled .butterfly-right{animation:p2-right 7s cubic-bezier(.37,0,.63,1) infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.butterfly-settled.small .butterfly-left{animation-name:p2-small-left;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.butterfly-settled.small .butterfly-right{animation-name:p2-small-right;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.ambient-paused .butterfly-hover,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer.ambient-paused .butterfly-rig img,:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.offscreen:not(.flight-running) .butterfly-hover,:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.offscreen:not(.flight-running) .butterfly-rig img{animation-play-state:paused!important;}
+@keyframes p2-hover{0%,100%{transform:translate3d(0,0,0) rotate(0deg)}50%{transform:translate3d(3px,-8px,0) rotate(.4deg)}}
+@keyframes p2-left{0%,71.428571%,100%{transform:rotate3d(var(--ax),var(--ay),0,0deg)}35.714286%{transform:rotate3d(var(--ax),var(--ay),0,var(--left-fold))}}
+@keyframes p2-right{0%,71.428571%,100%{transform:rotate3d(var(--ax),var(--ay),0,0deg)}35.714286%{transform:rotate3d(var(--ax),var(--ay),0,var(--right-fold))}}
+@keyframes p2-small-left{0%,85.714286%,100%{transform:rotate3d(var(--ax),var(--ay),0,var(--open))}42.857143%{transform:rotate3d(var(--ax),var(--ay),0,var(--left-fold))}}
+@keyframes p2-small-right{0%,85.714286%,100%{transform:rotate3d(var(--ax),var(--ay),0,0deg)}42.857143%{transform:rotate3d(var(--ax),var(--ay),0,var(--right-fold))}}
+:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .page>.brand,:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .page>.content>.claim-invitation,:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .claim-form>*{animation-play-state:paused!important;}
+@media(max-width:767px){:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-float{--crystal-drift:3px;}:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position{--left-fold:16deg;--right-fold:-18deg;}:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.small{--left-fold:23deg;--right-fold:-27.6deg;}}
+@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .art-entrance,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .crystal-float,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .butterfly-hover,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .butterfly-rig img{animation:none!important;}:is(#account-root,#membership-root,#launch-root) .design-claim .wave-intro-pending .page *{animation:none!important;}}
+
+
+/* Keep the claim in document flow so short Apple screens can scroll to the button. */
+:is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer {
+  min-height: 100vh;
+  min-height: 100svh;
+  height: auto;
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim .mesh-layer { height: 100vh; height: 100dvh; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-canvas { mix-blend-mode: normal; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation { white-space: normal !important; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .field, :is(#account-root,#membership-root,#launch-root) .design-claim .dial { font-size: max(16px, 1em); }
+
+@media (min-width: 901px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: calc(25.5svh + 18px) 0 40px;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    margin-left: 11.7% !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    width: 40.8%;
+    max-width: 668px;
+    margin: 14px 0 0 11.7% !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+    font-size: clamp(28px, 3vw, 47px) !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .artwork.art-layer {
+    width: min(46vw, 651px);
+    height: auto;
+    aspect-ratio: 824 / 873;
+  }
+}
+
+@media (min-width: 901px) and (max-height: 750px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer { padding-top: max(40px, calc(14svh + 18px)); }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer { padding: 36px 6% 64px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {
+    width: min(70%, 600px);
+    margin: 50px 0 0 !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .artwork.art-layer {
+    width: min(48vw, 450px);
+    height: auto;
+    aspect-ratio: 824 / 873;
+    right: -4vw;
+    opacity: .22;
+  }
+}
+
+@media (max-width: 700px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer {
+    padding: max(24px, env(safe-area-inset-top)) max(20px, 7%, env(safe-area-inset-right)) max(56px, env(safe-area-inset-bottom)) max(20px, 7%, env(safe-area-inset-left));
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content {
+    width: 100%;
+    margin: clamp(36px, 7svh, 64px) 0 0 !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
+    font-size: clamp(27px, 7vw, 34px) !important;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .artwork.art-layer {
+    width: min(72vw, 400px);
+    height: auto;
+    aspect-ratio: 824 / 873;
+    right: -14vw;
+    opacity: .18;
+  }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .field { min-height: 48px; font-size: 16px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .dial { min-height: 44px; font-size: 16px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .phone-row { gap: 12px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { min-height: 51px !important; }
+}
+
+@media (max-width: 900px) and (max-height: 500px) {
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page.text-layer { padding-top: 20px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content { margin-top: 20px !important; }
+}
+
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh{position:relative;height:100svh;min-height:320px;overflow:hidden;touch-action:none;outline-offset:-6px;background:radial-gradient(ellipse at 68% 65%,#14071d,transparent 65%),#08040d}
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh:focus-visible{outline:1px solid #89739f}
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh .caption{position:absolute;inset:auto 0 32px;margin:0;text-align:center;font-size:11px;letter-spacing:.16em;font-weight:400;pointer-events:none;user-select:none;opacity:.65}
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh .touch-hint{display:none}@media(pointer:coarse){:is(#account-root,#membership-root,#launch-root) .design-claim #mesh .mouse-hint{display:none}:is(#account-root,#membership-root,#launch-root) .design-claim #mesh .touch-hint{display:inline}}
+:is(#account-root,#membership-root,#launch-root) .design-claim #mesh.mesh-layer{position:fixed;height:100vh;height:100dvh;min-height:0;touch-action:auto}
+
+/* Mobile: show the existing artwork first, then dim it behind the form. */
+@media(max-width:900px){
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.artwork.art-layer{
+  position:fixed;
+  width:min(86vw,420px,calc((100svh - 120px)*824/873));
+  height:auto;
+  aspect-ratio:824/873;
+  right:max(16px,env(safe-area-inset-right,0px));
+  bottom:max(20px,env(safe-area-inset-bottom,0px));
+  opacity:var(--claim-art-dim,.18);
+  transition:opacity .45s ease;
+ }
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim.claim-art-intro .page>.artwork.art-layer{opacity:1;}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .art-layer.art-ready .art-entrance{animation:none!important;}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.brand,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-invitation,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-form>*{animation:none!important;}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.brand,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-back{opacity:1;transition:opacity .45s ease;}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim.claim-art-intro .page>.brand,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim.claim-art-intro .page>.content,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim.claim-art-intro .claim-back{opacity:0;visibility:hidden;pointer-events:none;transition:none;}
+}
+@media(min-width:701px) and (max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim{--claim-art-dim:.22;}}
+@media(max-width:900px) and (prefers-reduced-motion:reduce){
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.artwork.art-layer,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.brand,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content,
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-back{transition:none;}
+}
+:is(#account-root,#membership-root,#launch-root) .design-claim{display:block;min-height:100svh;position:relative;isolation:isolate;margin:0;color:#f3f0eb}
+:is(#account-root,#membership-root,#launch-root) .design-claim .sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+:is(#account-root,#membership-root,#launch-root) .design-claim .feedback{overflow-wrap:anywhere}

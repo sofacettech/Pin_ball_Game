@@ -1,0 +1,455 @@
+:is(#account-root,#membership-root,#launch-root) .design-launch .page.text-layer{padding:0;max-width:none;margin:0;color:#f5f2ed;font-family:Brilliant,Arial,sans-serif;}
+@font-face { font-family: Brilliant; src: url("/assets/collective/71ea450f47efdb271f0e.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: Brilliant; src: url("/assets/collective/efb754d1e2ba00e37492.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: Fancy; src: url("/assets/collective/493b16e633873e0340e2.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: SOFacetWordmark; src: url("/assets/collective/d671b0e99463e8090b89.otf") format("opentype"); font-weight: 400; font-display: swap; }
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer, :is(#account-root,#membership-root,#launch-root) .design-launch .text-layer *{box-sizing: border-box;}
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .page.text-layer{min-height: 100vh; position: relative; isolation: isolate; overflow: hidden;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand{position: absolute; left: 6.2%; top: 5.1%; display: flex; align-items: center; gap: 28px; font-family: SOFacetWordmark, Arial, sans-serif; font-size: 19px; white-space: nowrap; letter-spacing: 1px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand::after{content: ""; height: 1px; width: 62px; background: transparent;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{position: relative; margin-left: 49%; width: 47%; padding-top: clamp(110px, 15vh, 170px); padding-bottom: 55px; text-align: center; max-width: 770px;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .eyebrow{font: 400 16px / 1.5 Fancy, Georgia, serif; color: rgb(170, 163, 169); margin: 0px 0px 17px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1{font: 400 clamp(39px, 4.25vw, 63px) / 1.13 Brilliant, Arial, sans-serif; letter-spacing: -1.1px; margin: 0px 0px 22px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1 span{display: block;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount-line{display: flex; justify-content: center; align-items: baseline; gap: 16px; margin: 0px 0px 8px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount{font: 400 clamp(92px, 9.3vw, 143px) / 1 Fancy, Georgia, serif; letter-spacing: -3px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .coins{font: 600 clamp(16px, 1.7vw, 25px) / 1.2 Brilliant, Arial, sans-serif; letter-spacing: 0.6px; color: rgb(170, 163, 170); white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .conversion,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice{font: 400 16px / 1.55 Fancy, Georgia, serif; color: rgb(167, 160, 167); margin: 0px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .wordmark{font-family: SOFacetWordmark, Arial, sans-serif; letter-spacing: 0px; font-size: 0.95em; white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .rule{border-width: 1px 0px 0px; border-style: solid none none; border-color: rgb(64, 55, 66) currentcolor currentcolor; border-image: none; margin: 23px 0px 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice{margin: 0px 0px 21px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .buttons{display: flex; gap: 14px; width: 100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn{flex: 1 1 0%; min-width: 0px; height: 54px; background: transparent; border: 1px solid rgb(136, 129, 138); color: rgb(247, 244, 242); padding: 0px 17px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; cursor: pointer; font: 600 12px / 18px Brilliant, Arial, sans-serif; letter-spacing: 0.7px; transition: background 0.25s, color 0.25s, border-color 0.25s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn:hover,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn:focus-visible,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn:active{background: rgb(255, 255, 255); color: rgb(0, 0, 0); border-color: rgb(255, 255, 255);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn svg{width: 19px; height: 19px; flex: 0 0 auto;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard{display: inline-block; position: relative; margin-top: 26px; color: rgb(140, 132, 145); text-decoration: none; font: 600 12px / 18px Brilliant, Arial, sans-serif; letter-spacing: 2px; padding-bottom: 8px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard::after{content: ""; position: absolute; left: 0px; bottom: 0px; width: 100%; height: 1px; background: currentcolor; transform: scaleX(0); transform-origin: left center; transition: transform 0.38s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard:hover::after,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard:focus-visible::after{transform: scaleX(1);}
+@keyframes enter {
+  0% { opacity: 0; transform: translateX(-42px); }
+  100% { opacity: 1; transform: translateX(0px); }
+}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount-line,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .conversion,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .rule,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .buttons,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard{animation: 0.85s cubic-bezier(0.2, 0.75, 0.2, 1) 0s 1 normal both running enter;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand{animation-delay: 0.05s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .eyebrow{animation-delay: 0.15s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1{animation-delay: 0.25s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount-line{animation-delay: 0.36s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .conversion{animation-delay: 0.46s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .rule{animation-delay: 0.53s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice{animation-delay: 0.61s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .buttons{animation-delay: 0.7s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard{animation-delay: 0.8s;}
+@media (max-width: 850px){:is(#account-root,#membership-root,#launch-root) .design-launch .page.text-layer{min-height: 100svh;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand{position: relative; top: auto; left: auto; padding: 30px 6%; font-size: 16px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{margin: 0px auto; width: 90%; padding: 100px 0px 50px; }
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1{font-size: clamp(38px, 8vw, 56px);}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .conversion,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice{font-size: 14px;}}
+@media (max-width: 520px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{padding-top: 75px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount{font-size: 94px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .coins{font-size: 15px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .buttons{flex-direction: column;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn{flex: 1 1 auto;}
+}
+@media (prefers-reduced-motion: reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer h1,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .amount-line,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .conversion,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .rule,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .notice,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .buttons,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard{animation: auto ease 0s 1 normal none running none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .btn,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .leaderboard::after{transition: none;}}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{padding-top: clamp(112px, 16vh, 150px); padding-bottom: 26px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .eyebrow{font-size: 14px; margin-bottom: 12px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward h1{font-size: clamp(37px, 3.6vw, 54px); line-height: 1.12; margin-bottom: 13px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .amount-line{gap: 12px; margin-bottom: 10px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .amount{font-size: clamp(80px, 7.7vw, 116px); line-height: 1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .coins{font-size: clamp(14px, 1.35vw, 20px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .conversion,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .notice{font-size: 14px; line-height: 1.45;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .rule{margin: 18px 0px 15px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .notice{margin-bottom: 19px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .buttons .btn{height: 51px; font-size: 11px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .leaderboard{font-size: 11px; margin-top: 20px;}}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reveal-hint,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .interaction-hint,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .keyboard-hint,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .instructions,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reveal-instruction{display: none !important;}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{margin-left: 49%; width: 47%; padding-top: clamp(112px, 16vh, 150px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-pair{display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); column-gap: 28px; align-items: center; width: calc(188%); margin-left: -88%; margin-bottom: 26px; text-align: left;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-left{min-width: 0px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right{min-width: 0px; text-align: center;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-left h1{font-size: clamp(37px, 3.6vw, 54px); margin-bottom: 0px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right .amount-line{justify-content: center; gap: 10px; white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right .amount{font-size: clamp(78px, 7.5vw, 112px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right .coins{font-size: clamp(13px, 1.25vw, 19px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right .conversion{font-size: clamp(12px, 1vw, 14px); white-space: nowrap;}}
+@media (max-width: 850px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-pair{display: block;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .headline-right{text-align: center;}}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{margin-left: 49%; width: 47%; padding-top: clamp(160px, 20vh, 205px); padding-bottom: 22px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-pair{display: grid; grid-template-columns: minmax(0px, 0.95fr) minmax(0px, 1.05fr); gap: 22px; align-items: center; width: 100%; margin-left: 0px; margin-bottom: 24px; text-align: left;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-left,:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right{min-width: 0px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-left h1{font-size: clamp(32px, 3vw, 47px); line-height: 1.12; letter-spacing: -0.7px; margin: 0px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-left .eyebrow{font-size: 13px; margin: 0px 0px 15px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right{text-align: center;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right .amount-line{display: flex; align-items: baseline; justify-content: center; gap: 8px; white-space: nowrap; margin-bottom: 13px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right .amount{font-size: clamp(68px, 6.5vw, 100px); letter-spacing: -2px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right .coins{font-size: clamp(12px, 1.1vw, 17px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right .conversion{font-size: clamp(11px, 0.9vw, 13px); white-space: normal; line-height: 1.45;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .rule{margin: 18px 0px 16px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .notice{margin-bottom: 19px;}}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .brand{top: 7%; left: 6.2%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{padding-top: clamp(200px, 25vh, 255px);}}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{padding-top: clamp(235px, 28vh, 285px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward > .brand{position: relative; top: auto; left: auto; display: flex; width: max-content; margin: 0px 0px 25px; font-size: 17px; gap: 25px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-pair{margin-bottom: 18px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-left .eyebrow{margin-bottom: 13px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .rule{margin: 17px 0px 14px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .notice{margin-bottom: 17px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .leaderboard{margin-top: 17px;}}
+@media (max-width: 850px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward > .brand{position: relative; top: auto; left: auto; padding: 0px; margin: 0px 0px 26px;}}
+@media (min-width: 851px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward{padding-top: clamp(255px, 30vh, 310px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward > .brand{margin-bottom: 34px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-pair{margin-bottom: 29px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-left .eyebrow{margin-bottom: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .headline-right .amount-line{margin-bottom: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .rule{margin: 25px 0px 23px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .notice{margin-bottom: 24px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer .reward .leaderboard{margin-top: 25px;}}
+@media(max-width:850px){:is(#account-root,#membership-root,#launch-root) .design-launch .page.text-layer{padding-bottom:max(380px,90vw);}}
+
+/* The three supplied documents retain their own drawing and type rules. */
+:is(#account-root,#membership-root,#launch-root) .design-launch *{box-sizing:border-box}:is(#account-root,#membership-root,#launch-root) .design-launch,:is(#account-root,#membership-root,#launch-root) .design-launch{margin:0;background:#08040d;min-height:100%;overflow-x:clip;}
+:is(#account-root,#membership-root,#launch-root) .design-launch{position:relative;isolation:isolate;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .mesh-layer{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:grid;place-items:center;overflow:clip;pointer-events:none;mix-blend-mode:screen;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer picture{display:block;width:min(100%,1671px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer img{display:block;width:100%;height:auto;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .page{position:relative;z-index:2;max-width:1671px;min-height:100svh;pointer-events:none;padding:clamp(30px,5.4vh,61px) 6.2% 48px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .brand{position:relative;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .hero,:is(#account-root,#membership-root,#launch-root) .design-launch .separator,:is(#account-root,#membership-root,#launch-root) .design-launch .actions{width:52%;max-width:660px;margin-left:auto;margin-right:0;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .hero{margin-top:clamp(117px,calc(8vh + 75px),169px);display:block;text-align:center;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .eyebrow{margin-bottom:20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .headline{font-size:68px;line-height:1.06;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .reward{padding-top:26px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .amount-line{justify-content:center;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .conversion{margin-top:17px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .separator{margin-top:30px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .actions{padding-top:27px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .notice{margin-bottom:22px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .buttons{gap:14px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .btn{width:50%;padding:0 22px;pointer-events:auto;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .leaderboard{margin-top:27px;pointer-events:auto;}
+@media(min-width:701px) and (max-height:800px){
+  :is(#account-root,#membership-root,#launch-root) .design-launch .page{padding-top:30px;padding-bottom:30px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .hero{margin-top:111px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .eyebrow{margin-bottom:13px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .reward{padding-top:17px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .separator{margin-top:22px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .actions{padding-top:22px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .notice{margin-bottom:18px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .leaderboard{margin-top:22px;}
+}
+@media(min-width:701px) and (max-width:1100px){
+  :is(#account-root,#membership-root,#launch-root) .design-launch .hero,:is(#account-root,#membership-root,#launch-root) .design-launch .separator,:is(#account-root,#membership-root,#launch-root) .design-launch .actions{width:57%;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .headline{font-size:clamp(43px,5vw,68px);}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .amount{font-size:clamp(95px,11vw,145px);}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .btn{font-size:13px;letter-spacing:1px;padding:0 16px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .conversion{font-size:15px;}
+}
+@media(max-width:700px){
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer{align-items:end;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .page{padding:30px 7% max(380px,90vw);min-height:100svh;pointer-events:auto;touch-action:pan-y;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .hero,:is(#account-root,#membership-root,#launch-root) .design-launch .separator,:is(#account-root,#membership-root,#launch-root) .design-launch .actions{width:100%;max-width:none;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .hero{margin-top:77px;text-align:left;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .eyebrow{font-size:14px;margin-bottom:22px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .headline{font-size:clamp(45px,10vw,65px);}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .reward{padding-top:34px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .amount-line{justify-content:flex-start;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .amount{font-size:clamp(90px,22vw,135px);letter-spacing:-5px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .conversion{font-size:15px;line-height:1.5;margin-top:20px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .separator{margin-top:35px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .actions{padding-top:30px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .notice{font-size:14px;line-height:1.5;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .buttons{flex-direction:column;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .btn{width:100%;min-height:54px;font-size:12px;padding:0 26px;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .leaderboard{margin-top:27px;}
+}
+
+
+/* Quiet ambient movement; layout and hinge rotation live on separate wrappers. */
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-canvas{position:relative;width:min(100%,1671px);aspect-ratio:1671/941;--sway-angle:.9deg;--left-fold:18deg;--right-fold:22deg;--purple-left-fold:25.3deg;--purple-right-fold:29.9deg;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-fallback,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .motion-scene,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .plant-rig{position:absolute;inset:0;width:100%;height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-fallback{display:block;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-fallback img,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .plant-plate{display:block;position:absolute;inset:0;width:100%;height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .motion-scene{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.motion-ready .motion-scene{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.motion-ready .art-fallback{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .scene-mobile{display:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .plant-rig{transform-origin:var(--root-x) var(--root-y);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .white-butterfly{position:absolute;perspective:800px;transform-style:preserve-3d;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .white-butterfly img{position:absolute;inset:0;width:100%;height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .wing{transform-origin:var(--hinge-x) var(--hinge-y);backface-visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .butterfly-body{transform:translateZ(1px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-butterfly,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .plant-visibility{position:absolute;display:block;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-butterfly{perspective:450px;transform-style:preserve-3d;visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.purple-positioned .purple-butterfly{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-butterfly img{position:absolute;inset:0;width:100%;height:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-body{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.motion-ready .purple-wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.motion-ready .purple-body{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.motion-ready .purple-rest{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .purple-wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .purple-body{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .purple-rest{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-wing{transform-origin:var(--purple-hinge-x) var(--purple-hinge-y);backface-visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-body{transform:translateZ(1px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .plant-rig{animation:plant-breeze 14s cubic-bezier(.37,0,.63,1) -3.5s infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .wing-left{animation:wing-left-flex 7s cubic-bezier(.37,0,.63,1) -.5s infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .wing-right{animation:wing-right-flex 7s cubic-bezier(.37,0,.63,1) -.5s infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .purple-wing-left{animation:purple-left-flex 7s cubic-bezier(.37,0,.63,1) -1.7s infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .purple-wing-right{animation:purple-right-flex 7s cubic-bezier(.37,0,.63,1) -1.7s infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-paused .plant-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-paused .wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-paused .purple-wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.plant-paused .plant-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.plant-paused .wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.purple-paused .purple-wing{animation-play-state:paused;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .plant-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active:not(.ambient-paused):not(.purple-paused) .purple-wing{will-change:transform;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .motion-scene{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .art-fallback{visibility:visible;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .plant-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .purple-wing{animation:none;}
+@keyframes plant-breeze{0%,100%{transform:rotate(calc(0deg - var(--sway-angle)))}50%{transform:rotate(var(--sway-angle))}}
+@keyframes wing-left-flex{0%,14.285714%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}50%{transform:rotate3d(.45,.89,0,var(--left-fold))}}
+@keyframes wing-right-flex{0%,14.285714%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}50%{transform:rotate3d(.45,.89,0,calc(0deg - var(--right-fold)))}}
+@keyframes purple-left-flex{0%,85.714286%,100%{transform:rotate3d(.45,.89,0,-5deg)}42.857143%{transform:rotate3d(.45,.89,0,var(--purple-left-fold))}}
+@keyframes purple-right-flex{0%,85.714286%,100%{transform:rotate3d(.45,.89,0,0deg)}42.857143%{transform:rotate3d(.45,.89,0,calc(0deg - var(--purple-right-fold)))}}
+@media(max-width:850px){
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-canvas{aspect-ratio:853/1844;--sway-angle:.65deg;--left-fold:16deg;--right-fold:18deg;--purple-left-fold:23deg;--purple-right-fold:27.6deg;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .scene-desktop{display:none;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .scene-mobile{display:block;}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .motion-scene{visibility:hidden!important;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-fallback{visibility:visible!important;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-body{visibility:hidden!important;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-rest{visibility:visible!important;}
+  :is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .plant-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .wing,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .purple-wing{animation:none!important;}
+}
+
+
+/* Each separate flower keeps its source orientation and pivots at its own stem base. */
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .flower-rig{position:absolute;inset:0;pointer-events:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .flower-image{position:absolute;display:block;max-width:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .flower-top{z-index:3;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .flower-right{z-index:2;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .flower-left{z-index:1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .leaf-rig{z-index:0;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .petal-surface{position:absolute;display:block;pointer-events:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-image.petal-rendered{visibility:hidden;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.independent-flowers .motion-scene{visibility:visible!important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .flower-rig{animation:individual-flower-sway var(--flower-cycle) cubic-bezier(.37,0,.63,1) infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-top{--flower-cycle:14s;--flower-direction:1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-right{--flower-cycle:16s;--flower-direction:-1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-left{--flower-cycle:12s;--flower-direction:1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-rig{--sway-first:calc(var(--sway-angle) + 1deg);--sway-second:calc(0deg - var(--sway-angle));}
+:is(#account-root,#membership-root,#launch-root) .design-launch .flower-rig.flower-right{--sway-first:calc(0deg - var(--sway-angle));--sway-second:calc(var(--sway-angle) + 1deg);}
+@keyframes individual-flower-sway{0%,50%,100%{transform:rotate(0deg)}25%{transform:rotate(var(--sway-first))}75%{transform:rotate(var(--sway-second))}}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-paused .flower-rig,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.plant-paused .flower-rig{animation-play-state:paused;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active:not(.ambient-paused):not(.plant-paused) .flower-rig{will-change:transform;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .flower-rig{animation:none!important;}
+@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .flower-rig{animation:none!important;}}
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .white-hover{position:absolute;inset:0;z-index:4;transform:translateY(-14px);pointer-events:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-active .white-hover{animation:butterfly-hover 6s ease-in-out infinite;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.ambient-paused .white-hover,:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.plant-paused .white-hover{animation-play-state:paused;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer.reduced-motion .white-hover{animation:none!important;}
+@keyframes butterfly-hover{0%,100%{transform:translate3d(0,-14px,0) rotate(-.4deg)}50%{transform:translate3d(3px,-22px,0) rotate(.4deg)}}
+@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .white-hover{animation:none!important;}}
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch.wave-intro-pending .text-layer :is(.brand,.eyebrow,h1,.amount-line,.conversion,.rule,.notice,.buttons,.leaderboard){animation-play-state:paused!important;}
+@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-launch.wave-intro-pending .text-layer :is(.brand,.eyebrow,h1,.amount-line,.conversion,.rule,.notice,.buttons,.leaderboard){animation:none!important;}}
+
+@font-face { font-family: LaunchWordmark; src: url("/assets/collective/b9bd5355968c7668db00.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: LaunchFancy; src: url("/assets/collective/493b16e633873e0340e2.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: LaunchBrilliantRegular; src: url("/assets/collective/71ea450f47efdb271f0e.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: LaunchBrilliantMedium; src: url("/assets/collective/efb754d1e2ba00e37492.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope{color-scheme: dark; --paper: #F3F0EB; --muted: #AAA9A7; --border: #A8A4AC; --lilac: #C69BE7; --background: #000; --entrance: cubic-bezier(.2,.75,.2,1);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope *{box-sizing: border-box;}
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope ::selection{color: rgb(0, 0, 0); background: var(--lilac);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input{font: inherit;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope a,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input{-webkit-tap-highlight-color: transparent;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope a{touch-action: manipulation; color: inherit;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button{cursor: pointer;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button:focus-visible,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope a:focus-visible,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input:focus-visible,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope canvas:focus-visible{outline: 2px solid var(--lilac); outline-offset: 5px;}
+
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .brand-inline,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope #menu-title{font-family: LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif; font-weight: 400; font-kerning: normal; letter-spacing: normal; white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark{font-size: clamp(23px, 1.75vw, 32px); line-height: 1.2; text-decoration: none;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .icon-button{display: grid; place-items: center; width: 44px; height: 44px; padding: 7px; border: 0px; background: transparent;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .icon-button svg{width: 100%; height: 100%; fill: none; stroke: currentcolor; stroke-width: 1.1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{position: relative; width: min(46vw, 740px); margin-left: 11.45%; padding-top: clamp(144px, 17.55svh, 200px); padding-bottom: 148px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow{display: flex; align-items: center; gap: clamp(24px, 2vw, 34px); margin: 0px; font-style: normal; font-variant: normal; font-size-adjust: none; font-language-override: normal; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-weight: 400; font-stretch: normal; font-size: clamp(24px, 2.55vw, 43px); line-height: 1.2; font-family: LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif; font-kerning: normal; letter-spacing: normal; white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow::after{content: ""; width: clamp(48px, 4.8vw, 80px); height: 1px; flex: 0 0 auto; background: var(--border);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{margin: 36px 0px 32px; font-size: clamp(60px, 5.2vw, 94px); line-height: 1.04; font-weight: 400; letter-spacing: -0.025em;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 span,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 em{display: block; white-space: nowrap;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 em{color: var(--lilac); font-size: 1.06em; font-weight: 400; letter-spacing: -0.01em;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{margin: 0px; max-width: 65ch; font-size: clamp(20px, 1.6vw, 27px); line-height: 1.46; letter-spacing: normal;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{width: min(100%, 550px); margin-top: 32px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action{position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 51px; min-height: 51px; max-height: 51px; padding: 0px 42px; border: 1px solid var(--border); border-radius: 0px; background: transparent; color: var(--paper); font: 600 11px / 1.3 LaunchBrilliantMedium, Arial, sans-serif; letter-spacing: 0.7px; text-transform: uppercase; transition: background-color 250ms, color 250ms, border-color 250ms;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button:hover,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action:hover{background: var(--paper); border-color: var(--paper); color: rgb(0, 0, 0);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button svg,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action > svg{position: absolute; right: 20px; width: 20px; height: 20px; fill: none; stroke: currentcolor; stroke-width: 1.3; transition: transform 250ms;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button:hover svg,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action:hover > svg{transform: translateX(3px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link{display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 24px; padding: 0px; background: none; border: 0px; font-size: clamp(20px, 1.55vw, 26px); line-height: 1.35; text-decoration: none; transition: color 250ms;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link span{position: relative;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link span::after{content: ""; position: absolute; left: 0px; right: 0px; bottom: -3px; height: 1px; background: currentcolor;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:hover{color: var(--lilac);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:disabled{opacity: 0.6; cursor: default;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:disabled:hover{color: inherit;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:disabled span::after{display: none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link svg{width: 24px; height: 24px; fill: none; stroke: currentcolor; stroke-width: 1.2;}
+
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog{width: min(520px, -40px + 100vw); max-height: calc(-40px + 100svh); overflow: auto; margin: auto; padding: 48px 32px 32px; border: 1px solid var(--border); background: rgb(8, 7, 8); color: var(--paper);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog::backdrop{background: rgba(0, 0, 0, 0.8);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog h2{margin: 0px 0px 20px; font-size: clamp(32px, 3vw, 42px); font-weight: 400; line-height: 1.12; letter-spacing: -0.7px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog p{font-size: 20px; line-height: 1.45;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog > p:not(.dialog-label){margin-bottom: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope #menu-title{font-size: 30px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-close{position: absolute; top: 8px; right: 8px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-close svg{width: 22px; height: 22px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-label{margin-top: 0px; font: 400 15px / 1.4 LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif; letter-spacing: normal; text-transform: uppercase; color: var(--lilac);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .field-label{display: block; margin-bottom: 5px; font: 400 clamp(16px, 1.18vw, 19px) / 1.3 LaunchFancy, Georgia, serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input{width: 100%; height: 33px; padding: 0px 0px 6px; border-top: 0px; border-right: 0px; border-left: 0px; border-image: none; border-bottom: 1px solid var(--border); border-radius: 0px; color: var(--paper); background: transparent; caret-color: var(--lilac); font: 400 16px / 1.35 LaunchBrilliantRegular, Arial, sans-serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input::placeholder{color: var(--muted); opacity: 1;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action{margin-top: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .preview-note{color: var(--muted); font: 400 14px / 1.5 LaunchFancy, Georgia, serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .status{min-height: 24px; color: var(--lilac); font: 400 14px / 1.5 LaunchBrilliantRegular, Arial, sans-serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links{display: grid; justify-items: start; gap: 16px; margin-top: 24px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links a,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links button{position: relative; width: fit-content; min-height: 44px; display: grid; align-items: center; padding: 0px; border: 0px; background: none; font: 400 18px / 1.4 LaunchBrilliantRegular, Arial, sans-serif; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links a::after,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links button::after{content: ""; position: absolute; left: 0px; right: 0px; bottom: 4px; height: 1px; background: currentcolor; transform: scaleX(0); transform-origin: right center; transition: transform 400ms;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links a:is(:hover, :focus-visible)::after, :is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links button:is(:hover, :focus-visible)::after{transform: scaleX(1); transform-origin: left center;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links a:hover,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .menu-links button:hover{color: var(--lilac);}
+@media (min-width: 901px) and (max-height: 700px){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{padding-top: 128px; padding-bottom: 132px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{margin-top: 24px; margin-bottom: 24px;}}
+@media (max-width: 900px){
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark{font-size: 26px;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{order: 1; width: auto; margin: 0px 32px; padding-top: 144px; padding-bottom: 48px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow{font-size: 30px; gap: 24px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow::after{width: 64px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{margin-top: 32px; margin-bottom: 24px; font-size: clamp(64px, 9vw, 78px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{max-width: 40ch; font-size: 24px; line-height: 1.45;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description br{display: none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{width: min(100%, 550px); margin-top: 32px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link{margin-top: 24px; font-size: 23px;}
+
+
+}
+@media (max-width: 600px){
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark{font-size: 22px;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{margin: 0px 24px; padding-top: 132px; padding-bottom: 40px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow{font-size: clamp(20px, 5.5vw, 27px); gap: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow::after{width: 40px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{font-size: clamp(45px, 12.5vw, 72px); line-height: 1.08; margin-top: 32px; margin-bottom: 24px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{font-size: 21px; line-height: 1.45;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{margin-top: 28px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link{gap: 8px; font-size: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link svg{width: 21px;}
+
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog{padding: 48px 24px 24px;}}
+@media (prefers-reduced-motion: reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope *,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope ::before,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope ::after{animation: auto ease 0s 1 normal none running none !important; transition-duration: 0ms !important;}}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope{--paper: #F3F0EB; --muted: #AAA3AA; --border: #89848C; --lilac: #C69BE7;}
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .brand-inline,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope #menu-title{font-kerning: normal; font-family: LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif !important; letter-spacing: 0.045em !important; font-weight: 400 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark{font-size: clamp(20px, 1.45vw, 26px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{width: min(49vw, 740px); margin-left: 11.7%; padding-top: clamp(150px, 20vh, 220px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow{font-family: LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif !important; font-size: clamp(14px, 1.25vw, 18px) !important; font-weight: 400 !important; letter-spacing: 0.05em !important; line-height: 1.3 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow::after{width: clamp(40px, 4.5vw, 64px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{color: rgb(243, 240, 235); font-family: LaunchBrilliantRegular, Arial, sans-serif !important; font-size: clamp(32px, 3.35vw, 52px) !important; font-weight: 400 !important; line-height: 1.12 !important; letter-spacing: -0.7px !important; margin: 34px 0px 25px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 span,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 em{font-family: LaunchBrilliantRegular, Arial, sans-serif !important; font-weight: 400 !important; line-height: 1.12 !important; letter-spacing: -0.7px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 em{font-style: normal !important; font-size: 1em !important; color: rgb(243, 240, 235) !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{font-weight: 400; color: rgb(196, 192, 195); max-width: 55ch; font-family: LaunchFancy, Georgia, serif !important; font-size: clamp(15px, 1.1vw, 19px) !important; line-height: 1.48 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{width: min(100%, 550px); margin-top: 34px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action{width: 100%; height: 51px !important; min-height: 51px !important; max-height: 51px !important; border: 1px solid rgb(137, 132, 140) !important; box-shadow: none !important; font-family: LaunchBrilliantMedium, Arial, sans-serif !important; font-size: 11px !important; font-weight: 600 !important; letter-spacing: 0.7px !important; text-transform: uppercase !important; justify-content: center !important; text-align: center !important; transition: background-color 0.25s, color 0.25s, border-color 0.25s !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button:hover,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-action:hover{background: rgb(243, 240, 235) !important; color: rgb(8, 7, 8) !important; border-color: rgb(243, 240, 235) !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link{font-weight: 400; margin-top: 22px; font-family: LaunchFancy, Georgia, serif !important; font-size: clamp(15px, 1.15vw, 19px) !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link span::after{transform: scaleX(0); transform-origin: right center; transition: transform 0.38s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:hover span::after,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link:focus-visible span::after{transform: scaleX(1); transform-origin: left center;}
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .dialog-label{font-family: LaunchWordmark, LaunchBrilliantRegular, Arial, sans-serif !important; font-size: 14px !important; letter-spacing: 0.04em !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog h2{font-family: LaunchBrilliantRegular, Arial, sans-serif !important; font-size: clamp(32px, 3vw, 47px) !important; line-height: 1.12 !important; letter-spacing: -0.7px !important; font-weight: 400 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog p{font-family: LaunchFancy, Georgia, serif; font-size: clamp(15px, 1.2vw, 18px);}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .field-label{font-family: LaunchFancy, Georgia, serif !important; font-size: 16px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input{font-family: LaunchBrilliantRegular, Arial, sans-serif !important; font-size: 16px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .preview-note{font-family: LaunchFancy, Georgia, serif !important; font-size: 13px !important;}
+@media (max-width: 900px){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{width: auto; margin: 0px 6%; padding-top: 135px; padding-bottom: 34px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .eyebrow{font-size: 16px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{font-size: clamp(32px, 5.8vw, 47px) !important; margin: 24px 0px 20px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{font-size: 16px !important; line-height: 1.45 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{margin-top: 25px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .pinball-link{font-size: 16px !important;}
+}
+@media (max-width: 600px){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{margin: 0px 6%; padding-top: 115px; padding-bottom: 26px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .wordmark{font-size: 20px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1{font-size: clamp(30px, 7.7vw, 43px) !important; line-height: 1.13 !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 span,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope h1 em{white-space: normal;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .description{font-size: 15px !important;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .action-group{width: 100%; max-width: 100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .join-button{width: 100% !important;}
+}
+@media (prefers-reduced-motion: reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > h1,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .description,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .action-group,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog[open]{animation: auto ease 0s 1 normal none running none !important;}}
+
+
+
+
+
+
+
+
+
+@keyframes wing-breathe {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.8deg); }
+}
+@keyframes wing-breathe-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-1.8deg); }
+}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{z-index: 2;}
+@media (min-width: 901px){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy{padding-top: clamp(205px, 55px + 20vh, 275px);}}
+@media (max-width: 900px){}
+@keyframes enter-down {
+  0% { opacity: 0; transform: translateY(-42px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > h1,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .description,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .action-group{animation: 850ms cubic-bezier(0.2, 0.75, 0.2, 1) 0s 1 normal both running enter-down;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .eyebrow{animation-delay: 0.12s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > h1{animation-delay: 0.22s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .description{animation-delay: 0.32s;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .action-group{animation-delay: 0.42s;}
+@media (prefers-reduced-motion: reduce){:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > h1,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .description,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy > .action-group{animation: auto ease 0s 1 normal none running none !important;}}
+
+
+
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope{--paper:#F3F0EB;--muted:#AAA3AA;--border:#89848C;--lilac:#C69BE7;color:var(--paper);font-family:LaunchFancy,Georgia,serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer.launch-scope .reward .copy{position:relative;width:100%;max-width:none;margin:0;padding:0;text-align:left;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer.launch-scope .reward .copy>.brand{position:static;top:auto;left:auto;width:auto;margin:0;padding:0;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer.launch-scope .reward .copy>.brand::after{content:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy button,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy a,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog{pointer-events:auto;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy h1{max-width:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog{font-family:LaunchFancy,Georgia,serif;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog input{min-height:44px;}
+:is(#account-root,#membership-root,#launch-root) .design-launch{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope input{-webkit-appearance:none;appearance:none;box-shadow:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope button{font-synthesis:none;}
+:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope dialog{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));width:min(520px,calc(100vw - 40px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));overscroll-behavior:contain;}
+@supports not (height:100svh){:is(#account-root,#membership-root,#launch-root) .design-launch .page.text-layer{min-height:100vh;}}
+@supports not (overflow:clip){:is(#account-root,#membership-root,#launch-root) .design-launch,:is(#account-root,#membership-root,#launch-root) .design-launch{overflow-x:hidden;}:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer{overflow:hidden;}}
+@media(max-width:850px){:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer{align-items:end;}}
+@media(min-width:701px) and (max-width:850px){:is(#account-root,#membership-root,#launch-root) .design-launch .art-layer .art-canvas{position:absolute;left:0;bottom:0;width:min(100%,620px);height:auto;}}
+:is(#account-root,#membership-root,#launch-root) .design-launch.wave-intro-pending .launch-scope .copy>*{animation-play-state:paused!important;}
+@media(max-width:850px){:is(#account-root,#membership-root,#launch-root) .design-launch .text-layer.launch-scope .reward .copy{text-align:left;}:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy h1 span,:is(#account-root,#membership-root,#launch-root) .design-launch .launch-scope .copy h1 em{white-space:normal;}}
+:is(#account-root,#membership-root,#launch-root) .design-launch{display:block;min-height:100svh;position:relative;isolation:isolate;margin:0;color:#f3f0eb}
+:is(#account-root,#membership-root,#launch-root) .design-launch .sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+:is(#account-root,#membership-root,#launch-root) .design-launch .feedback{overflow-wrap:anywhere}

@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {normalisePhone,countries,phoneCountry,maskedPhone} from '../membership-source/src/phone.js';
 import {formatPoints,rewardMoney,resultHeadline,leaveCopy,birthDateState,splitPlayerName,publicPlayerName,validPlayerName,validPublicName} from '../game-source/src/player-copy.ts';
+import {registrationDetails,registrationPayload,normaliseDesignPhone} from '../collective-source/auth-values.js';
 
 test('result and leave copy preserves exact scores without rounding money upwards',()=>{
  assert.equal(formatPoints(3200),'3,200');assert.equal(rewardMoney(3205),'₹320.5');assert.equal(rewardMoney(9),'₹0.9');assert.equal(rewardMoney(-5),'₹0');
@@ -34,17 +35,15 @@ test('country menus put India first without changing alphabetical order for othe
  assert.deepEqual(rest.map(country=>country.name),[...rest].sort((a,b)=>a.name.localeCompare(b.name)).map(country=>country.name));
 });
 
-test('early-access signup requires both displayed consents without recording unaccepted Terms',()=>{
- const source=readFileSync(new URL('../membership-source/src/main.jsx',import.meta.url),'utf8');
- const validation=source.slice(source.indexOf('  function validate()'),source.indexOf('  async function sendCode'));
- const submission=source.slice(source.indexOf('  function begin('),source.indexOf('  async function confirm('));
- let errors,status,requests=0;
- const context={joining:true,reauth:false,details:{name:'Asha Kapoor',email:'asha@example.test',termsAccepted:false,privacyAccepted:false,marketingConsent:false},identity:{phone:'9876543210',country:'IN'},validPlayerName,normalisePhone,setErrors:value=>errors=value,setStatus:value=>status=value,document:{getElementById:()=>({focus(){}})},busy:false,config:{otpAvailable:true,policies:{terms:'https://example.test/terms',privacy:'https://example.test/privacy'}},run:()=>requests++};
- const form=vm.runInNewContext(validation+submission+';({validate,begin})',context);
- assert.equal(form.validate(),false);assert.ok(errors.terms);assert.ok(errors.marketing);
- context.details.privacyAccepted=true;assert.equal(form.validate(),false);assert.equal(errors.terms,undefined);assert.ok(errors.marketing);
- context.details.marketingConsent=true;assert.equal(form.validate(),true);
- form.begin({preventDefault(){}});assert.equal(requests,0);assert.match(status,/not available yet/);assert.equal(context.details.termsAccepted,false);
- context.joining=false;context.details.termsAccepted=true;context.details.marketingConsent=false;
- form.begin({preventDefault(){}});assert.equal(requests,1,'normal points registration retains optional marketing consent and its existing API flow');
+test('the account design maps explicit consent, DOB and city into the existing registration contract',()=>{
+ const values={title:'Ms',name:'Asha Kapoor',day:'1',month:'1',year:'1990',city:'Pune',country:'+91',phone:'9876543210',email:'asha@example.test',terms:true,updates:false};
+ assert.throws(()=>registrationDetails({...values,terms:false}),/terms/);
+ assert.throws(()=>registrationDetails({...values,day:'31',month:'2'}),/date of birth/);
+ const details=registrationDetails(values);
+ assert.equal(details.phoneNumber,'+919876543210');assert.equal(details.dateOfBirth,'1990-01-01');assert.equal(details.city,'Pune');
+ assert.equal(details.termsAccepted,true);assert.equal(details.marketingConsent,false);assert.equal(details.leaderboardName,'Asha K.');
+ const payload=registrationPayload({...details,points:999999,rewardValue:999999},'verified-token','game-reference');
+ assert.equal(payload.gameId,'game-reference');assert.equal(payload.verificationToken,'verified-token');assert.equal('points' in payload,false);assert.equal('rewardValue' in payload,false);
+ assert.equal(normaliseDesignPhone('020 7946 0018','+44'),'+442079460018');
+ assert.equal('gameId' in registrationPayload(details,'verified-token'),false,'creating an account without a game cannot invent rewards');
 });

@@ -1,0 +1,24 @@
+.auth-flow-notice{box-sizing:border-box;position:relative;min-height:100svh;padding:clamp(120px,18vh,200px) max(7vw,24px) 60px;color:#eee6f4;background:radial-gradient(ellipse at 60% 70%,#28123e,#08050d 70%);font:18px/1.5 Arial,sans-serif}
+.auth-flow-notice h1{max-width:19ch;margin:20px 0;font-size:clamp(34px,5vw,62px);font-weight:400;line-height:1.15}
+.auth-flow-notice p{max-width:46em}
+.auth-flow-actions{display:flex;gap:18px;flex-wrap:wrap;margin-top:30px}
+.auth-flow-notice button,.auth-flow-actions a{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 28px;background:transparent;color:inherit;border:1px solid #a98abe;font:16px/1.4 Arial,sans-serif;text-decoration:none;cursor:pointer}
+.auth-flow-actions>:first-child{background:#c9ff32;border-color:#c9ff32;color:#132000}
+.auth-flow-close{position:fixed;z-index:50;right:80px;top:16px;width:44px;height:44px;border:0;background:transparent;color:#fff;font:32px/1 Arial,sans-serif;cursor:pointer}
+.auth-flow-back{position:fixed;z-index:30;right:80px;top:16px;min-height:44px;padding:8px 12px;border:0;background:transparent;color:#fff;font:15px/1.5 Arial,sans-serif;cursor:pointer}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{position:absolute;left:6.2%;top:96px;z-index:4;min-height:44px;padding:8px 0;border:0;background:transparent;color:#eee;font:15px/1.4 Arial,sans-serif;cursor:pointer}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-resend{margin-top:16px}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-resend button{min-height:40px;border:0;background:none;padding:4px 0;color:#e8dcef;font:14px/1.5 Fancy,Georgia,serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-resend button:disabled{opacity:.55;cursor:default}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-sign-in{display:inline;min-height:0;padding:0;border:0;background:none;color:#eee;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-invitation{max-width:100%;white-space:normal;text-wrap:balance}
+.auth-flow-notice :focus-visible,.auth-flow-close:focus-visible{outline:2px solid #c9ff32;outline-offset:4px}
+@media(max-width:700px){.auth-flow-actions{flex-direction:column}.auth-flow-close{right:62px;top:10px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:80px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-invitation{font-size:clamp(25px,6.4vw,32px)}}
+:is(#account-root,#membership-root,#launch-root) .design-account .radio-label input{min-height:0;padding:0;flex:0 0 20px}
+@media(max-width:900px){
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell{padding-top:110px!important}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.text-layer{padding-top:132px}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content{margin-top:24px!important}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:80px}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell :is(#create-form,#login-form) :is(.text-line,.select){font-size:16px!important}
+}

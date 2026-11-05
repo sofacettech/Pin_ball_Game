@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import {fileURLToPath} from 'node:url';
 import {build,transform} from 'esbuild-wasm';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {leaveCopy} from '../game-source/src/player-copy.ts';
 
 const require=createRequire(import.meta.url);
-const bundle=await build({entryPoints:[new URL('../game-source/src/score-page.jsx',import.meta.url).pathname],bundle:true,platform:'node',format:'cjs',packages:'external',loader:{'.css':'empty'},write:false});
+const bundle=await build({entryPoints:[fileURLToPath(new URL('../game-source/src/score-page.jsx',import.meta.url))],bundle:true,platform:'node',format:'cjs',packages:'external',loader:{'.css':'empty'},write:false});
 const module={exports:{}};vm.runInNewContext(bundle.outputFiles[0].text,{module,exports:module.exports,require});
 const {ScorePage}=module.exports;
 const result=points=>({points,rewardValue:points/10,completedAt:123,gameId:'verified-game-reference',status:'completed'});
@@ -43,7 +44,7 @@ async function controllerFixture(){
    addEventListener(type,fn){this[type+'Listener']=fn},showModal(){this.open=true},close(){this.open=false;this.closeListener?.()},click(){this.onclick?.()}});
   return nodes.get(id);
  };
- const source=readFileSync(new URL('../game-source/src/post-game-rewards.ts',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
+ const source=readFileSync(new URL('../game-source/src/post-game-rewards.ts',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'');
  const compiled=await transform(source,{loader:'ts',format:'cjs'}),exports={};
  const context={exports,module:{exports},Date,Math,Number,URL,location:{origin:'http://test.local',href:'http://test.local/play.html'},
   document:{getElementById:node,querySelector:()=>node('header'),body:{prepend(){}},addEventListener:(key,fn)=>events.set(key,fn)},
