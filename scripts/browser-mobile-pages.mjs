@@ -62,7 +62,7 @@ try{await withRewardsSite(async({origin})=>{
     results.push({page:'claim',width,height,held,logo: settled});
    }else{
     const desktop=await page.locator('.design-claim .art-layer').evaluate(e=>{const s=getComputedStyle(e);return {position:s.position,right:s.right,bottom:s.bottom,opacity:s.opacity};});
-    assert.deepEqual(desktop,{position:'absolute',right:'0px',bottom:'0px',opacity:'1'});results.push({page:'claim',width,height,desktopUnchanged:true});
+    assert.deepEqual(desktop,{position:'fixed',right:'0px',bottom:'0px',opacity:'1'});results.push({page:'claim',width,height,desktopArtworkFixed:true});
    }
    await fits(page,'.design-claim .content');
    assert.ok(!(await page.locator('.design-claim .signin').innerText()).includes('/'),'Claim question has no decorative slash');
