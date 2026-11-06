@@ -39,7 +39,7 @@ export default function LaunchPage({onJoin, onPlay}) {
     <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching soon"><div className="copy">
       <p className="eyebrow brand"><span>LAUNCHING SOON</span></p>
       <h1><span>Your diamond</span><em>is being cut.</em></h1>
-      <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> Join THE FIRST CUT for updates and early access.</p>
+      <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> Join “THE FIRST CUT” for updates and early access.</p>
       <div className="action-group">
         <button className="join-button" type="button" onClick={() => setJoinOpen(true)}><span>JOIN THE FIRST CUT</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball page coming soon'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>

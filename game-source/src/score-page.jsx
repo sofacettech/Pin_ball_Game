@@ -21,9 +21,9 @@ export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
     </div>
    </div>
    <hr className="rule"/>
-   {!low&&<p className="notice" id="rewards-expiry">Unsaved SO/ COINS disappear when you leave this page.</p>}
+   {!low&&<p className="notice" id="rewards-expiry">Unsaved coins disappear when you leave this page.</p>}
    <div className="buttons">
-    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}>SAVE MY SO/ COINS <Arrow/></button>}
+    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}>SAVE MY COINS <Arrow/></button>}
     <button className="btn" id="rewards-retry" type="button" onClick={onReplay}>PLAY AGAIN <Replay/></button>
    </div>
    <button className="leaderboard" id="rewards-leaderboard" type="button" onClick={onLeaderboard}>SEE FULL LEADERBOARD</button>

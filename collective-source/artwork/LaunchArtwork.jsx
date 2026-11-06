@@ -5,5 +5,5 @@ export function LaunchArtwork() {
 }
 
 export function LaunchMesh() {
-  return (<iframe className="mesh-layer" title="Interactive purple mesh — click or tap to reveal" src="/assets/collective/meshes/launch.html"></iframe>);
+  return (<iframe className="mesh-layer" title="Interactive purple mesh — click or tap to reveal" src="/assets/collective/meshes/launch.html?v=rules-20261106"></iframe>);
 }

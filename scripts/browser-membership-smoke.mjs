@@ -52,10 +52,10 @@ try{
         await frame.getByRole('button',{name:'← Back',exact:true}).click();assert.equal(await frame.locator('#new-name').inputValue(),'Test Member');assert.ok(await frame.locator('[name="terms"]').isChecked());
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
         await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').waitFor();
-        await frame.locator('#final-otp').fill('000000');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'That code doesn’t match'}).waitFor();assert.equal(awards.size,0);
-        state.profileWriteError={status:503,code:'service_unavailable'};await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+        await frame.locator('#final-otp').fill('000000');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'That code doesn’t match'}).waitFor();assert.equal(awards.size,0);
+        state.profileWriteError={status:503,code:'service_unavailable'};await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
         await frame.locator('#feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
-        await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+        await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       }
       await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
       assert.equal(awards.size,1);assert.deepEqual([...awards.values()],[320]);assert.equal(events.filter(e=>e.path==='/rewards/auth').length,1);assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,2);
@@ -88,12 +88,12 @@ try{
       await frame.locator('[name="terms"]').check();
       await capture(page,'07-direct-join-mobile');
       await frame.getByRole('button',{name:'SEND CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).waitFor();
       assert.equal(await frame.locator('[name="fullName"]').inputValue(),'Test Member');
       assert.equal(await frame.locator('[name="email"]').count(),0);
       assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
       await frame.locator('#final-otp').fill('012345');
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();
       assert.equal(awards.size,1);
       console.log(engine+': direct score → Join, consent, OTP and score save passed without Welcome');
@@ -108,8 +108,8 @@ try{
       const frame=await embed(page,origin,false);await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').waitFor();
       await frame.locator('#final-otp').fill('012345');await frame.locator('[name="mobile"]').fill('9876543211');assert.ok(await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).isDisabled());
       await page.clock.fastForward(61000);await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal('dateOfBirth' in sent[1],false);
-      assert.equal(verified.length,0);await frame.locator('#final-otp').fill('123456');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'Enter the new code'}).waitFor();
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal('dateOfBirth' in sent[1],false);
+      assert.equal(verified.length,0);await frame.locator('#final-otp').fill('123456');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'Enter the new code'}).waitFor();
       assert.equal(verified[0].phoneNumber,'+919876543211');assert.equal(verified[0].challengeId,'client-check-2');assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
       console.log(engine+': changed phone observes cooldown, requests a fresh OTP, clears old code and preserves game ID');
     }finally{await context.close();}
@@ -184,9 +184,9 @@ try{
       await frame.locator('[name="email"]').fill('test@example.invalid');
       await frame.locator('[name="terms"]').check();
       await frame.getByRole('button',{name:'SEND CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).waitFor();
       await frame.locator('#final-otp').fill('012345');
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       await game.locator('#registration-dialog').waitFor({state:'hidden'});
       await game.locator('#leaderboard-dialog').waitFor({state:'visible'});
       assert.equal(awards.size,1);

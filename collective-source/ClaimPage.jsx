@@ -41,14 +41,14 @@ export default function ClaimPage({name = '',phone = '',dialCode = '+91',challen
           </div>
           {collectDetails&&<label className="claim-email"><span className="sr-only">Email address</span><input autoComplete="email" className="field" name="email" placeholder="Email address" type="email" required maxLength={254} value={emailAddress} onChange={event=>setEmail(event.target.value)} disabled={working}/></label>}
           <label className="otp-field"><span className="sr-only">Six-digit confirmation code</span><input id="final-otp" autoComplete="one-time-code" className="field" inputMode="numeric" maxLength={6} name="otp" placeholder="OTP" value={otp} onChange={event=>setOtp(event.target.value.replace(/\D/g,''))} disabled={working||collectDetails} /></label>
-          <p className="signin">Already saved your <span className="inline-coins">SO/ Coins</span>? {onSignIn&&<button className="claim-sign-in" type="button" disabled={working} onClick={onSignIn}>Sign in</button>}</p>
+          <p className="signin">Already saved your <span className="inline-coins">coins</span>? {onSignIn&&<button className="claim-sign-in" type="button" disabled={working} onClick={onSignIn}>Sign in</button>}</p>
           <p className="help">{collectDetails?'We’ll send a code by WhatsApp or SMS to confirm it’s you.':changed?'Your number changed. Send a new code to verify it.':'Enter the code sent by WhatsApp or SMS to confirm it’s you.'}</p>
           <p className="help">Your points can be used after the launch and expire 6 months after the launch. Terms apply.</p>
           {collectDetails&&<div className="claim-consents">
             <label className="consent"><input name="terms" type="checkbox" required disabled={working}/><span>I'm 18 or older and I agree to the <a href={termsUrl} aria-disabled={!termsUrl}>Terms and Conditions</a> and <a href={privacyUrl} aria-disabled={!privacyUrl}>Privacy Policy</a>, and I agree to receive a verification code.</span></label>
             <label className="consent"><input name="updates" type="checkbox" disabled={working}/><span>Send me SO/ FACET news and launch updates.</span></label>
           </div>}
-          <div className="buttons"><button className="btn" type="submit" disabled={working || busy || changed && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':collectDetails?'SEND CODE':changed?'SEND NEW CODE':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
+          <div className="buttons"><button className="btn" type="submit" disabled={working || busy || changed && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':collectDetails?'SEND CODE':changed?'SEND NEW CODE':'SAVE MY COINS'}</span><Arrow /></button></div>
           {!collectDetails&&<div className="claim-resend"><button type="button" disabled={working || busy || resendSeconds>0 || changed} onClick={()=>void submit(onResend,{},'Please request another code later.')}>{resendSeconds>0?'Resend code in '+resendSeconds+'s':'Resend code'}</button></div>}
           <p aria-live="polite" className="feedback" id="feedback" role="status">{status || message}</p>
         </form>

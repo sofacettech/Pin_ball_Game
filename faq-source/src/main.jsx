@@ -152,7 +152,7 @@ function App() {
     <a className="site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a>
     <main className={'faq-main'+(selected?' is-open':'')} id="faqs" ref={main} tabIndex={-1}>
       <div className="faq-intro">
-        <h1>HOW POINTS WORK / FAQ</h1>
+        <h1>HOW POINTS WORK</h1>
         <p><BrandText>A little more about the game, your points and SO/ FACET.</BrandText></p>
       </div>
       <nav className="help-grid" aria-label="Help topics">
