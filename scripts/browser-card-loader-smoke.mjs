@@ -46,6 +46,8 @@ try{await withRewardsSite(async({origin})=>{
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#game-loader-cards-root img')].map(image=>image.decode()));});
    await settled(page,'Diamond');assert.equal(await page.locator('#game-loading-screen canvas,.loading-statement').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
+   assert.equal(await page.locator('.card-hint').innerText(),mobile?'Swipe to discover your next facet.':'Click to discover your next facet.');
+   const hint=await page.locator('.card-hint').boundingBox();assert.ok(hint.y>box.y+box.height+12&&hint.y+hint.height<=(width===320?568:900),'Card hint fits below the deck');
    await capture(page,width+'-diamond');
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Jewellery');await capture(page,width+'-jewellery');

@@ -10,7 +10,10 @@
 .game-loader-cards, .game-loader-cards * { box-sizing: border-box; }
 
 .game-loader-cards {height:100%;display:grid;}
-.game-loader-cards .gallery { min-height: 100%; display: grid; }
+.game-loader-cards .gallery { position:relative;min-height: 100%; display: grid; }
+.game-loader-cards .card-hint{position:absolute;top:calc(50% + var(--card-width)*1330/806/2 + 24px);left:20px;right:20px;margin:0;color:#cbd0d5;text-align:center;font:400 14px/1.5 LoaderBrilliant,sans-serif;letter-spacing:.025em;pointer-events:none}
+.game-loader-cards .card-hint-mobile{display:none}
+@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}.game-loader-cards .card-hint-mobile{display:inline}}
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }
 .game-loader-cards .deck:focus-visible { outline: 1px solid #a6b5bd; outline-offset: 14px; }
