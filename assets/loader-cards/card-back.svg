@@ -9,14 +9,13 @@
     <linearGradient id="reflections" x1="0" y1="40" x2="0" y2="1320" gradientUnits="userSpaceOnUse">
       <stop stop-color="#fff" stop-opacity=".72"/><stop offset=".13" stop-color="#000" stop-opacity=".1"/><stop offset=".2" stop-color="#fff" stop-opacity=".35"/><stop offset=".34" stop-color="#000" stop-opacity=".38"/><stop offset=".48" stop-color="#fff" stop-opacity=".35"/><stop offset=".61" stop-color="#000" stop-opacity=".42"/><stop offset=".73" stop-color="#fff" stop-opacity=".65"/><stop offset=".86" stop-color="#000" stop-opacity=".3"/><stop offset=".92" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#111" stop-opacity=".22"/>
     </linearGradient>
-    <radialGradient id="navy" cx="43%" cy="30%" r="85%">
-      <stop stop-color="#031c2b"/><stop offset=".55" stop-color="#001420"/><stop offset="1" stop-color="#000b12"/>
+    <radialGradient id="navy" cx="50%" cy="24%" r="65%" color-interpolation="sRGB">
+      <stop stop-color="#021322"/><stop offset=".48" stop-color="#011220"/><stop offset="1" stop-color="#000F1B"/>
     </radialGradient>
     <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
       <feTurbulence type="fractalNoise" baseFrequency=".68 .9" numOctaves="3" seed="17" result="noise"/>
-      <feColorMatrix in="noise" type="saturate" values="0"/>
-      <feComponentTransfer><feFuncA type="linear" slope=".16"/></feComponentTransfer>
-      <feBlend in="SourceGraphic" mode="soft-light"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feColorMatrix in="mono" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2666667 -.2666667 -.2666667 0 .4"/>
     </filter>
     <filter id="brush" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
       <feTurbulence baseFrequency=".006 .85" numOctaves="2" seed="4" result="noise"/>
@@ -32,8 +31,8 @@
     <path id="mark" fill-rule="evenodd" d="M478 1091 L502 1065 H584 L608 1091 V1158 H565 L583 1126 H554 L543 1103 L532 1126 H503 L521 1158 H478 Z M503 1102 H583 V1098 L574 1086 H512 L503 1098 Z"/>
   </defs>
   <!-- The navy panel, grain and frame are all vector-native. -->
-  <use href="#shield" fill="url(#navy)"/>
-  <g clip-path="url(#surface)"><rect x="145" y="22" width="795" height="1312" fill="url(#navy)" filter="url(#grain)"/></g>
+  <use href="#shield" fill="#011220"/>
+  <g clip-path="url(#surface)"><rect x="145" y="22" width="795" height="1312" fill="url(#navy)"/><rect x="145" y="22" width="795" height="1312" fill="#000" filter="url(#grain)"/></g>
   <!-- Layered strokes form the rolled outer and inner metal bevels. -->
   <use href="#shield" stroke="#101517" stroke-width="32" stroke-linejoin="round"/>
   <use href="#shield" stroke="#858985" stroke-width="28" stroke-linejoin="round"/>
