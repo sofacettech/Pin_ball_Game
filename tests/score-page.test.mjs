@@ -41,7 +41,7 @@ async function controllerFixture(){
  const nodes=new Map(),events=new Map(),captured={};
  const node=id=>{
   if(!nodes.has(id))nodes.set(id,{id,hidden:false,open:false,dataset:{},style:{setProperty(){}},offsetTop:1,offsetHeight:1,
-   setAttribute(key,value){this[key]=value},getAttribute(key){return this[key]},focus(){},prepend(){},querySelector:selector=>node(id+selector),
+   setAttribute(key,value){this[key]=value},getAttribute(key){return this[key]},focus(){captured.focused=id},prepend(){},querySelector:selector=>node(id+selector),
    addEventListener(type,fn){this[type+'Listener']=fn},showModal(){this.open=true},close(){this.open=false;this.closeListener?.()},click(){this.onclick?.()}});
   return nodes.get(id);
  };
@@ -55,12 +55,18 @@ async function controllerFixture(){
  vm.runInNewContext(compiled.code,context);
  const registered=[],openers=[],replays=[],boards=[];
  const controller=context.module.exports.connectPostGameRewards((value,opener)=>{registered.push(value);openers.push(opener.id)},()=>replays.push(true),()=>boards.push(true));
- return {controller,node,captured,registered,openers,replays,boards};
+ return {controller,node,captured,registered,openers,replays,boards,events};
 }
 test('score controller passes the immutable completed result and game ID into registration',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(3205,'real-game-id');
  assert.equal(fixture.captured.result.points,3205);assert.equal(fixture.captured.result.rewardValue,320.5);assert.equal(Object.isFrozen(fixture.captured.result),true);
  fixture.captured.actions.onSave();assert.equal(fixture.registered[0],fixture.captured.result);assert.equal(fixture.registered[0].gameId,'real-game-id');assert.equal(fixture.openers[0],'rewards-register');
+});
+test('the score heading receives focus after its styles finish loading without interrupting an open menu',async()=>{
+ const f=await controllerFixture();f.controller.show(200);f.captured.focused=null;
+ f.controller.dialog['sofacet:page-readyListener']();assert.equal(f.captured.focused,'rewards-resulth1');
+ f.node('nav-toggle').setAttribute('aria-expanded','true');f.captured.focused=null;
+ f.controller.dialog['sofacet:page-readyListener']();assert.equal(f.captured.focused,null);
 });
 test('close, keep, leave-anyway, replay and leaderboard retain their established flow',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(4800,'game');
@@ -73,10 +79,12 @@ test('close, keep, leave-anyway, replay and leaderboard retain their established
  fixture.controller.clear();fixture.controller.show(9);fixture.node('rewards-close').click();assert.equal(fixture.captured.destination,'/');
 });
 
-test('Skip game checks an unfinished score without treating it as a completed reward',async()=>{
- const f=await controllerFixture();f.controller.requestLeave('/launching-soon.html',25);
- assert.equal(f.controller.dialog.dataset.view,'leave');assert.equal(f.controller.result,null);
- f.node('rewards-keep').click();assert.equal(f.controller.dialog.open,false);assert.equal(f.registered.length,0);
- f.controller.requestLeave('/launching-soon.html',25);f.controller.dialog.oncancel({preventDefault(){}});assert.equal(f.controller.dialog.open,false);
- f.controller.requestLeave('/launching-soon.html',0);assert.equal(f.captured.destination,'/launching-soon.html');
+test('Skip game goes straight to its destination without a leave screen or unload prompt',async()=>{
+ for(const points of [null,0,25,3205]){
+  const f=await controllerFixture();if(points!==null)f.controller.show(points,'completed-game');
+  f.controller.skip('/launching-soon.html?nav=game');
+  assert.equal(f.captured.destination,'/launching-soon.html?nav=game');
+  assert.notEqual(f.controller.dialog.dataset.view,'leave');assert.equal(f.registered.length,0);
+  let prompted=false;f.events.get('beforeunload')({preventDefault(){prompted=true}});assert.equal(prompted,false);
+ }
 });

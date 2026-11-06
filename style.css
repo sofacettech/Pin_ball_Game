@@ -1,4 +1,4 @@
-@import url('./assets/navigation.css?v=7f89985346d3');
+@import url('./assets/navigation.css?v=8d0d35aaa0d3');
 :root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:italic;font-display:swap}
@@ -173,7 +173,6 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 .story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
 :root .site-nav .play-now{font-size:13px}
 
-/* Desktop links and the mobile Socials disclosure share the same profile links. */
 .social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}
 .social-profiles{display:flex;align-items:center;gap:24px}
 .social-links a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;text-decoration:none;font:400 18px/1.2 Biarty;font-synthesis:none;white-space:nowrap}

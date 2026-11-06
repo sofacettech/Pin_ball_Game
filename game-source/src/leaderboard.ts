@@ -2,7 +2,7 @@ import {setBrandText} from '../../shared/brand-text.ts';
 import {MAX_GAME_TICKS,MAX_INPUT_RUNS,REPLAY_VERSION,packInput} from './simulation.ts';
 import type {InputRun} from './simulation';
 import type {Input} from './physics';
-import {formatPoints,resultHeadline} from './player-copy';
+import {formatPoints,resultHeadline,leaderboardName} from './player-copy';
 import type {CompletedGameResult} from './post-game-rewards';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
@@ -52,7 +52,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   const selected=visibleEntries(board.entries,board.me);rows.replaceChildren();
   document.getElementById('leaderboard-score-label')!.textContent='Score';
   for(const entry of selected){const row=document.createElement('tr');if(entry.is_you){row.className='current-player';row.setAttribute('aria-label','Your position')}
-   for(const [index,value] of [entry.rank===null?'—':String(entry.rank),entry.is_you&&player?.member===false?'You':entry.display_name,new Intl.NumberFormat('en-IN').format(entry.points)].entries()){
+   for(const [index,value] of [entry.rank===null?'—':String(entry.rank),entry.is_you&&player?.member===false?'You':leaderboardName(entry.display_name),new Intl.NumberFormat('en-IN').format(entry.points)].entries()){
     const cell=document.createElement('td');cell.textContent=value;if(index===1&&entry.is_you&&value!=='You'){const you=document.createElement('span');you.className='you-label';you.textContent='You';cell.append(you)}row.append(cell);
    }rows.append(row);
   }
@@ -75,15 +75,15 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
    if(target.ended&&!target.submitted)await submit(target);
    let rewardError='';
    if(target.ended&&target.submitted&&player?.member&&target.id&&!target.rewardSaved){
-    try{const result=await request<{pointsSaved:boolean}>('/api/membership/rewards',{gameId:target.id});if(result.pointsSaved!==true)throw Error('Points have not been saved yet.');target.rewardSaved=true}
+    try{const result=await request<{pointsSaved:boolean}>('/api/membership/rewards',{gameId:target.id});if(result.pointsSaved!==true)throw Error('SO/ COINS have not been saved yet.');target.rewardSaved=true}
     catch(error){
      if(error instanceof Error&&'code' in error&&['invalid_token','rewards_verification_required'].includes(String(error.code))){
       if(current===revision){close();onJoin(true,{points:target.score!,rewardValue:target.score!/10,completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
      }
-     rewardError=error instanceof Error?error.message:'Points have not been saved yet.';
+     rewardError=error instanceof Error?error.message:'SO/ COINS have not been saved yet.';
     }
    }
-   if(current!==revision)return;const board=await request<Board>('/api/leaderboard');if(current===revision){paint(board);if(rewardError){status.textContent='Your score is recorded. Points could not be saved: '+rewardError;retry.hidden=false}else if(target.ended&&target.rewardSaved&&target.score!==undefined){summary.textContent=resultHeadline(target.score,target.previousBest)}}
+   if(current!==revision)return;const board=await request<Board>('/api/leaderboard');if(current===revision){paint(board);if(rewardError){status.textContent='Your score is recorded. SO/ COINS could not be saved: '+rewardError;retry.hidden=false}else if(target.ended&&target.rewardSaved&&target.score!==undefined){summary.textContent=resultHeadline(target.score,target.previousBest)}}
   }catch(error){if(current===revision){status.textContent=error instanceof Error?error.message:'Unable to load the leaderboard.';retry.hidden=false}}
   finally{if(current===revision)rows.removeAttribute('aria-busy')}
  }

@@ -2,12 +2,13 @@ import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import {BrandText} from '../../assets/brand-text.jsx';
+import {brandText} from '../../shared/brand-react.jsx';
 import {sections} from './questions';
 import './style.css';
 
 const topics = [
   {...sections[0], icon: 'basics.png', alias: 'basics'},
-  {...sections[1], navTitle: 'The game & your points', icon: 'game.svg', alias: 'games'},
+  {...sections[1], navTitle: 'The game & your SO/ COINS', icon: 'game.svg', alias: 'games'},
   {...sections[2], icon: 'details.png', alias: 'details'},
   {id: 'contact', navTitle: 'Contact us', alias: 'contact'},
 ];
@@ -18,10 +19,10 @@ const topicFromHash = () => {
 };
 
 const socials = [
-  {name: 'Instagram', href: 'https://www.instagram.com/so.facet?obrf=MWY4NzIydDY3bmUybg==', icon: <><rect x="3" y="3" width="26" height="26" rx="7"/><circle cx="16" cy="16" r="6"/><circle className="fill" cx="24" cy="8" r="2"/></>},
+  {name: 'Instagram', href: 'https://www.instagram.com/so.facet', icon: <><rect x="3" y="3" width="26" height="26" rx="7"/><circle cx="16" cy="16" r="6"/><circle className="fill" cx="24" cy="8" r="2"/></>},
   {name: 'Facebook', icon: <path className="fill" d="M19 31V17h4l1-5h-5V9c0-1.4.4-2 2-2h3V2h-4c-4.5 0-7 2.7-7 7v3H9v5h4v14z"/>},
-  {name: 'X', href: 'https://x.com/so_facet?s=11&t=MpVMDpjvxy77_g81vQ3U7w', icon: <path className="fill" d="M25.2 1.5h4.9L19.4 13.8 32 30.5h-9.9l-7.7-10.1-8.8 10.1H.6l11.5-13.1L0 1.5h10.1l7 9.2Zm-1.7 26h2.7L8.6 4.3H5.7Z"/>},
-  {name: 'YouTube', href: 'https://youtube.com/@so_facet?si=_lCL7Q40ECeZ60g1', icon: <><rect className="fill" x="1" y="5" width="30" height="22" rx="5"/><path className="cutout" d="m13 10 10 6-10 6z"/></>},
+  {name: 'X', href: 'https://x.com/so_facet', icon: <path className="fill" d="M25.2 1.5h4.9L19.4 13.8 32 30.5h-9.9l-7.7-10.1-8.8 10.1H.6l11.5-13.1L0 1.5h10.1l7 9.2Zm-1.7 26h2.7L8.6 4.3H5.7Z"/>},
+  {name: 'YouTube', href: 'https://www.youtube.com/@so_facet', icon: <><rect className="fill" x="1" y="5" width="30" height="22" rx="5"/><path className="cutout" d="m13 10 10 6-10 6z"/></>},
   {name: 'LinkedIn', href: 'https://www.linkedin.com/company/so-facet/', icon: <><rect className="fill" x="2" y="2" width="28" height="28" rx="2"/><circle className="cutout" cx="9" cy="10" r="2"/><path className="cutout-stroke" d="M9 15v11m7 0V15m0 5c0-7 9-7 9 0v6"/></>},
 ];
 
@@ -39,15 +40,8 @@ function Footer({mobile, onTopic}) {
   }
   return <footer className="site-footer">
     <div className="footer-inner">
-      <section className="newsletter" aria-labelledby="newsletter-title">
-        <h2 id="newsletter-title">Subscribe to our newsletter</h2>
-        <div className="newsletter-signup">
-          <div className="email">
-            <input type="email" placeholder="Email (required field) *" aria-label="Email" autoComplete="email" aria-describedby="newsletter-note" disabled />
-            <button className="newsletter-submit" type="button" disabled>Proceed</button>
-          </div>
-          <p className="footer-note" id="newsletter-note">Newsletter signup is coming soon.</p>
-        </div>
+      <section className="collective-invite" aria-label="Join the SO/ COLLECTIVE">
+        <a href="/membership.html?from=collective" target="_top">JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a>
       </section>
       <div className="footer-menu">
         <FooterColumn title="Customer" mobile={mobile}>
@@ -56,13 +50,14 @@ function Footer({mobile, onTopic}) {
           <li><a href="#faqs" onClick={event => topicLink(event,null)}>Help &amp; FAQs</a></li>
         </FooterColumn>
         <FooterColumn title="Our company" mobile={mobile}>
-          <li><a href="#the-basics" onClick={event => topicLink(event,'the-basics')}><BrandText>About SO/ FACET</BrandText></a></li>
-          <li><a href="#game-and-points" onClick={event => topicLink(event,'game-and-points')}>The game &amp; your points</a></li>
+          <li><a href="/about.html" target="_top"><BrandText>About SO/ FACET</BrandText></a></li>
+          <li><a href="#game-and-points" onClick={event => topicLink(event,'game-and-points')}>The game &amp; your SO/ COINS</a></li>
           <li><a href="#your-details" onClick={event => topicLink(event,'your-details')}>Your details</a></li>
         </FooterColumn>
         <FooterColumn title="Legal and privacy" mobile={mobile}>
-          <li><span>Terms</span></li>
-          <li><span>Privacy</span></li>
+          <li><a href="/terms.html">Terms</a></li>
+          <li><a href="/privacy.html">Privacy</a></li>
+          <li><a href="/privacy.html#privacy-9-cookies-pixels-and-similar-technologies" data-cookie-settings>Cookie settings</a></li>
           <li><a href="mailto:privacy@sofacet.com">Data requests</a></li>
         </FooterColumn>
         <section className="footer-social">
@@ -78,7 +73,7 @@ function Footer({mobile, onTopic}) {
         </section>
       </div>
       <div className="footer-bottom">
-        <div className="footer-contact"><span>Still have a question?</span><a href="mailto:hello@sofacet.com">hello@sofacet.com <span aria-hidden="true">↗</span></a></div>
+        <div className="footer-contact"><span>Still have a question?</span><a href="mailto:hello@sofacet.com">hello@sofacet.com</a></div>
         <a className="pinball" href="/play.html" target="_top">Play Pinball <span aria-hidden="true">→</span></a>
       </div>
     </div>
@@ -146,14 +141,14 @@ function App() {
     });
   }
 
-  return <>
+  return brandText(<>
     <div className="faq-navbar-background" aria-hidden="true"/>
     <a className="faq-skip" href="#faqs">Skip to FAQs</a>
     <a className="site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a>
     <main className={'faq-main'+(selected?' is-open':'')} id="faqs" ref={main} tabIndex={-1}>
       <div className="faq-intro">
-        <h1>HOW POINTS WORK</h1>
-        <p><BrandText>A little more about the game, your points and SO/ FACET.</BrandText></p>
+        <h1>HOW SO/ COINS WORK</h1>
+        <p><BrandText>A little more about the game, your SO/ COINS and SO/ FACET.</BrandText></p>
       </div>
       <nav className="help-grid" aria-label="Help topics">
         {topics.map((topic,index) => <button className="tile" key={topic.id} id={'topic-'+topic.alias} type="button"
@@ -162,7 +157,7 @@ function App() {
           {topic.icon
             ? <img src={'/assets/faq/'+topic.icon} width="48" height="48" alt=""/>
             : <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="11" width="42" height="27"/><path d="M3 12 24 30 45 12"/></svg>}
-          <span className="tile-number" aria-hidden="true">0{index+1}</span><span className="tile-label">{topic.navTitle}</span>
+          <span className="tile-number" aria-hidden="true">0{index+1}</span><span className="tile-label">{topic.alias==='games'?<>The game &amp;<br/><span className="tile-label-line">Your SO/ COINS</span></>:topic.navTitle}</span>
         </button>)}
       </nav>
       <div className="faq-shell" hidden={!selected&&!printing}>
@@ -187,7 +182,7 @@ function App() {
       </div>
     </main>
     <Footer mobile={mobile} onTopic={id => select(id,true)}/>
-  </>;
+  </>);
 }
 
 createRoot(document.getElementById('faq-root')).render(<App/>);

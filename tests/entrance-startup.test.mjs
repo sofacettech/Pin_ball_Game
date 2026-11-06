@@ -17,6 +17,7 @@ test('the 3D entrance shares copy, navigation and reveal without a video or a st
  assert.equal((html.match(/id="site-loader"/g)||[]).length,1);
  assert.ok(html.includes('id="skip-game"'));
  assert.ok(html.includes('data-scene-progress'));
+ for(const page of [source,html]){assert.match(page,/class="social-links"/);assert.match(page,/social-links\.js/);assert.match(page,/instagram\.com/);assert.match(page,/linkedin\.com/);}
  assert.doesNotMatch(html,/__SHARED_(LOADER|COPY|BRAND|ENTER|NAVIGATION)__/);
 });
 

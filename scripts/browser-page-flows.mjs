@@ -12,8 +12,8 @@ const output=process.env.SOFACET_SCREENSHOT_DIR,report=[];
 if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){if(output){await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:resolve(output,name+'.png')});}}
 const titles={
-  '/':"What's yours?",'/video':"What's yours?",'/play.html':'Pinball','/membership.html':'My points','/account.html':'My points',
-  '/faq.html':'How points work','/launching-soon.html':"What's yours?",'/first-cuts-confirmation.html':"What's yours?",'/privacy.html':'Privacy','/terms.html':'Terms',
+  '/':"What's yours?",'/video':"What's yours?",'/play.html':'Pinball','/membership.html':'My SO/ COINS','/account.html':'My SO/ COINS',
+  '/faq.html':'How SO/ COINS work','/launching-soon.html':'Launching in December','/first-cuts-confirmation.html':"What's yours?",'/privacy.html':'Privacy','/terms.html':'Terms',
 };
 try{
  await withRewardsSite(async({origin})=>{
@@ -28,18 +28,18 @@ try{
     await page.goto(origin+'/faq.html');const play=page.locator('.pinball');await play.scrollIntoViewIfNeeded();
     const button=await play.evaluate(e=>({border:parseFloat(getComputedStyle(e).borderTopWidth),height:e.getBoundingClientRect().height}));
     assert.ok(button.border>=1&&button.height>=44);await capture(page,width+'-faq-end');await play.click();await page.waitForURL('**/play.html');
-    await page.goto(origin+'/launching-soon.html');await page.getByRole('button',{name:'JOIN SO/ COLLECTIVE',exact:true}).click();await page.waitForURL('**/membership.html?from=collective');await page.locator('#create-tab[aria-selected=true]').waitFor();await page.goto(origin+'/launching-soon.html');
+    await page.goto(origin+'/launching-soon.html');await page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await page.waitForURL('**/membership.html?from=collective');await page.locator('#create-tab[aria-selected=true]').waitFor();await page.goto(origin+'/launching-soon.html');
     await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');
-    for(const [name,path] of [['Play Pinball','/play.html'],['Back to the world','/']]){
+    for(const [name,path] of [['Play Pinball','/play.html'],['My SO/ COINS','/account.html']]){
      await page.goto(origin+'/first-cuts-confirmation.html');await page.getByRole('link',{name:new RegExp('^'+name)}).click();await page.waitForURL(origin+path);
     }
     await page.route('**/api/player',r=>r.fulfill({json:{member:true,display_name:'Test M.',best_score:3205}}));
     await page.route('**/api/account',r=>r.fulfill({json:{name:'Test Member',leaderboardName:'Test M.',email:'test@example.invalid',phoneNumber:'+919876543210',marketingConsent:false,savedPoints:3200,bestPoints:3205,rank:14}}));
     await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('button',{name:'Share my score',exact:true}).click();await page.getByRole('heading',{name:'Your score. Your move.'}).waitFor();
     await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}}));
-    await page.getByRole('button',{name:'Copy my score',exact:true}).click();await page.getByRole('dialog').getByRole('status').filter({hasText:'Your score was copied.'}).waitFor();assert.match(await page.evaluate(()=>window.__copiedScore),/3,205 pts/);
+    await page.getByRole('button',{name:'Copy my score',exact:true}).click();await page.getByRole('dialog').getByRole('status').filter({hasText:'Your score was copied.'}).waitFor();assert.match(await page.evaluate(()=>window.__copiedScore),/3,205 SO\/ COINS/);
     await page.getByRole('button',{name:'Done',exact:true}).click();await page.getByRole('link',{name:'Play again',exact:true}).click();await page.waitForURL('**/play.html');
-    report.push({width,flows:'FAQ play button, launch join/play, confirmation play/world, My points share/replay'});
+    report.push({width,flows:'FAQ play button, launch join/play, confirmation play/world, My SO/ COINS share/replay'});
    }finally{await context.close()}
   }
   // The Windows WebKit runner lacks AudioContext; only Chromium exercises

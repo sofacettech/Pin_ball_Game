@@ -17,13 +17,13 @@ export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
    <div className="headline-pair">
     <div className="headline-left"><p className="eyebrow">You've unlocked a facet.</p><h1 id="rewards-heading" tabIndex={-1}>{low?resultHeadline(result.points):<><span>HERE’S</span><span>what’s yours.</span></>}</h1></div>
     <div className="headline-right"><div className="amount-line" id="rewards-score"><strong className="amount" id="rewards-points" style={formatPoints(result.points).length>6?{fontSize:'clamp(48px,7vw,108px)'}:undefined}>{formatPoints(result.points)}</strong><span className="coins">SO/ COINS</span></div>
-    {low?<p className="conversion" id="rewards-low-copy">Play again. Every 10 points is ₹1 off <span className="wordmark">SO/ FACET</span> diamond jewellery.</p>:<p className="conversion" id="rewards-value-line">That's <strong id="rewards-value">{rewardMoney(result.points)} off</strong> <span className="wordmark">SO/ FACET</span> diamond jewellery.</p>}
+    {low?<p className="conversion" id="rewards-low-copy">Play again. Every 10 SO/ COINS is ₹1 off <span className="wordmark">SO/ FACET</span> diamond jewellery.</p>:<p className="conversion" id="rewards-value-line">That's <strong id="rewards-value">{rewardMoney(result.points)} off</strong> <span className="wordmark">SO/ FACET</span> diamond jewellery.</p>}
     </div>
    </div>
    <hr className="rule"/>
-   {!low&&<p className="notice" id="rewards-expiry">Unsaved coins disappear when you leave this page.</p>}
+   {!low&&<p className="notice" id="rewards-expiry">Unsaved SO/ COINS disappear when you leave this page.</p>}
    <div className="buttons">
-    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}>SAVE MY COINS <Arrow/></button>}
+    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}><span>SAVE MY SO/ COINS</span><Arrow/></button>}
     <button className="btn" id="rewards-retry" type="button" onClick={onReplay}>PLAY AGAIN <Replay/></button>
    </div>
    <button className="leaderboard" id="rewards-leaderboard" type="button" onClick={onLeaderboard}>See full leaderboard →</button>

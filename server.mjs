@@ -9,6 +9,7 @@ import {ServiceError,rewardsLeaderboard,awardPoints} from './rewards.mjs';
 import {validateInputs,verifyGame} from './verify-game.mjs';
 import {REPLAY_VERSION} from './game-source/src/simulation.ts';
 import {createMembershipApi} from './membership-api.mjs';
+import {leaderboardName} from './game-source/src/player-copy.ts';
 
 const root=resolve(fileURLToPath(new URL('.',import.meta.url)));
 const dir=resolve(process.env.DATA_DIR||resolve(root,'data'));mkdirSync(dir,{recursive:true});
@@ -34,7 +35,6 @@ const requests=new Map();
 function rateLimit(request){const now=Date.now(),key=request.socket.remoteAddress;for(const [ip,bucket] of requests)if(now>bucket.until)requests.delete(ip);const bucket=requests.get(key)||{count:0,until:now+60000};bucket.count++;requests.set(key,bucket);if(bucket.count>120)fail(429,'Too many requests. Please wait a minute and try again.')}
 function sameOrigin(request){const expected=process.env.APP_ORIGIN||'http://'+request.headers.host;if(request.headers.origin!==expected)fail(403,'Please submit this request from the game.');if(!request.headers['content-type']?.startsWith('application/json'))fail(415,'Please send JSON.');}
 function trusted(request){const secret=process.env.REWARDS_ADMIN_SECRET;if(!secret)fail(503,'Redeemable rewards are disabled.');const actual=Buffer.from(request.headers.authorization||''),expected=Buffer.from('Bearer '+secret);if(actual.length!==expected.length||!timingSafeEqual(actual,expected))fail(401,'Unauthorized.');}
-function leaderboardName(value){const words=String(value||'Player').trim().split(/\s+/);return words.length>1?words[0]+' '+Array.from(words.at(-1))[0]+'.':words[0]}
 function gameBoard(id){
  const ranked=Object.entries(store.players).filter(([,p])=>p.bestVerified===true&&Number.isSafeInteger(p.best)).sort(([a,p],[b,q])=>q.best-p.best||p.bestAt-q.bestAt||a.localeCompare(b));
  const entry=([key,p],index)=>({rank:index+1,display_name:key===id&&!p.profile?'You':leaderboardName(p.name),points:p.best,is_you:key===id});
@@ -82,7 +82,7 @@ async function api(request,response,path){
  // Separate sign-in and deletion still require the backend's verified account service.
  if(['/api/account/preferences','/api/account/delete'].includes(path)&&request.method==='POST'){
   if(!path.includes('/otp/')&&!p.profile)fail(401,'Please sign in to manage your account.');
-  fail(503,path.includes('/otp/')?'Account sign-in by SMS is not connected yet. Please try again later.':'Account changes are not connected yet. Your details and points have not changed.');
+  fail(503,path.includes('/otp/')?'Account sign-in by SMS is not connected yet. Please try again later.':'Account changes are not connected yet. Your details and SO/ COINS have not changed.');
  }
 
  if(path==='/api/membership/config'&&request.method==='GET')return json(response,200,await membershipApi(path,{},id));
@@ -124,8 +124,9 @@ const publicFiles=new Set(['index.html','entrance-3d.html','play.html','launchin
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
+ let path='';
  try{
-  const path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
+  path=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
   if(path==='/health'&&(request.method==='GET'||request.method==='HEAD'))return json(response,200,{status:'ok'});
   if(path==='/api/media-config'&&request.method==='GET')return json(response,200,{baseURL:process.env.MEDIA_CDN_BASE_URL||'',entranceManifestURL:process.env.ENTRANCE_VIDEO_MANIFEST_URL||'',entrance4kManifestURL:process.env.ENTRANCE_VIDEO_4K_MANIFEST_URL||''});
   if(path.startsWith('/api/'))return await api(request,response,path);
@@ -164,6 +165,7 @@ const server=createServer(async(request,response)=>{
   stream.pipe(response);
  }catch(error){if(!response.headersSent){
   const known=error instanceof ServiceError;
+  if(known&&error.status===404&&!path.startsWith('/api/')&&['GET','HEAD'].includes(request.method)&&(request.headers.accept||'').includes('text/html')){response.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});response.end();return;}
   if(known&&Number.isFinite(error.retryAfter))response.setHeader('Retry-After',String(error.retryAfter));
   json(response,known?error.status:500,{message:known?error.message:'The service could not complete this request. Please try again.',...(known&&error.code?{code:error.code}:{}),...(known&&Number.isFinite(error.retryAfter)?{retryAfter:error.retryAfter}:{})});
  }else response.end();}

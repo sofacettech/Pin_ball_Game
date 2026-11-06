@@ -1,5 +1,5 @@
 const title="SO/ FACET. What's yours?";
-const description='Play pinball, score points, and save them for SO/ FACET lab-grown diamond jewellery.';
+const description='Play pinball, score SO/ COINS, and save them for SO/ FACET lab-grown diamond jewellery.';
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
 export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.APP_ORIGIN||'https://shopsofacet.com'){
  let base='';
@@ -18,7 +18,7 @@ export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.A
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="SO/ FACET. What's yours? Play pinball. Save your points.">
+<meta property="og:image:alt" content="SO/ FACET. What's yours? Play pinball. Save your SO/ COINS.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escape(title)}">
 <meta name="twitter:description" content="${escape(description)}">

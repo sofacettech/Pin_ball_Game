@@ -1,8 +1,18 @@
 # SO/ FACET
 
-I’ve brought the landing journey, pinball game, registration and My points frontend together here for our backend handoff. The Node service verifies game scores and connects to the rewards backend. The default landing experience uses version 3, the 4K video of the current model; `/video` is retained for the legacy video comparison.
+I’ve brought the landing journey, pinball game, registration and My SO/ COINS frontend together here for our backend handoff. The Node service verifies game scores and connects to the rewards backend. The default landing experience uses version 3, the 4K video of the current model; `/video` is retained for the legacy video comparison.
 
 I’ve kept the approved black, violet and lime theme, wordmark typeface and responsive layouts. Please keep the current game presentation and reward rules intact while connecting the remaining services below.
+
+## Current copy and navigation
+
+I’ve applied the November copy updates across the landing journey, pinball, score and save flow, membership, My SO/ COINS, FAQ and About pages. The visible copy now uses SO/ COINS, SO/ COLLECTIVE, three lives and our December launch. The menu, browser titles, legal cross-links and social links follow the same wording.
+
+I’ve kept the current artwork, fonts and responsive layouts. Home shows Instagram and LinkedIn as icons with their existing links. The extra “Click/Tap to reveal” captions and background hover tooltips have been removed; the background interactions still work. The score screen opens the save form, and the saved screen includes a route to My SO/ COINS.
+
+Cookie preferences and Cookie settings are available across the site. Optional analytics and advertising remain off; I’m leaving tracking integrations and font changes for later. I’m also holding the separate 404 design until it is supplied. Unknown page addresses currently return visitors to Home.
+
+The signed-in My SO/ COINS page includes a leaderboard-name field connected to the existing profile update request. Live verification still needs the rewards service configuration. The review images use sample account and score data, and the browser checks do not certify performance on every physical phone.
 
 ## Run locally
 
@@ -115,7 +125,7 @@ Tests use temporary storage and synthetic services. The local smoke check starts
 - The queen impact at source frame 2164 hands directly into the game. Play Pinball bypasses the journey.
 - The chess-to-game transition keeps the moving ball and shows two messages in sequence: “Next: a game of pinball.” and “Score points. Save them for SO/ FACET diamond jewellery.” The text is white, regular-weight and at least 20px. The table opens after the final message and actual game readiness; reduced motion uses static text.
 - Skip game opens `launching-soon.html`, built from `launch-source`. Its Join THE FIRST CUT dialog carries the entered email in memory into the create-account tab; verified account creation opens the existing confirmation page. Play Pinball opens the game.
-- The shared menu contains Play Pinball (Back to game in game context), My points, How points work, About SO/ FACET and Join THE FIRST CUT. Terms and Privacy remain unavailable pending approved content. I’ve connected the official LinkedIn, X and YouTube links; each opens in a new tab. Instagram and Facebook remain unlinked until I provide their URLs. The mobile drawer uses compact spacing. Its footer links and the five social icons are centered in separate rows, with equal spacing and no frames around the icons. Settings is available from the game controls rather than the drawer, and My points replaces the old profile panel.
+- The shared menu contains Play Pinball (Back to game in game context), My SO/ COINS, How points work, About SO/ FACET and Join THE FIRST CUT. Terms and Privacy remain unavailable pending approved content. I’ve connected the official LinkedIn, X and YouTube links; each opens in a new tab. Instagram and Facebook remain unlinked until I provide their URLs. The mobile drawer uses compact spacing. Its footer links and the five social icons are centered in separate rows, with equal spacing and no frames around the icons. Settings is available from the game controls rather than the drawer, and My SO/ COINS replaces the old profile panel.
 - How points work retains its updated introduction, four topic cards and expandable answers. About SO/ FACET retains its restored closing paragraph and sign-off; newsletter signup remains disabled until connected.
 - Rewards and confirmation screens use SO/ UNLOCKED and SO/ SAVED, with Play again as the replay action. Claim now uses “MEMBERSHIP” and “SO/ COLLECTIVE”; launch retains THE FIRST CUT. I’ve merged the shared slash and quotation rules and the mobile type adjustments from main. Score sharing and the full leaderboard keep the same reward rules and membership requirement.
 - The supplied four HTML designs now live as shared React components in `collective-source`: the floral Reward page, Claim, Account (registered/create tabs), and Launch with its Join dialog. `game-source/src/score-page.jsx` uses the actual completed result and game ID, preserves 10 points = ₹1, and calls the existing registration, replay and leaderboard handlers. Low-score behavior and unsaved-points exit checks remain in place.
@@ -177,7 +187,7 @@ The OTP verification token is a short-lived internal proof bound to the current 
 
 1. **Rewards OTP:** `membership-otp.mjs` connects the SO FACET rewards API using the server-only `REWARDS_API_KEY` and `REWARDS_API_BASE`. The API delivers WhatsApp or SMS codes and issues the JWT only after verification. Sends are never automatically retried. Respect the returned resend delay (at least 60 seconds), `Retry-After`, five-minute expiry and five-attempt limit. A 502 delivery failure creates no local membership or credits. The supplied integration guide reports a Meta sender approval restriction; confirm actual delivery with a consenting phone before launch. No key or live phone is included in this repository.
 2. **International phone support:** the frontend normalizes international numbers to E.164. Server phone validation currently accepts Indian `+91` numbers only. Extend server validation and provider coverage together before enabling additional countries.
-3. **My points:** OTP sign-in and full Medusa profile reads/updates are connected. Account deletion remains unconnected. Name and leaderboard-name updates are handled from My points; the old profile panel is no longer in the menu.
+3. **My SO/ COINS:** OTP sign-in and full Medusa profile reads/updates are connected. Account deletion remains unconnected. Name and leaderboard-name updates are handled from My SO/ COINS; the old profile panel is no longer in the menu.
 4. **Approved policies:** Terms and Privacy content was left out pending approval. Set `MEMBERSHIP_TERMS_URL` and `MEMBERSHIP_PRIVACY_URL` to the approved HTTPS URLs. Registration currently refuses completion without them. The existing Terms and Privacy pages are explicitly labeled temporary placeholders. Production currently links to `/terms.html` and `/privacy.html` as requested; replace their content with the approved policies before public launch.
 5. **Commerce redemption:** apply the approved redemption cap, exclusions and expiry in the commerce backend when the shop opens. The frontend explains these rules; it does not enforce order eligibility.
 6. **Tracking:** I haven’t supplied Meta or Google identifiers yet. Connect them when the approved identifiers and consent requirements are available.
@@ -281,9 +291,9 @@ I’ve connected Save my coins directly to the score-context “THE FIRST CUT”
 
 I’ve applied our wordmark font to inline SO/ FACET names and added spacing after the slash. The launch signup email field is blank beneath its Email address label, with no example address. Email validation and the handoff to account creation remain in place.
 
-## My points
+## My SO/ COINS
 
-I’ve updated the My points sign-in with the butterfly artwork and put the mobile number, Generate OTP and Log in controls on the same screen. The page uses our existing WhatsApp or SMS verification. Signed-in players see their saved points and account details, and new players can go straight to Play Pinball. Links opened from game context retain `nav=game`, so Back to game can return players to their active game.
+I’ve updated the My SO/ COINS sign-in with the butterfly artwork and put the mobile number, Generate OTP and Log in controls on the same screen. The page uses our existing WhatsApp or SMS verification. Signed-in players see their saved points and account details, and new players can go straight to Play Pinball. Links opened from game context retain `nav=game`, so Back to game can return players to their active game.
 
 `collective-source/AuthFlow.jsx` connects the create tab to Claim and the registered tab to existing account OTP sign-in. Back returns to the collected details and reuses an unexpired challenge for the same phone and name. A changed number requires a new OTP after the resend cooldown. A pending game stays in memory across these steps; only its game ID is submitted for server-verified rewards. Profile management after sign-in remains in `account-source`.
 
@@ -301,4 +311,4 @@ A verified rewards session can read `GET /api/account`: `{name, leaderboardName,
 
 The separate `/api/account/preferences` placeholder is retained; the current account form saves `marketingConsent` through the implemented details request. Please keep those writes consistent if both routes are implemented.
 
-The frontend refreshes account data after changes and does not report unconfirmed server writes as saved. OTP codes and verification tokens are not persisted in browser storage. Score sharing uses the account’s confirmed best score. Play again and Share my score remain available from My points.
+The frontend refreshes account data after changes and does not report unconfirmed server writes as saved. OTP codes and verification tokens are not persisted in browser storage. Score sharing uses the account’s confirmed best score. Play again and Share my score remain available from My SO/ COINS.

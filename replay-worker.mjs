@@ -13,6 +13,6 @@ try{
   if(physics.state==='finished')throw new Error('The replay contains controls after the game ended.');
   physics.tick(input);
  }}
- if(physics.state!=='finished'||physics.lives!==0||physics.drains!==3)throw new Error('The replay does not complete all three balls.');
+ if(physics.state!=='finished'||physics.lives!==0||physics.drains!==3)throw new Error('The replay does not use all 3 lives.');
  parentPort.postMessage({score:physics.score,ticks:Math.round(physics.time*120)});
 }catch(error){parentPort.postMessage({error:error.message})}finally{physics?.dispose()}

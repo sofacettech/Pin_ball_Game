@@ -145,8 +145,6 @@ export function ClaimScene({contentRef, revealed, onReveal}) {
     <ClaimButterfly color="cyan" revealed={revealed}/>
    </div>
   </div>
-  <button className="claim-mesh-trigger" ref={trigger} type="button" aria-label="Reveal the purple mesh">
-   <span className="claim-mouse-hint">Click to reveal · Enter / Space</span><span className="claim-touch-hint">Tap to reveal</span>
-  </button>
+  <button className="claim-mesh-trigger" ref={trigger} type="button" aria-label="Reveal the purple mesh" />
  </>;
 }

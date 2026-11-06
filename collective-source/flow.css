@@ -14,13 +14,14 @@
 :is(#account-root,#membership-root,#launch-root) .design-claim .claim-sign-in{display:inline;min-height:0;padding:0;border:0;background:none;color:#eee;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 :is(#account-root,#membership-root,#launch-root) .design-claim .claim-invitation{max-width:100%;white-space:normal;text-wrap:balance}
 .auth-flow-notice :focus-visible,.auth-flow-close:focus-visible{outline:2px solid #c9ff32;outline-offset:4px}
-@media(max-width:700px){.auth-flow-actions{flex-direction:column}.auth-flow-close{right:62px;top:10px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:80px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-invitation{font-size:clamp(25px,6.4vw,32px)}}
+@media(max-width:700px){.auth-flow-actions{flex-direction:column}.auth-flow-close{right:62px;top:10px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:72px}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-invitation{font-size:clamp(25px,6.4vw,32px)}}
 :is(#account-root,#membership-root,#launch-root) .design-account .radio-label input{min-height:0;padding:0;flex:0 0 20px}
 @media(max-width:900px){
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell{padding-top:110px!important}
- :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.text-layer{padding-top:132px}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.text-layer{padding-top:124px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page .claim-form{gap:10px}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content{margin-top:24px!important}
- :is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:80px}
+ :is(#account-root,#membership-root,#launch-root) .design-claim .claim-back{top:72px}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .help{font-size:14px}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell :is(#create-form,#login-form) :is(.text-line,.select){font-size:16px!important}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell #create-form .checkbox-row{font-size:14px!important;line-height:1.5!important}
@@ -28,10 +29,20 @@
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell .small-button{font-size:11px!important}
 }
 @media(min-width:901px){
- :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.text-layer{padding-top:calc(var(--site-header-clearance,78px) + 48px)}
- :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-back{left:max(24px,calc(11.7% - 80px));top:calc(var(--site-header-clearance,78px) + 36px)}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.text-layer{padding-top:calc(var(--site-header-clearance,78px) + 18px);padding-bottom:24px}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-back{left:max(24px,calc(11.7% - 80px));top:calc(var(--site-header-clearance,78px) + 6px)}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.artwork.art-layer{position:fixed}
+ :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content>.claim-invitation{width:max-content;max-width:calc(88.3vw - 24px);white-space:nowrap!important}
 }
+
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .collective-name{white-space:nowrap}
+@media(max-width:360px){:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .collective-name{display:inline-block;position:relative;left:50%;transform:translateX(-50%)}}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content{padding-bottom:8px}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page>.content>.claim-invitation{margin-bottom:12px!important}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-score{margin-bottom:12px}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-form{gap:12px}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-form>:is(.phone-row,.claim-email,.otp-field,.signin,.help,.buttons){margin:0!important}
+:is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .feedback:empty{display:none}
 
 :is(#account-root,#membership-root,#launch-root) .react-page-root.design-account .shell #create-form .checkbox-row{font-size:14px!important;line-height:1.5!important}
 :is(#account-root,#membership-root,#launch-root) .design-claim .claim-score{font-size:14px;line-height:1.5;color:#e3d9eb;margin:0 0 22px}
@@ -58,8 +69,3 @@ body:has(:is(#account-root,#membership-root,#launch-root) :is(.design-account,.d
 
 :is(#account-root,#membership-root) .design-claim .claim-consents .consent{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;margin:12px 0}
 :is(#account-root,#membership-root) .design-claim .claim-consents .consent input{appearance:auto;-webkit-appearance:checkbox;flex:0 0 18px;width:18px;height:18px;min-height:0;margin:2px 0 0;padding:0;accent-color:#d9ed37}
-
-:is(#account-root,#membership-root) .design-claim>.caption{position:fixed;inset:auto 32px 32px auto;max-width:40vw;margin:0;text-align:right;font-size:11px;letter-spacing:.16em;font-weight:400;pointer-events:none;user-select:none;opacity:.65}
-:is(#account-root,#membership-root) .design-claim>.caption .touch-hint{display:none}
-@media(pointer:coarse){:is(#account-root,#membership-root) .design-claim>.caption .mouse-hint{display:none}:is(#account-root,#membership-root) .design-claim>.caption .touch-hint{display:inline}}
-@media(max-width:900px){:is(#account-root,#membership-root) .design-claim:has(>.caption){position:relative}:is(#account-root,#membership-root) .design-claim>.caption{position:absolute;inset:96px 24px auto 104px;max-width:none}}

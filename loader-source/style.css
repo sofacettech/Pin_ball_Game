@@ -12,6 +12,8 @@
 .game-loader-cards {height:100%;display:grid;}
 .game-loader-cards .gallery { min-height: 100%; display: grid; }
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
+.game-loader-cards .floating { position: relative; }
+.game-loader-cards .swipe-hint { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin: 18px 0 0; color: #e4e3de; font: 500 14px/1.4 LoaderBrilliant, sans-serif; letter-spacing: .08em; white-space: nowrap; text-align: center; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }
 .game-loader-cards .deck:focus-visible { outline: 1px solid #a6b5bd; outline-offset: 14px; }
 .game-loader-cards .sofacet-card { position: absolute; inset: 0; transform-origin: 50% 75%; perspective: 1200px; }

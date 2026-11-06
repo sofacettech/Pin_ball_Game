@@ -11,7 +11,7 @@ const member='a'.repeat(64),guest='b'.repeat(64),other='c'.repeat(64);
 async function withServer(mode,check){
  const probe=createServer();probe.listen(0,'127.0.0.1');await once(probe,'listening');const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
  const directory=await mkdtemp(join(tmpdir(),'sofacet-board-'));
- await writeFile(join(directory,'players.json'),JSON.stringify({players:{[member]:{name:'Asha K.',profile:{customerId:'fixture-member'},best:41000,bestVerified:true,bestAt:1},[guest]:{name:'Player BBBB',best:41000,bestVerified:true,bestAt:2},[other]:{name:'Noor S.',profile:{customerId:'fixture-other'},best:49500,bestVerified:true,bestAt:3}},games:{}}));
+ await writeFile(join(directory,'players.json'),JSON.stringify({players:{[member]:{name:'asha kapoor',profile:{customerId:'fixture-member'},best:41000,bestVerified:true,bestAt:1},[guest]:{name:'Player BBBB',best:41000,bestVerified:true,bestAt:2},[other]:{name:'noor syed',profile:{customerId:'fixture-other'},best:49500,bestVerified:true,bestAt:3}},games:{}}));
  const origin='http://127.0.0.1:'+port;
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('../',import.meta.url),env:{...process.env,DATA_DIR:directory,PORT:String(port),HOST:'127.0.0.1',APP_ORIGIN:origin,LEADERBOARD_MODE:mode,REWARDS_API_KEY:'',REWARDS_ADMIN_SECRET:''},stdio:['ignore','pipe','pipe']});
  const exited=once(child,'exit');

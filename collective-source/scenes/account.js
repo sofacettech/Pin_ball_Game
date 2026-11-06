@@ -16,8 +16,6 @@ const {document,window,requestAnimationFrame,cancelAnimationFrame,setTimeout,cle
     for(let tries=0;tries<180;tries++){
       const start=frame.contentWindow?.__startMeshWave;
       if(start){
-        const caption=frame.contentDocument?.querySelector('.caption');
-        if(caption)caption.style.display='none';
         await new Promise(requestAnimationFrame);
         const butterfly=document.querySelector('.butterfly-scene').getBoundingClientRect();
         const mesh=frame.getBoundingClientRect();

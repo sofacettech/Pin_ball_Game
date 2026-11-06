@@ -29,14 +29,14 @@ async function fits(page,selector){
 async function createClaim(page,origin){
  await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();
  if(mobile(page.viewportSize().width))await minimumText(page,'.design-account .small-button',11);
- await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
+ await page.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();
  if(mobile(page.viewportSize().width)){
   await minimumText(page,'#create-form .checkbox-row',13);
   await minimumText(page,'.design-account .tab',11);
  }
- await page.locator('input[name="title"][value="Ms"]').check();await page.locator('#new-name').fill('Test Member');
- await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
- await page.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
+ await page.locator('#new-name').fill('Test Member');
+ await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();await page.locator('[name="updates"]').check();
+ await page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();
  await page.locator('.design-claim .art-layer.art-ready').waitFor();
 }
 try{await withRewardsSite(async({origin})=>{
@@ -66,30 +66,30 @@ try{await withRewardsSite(async({origin})=>{
    }
    await fits(page,'.design-claim .content');
    assert.ok(!(await page.locator('.design-claim .signin').innerText()).includes('/'),'Claim question has no decorative slash');
-   assert.equal(await page.locator('.claim-form button[type="submit"]').innerText(),'SAVE MY COINS');
+   assert.equal(await page.locator('.claim-form button[type="submit"]').innerText(),'SAVE MY SO/ COINS');
    if(mobile(width)){await minimumText(page,'.design-claim .help',14);await minimumText(page,'.design-claim .signin',13);}
    if(width===1440)await page.locator('.design-claim .art-layer.art-landed').waitFor();
    if([390,844,1440].includes(width))await shot(page,width+'-claim-final');
    await page.locator('#final-otp').fill('012345');assert.equal(await page.locator('#final-otp').inputValue(),'012345');
    await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();await fits(page,'#registered-panel');
    if(mobile(width))assert.ok(parseFloat(await page.locator('#login-phone').evaluate(e=>getComputedStyle(e).fontSize))>=16);
-   await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();await fits(page,'#create-panel');
+   await page.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();await fits(page,'#create-panel');
    results.push({page:'account',width,height,registeredAndCreateFit:true});
    await page.goto(origin+'/launching-soon.html');await page.locator('.design-launch[data-scene-ready="true"]').waitFor();await fits(page,'.action-group');
    assert.match(await page.locator('.design-launch .description').innerText(),/JOIN SO\/ COLLECTIVE/);
-   assert.equal(await page.getByRole('button',{name:'JOIN SO/ COLLECTIVE',exact:true}).count(),1);
+   assert.equal(await page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).count(),1);
    await page.goto(origin+'/launching-soon.html#join');await page.locator('#join[open]').waitFor();await fits(page,'#join');
    await page.locator('#email').fill('mobile@example.invalid');await page.getByRole('button',{name:'Close signup'}).click();
-   assert.match(await page.frameLocator('.mesh-layer').locator('.mouse-hint').textContent(),/ENTER OR SPACE/);
+   assert.equal(await page.frameLocator('.mesh-layer').locator('.caption').count(),0);
    results.push({page:'launch',width,height,dialogFits:true});
    console.log(engine+': Claim opening/position, Account tabs and Launch fit '+width+'×'+height);
   }
-  await page.goto(origin+'/faq.html');await page.getByRole('heading',{name:'HOW POINTS WORK',exact:true}).waitFor();
+  await page.goto(origin+'/faq.html');await page.getByRole('heading',{name:'HOW SO/ COINS WORK',exact:true}).waitFor();
   if(engine==='webkit'){
    // Test the actual Reward React component in its existing shipped shell.
    // The Windows WebKit game-loader stall is outside this mobile UI change.
    const html=(await readFile(new URL('../play.html',import.meta.url),'utf8')).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace('<head>','<head><base href="'+origin+'/">').replace('media="print"','media="all"');
-   const bundle=await build({stdin:{contents:`import {mountScorePage} from './game-source/src/score-page.jsx';mountScorePage(document.getElementById('score-page-root'),{onSave(){},onReplay(){},onLeaderboard(){}}).render({points:3205,rewardValue:320.5,completedAt:Date.now(),gameId:'${gameId}',status:'completed'});const dialog=document.getElementById('post-game-rewards');dialog.dataset.view='result';dialog.prepend(document.querySelector('body > header'));dialog.showModal();document.getElementById('rewards-heading').focus();`,resolveDir:fileURLToPath(new URL('../',import.meta.url)),loader:'jsx'},bundle:true,platform:'browser',format:'iife',loader:{'.css':'empty'},write:false});
+   const bundle=await build({stdin:{contents:`import {mountScorePage} from './game-source/src/score-page.jsx';mountScorePage(document.getElementById('score-page-root'),{onSave(){},onReplay(){},onLeaderboard(){}}).render({SO/ COINS:3205,rewardValue:320.5,completedAt:Date.now(),gameId:'${gameId}',status:'completed'});const dialog=document.getElementById('post-game-rewards');dialog.dataset.view='result';dialog.prepend(document.querySelector('body > header'));dialog.showModal();document.getElementById('rewards-heading').focus();`,resolveDir:fileURLToPath(new URL('../',import.meta.url)),loader:'jsx'},bundle:true,platform:'browser',format:'iife',loader:{'.css':'empty'},write:false});
    await page.goto(origin+'/health');await page.setContent(html);await page.evaluate(()=>{document.body.removeAttribute('data-game-loading');document.getElementById('game-loading-screen')?.remove();});
    await page.addScriptTag({content:bundle.outputFiles[0].text});
   }else{
@@ -101,7 +101,7 @@ try{await withRewardsSite(async({origin})=>{
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    await fits(page,'.design-rewards .reward');
-   assert.equal(await page.locator('#rewards-register').innerText(),'SAVE MY COINS');
+   assert.equal(await page.locator('#rewards-register').innerText(),'SAVE MY SO/ COINS');
    assert.ok(!(await page.locator('#rewards-expiry').innerText()).includes('/'),'Reward supporting copy has no decorative slash');
    if(mobile(width)){await minimumText(page,'.design-rewards .conversion',14);await minimumText(page,'.design-rewards .notice',13);}
    if(engine==='webkit'){

@@ -8,7 +8,7 @@ const messages = {
  invalid_phone: 'Please use a valid Indian phone number (+91).',
  rate_limited: 'Too many requests. Please wait a minute and try again.',
  rewards_not_configured: 'Membership is temporarily unavailable. Please try again later.',
- invalid_token: 'Please verify your phone again to save your points.',
+ invalid_token: 'Please verify your phone again to save your SO/ COINS.',
  invalid_otp: 'That code doesn’t match or has already been used. Check it or request a new code.',
  otp_expired: 'This code expired. Please request a new one.',
  otp_attempts_exceeded: 'Too many attempts. Please request a new code.',
@@ -108,7 +108,7 @@ export async function rewardsLeaderboard() {
 }
 // Only a trusted server/admin may call this. Browser scores never become redeemable points.
 export async function awardPoints({ token, points, eventId }) {
- if (!Number.isSafeInteger(points) || points <= 0 || typeof eventId !== 'string' || !eventId.trim() || eventId.length > 160) throw new ServiceError(400, 'Positive integer points and a stable eventId are required.');
+ if (!Number.isSafeInteger(points) || points <= 0 || typeof eventId !== 'string' || !eventId.trim() || eventId.length > 160) throw new ServiceError(400, 'Positive integer SO/ COINS and a stable eventId are required.');
  if (typeof token !== 'string' || !token) throw new ServiceError(401, messages.invalid_token, 'invalid_token');
  const data = await call('/rewards/points', { token, body: { points, idempotency_key: 'facet-pinball:' + eventId, reason: 'pinball-verified-event', external_ref: eventId, metadata: { game: 'facet-pinball' } } });
  valid(integer(data.balance) && integer(data.lifetime_earned) && typeof data.transaction_id === 'string' && data.transaction_id.length > 0 && typeof data.replayed === 'boolean');

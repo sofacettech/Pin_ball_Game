@@ -21,7 +21,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       <h2 id="practice-title"></h2><p id="practice-copy"></p>
       <div class="practice-keys" aria-hidden="true"></div>
       <p class="practice-feedback" role="status" aria-live="polite"></p>
-      <p class="practice-note">Just practice. Your three balls are waiting.</p>
+      <p class="practice-note">Just practice. Your three lives are waiting.</p>
     </section>`;
   document.body.append(dialog);
   const get = <T extends HTMLElement>(selector: string) => dialog.querySelector<T>(selector)!;
@@ -138,7 +138,7 @@ export function connectControlsTutorial(view: TableView, viewport: HTMLElement, 
       if (dialog.open) return;
       state = new TutorialState(); elapsed = 0; amount = 0; tapUntil = 0; input = null; afterClose = callback;
       dialog.dataset.mode = mode; skip.textContent = mode === 'replay' ? 'Close guide ↗' : 'Skip guide ↗';
-      get('.practice-note').textContent = mode === 'replay' ? 'Your game is paused. No points or lives used.' : 'Just practice. Your three balls are waiting.';
+      get('.practice-note').textContent = mode === 'replay' ? 'Your game is paused. Nothing is lost.' : 'Just practice. Your three lives are waiting.';
       document.body.classList.add('practising-controls');
       refresh(); dialog.showModal(); layout();
       // Mark the first display, including users who dismiss or reload mid-guide.

@@ -22,6 +22,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .tile img{width:48px;height:48px;object-fit:contain;filter:invert(1)}
 .tile svg{width:48px;height:48px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:square;stroke-linejoin:miter}
 .tile-label{line-height:1.6;text-transform:uppercase;text-align:center}
+.tile-label-line{white-space:nowrap}
 .faq-main.is-open{display:grid;grid-template-columns:220px minmax(0,1fr);gap:0 70px;align-items:start}
 .is-open .help-grid{display:flex;flex-direction:column;align-items:stretch;gap:8px}
 .is-open .tile{width:100%;height:auto;min-height:52px;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 0;border:0;background:transparent;color:#aaa7a1;text-align:left}
@@ -45,17 +46,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 
 .site-footer{background:var(--background);padding:0 max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px))}
 .footer-inner{max-width:1280px;margin:0 auto}
-.newsletter{text-align:center;padding:56px 20px 74px;border-bottom:1px solid var(--line)}
-.newsletter h2{font-size:16px;font-weight:600;line-height:28px;letter-spacing:.035em;text-transform:uppercase;margin:0 0 30px;text-wrap:balance}
-.newsletter-signup{width:396px;max-width:100%;margin:0 auto}
-.email{display:flex;align-items:stretch;min-height:44px;border-bottom:1px solid #aaa;gap:0}
-.email:focus-within{border-color:var(--paper)}
-.email input{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:transparent;padding:10px 0 8px;color:var(--paper);font:16px Georgia,serif;letter-spacing:0}
-.email input::placeholder{color:#c1bfb9;opacity:1}
-.email input:focus-visible{outline-offset:2px}
-.newsletter-submit{width:122px;flex-shrink:0;border:1px solid var(--paper);border-radius:0;background:var(--paper);color:#111;padding:8px 16px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-.newsletter-submit:disabled{opacity:1;cursor:default}
-.footer-note{margin:10px 0 0;color:var(--muted);font-size:13px;line-height:1.5;letter-spacing:0}
+.collective-invite{text-align:center;padding:56px 20px 74px;border-bottom:1px solid var(--line)}
+.collective-invite a{display:inline-flex;align-items:center;justify-content:center;gap:20px;min-height:44px;font-size:16px;font-weight:600;line-height:1.5;letter-spacing:.035em}
 .footer-menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px;padding:50px 80px 58px}
 .footer-column{min-width:0}
 .footer-column>summary,.footer-column>h2{list-style:none;font-size:16px;font-weight:600;line-height:24px;letter-spacing:.035em;text-transform:uppercase;margin:0 0 20px}
@@ -66,7 +58,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .footer-column a:hover{text-decoration:underline;text-underline-offset:4px}
 .footer-column li>span{color:var(--muted)}
 .footer-social h2{font-size:16px;font-weight:600;line-height:24px;letter-spacing:.035em;text-transform:uppercase;margin:0 0 24px}
-.social-icons{display:grid;grid-template-columns:repeat(3,44px);gap:8px 10px}
+.social-icons{display:grid;grid-template-columns:repeat(5,44px);gap:8px 10px}
 .social-icons>a,.social-icons>span{width:44px;height:44px;text-decoration:none;display:grid;place-items:center;color:var(--paper)}
 .social-icons svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2}
 .social-icons .fill{fill:currentColor;stroke:none}
@@ -77,8 +69,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .footer-contact>span{color:var(--muted)}
 .footer-contact>a{text-decoration:none}
 .footer-contact>a:hover{text-decoration:underline}
-.footer-contact>a>span{display:inline-block;margin-left:10px;font-size:16px}
-.pinball{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:1px solid var(--paper);background:var(--paper);color:#111;gap:22px;text-decoration:none;font-size:14px;white-space:nowrap}
+.pinball{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:1px solid var(--paper);background:var(--paper);color:#000;gap:22px;text-decoration:none;font-size:14px;white-space:nowrap}
 .pinball:hover{background:transparent;color:var(--paper)}
 .pinball>span{font-size:20px}
 
@@ -106,9 +97,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   .faq-panel summary{font-size:16px;gap:20px}
   .faq-panel p{font-size:16px;line-height:1.7;margin-top:18px}
   .faq-panel details{margin-bottom:24px;padding-bottom:24px}
-  .newsletter{padding:48px 0 46px}
-  .newsletter h2{margin-bottom:28px}
-  .newsletter-submit{width:116px}
+  .collective-invite{padding:48px 0 46px}
   .footer-menu{display:block;padding:0}
   .footer-column{border-bottom:1px solid var(--line)}
   .footer-column>summary{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:74px;padding:24px 0;margin:0;pointer-events:auto;cursor:pointer}
@@ -121,7 +110,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   .footer-bottom{align-items:center;flex-direction:column;gap:22px;padding:24px 0 max(24px,env(safe-area-inset-bottom,0px));background:#101010;text-align:center}
   .footer-contact{flex-direction:column;gap:8px}
   .footer-contact>span{font-size:14px}
-  .footer-contact>a>span{margin-left:6px}
   .pinball{gap:18px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -139,7 +127,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 @media(max-width:380px){
  .help-grid{gap:10px}
  .tile{padding-inline:8px}
- .newsletter-submit{width:auto;padding-inline:10px}
 }
 @media(forced-colors:active){
  .tile,.faq-panel details,.footer-column{border-color:CanvasText}

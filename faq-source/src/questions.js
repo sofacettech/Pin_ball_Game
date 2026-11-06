@@ -8,13 +8,13 @@ export const sections = [
       {
         "question": "What is SO/ FACET?",
         "answer": [
-          "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open soon."
+          "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open in December."
         ]
       },
       {
         "question": "Are lab-grown diamonds real diamonds?",
         "answer": [
-          "Yes. They’re made of the same carbon, with the same hardness and sparkle as mined diamonds. The only difference is where they come from: they’re grown, not mined."
+          "Yes. The same carbon, the same hardness, the same sparkle. They're simply grown."
         ]
       },
       {
@@ -26,13 +26,13 @@ export const sections = [
       {
         "question": "When do you launch?",
         "answer": [
-          "Soon. Save your points or JOIN SO/ COLLECTIVE, and you’ll be among the first to know."
+          "In December. Save your SO/ COINS or join SO/ COLLECTIVE, and you'll be among the first to know."
         ]
       },
       {
-        "question": "What is “THE FIRST CUT”?",
+        "question": "What is SO/ COLLECTIVE?",
         "answer": [
-          "Our early list: everyone who saves their points or joins before our doors open."
+          "Our early list: everyone who saves their SO/ COINS or joins before we launch."
         ]
       }
     ]
@@ -40,65 +40,67 @@ export const sections = [
   {
     "id": "game-and-points",
     "tabId": "tab-points",
-    "title": "The game and your points",
-    "navTitle": "Game & points",
+    "title": "The game and your SO/ COINS",
+    "navTitle": "Game & SO/ COINS",
     "questions": [
       {
-        "question": "Is the game free?",
-        "answer": ["Yes, always. No purchase is needed to play or to save your points."]
-      },
-      {
-        "question": "How do I earn points?",
+        "question": "Do I need to buy anything to play?",
         "answer": [
-          "Play a round at the SO/ FACET table. The higher you score, the more you earn."
+          "No. You don't need to buy anything to play or to save your SO/ COINS."
         ]
       },
       {
-        "question": "What are my points worth?",
+        "question": "How do I earn SO/ COINS?",
         "answer": [
-          "10 points = ₹1 off SO/ FACET diamond jewellery. Score 3,200 and that’s ₹320 off."
+          "Play a round at the SO/ FACET table. Your score is your SO/ COINS: score 3,200 and you earn 3,200."
+        ]
+      },
+      {
+        "question": "What are my SO/ COINS worth?",
+        "answer": [
+          "10 SO/ COINS = ₹1 off SO/ FACET diamond jewellery. Score 3,200 and that's ₹320 off."
         ]
       },
       {
         "question": "Is there a limit?",
         "answer": [
-          "Points can cover up to 10% of the diamond value and making charges in an order. They don’t apply to the metal value, GST or shipping."
+          "SO/ COINS can cover up to 10% of the diamond value and making charges in an order. They don't apply to the metal value, GST or shipping."
         ]
       },
       {
-        "question": "Can I use leftover points later?",
+        "question": "Can I use leftover SO/ COINS later?",
         "answer": [
-          "Yes. Points left after an order stay in your balance for your next order, until they expire."
+          "Yes. SO/ COINS left after an order stay in your balance for your next order, until they expire."
         ]
       },
       {
         "question": "Can I play more than once?",
         "answer": [
-          "As often as you like. Only your best score counts."
+          "As often as you like. Only your best score counts, so a higher score adds just the difference."
         ]
       },
       {
-        "question": "How do I save my points?",
+        "question": "How do I save my SO/ COINS?",
         "answer": [
-          "After your game, enter your full name, mobile number and email, then confirm with the code we send you by WhatsApp or SMS. Unsaved points disappear when you leave the page."
+          "After your game, enter your full name, mobile number and email, then confirm with the code we send you by WhatsApp or SMS. Unsaved SO/ COINS disappear when you leave the page."
         ]
       },
       {
-        "question": "How do I use my points?",
+        "question": "How do I use my SO/ COINS?",
         "answer": [
-          "When our shop opens. We’ll share exactly how at launch."
+          "From our launch in December. Sign in at checkout with your mobile number and switch on SO/ COINS."
         ]
       },
       {
-        "question": "Do my points expire?",
+        "question": "Do my SO/ COINS expire?",
         "answer": [
-          "Yes. Points expire 6 months after our shop opens."
+          "Yes, 6 months after our launch. You'll see the exact date in My SO/ COINS."
         ]
       },
       {
-        "question": "Can I use points with other offers, or give them to someone else?",
+        "question": "Can I use SO/ COINS with other offers, or give them to someone else?",
         "answer": [
-          "No. Points can’t be used on sale items or with other offers, and can’t be transferred. Each person can have one profile."
+          "No. SO/ COINS can't be used on sale items or with other offers, and can't be transferred. Each person can have one profile."
         ]
       },
       {
@@ -117,23 +119,25 @@ export const sections = [
     "questions": [
       {
         "question": "Why do you need my mobile number?",
-        "answer": ["To confirm it's you with a one-time code and keep your points safe. It's also how you sign in later."]
+        "answer": [
+          "To confirm it's you with a one-time code and keep your SO/ COINS safe. It's also how you sign in later."
+        ]
       },
       {
         "question": "What do you do with my details?",
         "answer": [
-          "We use them to save your points, run the leaderboard and tell you when our shop opens. We don’t sell your personal information. Our Privacy Policy has the full detail."
+          "We use them to save your SO/ COINS, run the leaderboard and tell you about our launch. We don't sell your personal information. Our Privacy Policy has the full detail."
         ]
       },
       {
         "question": "How do I stop updates or delete my data?",
         "answer": [
-          "Sign in to My points, or email us at ",
+          "Sign in to My SO/ COINS, or email us at ",
           {
             "href": "mailto:privacy@sofacet.com",
             "text": "privacy@sofacet.com"
           },
-          "."
+          ". Deleting your data also removes your SO/ COINS."
         ]
       },
       {
@@ -145,11 +149,20 @@ export const sections = [
             "text": "hello@sofacet.com"
           },
           ". For privacy, contact ",
-          {"href":"mailto:privacy@sofacet.com","text":"privacy@sofacet.com"},
+          {
+            "href": "mailto:privacy@sofacet.com",
+            "text": "privacy@sofacet.com"
+          },
           "; for security, ",
-          {"href":"mailto:security@sofacet.com","text":"security@sofacet.com"},
+          {
+            "href": "mailto:security@sofacet.com",
+            "text": "security@sofacet.com"
+          },
           "; for grievances, ",
-          {"href":"mailto:grievance@sofacet.com","text":"grievance@sofacet.com"},
+          {
+            "href": "mailto:grievance@sofacet.com",
+            "text": "grievance@sofacet.com"
+          },
           "."
         ]
       }

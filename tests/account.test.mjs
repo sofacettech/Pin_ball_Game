@@ -33,3 +33,18 @@ test('account sign-in reads the Medusa profile and sign-out invalidates the serv
   assert.equal(events.filter(e=>e.path==='/rewards/points').length,0);
  },{returningMember:true});
 });
+
+test('signed-in leaderboard name edits use the existing account details API',async()=>{
+ await withRewardsSite(async({request,state,events})=>{
+  const sent=await request('/api/account/otp/request',{phoneNumber:registration.phoneNumber});
+  assert.equal(sent.status,200);
+  const verified=await request('/api/account/otp/verify',{phoneNumber:registration.phoneNumber,challengeId:sent.data.challengeId,otp:'012345'});
+  assert.equal(verified.status,200);
+  const account=(await request('/api/account')).data;
+  const saved=await request('/api/account/details',{name:account.name,leaderboardName:'Chanda R.',email:account.email,phoneNumber:account.phoneNumber,marketingConsent:account.marketingConsent});
+  assert.equal(saved.status,200);assert.equal(saved.data.success,true);
+  assert.equal((await request('/api/account')).data.leaderboardName,'Chanda R.');
+  assert.equal(state.profile.leaderboard_name,'Chanda R.');
+  assert(events.some(event=>event.path==='/rewards/profile'&&event.body?.leaderboard_name==='Chanda R.'));
+ },{returningMember:true});
+});

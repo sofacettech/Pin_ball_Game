@@ -21,7 +21,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
   const challenges = new Map(), proofs = new Map(), sessions = new Map(), cooldowns = new Map(), jobs = new Map();
   const policies = () => ({ terms: publicUrl(process.env.MEMBERSHIP_TERMS_URL), privacy: publicUrl(process.env.MEMBERSHIP_PRIVACY_URL) });
   const configured = () => typeof provider.request === 'function' && typeof provider.verify === 'function' && (!provider.configured || provider.configured());
-  const requireVerification = () => { throw new ServiceError(401, 'Please verify your phone again to save your points.', 'rewards_verification_required'); };
+  const requireVerification = () => { throw new ServiceError(401, 'Please verify your phone again to save your SO/ COINS.', 'rewards_verification_required'); };
   function cleanup() {
     for (const map of [challenges, proofs, sessions]) for (const [key, item] of map) if (item.expiresAt <= now()) map.delete(key);
     for (const [key, until] of cooldowns) if (until <= now()) cooldowns.delete(key);
@@ -140,7 +140,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
       if (typeof profile?.customerId !== 'string' || !profile.customerId || typeof profile.phone !== 'string') fail(401, 'Please complete your membership first.');
       return { success: true, ...await saveReward(profile.customerId, phone(profile.phone), data.gameId, id) };
     }
-    if (!configured()) fail(503, 'Phone verification is not connected yet. Your points have not been saved. Please try again later.');
+    if (!configured()) fail(503, 'Phone verification is not connected yet. Your SO/ COINS have not been saved. Please try again later.');
     if (path === '/api/membership/otp/request') {
       const normalized = phone(data.phoneNumber), name = signingIn ? undefined : text(data.name, 80, 'your name');
       const member = getStore().players[id]?.profile;

@@ -43,12 +43,7 @@ a { color: inherit; text-underline-offset: 3px; }
 .claim-art-clip { inset: 0; overflow: hidden; }
 .claim-mesh { inset: 0; }
 .claim-mesh canvas { display: block; width: 100%; height: 100%; }
-.claim-mesh-trigger { position: fixed; z-index: 1; bottom: 12px; left: 50%; transform: translateX(-50%); min-height: 44px; border: 0; padding: 0 12px; background: transparent; color: #b8aec7; font: 400 10px/1.4 var(--sans); letter-spacing: .15em; text-transform: uppercase; }
-.claim-touch-hint { display: none; }
-@media (pointer: coarse) {
- .claim-mouse-hint { display: none; }
- .claim-touch-hint { display: inline; }
-}
+.claim-mesh-trigger { position: fixed; z-index: 1; bottom: 12px; left: 50%; transform: translateX(-50%); min-height: 44px; min-width: 44px; border: 0; padding: 0 12px; background: transparent; color: #b8aec7; font: 400 10px/1.4 var(--sans); letter-spacing: .15em; text-transform: uppercase; }
 .claim-art { position: absolute; right: 0; bottom: 0; width: min(46vw, 651px); aspect-ratio: 824 / 873; }
 .claim-crystal-arrival { height: 100%; animation: claim-crystal-enter 1.6s cubic-bezier(.2,.75,.2,1) .05s both; }
 .claim-art:not(.is-revealed) .claim-crystal-arrival { animation-play-state: paused; }

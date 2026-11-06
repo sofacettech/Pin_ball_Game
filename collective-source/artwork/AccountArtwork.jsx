@@ -5,5 +5,5 @@ export function AccountArtwork() {
 }
 
 export function AccountMesh() {
-  return (<iframe className="mesh-layer" title="Interactive purple mesh — click or tap to reveal" src="/assets/collective/meshes/account.html?v=rules-20261106"></iframe>);
+  return (<iframe className="mesh-layer" aria-label="Interactive background" src="/assets/collective/meshes/account.html?v=no-hints-20261106"></iframe>);
 }

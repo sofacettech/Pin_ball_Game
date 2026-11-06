@@ -8,7 +8,7 @@ import {Arrow} from './icons.jsx';
 import {validPhone, validateAccount} from './validation.js';
 import {formValues, showValidation, useSubmission} from './form-actions.js';
 
-export default function AccountPage({pointsContext=false,initialTab = 'registered', activeTab, onTabChange, onLogin, onRequestOtp, onCreateAccount, termsUrl, privacyUrl, defaults = {}, status = '', resendSeconds = 0, working = false}) {
+export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',pointsContext=false,initialTab = 'registered', activeTab, onTabChange, onLogin, onRequestOtp, onCreateAccount, termsUrl, privacyUrl, defaults = {}, status = '', resendSeconds = 0, working = false}) {
   const [selectedTab, setTab] = useState(initialTab);
   const tab = activeTab ?? selectedTab;
   const login = useSubmission(), create = useSubmission();
@@ -26,7 +26,7 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
   function requestCode() {
     if (resendSeconds > 0 || working) return;
     if (!validPhone(phone.current.value, 10)) {login.setMessage('Enter a valid mobile number first.'); phone.current.focus(); return;}
-    void login.submit(onRequestOtp, {phone:phone.current.value.trim()}, 'OTP sending is not connected in this preview.');
+    void login.submit(onRequestOtp, {phone:phone.current.value.trim()}, 'Code sending is not connected in this preview.');
   }
   function signIn(event) {
     event.preventDefault();
@@ -42,33 +42,32 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
     void create.submit(onCreateAccount, {...values, terms:values.terms === 'on', updates:values.updates === 'on'}, 'Account creation is not connected in this preview.');
   }
   const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy.html':'/terms.html')}>{label}</a>;
-  return <PageShell scene="account" initialize={initialize} title="SO/ FACET — My points">
+  return <PageShell scene="account" initialize={initialize} title={pageTitle}>
     <AccountMesh />
     <main className="shell"><div className="container">
-      {pointsContext&&<p className="points-label">MY POINTS</p>}
+      {pointsContext&&<p className="points-label">MY SO/ COINS</p>}
       <h1 className="welcome-heading">WELCOME</h1>
       <nav aria-label="Account access" className="tabs" role="tablist">
-        <button aria-controls="registered-panel" aria-selected={tab === 'registered'} className={'tab' + (tab === 'registered' ? ' active' : '')} id="registered-tab" role="tab" type="button" tabIndex={tab === 'registered' ? 0 : -1} onClick={() => selectTab('registered')} onKeyDown={tabKey}>ALREADY REGISTERED?</button>
-        <button aria-controls="create-panel" aria-selected={tab === 'create'} className={'tab' + (tab === 'create' ? ' active' : '')} id="create-tab" role="tab" type="button" tabIndex={tab === 'create' ? 0 : -1} onClick={() => selectTab('create')} onKeyDown={tabKey}>CREATE YOUR ACCOUNT</button>
+        <button aria-controls="registered-panel" aria-selected={tab === 'registered'} className={'tab' + (tab === 'registered' ? ' active' : '')} id="registered-tab" role="tab" type="button" tabIndex={tab === 'registered' ? 0 : -1} onClick={() => selectTab('registered')} onKeyDown={tabKey}>SIGN IN</button>
+        <button aria-controls="create-panel" aria-selected={tab === 'create'} className={'tab' + (tab === 'create' ? ' active' : '')} id="create-tab" role="tab" type="button" tabIndex={tab === 'create' ? 0 : -1} onClick={() => selectTab('create')} onKeyDown={tabKey}>JOIN THE SO/ COLLECTIVE</button>
       </nav>
       <section aria-labelledby="registered-tab" className="panel login-panel" id="registered-panel" role="tabpanel" hidden={tab !== 'registered'}>
-        <p className="intro stagger">If you are already registered with <span className="wm">SO/ FACET</span>, login here:</p>
-        {pointsContext&&<a className="points-play" href={accountNavigationHref('/play.html')}>New here? Play Pinball to earn points →</a>}
+        <p className="intro stagger">Sign in with the mobile number you saved your SO/ COINS with.</p>
+        {pointsContext&&<a className="points-play" href={accountNavigationHref('/play.html')}>New here? Play pinball to earn SO/ COINS →</a>}
         <form id="login-form" noValidate onSubmit={signIn}>
           <div className="field-group stagger"><label className="field-title" htmlFor="login-phone">Mobile number</label><input ref={phone} autoComplete="tel-national" className="text-line" id="login-phone" inputMode="tel" name="phone" pattern="[+0-9 ()-]{7,22}" defaultValue={defaults.phone || ''} required type="tel" /></div>
-          <div className="field-group stagger"><label className="field-title" htmlFor="login-otp">OTP</label><div className="otp-grid"><input autoComplete="one-time-code" className="text-line" id="login-otp" inputMode="numeric" maxLength={6} name="otp" pattern="[0-9]{6}" required type="text" /><button className="small-button" id="generate" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>GENERATE OTP</button></div></div>
-          <div className="stagger"><button className="under-link" id="resend" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>{resendSeconds > 0 ? 'Resend OTP in ' + resendSeconds + 's' : 'Resend OTP'}</button><p className="privacy-text">Read the {policyLink('Privacy Policy',privacyUrl)} for further information</p><button className="cta" type="submit" disabled={login.busy || working}>{login.busy || working ? 'PLEASE WAIT…' : 'LOGIN'} <Arrow /></button><p aria-live="polite" className="feedback" id="login-feedback" role="status">{status || login.message}</p></div>
+          <div className="field-group stagger"><label className="field-title" htmlFor="login-otp">Code</label><div className="otp-grid"><input autoComplete="one-time-code" className="text-line" id="login-otp" inputMode="numeric" maxLength={6} name="otp" pattern="[0-9]{6}" required type="text" /><button className="small-button" id="generate" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>SEND CODE</button></div></div>
+          <div className="stagger"><button className="under-link" id="resend" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>{resendSeconds > 0 ? 'Resend code in ' + resendSeconds + 's' : 'Resend code'}</button><p className="privacy-text">How we use your details: {policyLink('Privacy Policy',privacyUrl)}</p><button className="cta" type="submit" disabled={login.busy || working}>{login.busy || working ? 'PLEASE WAIT…' : 'SIGN IN'} <Arrow /></button><p aria-live="polite" className="feedback" id="login-feedback" role="status">{status || login.message}</p></div>
         </form>
-        {pointsContext&&<div className="points-notes"><p>No password to remember.</p><p>Your best score stays yours.</p><a href={accountNavigationHref('/faq.html')}>How points work</a></div>}
+        {pointsContext&&<div className="points-notes"><p>No password to remember.</p><p>Your best score stays yours.</p><a href={accountNavigationHref('/faq.html')}>HOW SO/ COINS WORK</a></div>}
       </section>
       <section aria-labelledby="create-tab" className="panel create-panel" hidden={tab !== 'create'} id="create-panel" role="tabpanel">
         <form id="create-form" noValidate onSubmit={createAccount}>
-          <fieldset className="titles" style={{border:0,padding:0}}><legend className="field-title">Title</legend><div className="radio-row">{['Mr','Mrs','Ms'].map(title => <label className="radio-label" key={title}><input name="title" required type="radio" value={title} defaultChecked={defaults.title === title} />{title}</label>)}</div></fieldset>
-          <div className="field-group"><label className="field-title" htmlFor="new-name">Name</label><input autoComplete="name" className="text-line" id="new-name" name="name" defaultValue={defaults.name || ''} required /></div>
+          <div className="field-group"><label className="field-title" htmlFor="new-name">Full name</label><input autoComplete="name" className="text-line" id="new-name" name="name" defaultValue={defaults.name || ''} required /></div>
           <div className="field-group"><label className="field-title" htmlFor="new-phone">Mobile number</label><div className="phone-line"><select aria-label="Country code" className="select country-select" name="country" defaultValue={defaults.country || '+91'}>{countries.map(country => <option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select><input autoComplete="tel-national" className="text-line" id="new-phone" inputMode="tel" name="phone" pattern="[0-9]{7,15}" placeholder="Phone" defaultValue={defaults.phone || ''} required type="tel" /></div></div>
           <div className="field-group"><label className="field-title" htmlFor="new-email">Email address</label><input autoComplete="email" className="text-line" id="new-email" name="email" defaultValue={defaults.email || ''} required type="email" /></div>
-          <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" type="checkbox" defaultChecked={!!defaults.updates} /><span>Send me <span className="wm">SO/ FACET</span> news and launch updates.</span></label></div>
-          <button className="cta" type="submit" disabled={create.busy || working}>{create.busy || working ? 'PLEASE WAIT…' : 'CREATE ACCOUNT'} <Arrow /></button><p aria-live="polite" className="feedback" id="create-feedback" role="status">{status || create.message}</p>
+          <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" required type="checkbox" defaultChecked={!!defaults.updates} /><span>Send me <span className="wm">SO/ FACET</span> updates and early access by email, SMS and WhatsApp.</span></label></div>
+          <button className="cta" type="submit" disabled={create.busy || working}>{create.busy || working ? 'PLEASE WAIT…' : 'JOIN THE SO/ COLLECTIVE'} <Arrow /></button><p aria-live="polite" className="feedback" id="create-feedback" role="status">{status || create.message}</p>
         </form>
       </section>
     </div></main>
