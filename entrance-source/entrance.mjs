@@ -104,10 +104,10 @@ function enterGame({fromChess=false}={}){
   cancelAnimationFrame(raf);raf=0;journey?.suspend();siteSound.handoff();
   assembly.finish();
   // Keep game work after the 3D loop stops. The origin/main loader covers real
-  // game readiness, including its reward-copy sequence after the chess room.
+  // game readiness, using the approved React cards.
   main.inert=true;document.body.setAttribute('data-game-loading','');
   gameLoader.show({story:fromChess});
-  // The opaque Canvas loader now covers the chess frame. Free its geometry,
+  // The opaque React card loader now covers the chess frame. Free its geometry,
   // reflection targets and WebGL context before allocating the pinball table.
   journey?.dispose();journey=null;
   loadGame();

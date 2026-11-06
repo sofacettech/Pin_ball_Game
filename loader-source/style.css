@@ -1,0 +1,74 @@
+.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#000;opacity:1;transition:opacity .4s ease;touch-action:pan-y}
+.game-loading-screen[hidden]{display:none!important}
+.game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
+#game-loader-cards-root{height:100%}
+.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@font-face { font-family: LoaderBrilliant; src: url('/assets/loader-cards/BrilliantCutPro-Regular.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: LoaderBrilliant; src: url('/assets/loader-cards/BrilliantCutPro-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: LoaderRupee; src: url('/assets/loader-cards/HelveticaNeueRoman.otf') format('opentype'); font-display: swap; }
+.game-loader-cards { color-scheme: dark; background: #000; color: #e2e4df; font-family: LoaderBrilliant, sans-serif; --card-width: min(400px, 67vw, calc((100svh - var(--game-loader-top,96px) - 164px) * 806 / 1330)); }
+.game-loader-cards, .game-loader-cards * { box-sizing: border-box; }
+
+.game-loader-cards {height:100%;display:grid;}
+.game-loader-cards .gallery { min-height: 100%; display: grid; }
+.game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
+.game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }
+.game-loader-cards .deck:focus-visible { outline: 1px solid #a6b5bd; outline-offset: 14px; }
+.game-loader-cards .sofacet-card { position: absolute; inset: 0; transform-origin: 50% 75%; perspective: 1200px; }
+.game-loader-cards .sofacet-card[data-slot="0"] { z-index: 3; transform: translate(0,0) rotate(0deg) scale(1); filter: brightness(1); }
+.game-loader-cards .sofacet-card[data-slot="1"] { z-index: 2; transform: translate(14px,-8px) rotate(3deg) scale(.97); filter: brightness(.68); }
+.game-loader-cards .sofacet-card[data-slot="2"] { z-index: 1; transform: translate(28px,-16px) rotate(6deg) scale(.94); filter: brightness(.48); }
+.game-loader-cards .card-turn { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(0deg); }
+.game-loader-cards .is-reversed .card-turn { transform: rotateY(180deg); }
+.game-loader-cards .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.game-loader-cards .reverse-face { transform: rotateY(180deg); }
+.game-loader-cards .face[hidden] { display: none; }
+.game-loader-cards .sofacet-card img { pointer-events: none; user-select: none; }
+.game-loader-cards .sofacet-card__background { display: block; width: 100%; height: 100%; }
+.game-loader-cards .sofacet-card__product { position: absolute; left: 50%; transform: translateX(-50%); height: auto; display: block; filter: drop-shadow(0 7px 5px #0006); }
+.game-loader-cards .product--pinball { width: 87%; top: 21%; }
+.game-loader-cards .product--diamond { width: 67%; top: 25%; }
+.game-loader-cards .product--earrings { width: 64%; top: 26%; }
+.game-loader-cards .back-name { position: absolute; top: 60.7%; left: 10%; width: 80%; margin: 0; text-align: center; color: #e4e3de; font-family: LoaderBrilliant; font-size: 5.2cqw; font-weight: 400; font-synthesis: none; line-height: 1.2; letter-spacing: .035em; }
+.game-loader-cards .card-copy { position: absolute; top: 65%; left: 9%; width: 82%; text-align: center; font-synthesis: none; text-transform: uppercase; }
+.game-loader-cards .card-copy p, .game-loader-cards .card-copy h1 { margin: 0; }
+.game-loader-cards .diamond-copy, .game-loader-cards .jewellery-copy, .game-loader-cards .table-copy { color: #e4e3de; }
+.game-loader-cards .table-title { font-size: 4.65cqw; font-weight: 500; line-height: 1.4; letter-spacing: .025em; }
+.game-loader-cards .table-detail { margin-top: 1.6cqw !important; font-size: 3.3cqw; line-height: 1.45; letter-spacing: .035em; }
+.game-loader-cards .diamond-copy p { font-size: 4.4cqw; line-height: 1.3; letter-spacing: .24em; padding-left: .24em; }
+.game-loader-cards .diamond-copy h1 { margin-top: 2.2cqw; font-size: 8cqw; font-weight: 500; line-height: 1.15; letter-spacing: .16em; padding-left: .16em; }
+.game-loader-cards .offer { font-size: 4.65cqw; font-weight: 500; line-height: 1.4; letter-spacing: .025em; }
+.game-loader-cards .offer-detail { margin-top: 2.5cqw !important; font-size: 3.3cqw; line-height: 1.4; letter-spacing: .035em; }
+.game-loader-cards .rupee { font-family: LoaderRupee; font-weight: 400; }
+.game-loader-cards ::selection { background: #315161; color: #fff; }
+.game-loader-cards .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .game-loader-cards .floating { animation: loader-card-float 6.5s ease-in-out infinite; }
+  @keyframes loader-card-float { 0%, 100% { transform: translateY(3px) rotate(-.18deg); } 50% { transform: translateY(-4px) rotate(.18deg); } }
+}
+.game-loader-cards.paused .floating, .game-loader-cards.tab-hidden .floating { animation-play-state: paused; }
+.game-loading-error{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:#000;color:#f6f2ff;font:16px/1.5 Arial,sans-serif;text-align:center}
+.game-loading-error[hidden]{display:none!important}
+.game-loading-error p{max-width:32em;margin:0}
+.game-loading-error button{min-height:44px;padding:10px 24px;border:1px solid #bfff00;border-radius:6px;background:#bfff00;color:#121700;font:600 16px/1.4 Arial,sans-serif;cursor:pointer}
+.game-loading-error button:focus-visible{outline:2px solid #fff;outline-offset:5px}
+body[data-game-loading]{margin:0;background:#000;overflow:hidden;--nav-height:90px;--nav-gap:var(--nav-height)}
+body[data-game-loading] #stage{pointer-events:none}
+#stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
+body[data-game-loading] #game-header{position:fixed;inset:0 0 auto;height:0;z-index:40}
+body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);background:#07060d;transform:none!important}
+body[data-game-loading] .nav-trim{position:absolute;bottom:-2px;left:0;width:100%;height:27px;overflow:visible;pointer-events:none}
+body[data-game-loading] .nav-trim path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+body[data-game-loading] .trim-shadow{stroke:#9905ef;stroke-width:7;opacity:.22;filter:blur(4px)}
+body[data-game-loading] .trim-violet{stroke:#aa0cff;stroke-width:2}
+body[data-game-loading] .trim-green{stroke:#afff39;stroke-width:3;filter:drop-shadow(0 0 4px #80e426)}
+body[data-game-loading] .site-brand{position:absolute;z-index:4;top:calc(25px + env(safe-area-inset-top,0px));left:calc(32px + env(safe-area-inset-left,0px));width:160px;line-height:0}
+body[data-game-loading] .site-brand img{display:block;width:100%;height:auto}
+body[data-game-loading] .site-nav{position:absolute;z-index:40;top:calc(14px + env(safe-area-inset-top,0px));right:calc(24px + env(safe-area-inset-right,0px));height:44px}
+body[data-game-loading] .menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}
+body[data-game-loading] .hamburger-lines{display:grid;gap:5px;width:24px}
+body[data-game-loading] .hamburger-lines span{display:block;width:24px;height:1px;background:currentColor}
+body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-events:none}
+@media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
+@media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
+@media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}

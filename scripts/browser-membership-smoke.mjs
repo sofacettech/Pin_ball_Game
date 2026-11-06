@@ -12,7 +12,7 @@ const browser=await browserType.launch({...(process.env.SOFACET_BROWSER_CHANNEL?
 const output=process.env.SOFACET_SCREENSHOT_DIR;
 if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){if(output){
-  for(const frame of page.frames())await frame.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(img=>img.decode().catch(()=>{})));});
+  for(const frame of page.frames())await frame.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].filter(img=>!img.closest('#game-loading-screen[hidden]')).map(img=>img.decode().catch(()=>{})));});
   if(name.startsWith('04-'))await page.frameLocator('#membership').locator('.art-layer.art-ready').waitFor();
   if(name.includes('mobile')&&name.startsWith('04-'))assert.ok((await page.frameLocator('#membership').locator('.claim-invitation').boundingBox()).y>110,'Claim heading clears the header and Back');
   if(name.includes('mobile')&&/^(02|03)-/.test(name))assert.ok((await page.locator('.welcome-heading').boundingBox()).y>90,'Account heading clears the navigation');
