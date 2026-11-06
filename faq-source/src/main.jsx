@@ -18,7 +18,7 @@ const topicFromHash = () => {
 };
 
 const socials = [
-  {name: 'Instagram', icon: <><rect x="3" y="3" width="26" height="26" rx="7"/><circle cx="16" cy="16" r="6"/><circle className="fill" cx="24" cy="8" r="2"/></>},
+  {name: 'Instagram', href: 'https://www.instagram.com/so.facet?obrf=MWY4NzIydDY3bmUybg==', icon: <><rect x="3" y="3" width="26" height="26" rx="7"/><circle cx="16" cy="16" r="6"/><circle className="fill" cx="24" cy="8" r="2"/></>},
   {name: 'Facebook', icon: <path className="fill" d="M19 31V17h4l1-5h-5V9c0-1.4.4-2 2-2h3V2h-4c-4.5 0-7 2.7-7 7v3H9v5h4v14z"/>},
   {name: 'X', href: 'https://x.com/so_facet?s=11&t=MpVMDpjvxy77_g81vQ3U7w', icon: <path className="fill" d="M25.2 1.5h4.9L19.4 13.8 32 30.5h-9.9l-7.7-10.1-8.8 10.1H.6l11.5-13.1L0 1.5h10.1l7 9.2Zm-1.7 26h2.7L8.6 4.3H5.7Z"/>},
   {name: 'YouTube', href: 'https://youtube.com/@so_facet?si=_lCL7Q40ECeZ60g1', icon: <><rect className="fill" x="1" y="5" width="30" height="22" rx="5"/><path className="cutout" d="m13 10 10 6-10 6z"/></>},

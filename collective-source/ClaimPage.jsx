@@ -31,7 +31,7 @@ export default function ClaimPage({result,name = '',phone = '',dialCode = '+91',
       {onBack && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
       <header className="brand"><span className="wordmark">{result?'GAME COMPLETE':'THE FIRST CUT'}</span></header>
       <section aria-label="Claim your reward — OTP verification" className="content">
-        <p className="claim-invitation">Join “THE FIRST CUT”.</p>
+        <p className="claim-invitation">JOIN SO/ COLLECTIVE</p>
         {result&&<p className="claim-score">{formatPoints(result.points)} pts · {rewardMoney(result.points)} off <span className="brand-word">SO/ FACET</span> diamond jewellery</p>}
         <form className="claim-form" id="claim" noValidate onSubmit={save}>
           <label><span className="sr-only">Full name</span><input autoComplete="name" className="field" name="fullName" placeholder="Full name" value={fullName} readOnly={!collectDetails} required maxLength={80} disabled={working} onChange={event=>setFullName(capitaliseName(event.target.value))} /></label>

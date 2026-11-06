@@ -1,7 +1,7 @@
 @font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
-:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
+:root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 5px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
 :root .site-brand{position:fixed;z-index:4;top:calc(var(--site-brand-top) + env(safe-area-inset-top,0px));left:calc(var(--site-brand-left) + env(safe-area-inset-left,0px));display:block;width:var(--site-brand-width);height:auto;margin:0;padding:0;line-height:0;flex:none;color:#fff;text-decoration:none}
 :root .site-brand img{display:block;width:100%;height:auto}
 :root .site-brand:focus{outline:none}
@@ -41,9 +41,9 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
  :root .site-nav .play-now{font-size:13px}
 }
 .menu-panel .menu-item:is(button){display:block;margin:0;padding:14px 0;border:0;border-radius:0;background:transparent;color:#fff;font:400 var(--site-menu-size)/1.2 Acumin,Arial,sans-serif;letter-spacing:-.02em;text-align:left;cursor:pointer}
-.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;color:#d9ed37;font-size:18px;text-align:center}
+.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;color:#d9ed37;font-size:16px;text-align:center}
 .menu-small-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
-.menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:13px;letter-spacing:0}
+.menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:11px;letter-spacing:0}
 .menu-small-links [aria-disabled=true]{opacity:.6}
 .menu-panel .menu-social-links .social-placeholder{display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:0;border-radius:0;background:transparent;color:#eeeaf3;opacity:1}
 .social-placeholder svg{width:22px;height:22px;fill:currentColor;stroke:#0b0e18;stroke-width:.55;stroke-linejoin:round}

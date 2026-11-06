@@ -36,10 +36,10 @@ if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textConten
 const accountLink = menuLink('My points', '/account.html');accountLink.setAttribute('data-account-link', '');
 const about = menuLink('About ', '/about.html');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
-const join = menuLink('Join THE FIRST CUT', '/launching-soon.html#join', 'menu-item menu-join');
+const join = menuLink('JOIN SO/ COLLECTIVE', '/membership.html?from=collective', 'menu-item menu-join');
 const small = document.createElement('div');small.className = 'menu-small-links';
-small.append(menuLink('Terms','/terms.html',''),menuLink('Privacy','/privacy.html',''),menuLink('Contact','mailto:hello@sofacet.com',''));
-const instagram=menuLink('Instagram','https://www.instagram.com/so.facet','');instagram.target='_blank';instagram.rel='noopener noreferrer';small.append(instagram);
+small.append(menuLink('Terms','/terms.html',''),menuLink('Privacy','/privacy.html',''),menuLink('Contact','/faq.html#contact',''));
+const instagram=menuLink('Instagram','https://www.instagram.com/so.facet?obrf=MWY4NzIydDY3bmUybg==','');instagram.target='_blank';instagram.rel='noopener noreferrer';small.append(instagram);
 panel.replaceChildren(play, accountLink, menuLink('How points work', '/faq.html'), about, join, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
@@ -48,6 +48,7 @@ panel.querySelectorAll('a[href]').forEach(item => {
   const target = new URL(item.href, location.href);
   const targetPath = target.pathname === '/' ? '/index.html' : target.pathname;
   if (target.origin !== location.origin || targetPath !== currentPath) return;
+  if (target.hash && target.hash !== location.hash) return;
   if (targetPath === '/membership.html' && target.searchParams.get('from') !== new URLSearchParams(location.search).get('from')) return;
   item.setAttribute('aria-current', 'page');
   item.setAttribute('aria-disabled', 'true');

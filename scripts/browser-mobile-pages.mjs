@@ -76,9 +76,9 @@ try{await withRewardsSite(async({origin})=>{
    await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();await fits(page,'#create-panel');
    results.push({page:'account',width,height,registeredAndCreateFit:true});
    await page.goto(origin+'/launching-soon.html');await page.locator('.design-launch[data-scene-ready="true"]').waitFor();await fits(page,'.action-group');
-   assert.match(await page.locator('.design-launch .description').innerText(),/Join “THE FIRST CUT”/);
-   assert.equal(await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).count(),1);
-   await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await fits(page,'#join');
+   assert.match(await page.locator('.design-launch .description').innerText(),/JOIN SO\/ COLLECTIVE/);
+   assert.equal(await page.getByRole('button',{name:'JOIN SO/ COLLECTIVE',exact:true}).count(),1);
+   await page.goto(origin+'/launching-soon.html#join');await page.locator('#join[open]').waitFor();await fits(page,'#join');
    await page.locator('#email').fill('mobile@example.invalid');await page.getByRole('button',{name:'Close signup'}).click();
    assert.match(await page.frameLocator('.mesh-layer').locator('.mouse-hint').textContent(),/ENTER OR SPACE/);
    results.push({page:'launch',width,height,dialogFits:true});

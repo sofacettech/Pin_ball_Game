@@ -1,0 +1,35 @@
+@font-face{font-family:PolicySans;src:url('/assets/score-coins/brilliant-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:PolicyMedium;src:url('/assets/score-coins/brilliant-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:PolicySerif;src:url('/assets/score-coins/fancy-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:PolicyWordmark;src:url('/assets/fonts/policy-wordmark.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:PolicyCurrency;src:url('/assets/loader-cards/HelveticaNeueRoman.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+
+html.policy-root{background:#050505;color-scheme:dark;scroll-padding-top:calc(var(--site-header-clearance,78px) + 24px)}
+body.policy-page{margin:0;min-height:100vh;min-height:100svh;background:#050505;color:#f2efe9;font:400 16px/1.6 PolicySerif,PolicySans,PolicyCurrency,serif;letter-spacing:normal;font-synthesis:none}
+body.policy-page>header{position:fixed;inset:0 0 auto;z-index:30;height:var(--site-header-clearance,78px);background:#050505}
+body.policy-page>.site-sound{position:static;display:flex;justify-content:flex-start;width:min(760px,calc(100% - 80px));margin:0 auto 32px;padding:0;font:400 13px/1.4 PolicySans,sans-serif}
+.policy-main{position:static;inset:auto;display:block;overflow:visible;width:min(760px,calc(100% - 80px));margin:0 auto;padding:calc(var(--site-header-clearance,78px) + 36px) 0 88px}
+.policy-main .sf-legal{margin:0;padding:0;min-width:0;overflow-wrap:anywhere}
+.sf-legal h1{margin:0 0 16px;font:400 clamp(32px,3vw,47px)/1.12 PolicySans,sans-serif;letter-spacing:-.7px;text-wrap:balance}
+.sf-legal h2{margin:40px 0 12px;font:600 20px/1.4 PolicyMedium,sans-serif;letter-spacing:0;scroll-margin-top:calc(var(--site-header-clearance,78px) + 24px)}
+.sf-legal h3{margin:28px 0 8px;font:600 16.8px/1.5 PolicyMedium,sans-serif;letter-spacing:0;scroll-margin-top:calc(var(--site-header-clearance,78px) + 24px)}
+.sf-legal p,.sf-legal li{font-size:16px;line-height:1.6;margin:0 0 12px}
+.sf-legal ul,.sf-legal ol{padding-left:24px;margin:0 0 16px}
+.sf-legal strong,.sf-legal b{font-family:PolicyMedium,sans-serif;font-weight:600}
+.sf-legal .sf-legal-meta{margin-bottom:32px;color:#aaa7a1;font:400 14.4px/1.6 PolicySans,sans-serif;letter-spacing:0}
+.sf-legal .policy-brand{font-family:PolicyWordmark,sans-serif;font-weight:400;font-style:normal;font-kerning:normal;font-synthesis:none;letter-spacing:normal;white-space:nowrap;text-transform:uppercase}
+.sf-legal .policy-currency{font-family:PolicyCurrency,PolicySans,sans-serif;font-weight:400}
+.sf-legal a{color:inherit;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;overflow-wrap:anywhere;transition:color .25s ease}
+.sf-legal a:hover{color:#fff}
+.sf-legal a:focus-visible,.sf-legal-table:focus-visible{outline:1px solid #f2efe9;outline-offset:4px}
+.sf-legal-table{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;margin:0 0 20px;scrollbar-width:thin;scrollbar-color:#77736e #050505}
+.sf-legal table{width:100%;border-collapse:collapse;font-size:14.72px;line-height:1.6;table-layout:fixed}
+.sf-legal th,.sf-legal td{padding:10px 12px;border:1px solid #41403d;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.sf-legal th{font-family:PolicyMedium,sans-serif;font-weight:600}
+.sf-legal table:has(tr>:nth-child(3)){min-width:640px}
+.sf-legal>:nth-child(-n+3){animation:policy-enter .85s cubic-bezier(.2,.75,.2,1) both}
+.sf-legal>:nth-child(2){animation-delay:.12s}
+.sf-legal>:nth-child(3){animation-delay:.22s}
+@keyframes policy-enter{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:600px){.policy-main,body.policy-page>.site-sound{width:calc(100% - 40px)}.policy-main{padding-top:calc(var(--site-header-clearance,78px) + 32px);padding-bottom:64px}.sf-legal h2{margin-top:32px}.sf-legal th,.sf-legal td{padding:8px 10px}}
+@media(prefers-reduced-motion:reduce){.sf-legal>:nth-child(-n+3){animation:none}.sf-legal a{transition:none}}

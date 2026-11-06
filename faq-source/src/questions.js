@@ -26,7 +26,7 @@ export const sections = [
       {
         "question": "When do you launch?",
         "answer": [
-          "Soon. Save your points or join “THE FIRST CUT”, and you’ll be among the first to know."
+          "Soon. Save your points or JOIN SO/ COLLECTIVE, and you’ll be among the first to know."
         ]
       },
       {

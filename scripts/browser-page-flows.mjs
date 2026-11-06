@@ -28,7 +28,7 @@ try{
     await page.goto(origin+'/faq.html');const play=page.locator('.pinball');await play.scrollIntoViewIfNeeded();
     const button=await play.evaluate(e=>({border:parseFloat(getComputedStyle(e).borderTopWidth),height:e.getBoundingClientRect().height}));
     assert.ok(button.border>=1&&button.height>=44);await capture(page,width+'-faq-end');await play.click();await page.waitForURL('**/play.html');
-    await page.goto(origin+'/launching-soon.html');await page.getByRole('button',{name:'JOIN THE FIRST CUT',exact:true}).click();await page.locator('#join[open]').waitFor();await page.getByRole('button',{name:'Close signup'}).click();
+    await page.goto(origin+'/launching-soon.html');await page.getByRole('button',{name:'JOIN SO/ COLLECTIVE',exact:true}).click();await page.waitForURL('**/membership.html?from=collective');await page.locator('#create-tab[aria-selected=true]').waitFor();await page.goto(origin+'/launching-soon.html');
     await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');
     for(const [name,path] of [['Play Pinball','/play.html'],['Back to the world','/']]){
      await page.goto(origin+'/first-cuts-confirmation.html');await page.getByRole('link',{name:new RegExp('^'+name)}).click();await page.waitForURL(origin+path);
