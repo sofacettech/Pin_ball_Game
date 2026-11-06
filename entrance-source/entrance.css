@@ -18,7 +18,7 @@ body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility
  #story-copy .story-outside,#story-copy .story-approach{left:6%;top:22%;width:35%}
 }
 body[data-loading] .frame-rate-panel{visibility:hidden}
-#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
+#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:0;border-radius:0;background:transparent;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
 body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}

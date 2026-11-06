@@ -35,8 +35,7 @@ async function createClaim(page,origin){
   await minimumText(page,'.design-account .tab',11);
  }
  await page.locator('input[name="title"][value="Ms"]').check();await page.locator('#new-name').fill('Test Member');
- await page.locator('#day').selectOption('1');await page.locator('#month').selectOption('1');await page.locator('#year').selectOption('1990');
- await page.locator('#new-city').fill('Delhi');await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
+ await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
  await page.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
  await page.locator('.design-claim .art-layer.art-ready').waitFor();
 }
@@ -85,7 +84,7 @@ try{await withRewardsSite(async({origin})=>{
    results.push({page:'launch',width,height,dialogFits:true});
    console.log(engine+': Claim opening/position, Account tabs and Launch fit '+width+'×'+height);
   }
-  await page.goto(origin+'/faq.html');await page.locator('h1').waitFor();assert.equal(await page.locator('h1').innerText(),'HOW POINTS WORK');
+  await page.goto(origin+'/faq.html');await page.getByRole('heading',{name:'HOW POINTS WORK',exact:true}).waitFor();
   if(engine==='webkit'){
    // Test the actual Reward React component in its existing shipped shell.
    // The Windows WebKit game-loader stall is outside this mobile UI change.

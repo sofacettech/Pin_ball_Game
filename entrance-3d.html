@@ -6,7 +6,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=menu-0475ed4cb659">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
+  <style data-shared-style="./style.css?v=rules-38355a2d7bd8">@font-face{font-family:Acumin;src:url('/assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 3px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -114,7 +114,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .story-text-line{display:block;white-space:nowrap}
 .story-approach p,.story-finale p{white-space:nowrap}
 .story-approach{right:5.5%;bottom:17%;width:min(32vw,530px)}
-.story-butterflies{right:9.5%;top:16.5%;width:28%;text-align:right}
+.story-butterflies{right:9.5%;top:33.5%;width:28%;text-align:right}
 .story-choice{left:13.7%;top:33.5%;width:25%}
 .story-choice p{margin-top:.7em;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.04;letter-spacing:0}
 .story-rules,.story-finale{left:6.5%;top:33%;width:min(33vw,550px)}
@@ -296,7 +296,7 @@ body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility
  #story-copy .story-outside,#story-copy .story-approach{left:6%;top:22%;width:35%}
 }
 body[data-loading] .frame-rate-panel{visibility:hidden}
-#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:1px solid #ffffff40;border-radius:999px;background:#080b1566;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:opacity .25s}
+#scroll-hint{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:18px;min-height:44px;padding:8px 18px;border:0;border-radius:0;background:transparent;color:#fff;font:400 14px Acumin,Arial,sans-serif;cursor:pointer;transition:opacity .25s}
 #scroll-hint:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 body[data-scrolled] #scroll-hint{opacity:0;pointer-events:none}
 body[data-game-loading] #scene-viewport,body[data-game-loading] #story-copy,body[data-game-loading] #scroll-hint,body[data-game-loading] #progress,body[data-game-loading] .frame-rate-panel{visibility:hidden}
@@ -510,7 +510,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     <div id="story-copy" aria-label="The SO/ FACET story">
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
         <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/ FACET</span></span></h1>
-        <p><span class="story-text-line">LAB-GROWN DIAMOND</span> <span class="story-text-line">REDEFINED</span></p>
+        <p><span class="story-text-line">LAB-GROWN DIAMONDS</span> <span class="story-text-line">REDEFINED</span></p>
       </section>
       <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
         <h2><span class="story-text-line">For years,</span> <span class="story-text-line">diamonds came</span> <span class="story-text-line">with rules/</span></h2>
@@ -524,12 +524,12 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
       </section>
       <section class="story-line story-choice" data-from="1301" data-until="1630" aria-hidden="true">
         <h2><span class="story-text-line">And you're</span> <span class="story-text-line">the one who</span> <span class="story-text-line">chooses/</span></h2>
-        <p><span class="story-text-line">No special</span> <span class="story-text-line">occasion</span> <span class="story-text-line">needed.</span> <span class="story-text-line">Just you,</span> <span class="story-text-line">today.</span></p>
+        <p><span class="story-text-line">No special</span> <span class="story-text-line">occasion needed.</span> <span class="story-text-line">Just you, today.</span></p>
       </section>
-      <section class="story-line story-rules" data-from="1630" data-until="2049" aria-hidden="true">
+      <section class="story-line story-rules" data-from="1630" data-until="2000" aria-hidden="true">
         <h2><span class="story-text-line">Your rules/</span> <span class="story-text-line">Your shape/</span> <span class="story-text-line">Your diamond/</span></h2>
       </section>
-      <section class="story-line story-finale" data-from="2049" aria-hidden="true">
+      <section class="story-line story-finale" data-from="2000" aria-hidden="true">
         <h2><span class="story-text-line">So/</span> <span class="story-text-line">what's yours?</span></h2>
         <p>Find out in a game of pinball. Every 10 points is ₹1 off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
       </section>
@@ -558,7 +558,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
       <p id="preparation-status" data-scene-status role="status">Growing the diamonds…</p>
       <progress data-scene-progress max="100" aria-label="World download"></progress>
     </section>
-    <button id="scroll-hint" type="button">Scroll to explore <span aria-hidden="true">↓</span></button>
+    <button id="scroll-hint" type="button">Scroll Up to Explore <span aria-hidden="true">↑</span></button>
     <div id="progress" aria-hidden="true"></div>
   </main>
   <iframe id="game-page" title="SO/ FACET pinball game" aria-hidden="true" inert></iframe>

@@ -11,8 +11,8 @@ export function registrationDetails(values) {
   const phoneNumber=normaliseDesignPhone(values.phone,values.country);
   if(!phoneNumber)throw new Error('Please enter a valid mobile number.');
   const {firstName,lastInitial}=splitPlayerName(values.name);
-  return {name:values.name.trim(),email:values.email.trim(),city:values.city.trim(),dateOfBirth:[values.year,String(values.month).padStart(2,'0'),String(values.day).padStart(2,'0')].join('-'),leaderboardName:publicPlayerName(firstName,lastInitial).slice(0,30),termsAccepted:values.terms===true || values.terms==='on',marketingConsent:values.updates===true || values.updates==='on',phoneNumber};
+  return {name:values.name.trim(),email:values.email.trim(),leaderboardName:publicPlayerName(firstName,lastInitial).slice(0,30),termsAccepted:values.terms===true || values.terms==='on',marketingConsent:values.updates===true || values.updates==='on',phoneNumber};
 }
 export function registrationPayload(details,verificationToken,gameId) {
-  return {name:details.name,email:details.email,city:details.city,dateOfBirth:details.dateOfBirth,leaderboardName:details.leaderboardName,termsAccepted:details.termsAccepted,marketingConsent:details.marketingConsent,phoneNumber:details.phoneNumber,verificationToken,...(gameId?{gameId}:{})};
+  return {name:details.name,email:details.email,leaderboardName:details.leaderboardName,termsAccepted:details.termsAccepted,marketingConsent:details.marketingConsent,phoneNumber:details.phoneNumber,verificationToken,...(gameId?{gameId}:{})};
 }

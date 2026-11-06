@@ -1,6 +1,7 @@
 .auth-flow-notice{box-sizing:border-box;position:relative;min-height:100svh;padding:clamp(120px,18vh,200px) max(7vw,24px) 60px;color:#eee6f4;background:radial-gradient(ellipse at 60% 70%,#28123e,#08050d 70%);font:18px/1.5 Arial,sans-serif}
 .auth-flow-notice h1{max-width:19ch;margin:20px 0;font-size:clamp(34px,5vw,62px);font-weight:400;line-height:1.15}
 .auth-flow-notice p{max-width:46em}
+:is(#account-root,#membership-root,#launch-root) .design-claim .claim-email{display:block;margin-top:20px}
 .auth-flow-actions{display:flex;gap:18px;flex-wrap:wrap;margin-top:30px}
 .auth-flow-notice button,.auth-flow-actions a{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 28px;background:transparent;color:inherit;border:1px solid #a98abe;font:16px/1.4 Arial,sans-serif;text-decoration:none;cursor:pointer}
 .auth-flow-actions>:first-child{background:#c9ff32;border-color:#c9ff32;color:#132000}
@@ -49,3 +50,11 @@ body:has(:is(#account-root,#membership-root,#launch-root) :is(.design-account,.d
 :is(#account-root,#membership-root) .design-account .points-notes{margin-top:20px;color:#d0c5d7;font-size:13px;line-height:1.5}
 :is(#account-root,#membership-root) .design-account .points-notes p{margin:0 0 6px;font-size:13px}
 :is(#account-root,#membership-root) .design-account .points-notes a{display:inline-flex;align-items:center;min-height:44px;color:inherit;font-size:13px;text-underline-offset:4px}
+
+:is(#account-root,#membership-root) .design-claim .claim-consents .consent{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;margin:12px 0}
+:is(#account-root,#membership-root) .design-claim .claim-consents .consent input{appearance:auto;-webkit-appearance:checkbox;flex:0 0 18px;width:18px;height:18px;min-height:0;margin:2px 0 0;padding:0;accent-color:#d9ed37}
+
+:is(#account-root,#membership-root) .design-claim>.caption{position:fixed;inset:auto 32px 32px auto;max-width:40vw;margin:0;text-align:right;font-size:11px;letter-spacing:.16em;font-weight:400;pointer-events:none;user-select:none;opacity:.65}
+:is(#account-root,#membership-root) .design-claim>.caption .touch-hint{display:none}
+@media(pointer:coarse){:is(#account-root,#membership-root) .design-claim>.caption .mouse-hint{display:none}:is(#account-root,#membership-root) .design-claim>.caption .touch-hint{display:inline}}
+@media(max-width:900px){:is(#account-root,#membership-root) .design-claim:has(>.caption){position:relative}:is(#account-root,#membership-root) .design-claim>.caption{position:absolute;inset:96px 24px auto 104px;max-width:none}}

@@ -13,15 +13,15 @@ const output=process.env.SOFACET_SCREENSHOT_DIR;
 if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){if(output){
   for(const frame of page.frames())await frame.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].filter(img=>!img.closest('#game-loading-screen[hidden]')).map(img=>img.decode().catch(()=>{})));});
-  if(name.startsWith('04-'))await page.frameLocator('#membership').locator('.art-layer.art-ready').waitFor();
-  if(name.includes('mobile')&&name.startsWith('04-'))assert.ok((await page.frameLocator('#membership').locator('.claim-invitation').boundingBox()).y>110,'Claim heading clears the header and Back');
+  const claim=page.frameLocator(name.includes('direct-claim')?'#registration-frame':'#membership');
+  if(name.startsWith('04-'))await claim.locator('.art-layer.art-ready').waitFor();
+  if(name.includes('mobile')&&name.startsWith('04-'))assert.ok((await claim.locator('.claim-invitation').boundingBox()).y>110,'Claim heading clears the header and Back');
   if(name.includes('mobile')&&/^(02|03)-/.test(name))assert.ok((await page.locator('.welcome-heading').boundingBox()).y>90,'Account heading clears the navigation');
   await page.screenshot({path:resolve(output,name+'.png'),fullPage:true});
 }}
 async function fillCreate(frame){
   await frame.locator('input[name="title"][value="Ms"]').check();await frame.locator('#new-name').fill('Test Member');
-  await frame.locator('#day').selectOption('1');await frame.locator('#month').selectOption('1');await frame.locator('#year').selectOption('1990');
-  await frame.locator('#new-city').fill('Delhi');await frame.locator('#new-phone').fill('9876543210');await frame.locator('#new-email').fill('test@example.invalid');await frame.locator('input[name="terms"]').check();
+  await frame.locator('#new-phone').fill('9876543210');await frame.locator('#new-email').fill('test@example.invalid');await frame.locator('input[name="terms"]').check();
 }
 async function embed(page,origin,returningMember){
   await page.goto(origin+'/health');
@@ -77,7 +77,7 @@ try{
       const frame=await embed(page,origin,false);await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').waitFor();
       await frame.locator('#final-otp').fill('012345');await frame.locator('[name="mobile"]').fill('9876543211');assert.ok(await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).isDisabled());
       await page.clock.fastForward(61000);await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal(sent[1].dateOfBirth,'1990-01-01');
+      await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal(sent[1].dateOfBirth,undefined);assert.equal(sent[1].city,undefined);
       assert.equal(verified.length,0);await frame.locator('#final-otp').fill('123456');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'Enter the new code'}).waitFor();
       assert.equal(verified[0].phoneNumber,'+919876543211');assert.equal(verified[0].challengeId,'client-check-2');assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
       console.log(engine+': changed phone observes cooldown, requests a fresh OTP, clears old code and preserves game ID');
@@ -115,13 +115,18 @@ try{
       assert.equal(await page.locator('#rewards-points').innerText(),'3,205');assert.match(await page.locator('#rewards-value').innerText(),/320\.5/);
       await capture(page,'01-reward-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'01-reward-mobile');await page.setViewportSize({width:1440,height:900});
       await page.locator('#rewards-close').click();await page.locator('#rewards-keep').waitFor({state:'visible'});await page.locator('#rewards-close').click();
-      await page.locator('#rewards-register').click();const frame=page.frameLocator('#registration-frame');await frame.locator('#new-name').waitFor();
-      assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
-      await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();
-      await frame.getByRole('button',{name:'Save my points',exact:true}).click();await frame.locator('#new-name').waitFor();
-      assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.points),3205);
+      const frame=page.frameLocator('#registration-frame');
+      async function openClaim(){await page.locator('#rewards-register').click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();await frame.locator('[name="fullName"]').waitFor();assert.equal(await frame.locator('[name="fullName"]').isEditable(),true);assert.equal(await frame.locator('#final-otp').isDisabled(),true);assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);}
+      async function scoreRestored(){await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open);await page.locator('#rewards-register').waitFor();assert.equal(await page.locator('#rewards-points').innerText(),'3,205');}
+      await openClaim();await capture(page,'04-direct-claim-desktop');await page.setViewportSize({width:375,height:844});await capture(page,'04-direct-claim-mobile');await page.setViewportSize({width:1440,height:900});
+      await frame.getByRole('button',{name:'← Back',exact:true}).click();await scoreRestored();
+      await openClaim();await frame.locator('[name="fullName"]').press('Escape');await scoreRestored();
+      await openClaim();await page.goBack();await scoreRestored();
+      await openClaim();await frame.getByRole('button',{name:'Sign in',exact:true}).click();await frame.locator('#login-phone').waitFor();assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.points),3205);await frame.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();await frame.locator('[name="fullName"]').waitFor();
+      await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();await frame.getByRole('button',{name:'Save my points',exact:true}).click();await frame.locator('[name="fullName"]').waitFor();
+      assert.equal(await frame.locator('.claim-invitation').innerText(),'Join “THE FIRST CUT”.');assert.match(await frame.locator('.claim-score').innerText(),/3,205 pts/);
       await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
-      await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
+      await frame.locator('[name="fullName"]').fill('Test Member');await frame.locator('[name="mobile"]').fill('9876543210');await frame.locator('[name="email"]').fill('test@example.invalid');await frame.locator('[name="terms"]').check();await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();await frame.locator('#final-otp:not([disabled])').waitFor();await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
       await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedScore=data}});});
       await frame.getByRole('button',{name:'Share my score',exact:true}).click();assert.match(await frame.locator('body').evaluate(()=>window.__sharedScore.text),/I scored 3,205 pts/);

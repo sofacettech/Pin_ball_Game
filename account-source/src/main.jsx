@@ -89,7 +89,7 @@ function App(){
   {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your points.</em></h1><p className="supporting">Please try again.</p><button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
   {signingIn&&<>
     <section className="screen access-screen" aria-labelledby="signin-title">
-      <h1 id="signin-title" tabIndex={-1}>Welcome back</h1>
+      <h1 id="signin-title" tabIndex={-1}>Welcome</h1>
       <nav className="access-links" aria-label="Account access">
         <span aria-current="page">Already registered?</span>
         <a href={membershipHref}>Create your account</a>

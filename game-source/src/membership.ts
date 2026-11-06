@@ -9,6 +9,7 @@ export function connectMembership(options:Options){
  const member=$<HTMLButtonElement>('member'),menuMember=$<HTMLButtonElement>('menu-member');
  let player:Player|null=null,checking=true,completed=false,opener:HTMLElement=$('nav-toggle');
  let pendingReward:CompletedGameResult|null=null;
+ let joinHistory=false,pendingClose:{returnToScore:boolean;after?:()=>void}|null=null;
  frame.addEventListener('load',()=>{if(dialog.open&&pendingReward)frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin)});
 
  function paint(){member.hidden=menuMember.hidden=player?.member!==true}
@@ -18,16 +19,29 @@ export function connectMembership(options:Options){
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member&&!verify){options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;options.beforeOpen();
-  frame.src='/membership.html?nav=game'+(verify?'&verify=1':'');dialog.showModal();document.body.classList.add('membership-open');
+  if(pendingReward){history.pushState({...history.state,sofacetJoin:true},'');joinHistory=true;}
+  frame.contentWindow!.location.replace('/membership.html?nav=game'+(verify?'&verify=1':pendingReward?'&from=score':''));dialog.showModal();document.body.classList.add('membership-open');
  }
- function close(returnToScore=false){
+ function finishClose(returnToScore=false,after?:()=>void){
   if(!dialog.open)return;
-  dialog.close();frame.removeAttribute('src');pendingReward=null;document.body.classList.remove('membership-open');
+  dialog.close();frame.contentWindow!.location.replace('about:blank');pendingReward=null;document.body.classList.remove('membership-open');
   (!opener.isConnected||opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
   options.afterClose(completed,returnToScore);
+  after?.();
  }
+ function close(returnToScore=false,after?:()=>void){
+  if(!dialog.open)return;
+  // Consume the modal history step before resuming/replaying the game.
+  if(joinHistory){if(!pendingClose){pendingClose={returnToScore,after};history.back();}return;}
+  finishClose(returnToScore,after);
+ }
+ window.addEventListener('popstate',()=>{
+  if(!joinHistory)return;
+  joinHistory=false;const requested=pendingClose;pendingClose=null;
+  finishClose(requested?.returnToScore??true,requested?.after??(completed?options.onLeaderboard:undefined));
+ });
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
- const requestExit=()=>frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);
+ const requestExit=()=>{if(joinHistory){close(true);return;}frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);};
  dialog.oncancel=event=>{event.preventDefault();requestExit()};
  dialog.addEventListener('click',event=>{
   if(event.target!==dialog)return;
@@ -37,12 +51,12 @@ export function connectMembership(options:Options){
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}
-  if(event.data?.type==='contest-registration:close'){const saved=completed;close(event.data.returnToScore===true&&pendingReward!==null);if(saved)options.onLeaderboard();return}
+  if(event.data?.type==='contest-registration:close'){close(event.data.returnToScore===true&&pendingReward!==null,completed?options.onLeaderboard:undefined);return}
   if(event.data?.type==='sofacet:reward-discarded'){pendingReward=null;options.onDiscard();return}
-  if(event.data?.type==='sofacet:membership-replay'){close();options.onReplay();return}
+  if(event.data?.type==='sofacet:membership-replay'){close(false,options.onReplay);return}
   if(event.data?.type==='sofacet:membership-existing'){
    await options.refreshPlayer();
-   if(dialog.open&&player?.member){completed=true;close();options.onLeaderboard()}
+   if(dialog.open&&player?.member){completed=true;close(false,options.onLeaderboard)}
    return;
   }
   if(event.data?.type==='contest-registration:complete'&&!completed){

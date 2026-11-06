@@ -13,7 +13,6 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
   const tab = activeTab ?? selectedTab;
   const login = useSubmission(), create = useSubmission();
   const phone = useRef(null);
-  const currentYear = new Date().getFullYear();
   function selectTab(name, focus = false) {
     if (working) return;
     setTab(name);
@@ -38,6 +37,7 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
   function createAccount(event) {
     event.preventDefault();
     const form = event.currentTarget, values = formValues(form);
+    if (!form.reportValidity()) return;
     if (showValidation(form, validateAccount(values), create.setMessage)) return;
     void create.submit(onCreateAccount, {...values, terms:values.terms === 'on', updates:values.updates === 'on'}, 'Account creation is not connected in this preview.');
   }
@@ -46,7 +46,7 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
     <AccountMesh />
     <main className="shell"><div className="container">
       {pointsContext&&<p className="points-label">MY POINTS</p>}
-      <h1 className="welcome-heading">WELCOME BACK</h1>
+      <h1 className="welcome-heading">WELCOME</h1>
       <nav aria-label="Account access" className="tabs" role="tablist">
         <button aria-controls="registered-panel" aria-selected={tab === 'registered'} className={'tab' + (tab === 'registered' ? ' active' : '')} id="registered-tab" role="tab" type="button" tabIndex={tab === 'registered' ? 0 : -1} onClick={() => selectTab('registered')} onKeyDown={tabKey}>ALREADY REGISTERED?</button>
         <button aria-controls="create-panel" aria-selected={tab === 'create'} className={'tab' + (tab === 'create' ? ' active' : '')} id="create-tab" role="tab" type="button" tabIndex={tab === 'create' ? 0 : -1} onClick={() => selectTab('create')} onKeyDown={tabKey}>CREATE YOUR ACCOUNT</button>
@@ -65,14 +65,6 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
         <form id="create-form" noValidate onSubmit={createAccount}>
           <fieldset className="titles" style={{border:0,padding:0}}><legend className="field-title">Title</legend><div className="radio-row">{['Mr','Mrs','Ms'].map(title => <label className="radio-label" key={title}><input name="title" required type="radio" value={title} defaultChecked={defaults.title === title} />{title}</label>)}</div></fieldset>
           <div className="field-group"><label className="field-title" htmlFor="new-name">Name</label><input autoComplete="name" className="text-line" id="new-name" name="name" defaultValue={defaults.name || ''} required /></div>
-          <div className="split-fields">
-            <div className="field-group"><label className="field-title" htmlFor="day">Date of birth</label><div className="dob-row">
-              <select aria-label="Birth day" className="select" id="day" name="day" required defaultValue={defaults.day || ''}><option value="">Day</option>{Array.from({length:31},(_,i) => <option value={i+1} key={i}>{String(i+1).padStart(2,'0')}</option>)}</select>
-              <select aria-label="Birth month" className="select" id="month" name="month" required defaultValue={defaults.month || ''}><option value="">Month</option>{Array.from({length:12},(_,i) => <option value={i+1} key={i}>{String(i+1).padStart(2,'0')}</option>)}</select>
-              <select aria-label="Birth year" className="select" id="year" name="year" required defaultValue={defaults.year || ''}><option value="">Year</option>{Array.from({length:currentYear-1899},(_,i) => <option value={currentYear-i} key={i}>{currentYear-i}</option>)}</select>
-            </div></div>
-            <div className="field-group"><label className="field-title" htmlFor="new-city">City</label><input autoComplete="address-level2" className="text-line" id="new-city" name="city" defaultValue={defaults.city || ''} required /></div>
-          </div>
           <div className="field-group"><label className="field-title" htmlFor="new-phone">Mobile number</label><div className="phone-line"><select aria-label="Country code" className="select country-select" name="country" defaultValue={defaults.country || '+91'}>{countries.map(country => <option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select><input autoComplete="tel-national" className="text-line" id="new-phone" inputMode="tel" name="phone" pattern="[0-9]{7,15}" placeholder="Phone" defaultValue={defaults.phone || ''} required type="tel" /></div></div>
           <div className="field-group"><label className="field-title" htmlFor="new-email">Email address</label><input autoComplete="email" className="text-line" id="new-email" name="email" defaultValue={defaults.email || ''} required type="email" /></div>
           <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" type="checkbox" defaultChecked={!!defaults.updates} /><span>Send me <span className="wm">SO/ FACET</span> news and launch updates.</span></label></div>

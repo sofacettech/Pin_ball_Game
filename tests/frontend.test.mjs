@@ -38,14 +38,14 @@ test('country menus put India first without changing alphabetical order for othe
  assert.deepEqual(rest.map(country=>country.name),[...rest].sort((a,b)=>a.name.localeCompare(b.name)).map(country=>country.name));
 });
 
-test('the account design maps explicit consent, DOB and city into the existing registration contract',()=>{
- const values={title:'Ms',name:'Asha Kapoor',day:'1',month:'1',year:'1990',city:'Pune',country:'+91',phone:'9876543210',email:'asha@example.test',terms:true,updates:false};
+test('account registration uses the age declaration without collecting birth date or city',()=>{
+ const values={title:'Ms',name:'Asha Kapoor',country:'+91',phone:'9876543210',email:'asha@example.test',terms:true,updates:false};
  assert.throws(()=>registrationDetails({...values,terms:false}),/terms/);
- assert.throws(()=>registrationDetails({...values,day:'31',month:'2'}),/date of birth/);
  const details=registrationDetails(values);
- assert.equal(details.phoneNumber,'+919876543210');assert.equal(details.dateOfBirth,'1990-01-01');assert.equal(details.city,'Pune');
+ assert.equal(details.phoneNumber,'+919876543210');assert.equal('dateOfBirth' in details,false);assert.equal('city' in details,false);
  assert.equal(details.termsAccepted,true);assert.equal(details.marketingConsent,false);assert.equal(details.leaderboardName,'Asha K.');
  const payload=registrationPayload({...details,points:999999,rewardValue:999999},'verified-token','game-reference');
+ assert.equal('dateOfBirth' in payload,false);assert.equal('city' in payload,false);
  assert.equal(payload.gameId,'game-reference');assert.equal(payload.verificationToken,'verified-token');assert.equal('points' in payload,false);assert.equal('rewardValue' in payload,false);
  assert.equal(normaliseDesignPhone('020 7946 0018','+44'),'+442079460018');
  assert.equal('gameId' in registrationPayload(details,'verified-token'),false,'creating an account without a game cannot invent rewards');

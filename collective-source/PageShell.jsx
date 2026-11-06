@@ -1,5 +1,6 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {createAnimationScope} from './animation-scope.js';
+import {brandText} from '../shared/brand-react.jsx';
 
 export default function PageShell({scene, initialize, title, children}) {
   const root = useRef(null);
@@ -21,5 +22,5 @@ export default function PageShell({scene, initialize, title, children}) {
     document.head.append(stylesheet);
     return () => {active = false; scope?.dispose(); stylesheet.remove(); document.title = previousTitle;};
   }, [scene, initialize, title]);
-  return <div className={'react-page-root design-' + scene + (scene === 'claim' ? ' claim-art-intro' : '')} ref={root}>{children}</div>;
+  return <div className={'react-page-root design-' + scene + (scene === 'claim' ? ' claim-art-intro' : '')} ref={root}>{brandText(children)}</div>;
 }

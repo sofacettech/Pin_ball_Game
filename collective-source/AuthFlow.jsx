@@ -9,8 +9,8 @@ import './flow.css';
 
 const embedded=window.parent!==window;
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
-export default function AuthFlow({pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,onComplete,onBack,firstCut=false}) {
-  const [tab,setTab]=useState(initialTab),[step,setStep]=useState('identity'),[memberCheck,setMemberCheck]=useState(checkMembership?'checking':'guest');
+export default function AuthFlow({pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
+  const [tab,setTab]=useState(initialTab),[step,setStep]=useState(claimFirst&&!forceVerification?'claim':'identity'),[memberCheck,setMemberCheck]=useState(checkMembership?'checking':'guest');
   const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(null),[saved,setSaved]=useState(null);
   const [challenge,setChallenge]=useState(null),[status,setStatus]=useState(''),[busy,setBusy]=useState(false),[config,setConfig]=useState(null),[resendAt,setResendAt]=useState(0),[seconds,setSeconds]=useState(0),[exit,setExit]=useState(null);
   const pendingRef=useRef(null),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),mounted=useRef(true),destination=useRef('/'),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
@@ -44,12 +44,12 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
       event.preventDefault();exitRef.current(url.href);
     };
     const unload=event=>{if(unsaved()){event.preventDefault();event.returnValue='';}};
-    const escape=event=>{if(event.key==='Escape'&&!event.defaultPrevented&&!document.body.hasAttribute('data-menu-open'))exitRef.current(embedded?()=>post({type:'contest-registration:close'}):'/',true);};
+    const escape=event=>{if(event.key!=='Escape'||event.defaultPrevented||document.body.hasAttribute('data-menu-open'))return;if(claimFirst&&embedded&&pendingRef.current){post({type:'contest-registration:close',returnToScore:true});return;}exitRef.current(embedded?()=>post({type:'contest-registration:close'}):'/',true);};
     window.addEventListener('message',receive);window.addEventListener('beforeunload',unload);document.addEventListener('click',navigate,true);document.addEventListener('keydown',escape);
     Object.defineProperty(window,'sofacetPendingReward',{get:()=>pendingRef.current,configurable:true});
     post({type:'sofacet:membership-ready'});
     return()=>{mounted.current=false;abort.abort();controller.current?.abort();window.removeEventListener('message',receive);window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);document.removeEventListener('keydown',escape);delete window.sofacetPendingReward;};
-  },[checkMembership,forceVerification]);
+  },[checkMembership,forceVerification,claimFirst]);
   useEffect(()=>{const tick=()=>setSeconds(Math.max(0,Math.ceil((resendAt-Date.now())/1000)));tick();const timer=setInterval(tick,1000);return()=>clearInterval(timer);},[resendAt]);
   async function perform(action) {
     if(lock.current)throw Error('Please wait for the current request to finish.');
@@ -63,7 +63,7 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
     if(seconds>0)throw Error('Please wait '+seconds+' seconds before requesting another code.');
     if(kind==='signup'&&(!config?.policies?.terms||!config?.policies?.privacy))throw Error('Account terms are not available yet. Please try again later.');
     proof.current=null;
-    const sent=await request(kind==='signin'?'/api/account/otp/request':'/api/membership/otp/request',kind==='signin'?{phoneNumber}:{phoneNumber,name:profile.name,consent:profile.termsAccepted,dateOfBirth:profile.dateOfBirth},signal);
+    const sent=await request(kind==='signin'?'/api/account/otp/request':'/api/membership/otp/request',kind==='signin'?{phoneNumber}:{phoneNumber,name:profile.name,consent:profile.termsAccepted},signal);
     if(sent.success!==true||typeof sent.challengeId!=='string'||!Number.isFinite(sent.expiresIn)||sent.expiresIn<=0)throw Error('Your code could not be sent. Please try again.');
     setChallenge({id:sent.challengeId,phoneNumber,kind,expiresAt:Date.now()+sent.expiresIn*1000,channel:sent.deliveryChannel});
     setResendAt(Date.now()+Math.max(60,sent.resendAfter||60)*1000);
@@ -79,7 +79,7 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);setDefaults(values);setDetails(profile);
-    if(challenge?.kind==='signup'&&challenge.expiresAt>Date.now()&&details?.name===profile.name&&details?.dateOfBirth===profile.dateOfBirth&&challenge.phoneNumber===profile.phoneNumber){setStep('claim');setStatus('Enter the code already sent to your mobile number.');return;}
+    if(challenge?.kind==='signup'&&challenge.expiresAt>Date.now()&&details?.name===profile.name&&challenge.phoneNumber===profile.phoneNumber){setStep('claim');setStatus('Enter the code already sent to your mobile number.');return;}
     await sendCode('signup',profile.phoneNumber,profile,signal);setStep('claim');
   });
   const requestSignIn=values=>perform(signal=>sendCode('signin',normaliseDesignPhone(values.phone),null,signal));
@@ -107,8 +107,8 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
     await complete(response);
   });
   const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,details,signal));
-  function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);}
-  const goBack=()=>{if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
+  function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
+  const goBack=()=>{if(claimFirst&&embedded&&step==='claim'){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/play.html');};
   async function shareScore(){
     const text='I scored '+formatPoints(saved.score)+' pts on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/';
@@ -121,6 +121,6 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
   return <>
     {embedded&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
-    {step==='claim'?<ClaimPage result={pending} key={challenge?.id} name={details?.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber || ''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
+    {step==='claim'?<ClaimPage result={pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;
 }
