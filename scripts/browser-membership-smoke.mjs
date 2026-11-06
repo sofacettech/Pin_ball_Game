@@ -20,8 +20,7 @@ async function capture(page,name){if(output){
 }}
 async function fillCreate(frame){
   await frame.locator('input[name="title"][value="Ms"]').check();await frame.locator('#new-name').fill('Test Member');
-  await frame.locator('#day').selectOption('1');await frame.locator('#month').selectOption('1');await frame.locator('#year').selectOption('1990');
-  await frame.locator('#new-city').fill('Delhi');await frame.locator('#new-phone').fill('9876543210');await frame.locator('#new-email').fill('test@example.invalid');await frame.locator('input[name="terms"]').check();
+  await frame.locator('#new-phone').fill('9876543210');await frame.locator('#new-email').fill('test@example.invalid');await frame.locator('input[name="terms"]').check();
 }
 async function embed(page,origin,returningMember){
   await page.goto(origin+'/health');
@@ -37,6 +36,8 @@ try{
       await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
       const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));const frame=await embed(page,origin,returningMember);
       if(returningMember){
+        assert.equal(await frame.locator('input[type="checkbox"]:visible').count(),0);
+        assert.equal(await frame.locator('[name="terms"]').isChecked(),false);
         await frame.locator('#login-phone').fill('9876543210');await capture(page,'03-account-registered-desktop');
         assert.equal((await request('/api/membership/rewards',{gameId})).data.code,'rewards_verification_required');
         await frame.locator('#generate').click();await frame.locator('#login-feedback').filter({hasText:'WhatsApp'}).waitFor();
@@ -46,7 +47,7 @@ try{
         await capture(page,'02-account-create-desktop');await frame.getByRole('tab',{name:'ALREADY REGISTERED?'}).click();
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);await frame.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
         await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();
-        await frame.getByText('Join “THE SO/COLEECTIVE”',{exact:true}).waitFor();assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
+        await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
         await capture(page,'04-claim-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'04-claim-mobile');await page.setViewportSize({width:1440,height:900});
         await frame.getByRole('button',{name:'← Back',exact:true}).click();assert.equal(await frame.locator('#new-name').inputValue(),'Test Member');assert.ok(await frame.locator('[name="terms"]').isChecked());
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
@@ -65,6 +66,39 @@ try{
       console.log(engine+': '+(returningMember?'returning sign-in':'create → Claim, wrong OTP, retry, pending reward')+' and profile persistence passed');
     }finally{await context.close();}
   },{returningMember});
+  await withRewardsSite(async({origin,events,awards})=>{
+    const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),page=await context.newPage();
+    try{
+      await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
+      await embed(page,origin,false);
+      await page.locator('#membership').evaluate(frame=>frame.src='/membership.html?nav=game&from=score');
+      const frame=page.frameLocator('#membership');
+      await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();
+      assert.equal(await frame.locator('.welcome-heading').count(),0);
+      await frame.getByRole('button',{name:'Sign in',exact:true}).click();
+      assert.equal(await frame.locator('input[type="checkbox"]:visible').count(),0);
+      assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
+      await frame.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
+      await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();
+      await frame.locator('[name="fullName"]').fill('test Member');
+      await frame.locator('[name="mobile"]').fill('9876543210');
+      await frame.locator('[name="email"]').fill('test@example.invalid');
+      await frame.getByRole('button',{name:'SEND CODE',exact:true}).click();
+      assert.equal(events.filter(e=>e.path==='/rewards/auth').length,0,'consent is required before sending');
+      await frame.locator('[name="terms"]').check();
+      await capture(page,'07-direct-join-mobile');
+      await frame.getByRole('button',{name:'SEND CODE',exact:true}).click();
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();
+      assert.equal(await frame.locator('[name="fullName"]').inputValue(),'Test Member');
+      assert.equal(await frame.locator('[name="email"]').count(),0);
+      assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
+      await frame.locator('#final-otp').fill('012345');
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();
+      assert.equal(awards.size,1);
+      console.log(engine+': direct score → Join, consent, OTP and score save passed without Welcome');
+    }finally{await context.close()}
+  });
   await withRewardsSite(async({origin})=>{
     const context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage(),sent=[],verified=[];
     try{
@@ -74,7 +108,7 @@ try{
       const frame=await embed(page,origin,false);await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').waitFor();
       await frame.locator('#final-otp').fill('012345');await frame.locator('[name="mobile"]').fill('9876543211');assert.ok(await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).isDisabled());
       await page.clock.fastForward(61000);await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal(sent[1].dateOfBirth,'1990-01-01');
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal('dateOfBirth' in sent[1],false);
       assert.equal(verified.length,0);await frame.locator('#final-otp').fill('123456');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'Enter the new code'}).waitFor();
       assert.equal(verified[0].phoneNumber,'+919876543211');assert.equal(verified[0].challengeId,'client-check-2');assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
       console.log(engine+': changed phone observes cooldown, requests a fresh OTP, clears old code and preserves game ID');
@@ -92,10 +126,11 @@ try{
       await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');console.log(engine+': launch → Join → prefilled account, Back and Play Pinball passed');
     }finally{await context.close();}
   });
-  await withRewardsSite(async({origin})=>{
+  for(const nested of [false,true])await withRewardsSite(async({origin,awards})=>{
     const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'}),page=await context.newPage(),errors=[];
     try{
       page.on('pageerror',e=>errors.push(e.message));
+      await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
       // Expose the existing controller only in the intercepted test response.
       // No debug globals or invented game results are shipped in the application.
       await page.route('**/assets/sofacet-game-*.js',async route=>{
@@ -106,18 +141,57 @@ try{
           source+=';window.__testRewards='+binding+';';}
         await route.fulfill({response,body:source});
       });
-      await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.__testRewards);
-      await page.waitForFunction(()=>!document.body.hasAttribute('data-game-loading'),{},{timeout:60000});
-      await page.evaluate(id=>window.__testRewards.show(3205,id),gameId);await page.locator('.design-rewards[data-scene-ready="true"]').waitFor();
-      assert.equal(await page.locator('#rewards-points').innerText(),'3,205');assert.match(await page.locator('#rewards-value').innerText(),/320\.5/);
+      if(nested){
+        await page.goto(origin+'/health');
+        await page.setContent('<style>body{margin:0}iframe{width:100vw;height:100vh;border:0}</style><iframe id="embedded-game" src="/play.html"></iframe>');
+      }else await page.goto(origin+'/play.html');
+      const game=nested?await (await page.locator('#embedded-game').elementHandle()).contentFrame():page;
+      await game.waitForFunction(()=>!!window.__testRewards);
+      await game.waitForFunction(()=>!document.body.hasAttribute('data-game-loading'),{},{timeout:60000});
+      await game.evaluate(id=>window.__testRewards.show(3205,id),gameId);await game.locator('.design-rewards[data-scene-ready="true"]').waitFor();
+      assert.equal(await game.locator('#rewards-points').innerText(),'3,205');assert.match(await game.locator('#rewards-value').innerText(),/320\.5/);
       await capture(page,'01-reward-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'01-reward-mobile');await page.setViewportSize({width:1440,height:900});
-      await page.locator('#rewards-close').click();await page.locator('#rewards-keep').waitFor({state:'visible'});await page.locator('#rewards-close').click();
-      await page.locator('#rewards-register').click();const frame=page.frameLocator('#registration-frame');await frame.locator('#new-name').waitFor();
+      await game.locator('#rewards-close').click();await game.locator('#rewards-keep').waitFor({state:'visible'});await game.locator('#rewards-close').click();
+      await game.locator('#rewards-register').click();const frame=game.frameLocator('#registration-frame');await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();assert.equal(await frame.locator('.welcome-heading').count(),0);assert.ok(await frame.locator('[name="fullName"]').isEditable());
+      assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
+      await capture(page,'08-direct-join-desktop');
+      await frame.getByRole('button',{name:'← Back',exact:true}).click();
+      await game.locator('#rewards-points').waitFor();assert.equal(await game.locator('#rewards-points').innerText(),'3,205');
+      const historyLength=await page.evaluate(()=>history.length),url=page.url();
+      for(const back of ['browser','escape']){
+        await game.locator('#rewards-register').click();
+        await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();
+        if(back==='browser'&&engine==='chromium'){
+          const client=await page.context().newCDPSession(page);
+          const navigation=await client.send('Page.getNavigationHistory');
+          await client.send('Page.navigateToHistoryEntry',{entryId:navigation.entries[navigation.currentIndex-1].id});
+          await client.detach();
+        }else if(back==='browser')await page.evaluate(()=>history.back());
+        else await frame.locator('[name="fullName"]').press('Escape');
+        await game.locator('#rewards-points').waitFor();
+        assert.equal(await game.locator('#rewards-points').innerText(),'3,205');
+        assert.equal(page.url(),url);
+        assert.equal(await page.evaluate(()=>history.length),historyLength,'reopening Join reuses one history entry');
+      }
+      await game.locator('#rewards-register').click();
+      await frame.getByText('SO/ COLLECTIVE',{exact:true}).waitFor();
       assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
       await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();
-      await frame.getByRole('button',{name:'Save my points',exact:true}).click();await frame.locator('#new-name').waitFor();
+      await frame.getByRole('button',{name:'Save my points',exact:true}).click();await frame.locator('[name="fullName"]').waitFor();
       assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.points),3205);
-      assert.deepEqual(errors,[]);console.log(engine+': game result → Reward → embedded Account, close guard and pending result passed');
+      await frame.locator('[name="fullName"]').fill('Test Member');
+      await frame.locator('[name="mobile"]').fill('9876543210');
+      await frame.locator('[name="email"]').fill('test@example.invalid');
+      await frame.locator('[name="terms"]').check();
+      await frame.getByRole('button',{name:'SEND CODE',exact:true}).click();
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();
+      await frame.locator('#final-otp').fill('012345');
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      await game.locator('#registration-dialog').waitFor({state:'hidden'});
+      await game.locator('#leaderboard-dialog').waitFor({state:'visible'});
+      assert.equal(awards.size,1);
+      assert.ok(!await game.evaluate(()=>history.state?.sofacetJoin),'completed save consumes the Join history entry');
+      assert.deepEqual(errors,[]);console.log(engine+': Join → browser Back, Escape and page Back preserve score ('+(nested?'embedded game':'standalone game')+')');
     }finally{await context.close();}
   });
 }finally{await browser.close();}

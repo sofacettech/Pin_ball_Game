@@ -25,8 +25,7 @@ async function createClaim(page,origin){
  await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();
  await page.getByRole('tab',{name:'CREATE YOUR ACCOUNT'}).click();
  await page.locator('input[name="title"][value="Ms"]').check();await page.locator('#new-name').fill('Test Member');
- await page.locator('#day').selectOption('1');await page.locator('#month').selectOption('1');await page.locator('#year').selectOption('1990');
- await page.locator('#new-city').fill('Delhi');await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
+ await page.locator('#new-phone').fill('9876543210');await page.locator('#new-email').fill('test@example.invalid');await page.locator('[name="terms"]').check();
  await page.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
  await page.locator('.design-claim .art-layer.art-ready').waitFor();
 }

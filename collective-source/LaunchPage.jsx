@@ -26,9 +26,9 @@ function JoinDialog({open, onClose, onJoin}) {
   return <dialog ref={dialog} aria-labelledby="join-title" id="join" onClose={onClose} onClick={backdrop}>
     <button aria-label="Close signup" className="icon-button dialog-close" type="button" onClick={onClose}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 4 16 16M20 4 4 20" /></svg></button>
     <p className="dialog-label">The first cut</p><h2 id="join-title">Be part of the beginning.</h2>
-    <p>Updates and early access to <span className="brand-inline">SO/ FACET</span>.</p>
+    <p>Updates and early access to <span className="brand-word">SO/ FACET</span>.</p>
     <p className="preview-note">{onJoin?'Continue to create your account and verify your number.':'Standalone preview: your email is saved only on this device. This does not subscribe you to emails.'}</p>
-    <form id="join-form" onSubmit={join}><label className="field-label" htmlFor="email">Email address</label><input autoComplete="email" id="email" name="email" placeholder="you@example.com" required type="email" /><button className="dialog-action" type="submit" disabled={busy}>{busy ? 'Please wait…' : onJoin ? 'Continue' : 'Save my interest'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p></form>
+    <form id="join-form" onSubmit={join}><label className="field-label" htmlFor="email">Email address</label><input autoComplete="email" id="email" name="email" required type="email" /><button className="dialog-action" type="submit" disabled={busy}>{busy ? 'Please wait…' : onJoin ? 'Continue' : 'Save my interest'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p></form>
   </dialog>;
 }
 

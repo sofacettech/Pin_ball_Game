@@ -15,6 +15,7 @@ export function connectMembership(options:Options){
  let profileUpdateUrl:string|null=null,editing=false;
  let player:Player|null=null,checking=true,completed=false,opener:HTMLElement=profile;
  let pendingReward:CompletedGameResult|null=null;
+ let joinHistory=false,closeAfterBack:boolean|null=null;
  frame.addEventListener('load',()=>{if(dialog.open&&pendingReward)frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin)});
 
  function paint(){
@@ -41,19 +42,28 @@ export function connectMembership(options:Options){
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member&&!verify){closeProfile();options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;closeProfile();options.beforeOpen();
-  frame.src='/membership.html?nav=game'+(verify?'&verify=1':'');dialog.showModal();document.body.classList.add('membership-open');
+  // Native Back consumes this modal step while keeping the completed game loaded.
+  if(pendingReward){history.pushState({...history.state,sofacetJoin:true},'');joinHistory=true;}
+  frame.contentWindow!.location.replace('/membership.html?nav=game'+(verify?'&verify=1':pendingReward?'&from=score':''));dialog.showModal();document.body.classList.add('membership-open');
  }
  function close(returnToScore=false){
   if(!dialog.open)return;
-  dialog.close();frame.removeAttribute('src');pendingReward=null;document.body.classList.remove('membership-open');
+  if(joinHistory){if(closeAfterBack===null){closeAfterBack=returnToScore;history.back();}return;}
+  dialog.close();frame.contentWindow!.location.replace('about:blank');pendingReward=null;document.body.classList.remove('membership-open');
   (!opener.isConnected||opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
   options.afterClose(completed,returnToScore);
  }
+ window.addEventListener('popstate',()=>{
+  if(!joinHistory)return;
+  joinHistory=false;
+  const returnToScore=closeAfterBack??true;closeAfterBack=null;
+  close(returnToScore);
+ });
  profile.onclick=showProfile;
  $('profile-close').onclick=()=>closeProfile(true);
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
  profileRetry.onclick=async()=>{checking=true;paint();await options.refreshPlayer()};
- const requestExit=()=>frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);
+ const requestExit=()=>{if(joinHistory){close(true);return;}frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);};
  dialog.oncancel=event=>{event.preventDefault();requestExit()};
  dialog.addEventListener('click',event=>{
   if(event.target!==dialog)return;

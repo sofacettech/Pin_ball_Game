@@ -65,10 +65,8 @@ membership=connectMembership({
   if(resume){physics.setPaused(false);accumulator=0}
   resumeAfterMembership=false;
   if(loaded)sync();
-  if(!completed&&loaded&&physics.state==='finished'){
-   if(returnToScore)rewards.show(physics.score,leaderboard.gameId);
-   else showResult();
-  }
+  if(!completed&&returnToScore&&rewards.result)rewards.show();
+  else if(!completed&&loaded&&physics.state==='finished')showResult();
   if(resume)canvas.focus();
  },
  refreshPlayer:()=>leaderboard.memberChanged(),
