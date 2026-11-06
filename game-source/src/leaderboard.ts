@@ -27,6 +27,19 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
  const dialog=document.getElementById('leaderboard-dialog') as HTMLDialogElement;
  const rows=document.getElementById('leaderboard-rows')!,status=document.getElementById('leaderboard-status')!,summary=document.getElementById('leaderboard-summary')!;
  const retry=document.getElementById('leaderboard-retry') as HTMLButtonElement;
+ const table=dialog.querySelector<HTMLTableElement>('.leaderboard-table')!,mobileFrame=dialog.querySelector<SVGSVGElement>('.artwork--mobile')!;
+ const frameMiddle=mobileFrame.children[1],frameBottom=mobileFrame.children[2];
+ new ResizeObserver(()=>{
+  if(!dialog.open||!matchMedia('(max-width:600px)').matches)return;
+  const panel=mobileFrame.parentElement!.getBoundingClientRect(),rows=table.getBoundingClientRect(),scale=panel.width/1456;
+  if(!scale||!rows.height)return;
+  // Leave 8px below the table; preserve the artwork's 334-unit header and 321-unit footer.
+  const height=Math.max(656,Math.ceil((rows.bottom-panel.top+8)/scale+267));
+  mobileFrame.setAttribute('viewBox',`0 0 1456 ${height}`);
+  mobileFrame.style.height=height*scale+'px';
+  frameMiddle.setAttribute('height',String(height-655));
+  frameBottom.setAttribute('y',String(height-321));
+ }).observe(table);
  type Run={id?:string;seed?:number;inputs:InputRun[];ticks:number;ended:boolean;submitted:boolean;previousBest?:number|null;score?:number;rewardSaved?:boolean;error?:string;submission?:Promise<void>};
  let player:Player|null=null,run:Run={inputs:[],ticks:0,ended:false,submitted:false},revision=0,playerRevision=0;
  const refreshPlayer=async()=>{const current=++playerRevision;try{const next=await request<Player>('/api/player');if(typeof next.member!=='boolean')throw Error('Invalid player');if(current!==playerRevision)return;player=next;onBest(player.best_score);onPlayer(player)}catch{if(current===playerRevision){player=null;onPlayer(null)}}};

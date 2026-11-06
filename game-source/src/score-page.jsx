@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import {formatPoints,rewardMoney,resultHeadline} from './player-copy';
@@ -26,18 +26,9 @@ export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
     {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}>SAVE MY COINS <Arrow/></button>}
     <button className="btn" id="rewards-retry" type="button" onClick={onReplay}>PLAY AGAIN <Replay/></button>
    </div>
-   <LeaderboardPreview result={result}/>
    <button className="leaderboard" id="rewards-leaderboard" type="button" onClick={onLeaderboard}>See full leaderboard →</button>
   </section></main>
  </PageShell>;
-}
-function LeaderboardPreview({result}){
- const [board,setBoard]=useState(null),[failed,setFailed]=useState(false);
- useEffect(()=>{let active=true,revision=0;const abort=new AbortController();async function load(){const current=++revision;try{const response=await fetch('/api/leaderboard',{signal:abort.signal});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.entries))throw Error();if(active&&current===revision){setBoard(data);setFailed(false)}}catch(error){if(active&&error.name!=='AbortError')setFailed(true)}}void load();window.addEventListener('sofacet:leaderboard-updated',load);return()=>{active=false;abort.abort();window.removeEventListener('sofacet:leaderboard-updated',load)}},[result.gameId,result.points]);
- const me=board?.me,points=me?.points??result.points;
- return <section className="leaderboard-preview" aria-labelledby="preview-title"><h2 id="preview-title">Leaderboard</h2><p className="preview-you">You · {me?.rank?'#'+me.rank:'—'} · {formatPoints(points)} pts</p>
- {board?<ol>{board.entries.slice(0,3).map(row=><li key={row.rank}><span>{row.rank}</span><span>{row.display_name}</span><span>{formatPoints(row.points)}</span></li>)}</ol>:<p role="status">{failed?'Leaderboard unavailable.':'Loading the leaderboard…'}</p>}
- {board?.saved!==true&&<p className="preview-save">Save your points to put your name on it.</p>}</section>;
 }
 export function mountScorePage(container,actions){
  const root=createRoot(container);

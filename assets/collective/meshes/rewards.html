@@ -12,14 +12,11 @@ body{color:#b8aec7;font-family:ui-sans-serif,system-ui,sans-serif}
 #mesh{position:relative;height:100svh;min-height:320px;overflow:hidden;touch-action:none;outline-offset:-6px;background:radial-gradient(ellipse at 68% 65%,#14071d,transparent 65%),#08040d}
 #mesh:focus-visible{outline:1px solid #89739f}
 canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.caption{position:absolute;inset:auto 0 32px;margin:0;text-align:center;font-size:11px;letter-spacing:.16em;font-weight:400;pointer-events:none;user-select:none;opacity:.65}
-.touch-hint{display:none}@media(pointer:coarse){.mouse-hint{display:none}.touch-hint{display:inline}}
 </style>
 </head>
 <body>
 <main id="mesh" tabindex="0" aria-label="Click or tap to reveal the dark purple mesh with an outward wave. Press Enter or Space for a centered wave; Escape clears it.">
 <canvas aria-hidden="true"></canvas>
-<p class="caption" aria-hidden="true"><span class="mouse-hint">CLICK TO REVEAL � ENTER OR SPACE</span><span class="touch-hint">TAP TO REVEAL</span></p>
 </main>
 <script>
 // Fixed vertices and connections traced from the supplied 1672 x 941 reference.
