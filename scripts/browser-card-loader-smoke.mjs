@@ -13,6 +13,12 @@ const activeCard='.game-loader-cards .sofacet-card[data-slot="0"]';
 async function settled(page,name){await page.waitForFunction(name=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]')?.getAttribute('aria-label')===name+' card'&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false',name);}
 async function capture(page,name){if(output)await page.screenshot({path:resolve(output,engine+'-'+name+'.png')});}
 async function point(page){const r=await page.locator('.game-loader-cards .deck').boundingBox();return{x:r.x+r.width/2,y:r.y+r.height/2};}
+async function checkTravel(page,right){
+ await page.waitForFunction(()=>document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='true');
+ const motion=await page.locator('.game-loader-cards .sofacet-card').evaluateAll(cards=>cards.flatMap(card=>card.getAnimations()).filter(a=>a.effect.getKeyframes().length===65).map(a=>({x:new DOMMatrixReadOnly(a.effect.getKeyframes()[32].transform).m41,...a.effect.getTiming()}))[0]);
+ assert.ok(right?motion.x>0:motion.x<0,'The card follows the intended swipe direction');
+ assert.equal(motion.duration,1600);assert.equal(motion.easing,'cubic-bezier(0.45, 0, 0.2, 1)');
+}
 async function swipe(page,dx){
  const {x,y}=await point(page);
  if(engine==='chromium'){
@@ -42,12 +48,12 @@ try{await withRewardsSite(async({origin})=>{
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
    await capture(page,width+'-diamond');
    if(mobile){
-    await swipe(page,90);await settled(page,'Jewellery');await capture(page,width+'-jewellery');
-    await swipe(page,-90);await settled(page,'Diamond');
+    await swipe(page,90);await checkTravel(page,true);await settled(page,'Jewellery');await capture(page,width+'-jewellery');
+    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Diamond');
     const {x,y}=await point(page);await page.touchscreen.tap(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');await capture(page,width+'-back');
     await page.touchscreen.tap(x,y);await page.waitForFunction(()=>!document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');
    }else{
-    let {x,y}=await point(page);await page.mouse.click(x,y);await settled(page,'Jewellery');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-jewellery');
+    let {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Jewellery');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-jewellery');
     ({x,y}=await point(page));await page.mouse.dblclick(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='true');
     const moving=await page.locator('.game-loader-cards .sofacet-card').evaluateAll(cards=>cards.flatMap(card=>card.getAnimations().map(animation=>({name:card.getAttribute('aria-label'),frames:animation.effect.getKeyframes()}))).find(animation=>animation.frames.length===65));
     assert.equal(moving.name,'Diamond card');assert.equal(moving.frames.length,65);await settled(page,'Diamond');

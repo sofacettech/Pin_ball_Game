@@ -4,7 +4,7 @@ import {connectCardMotion} from './card-motion.js';
 const artwork='/assets/loader-cards/';
 const cards=[
   {name:'Diamond',product:'diamond',width:535,height:425,alt:'Faceted diamond',copy:<div className="card-copy diamond-copy"><p>Up Next:</p><h1>Pinball</h1></div>},
-  {name:'Jewellery',product:'earrings',width:515,height:415,alt:'Pair of SO/FACET black and white diamond star earrings',copy:<div className="card-copy jewellery-copy"><p className="offer">10 SO/ICON = <span className="rupee">₹</span>1 OFF</p><p className="offer-detail">SO/FACET DIAMOND JEWELLERY</p></div>},
+  {name:'Jewellery',product:'earrings',width:515,height:415,alt:'Pair of SO/FACET black and white diamond star earrings',copy:<div className="card-copy jewellery-copy"><p className="offer">10 SO COIN = <span className="rupee">₹</span>1 OFF</p><p className="offer-detail">SO/FACET DIAMOND JEWELLERY</p></div>},
   {name:'Pinball',product:'pinball',width:740,height:595,alt:'SO/FACET pinball table',copy:<div className="card-copy table-copy"><p className="table-title">Score So/ coins.</p><p className="table-detail">Save them for<br/>so/facet diamond jewellery</p></div>},
 ];
 export default function CardDeck({active=false}) {
