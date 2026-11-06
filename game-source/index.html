@@ -218,8 +218,6 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
             <image class="source-image" href="/leaderboard/sofacet-leaderboard-frame.jpeg" mask="url(#frame-depth)" preserveAspectRatio="none"/>
           </g>
           <image class="source-image" href="/leaderboard/sofacet-leaderboard-frame.jpeg" mask="url(#object-silhouette)" preserveAspectRatio="none"/>
-          <!-- Render the rail separately to align it with the responsive table header. -->
-          <rect x="310" y="247" width="835" height="76" fill="#100b21"/>
           </g>
           </defs>
           <use href="#leaderboard-frame-art"/>
@@ -231,9 +229,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
    </svg>
    <h2 id="leaderboard-title" class="leaderboard-heading"><img src="/leaderboard/sofacet-leaderboard-title.png" alt="Leaderboard" width="666" height="123"></h2>
    <button id="leaderboard-close" class="board-close" aria-label="Close leaderboard" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-   <svg class="leaderboard-header-rail" viewBox="310 247 835 76" preserveAspectRatio="none" aria-hidden="true"><image href="/leaderboard/sofacet-leaderboard-frame.jpeg" width="1456" height="1024" preserveAspectRatio="none"/></svg>
-   <span id="leaderboard-caption" class="leaderboard-caption">The best scores so far.</span>
-   <table class="leaderboard-table" aria-labelledby="leaderboard-caption"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
+   <table class="leaderboard-table" aria-labelledby="leaderboard-title"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col" id="leaderboard-score-label">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
    <div class="leaderboard-note"><p id="leaderboard-summary"></p><p id="leaderboard-status" role="status"></p><button id="leaderboard-retry" hidden>Try again</button></div>
   </div>
   <div class="leaderboard-actions"><button id="leaderboard-save" type="button" hidden>Save my points</button><button id="leaderboard-play">Play again</button></div>

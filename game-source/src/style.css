@@ -57,14 +57,14 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 .leaderboard-panel .source-image{width:1456px;height:1024px}
 .leaderboard-heading{position:absolute;left:25.4%;top:5.4%;width:49.1%;height:13.7%;margin:0;display:flex;align-items:center}
 .leaderboard-heading img{display:block;width:100%;height:auto;clip-path:inset(16% 3% 15%)}
-.board-close{position:absolute;left:79.8%;top:12.8%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:10px;border:0;border-radius:0;background:transparent;z-index:1}
+.board-close{position:absolute;left:79.35%;top:13.3%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:10px;border:0;border-radius:0;background:transparent;z-index:1}
 .board-close svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .board-close:hover,.board-close:focus-visible{background:transparent;color:#e5ff42;outline:none}
-.leaderboard-header-rail{position:absolute;left:21.291%;top:25.4%;width:57.349%;height:7.422%;pointer-events:none}
-.leaderboard-table{--row-height:3.7cqw;position:absolute;left:22.1%;top:26.4%;width:55.8%;height:auto;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
+.leaderboard-table{--row-height:2.7cqw;position:absolute;left:22.1%;top:26.47%;width:55.8%;height:auto;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
 .leaderboard-table th:first-child{width:21%}.leaderboard-table th:last-child{width:23%}
 .leaderboard-table thead,.leaderboard-table tr{height:var(--row-height)}.leaderboard-table tbody:empty{display:none}
 .leaderboard-table th,.leaderboard-table td{height:var(--row-height);text-align:center;vertical-align:middle;padding:0 2.3%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+@media(min-width:601px){.leaderboard-table :is(thead,thead tr,th){height:3.7cqw}}
 .leaderboard-table th{color:#e8ff70;font-size:.86em;font-weight:650;text-transform:uppercase;letter-spacing:.06em}
 .leaderboard-table td{background:#100b21d9;border-bottom:1px solid #57267b70}
 .leaderboard-table td:first-child{color:#cdb7e5}
@@ -92,9 +92,8 @@ header #member{color:#b5ff42;border:1px solid #68408b}
  .leaderboard-panel .artwork--desktop{display:none}
  .leaderboard-panel .artwork--mobile{display:block;height:151.099cqw}
  .leaderboard-heading{top:3.798cqw;height:9.635cqw}
- .board-close{top:9.002cqw;width:44px;height:44px;padding:13px}
- .leaderboard-header-rail{top:17.4cqw;height:5.22cqw}
- .leaderboard-table{--row-height:5.22cqw;top:17.4cqw;font-size:clamp(12px,3.6cqw,14px);line-height:1.25}
+ .board-close{left:79.3%;top:9.15cqw;width:44px;height:44px;padding:13px}
+ .leaderboard-table{--row-height:5.22cqw;top:17.86cqw;font-size:clamp(12px,3.6cqw,14px);line-height:1.25}
  .leaderboard-table th{font-size:.8em}
  .leaderboard-table th:first-child{width:20%}.leaderboard-table th:last-child{width:32%}
  .leaderboard-table th,.leaderboard-table td{padding-inline:3px}
@@ -462,8 +461,6 @@ body[data-game-loading] #mobile-lives{display:none}
  #mobile-lives .lives-label{font-size:13px}
 }
 
-.leaderboard-caption{position:absolute;left:22.1%;top:14.25cqw;width:55.8%;margin:0;color:#c9b6d7;font-size:clamp(13px,1.3cqw,18px);line-height:1.2;text-align:center}
-@media(max-width:700px){.leaderboard-caption{top:13.5cqw;font-size:13px;line-height:1}}
 body>#game-menu{position:fixed;z-index:45;top:calc(var(--site-header-clearance) + 48px);right:max(16px,var(--site-nav-right));max-height:calc(100dvh - var(--site-header-clearance) - 64px);box-shadow:0 20px 60px #0008}
 /* Table intro and the two in-game panels retain the existing game palette. */
 #table-intro h1{font-size:24px;line-height:1.15;margin:8px 0 12px;font-weight:500}
