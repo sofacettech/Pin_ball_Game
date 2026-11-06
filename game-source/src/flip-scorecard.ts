@@ -3,11 +3,7 @@ const format=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,best:HTMLElement){
  const front=button.querySelector<HTMLElement>('.front')!,back=button.querySelector<HTMLElement>('.back')!;
  let previousScore:number|undefined,previousBest:number|null|undefined,phone=false,pregame=false,visible:boolean|undefined;
- function applyPregame(){
-  // Null means no completed, verified run; a saved zero is still a returning player.
-  button.hidden=pregame&&previousBest==null;
-  if(pregame&&!button.hidden)showScore(true);
- }
+ function applyPregame(){button.hidden=pregame;}
  function showScore(show:boolean){
   if(visible===show)return;visible=show;
   button.classList.toggle('flipped',show);
