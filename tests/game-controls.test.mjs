@@ -78,7 +78,7 @@ test('phone card alternates launch and score without exposing desktop instructio
  panel.setPhoneStage(false);send(card,'click');assert.equal(card.classes.has('flipped'),false);assert.equal(front.inert,false);assert.equal(card.getAttribute('aria-label'),'Show scoreboard');
 });
 
-test('pregame hides an empty scorecard, restores saved best scores, and shows live scores on the first run',()=>{
+test('pregame hides the scorecard for every player and preserves scores when play begins',()=>{
  const card=new Element(),front=new Element(),back=new Element(),score=new Element(),best=new Element();front.id='instructions';back.id='scoreboard';card.querySelector=s=>s==='.front'?front:back;
  const panel=connectFlipScorecard(card,score,best);
  panel.setPregame(true);assert.equal(panel.hidden,true); // Player request still pending.
@@ -87,9 +87,11 @@ test('pregame hides an empty scorecard, restores saved best scores, and shows li
  panel.setPregame(false);assert.equal(panel.hidden,false); // First game, before any saved score.
  panel.update(300,null);assert.equal(panel.hidden,false);assert.equal(score.textContent,'300');
  panel.setPregame(true);assert.equal(panel.hidden,true);
- panel.update(0,1200);assert.equal(panel.hidden,false);assert.equal(best.textContent,'1,200');assert.equal(card.classes.has('flipped'),true);
- panel.setPhoneStage(false);panel.update(0,0);assert.equal(panel.hidden,false);assert.equal(best.textContent,'0');
+ panel.update(0,1200);assert.equal(panel.hidden,true);assert.equal(best.textContent,'1,200');assert.equal(card.classes.has('flipped'),true);
+ panel.setPhoneStage(false);panel.update(0,0);assert.equal(panel.hidden,true);assert.equal(best.textContent,'0');
  panel.update(0,null);assert.equal(panel.hidden,true); // No saved score for the current player.
+ panel.update(0,1200);panel.setPregame(false);assert.equal(panel.hidden,false);assert.equal(best.textContent,'1,200');
+ panel.update(450,1200);assert.equal(score.textContent,'450');assert.equal(best.textContent,'1,200');
 });
 
 test('the score screen leaderboard action is available to guests without opening registration',()=>{

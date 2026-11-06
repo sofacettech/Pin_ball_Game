@@ -14,6 +14,8 @@ Cookie preferences and Cookie settings are available across the site. Optional a
 
 The signed-in My SO/ COINS page includes a leaderboard-name field connected to the existing profile update request. Live verification still needs the rewards service configuration. The review images use sample account and score data, and the browser checks do not certify performance on every physical phone.
 
+I’ve merged Harsh’s welcome-before-Play update and corrected loading-card swipe direction. The loader keeps its responsive hint, with the approved “Swipe to Explore” wording on mobile and SO/ COINS copy on the cards. I rebuilt the combined site, passed all 457 automated tests, and checked the save, sign-in and navigation journeys at desktop and mobile widths.
+
 ## Run locally
 
 Use **Node.js 26**, npm and Git LFS. The server uses Node's native TypeScript support for shared game simulation code.

@@ -33,7 +33,7 @@ export function connectCardMotion(root) {
     root.classList.toggle('paused', paused);
     if (announce) root.querySelector('[data-card-status]').textContent = `${names[current]} card, ${current + 1} of 3. ${showBack ? 'Back' : 'Front'} view.`;
   }
-  async function exchange(target, manual = true, direction = 1) {
+  async function exchange(target, manual = true, direction = 1, exitRight = false) {
     if (disposed || busy || target === current) return;
     clearTimeout(timer);
     busy = true;
@@ -46,6 +46,7 @@ export function connectCardMotion(root) {
         const width = deck.getBoundingClientRect().width;
         const mobile = innerWidth < 600;
         const travel = mobile ? Math.max(width * 1.12, (innerWidth + width) / 2 + 32) : width * 1.12;
+        const bend = (exitRight ? 1 : -1) * travel * 1.45;
         const curve = (a, b, c, d, t) => (1-t)**3*a + 3*(1-t)**2*t*b + 3*(1-t)*t*t*c + t**3*d;
         const smooth = (a, b, t) => {const value = Math.max(0, Math.min(1, (t-a)/(b-a))); return value*value*(3-2*value);};
         cards.forEach((card, index) => {
@@ -57,7 +58,7 @@ export function connectCardMotion(root) {
           // where the card is clear of the stack (and faded out on phones).
           const frames = card === moving ? Array.from({length: 65}, (_, step) => {
             const offset = step / 64, t = backwards ? 1-offset : offset;
-            const x = curve(0, -travel*1.45, -travel*1.45, 28, t);
+            const x = curve(0, bend, bend, 28, t);
             const y = curve(0, -28, -54, -16, t);
             const angle = curve(0, -10, -8, 6, t);
             const scale = curve(1, .985, .92, .94, t);
@@ -106,9 +107,9 @@ export function connectCardMotion(root) {
       schedule();
     }
   }
-  function move(direction) {
+  function move(direction, exitRight = false) {
     clearTimeout(clickTimer); clickTimer = undefined;
-    exchange((current + direction + cards.length) % cards.length, true, direction);
+    exchange((current + direction + cards.length) % cards.length, true, direction, exitRight);
   }
   let pointerStart, swiped = false, pointerType = 'mouse';
   listen(deck, 'pointerdown', event => {
@@ -125,7 +126,7 @@ export function connectCardMotion(root) {
     const dx = event.clientX - pointerStart.x, dy = event.clientY - pointerStart.y;
     pointerStart = null;
     swiped = Math.hypot(dx, dy) > 12;
-    if (pointerType !== 'mouse' && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+    if (pointerType !== 'mouse' && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1, dx > 0);
     deck.blur();
     schedule();
   });

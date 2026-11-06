@@ -25,8 +25,9 @@ export default function CardDeck({active=false}) {
           </div></div>
         </article>)}
       </div>
-      <p className="swipe-hint">Swipe to Explore</p>
-    </div></div></div>
+    </div></div>
+      <p className="card-hint"><span className="card-hint-desktop">Click to discover your next facet.</span><span className="card-hint-mobile">Swipe to Explore</span></p>
+    </div>
     <p className="sr-only" id="loader-card-instructions">Desktop: click for the next card; double-click for the previous card. Mobile: swipe right for the next card, swipe left for the previous card, and tap to flip. Keyboard: use arrow keys to change cards, Enter to flip, and Space to pause or resume motion.</p>
     <p className="sr-only" data-card-status aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p>
   </div>;

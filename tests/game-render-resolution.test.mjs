@@ -155,10 +155,10 @@ test('only active unobstructed ball play can activate Auto and update the settin
   const source=readFileSync(new URL('../game-source/src/main.ts',import.meta.url),'utf8');
   const canTouch=source.match(/^const canTouch=.*$/m)[0].replace("(control:'paddle'|'launch')",'(control)');
   const sample=source.slice(source.indexOf('function sampleGameplayPerformance('),source.indexOf('function frame(now:number)')).replace('(now:number)','(now)');
-  const blocked=[c=>c.loaded=false,c=>c.starting=true,c=>c.physics.active=false,c=>c.physics.paused=true,c=>c.physics.state='launcher',c=>c.physics.state='finished',c=>c.tutorial={active:true},c=>c.inspecting=true,c=>c.menu.hidden=false,c=>c.navOpen=true,c=>c.registration.open=true,c=>c.rewards.dialog.open=true,c=>c.leaderboard.dialog.open=true];
+  const blocked=[c=>c.cookieSettingsOpen=true,c=>c.loaded=false,c=>c.starting=true,c=>c.physics.active=false,c=>c.physics.paused=true,c=>c.physics.state='launcher',c=>c.physics.state='finished',c=>c.tutorial={active:true},c=>c.inspecting=true,c=>c.menu.hidden=false,c=>c.navOpen=true,c=>c.registration.open=true,c=>c.rewards.dialog.open=true,c=>c.leaderboard.dialog.open=true];
   for(const block of [null,...blocked]){
     const controller=new AdaptiveResolution();
-    const context={loaded:true,starting:false,physics:{active:true,paused:false,state:'playing'},tutorial:undefined,inspecting:false,menu:{hidden:true},registration:{open:false},rewards:{dialog:{open:false}},leaderboard:{dialog:{open:false}},navOpen:false,quality:{value:'full'},
+    const context={loaded:true,cookieSettingsOpen:false,starting:false,physics:{active:true,paused:false,state:'playing'},tutorial:undefined,inspecting:false,menu:{hidden:true},registration:{open:false},rewards:{dialog:{open:false}},leaderboard:{dialog:{open:false}},navOpen:false,quality:{value:'full'},
       navToggle:{getAttribute:()=>String(context.navOpen)},
       view:{resetPerformanceSampling:()=>controller.resetTiming(),adaptResolution(now){const before=controller.mode;controller.sample(now);return before!==controller.mode},get quality(){return controller.mode}},
     };
