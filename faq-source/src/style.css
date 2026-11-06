@@ -78,7 +78,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .footer-contact>a{text-decoration:none}
 .footer-contact>a:hover{text-decoration:underline}
 .footer-contact>a>span{display:inline-block;margin-left:10px;font-size:16px}
-.pinball{display:flex;align-items:center;min-height:44px;gap:22px;text-decoration:none;font-size:12px;white-space:nowrap}
+.pinball{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:1px solid var(--paper);background:var(--paper);color:#111;gap:22px;text-decoration:none;font-size:14px;white-space:nowrap}
+.pinball:hover{background:transparent;color:var(--paper)}
 .pinball>span{font-size:20px}
 
 @media(max-width:1000px){

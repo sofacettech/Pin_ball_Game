@@ -42,7 +42,7 @@ export default function AccountPage({pointsContext=false,initialTab = 'registere
     void create.submit(onCreateAccount, {...values, terms:values.terms === 'on', updates:values.updates === 'on'}, 'Account creation is not connected in this preview.');
   }
   const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy.html':'/terms.html')}>{label}</a>;
-  return <PageShell scene="account" initialize={initialize} title="Welcome Back | SO/FACET">
+  return <PageShell scene="account" initialize={initialize} title="SO/ FACET — My points">
     <AccountMesh />
     <main className="shell"><div className="container">
       {pointsContext&&<p className="points-label">MY POINTS</p>}

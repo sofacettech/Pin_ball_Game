@@ -10,7 +10,7 @@ import './reward-integration.css';
 
 export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
  const low=result.points<10;
- return <PageShell scene="rewards" initialize={initialize} title="SO/ UNLOCKED — Your reward">
+ return <PageShell scene="rewards" initialize={initialize} title="SO/ FACET — Pinball">
   <RewardMesh/><RewardArtwork/>
   <main className="page text-layer"><section className="reward" aria-label="Your unlocked reward">
    <div className="brand">SO/ UNLOCKED</div>

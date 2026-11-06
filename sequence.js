@@ -209,6 +209,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     waitingForGameDocument = false;
     window.sofacetGameLoader?.cancel();
     document.body.dataset.game = 'visible';
+    document.title = 'SO/ FACET — Pinball';
     setGameVisibility(true);
     game.inert = false;
     game.removeAttribute('aria-hidden');
@@ -300,7 +301,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
       if (waitingForGameDocument) { waitingForGameDocument = false; window.sofacetGameLoader?.cancel(); }
       siteSound.setActive(true);
       if (!status.hidden) status.hidden = true;
-      if (document.body.hasAttribute('data-game')) delete document.body.dataset.game;
+      if (document.body.hasAttribute('data-game')) {delete document.body.dataset.game;document.title = "SO/ FACET — What's yours?";}
       setGameVisibility(false);
       if (!game.inert) game.inert = true;
       if (game.getAttribute('aria-hidden') !== 'true') game.setAttribute('aria-hidden', 'true');

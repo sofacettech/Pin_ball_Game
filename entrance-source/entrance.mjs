@@ -94,6 +94,7 @@ function showGame(){
   if(!gameLoaded||!gameRequested||gameVisible)return;
   gameVisible=true;
   document.body.dataset.game='visible';
+  document.title='SO/ FACET — Pinball';
   main.inert=true;main.setAttribute('aria-hidden','true');game.inert=false;game.removeAttribute('aria-hidden');
   siteSound.handoff();siteSound.save();journey?.suspend();
   gameVisibility(!document.hidden);game.focus();

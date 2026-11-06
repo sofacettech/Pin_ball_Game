@@ -71,7 +71,8 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
   }
   async function complete(value) {
     if(value.player?.member!==true)throw Error('Your account could not be confirmed.');
-    savedRef.current=true;pendingRef.current=null;setSaved(value);setStep('success');setResendAt(0);
+    const score=pendingRef.current?.points??value.player.best_score??value.savedPoints;
+    savedRef.current=true;pendingRef.current=null;setSaved({...value,score});setStep('success');setResendAt(0);
     if(embedded)post({type:'contest-registration:complete',player:value.player});
     else if(completeRef.current)await completeRef.current(value);
     else location.replace(firstCut?'/first-cuts-confirmation.html':'/account.html');
@@ -109,9 +110,14 @@ export default function AuthFlow({pointsContext=false,initialTab='create',initia
   function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);}
   const goBack=()=>{if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/play.html');};
+  async function shareScore(){
+    const text='I scored '+formatPoints(saved.score)+' pts on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/';
+    if(navigator.share){try{await navigator.share({title:'SO/ FACET — Pinball',text});return}catch(error){if(error.name==='AbortError')return}}
+    try{await navigator.clipboard.writeText(text);setStatus('Your score was copied.')}catch{setStatus('Select and copy your score: '+text)}
+  }
   if(exit){const copy=exit==='confirm'?leaveCopy(pending?.points||0):exitCopy;return <section className="auth-flow-notice"><p>{exit==='confirm'?'BEFORE YOU GO':'COMING SOON'}</p><h1 tabIndex={-1}>{copy.title}</h1><p>{exit==='confirm'?copy.support:exitCopy.support}</p><div className="auth-flow-actions">{exit==='confirm'?<><button onClick={()=>setExit(null)}>Save my points</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}</div>{exit==='left'&&<><a className="auth-flow-updates" href="/launching-soon.html" target="_top">Just want updates? Join THE FIRST CUT →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}</section>;}
   if(memberCheck!=='guest')return <section className="auth-flow-notice" role="status"><p>{memberCheck==='error'?"We couldn't load your points. Please try again.":memberCheck==='member'?'Opening your account…':'Checking your points…'}</p>{status&&memberCheck!=='error'&&<p>{status}</p>}{memberCheck==='error'&&<button onClick={()=>location.reload()}>Try again</button>}</section>;
-  if(step==='success')return <section className="auth-flow-notice"><p>{saved?.pointsSaved?'SO/ SAVED':'POINTS SAVED'}</p><h1>It’s yours.</h1>{saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}<p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' points ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn points.'}</p>{status&&<p role="status">{status}</p>}<div className="auth-flow-actions"><button onClick={replay}>Play again</button><a href="/account.html" target="_top">My points</a></div></section>;
+  if(step==='success')return <section className="auth-flow-notice"><p>{saved?.pointsSaved?'SO/ SAVED':'POINTS SAVED'}</p><h1>It’s yours.</h1>{saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}<p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' points ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn points.'}</p>{status&&<p role="status">{status}</p>}<div className="auth-flow-actions"><button onClick={replay}>Play again</button>{saved?.pointsSaved?<button onClick={()=>void shareScore()}>Share my score</button>:<a href="/account.html" target="_top">My points</a>}</div></section>;
   return <>
     {embedded&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}

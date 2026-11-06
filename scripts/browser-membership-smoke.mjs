@@ -57,6 +57,9 @@ try{
         await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
       }
       await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();await frame.getByText('You made “THE FIRST CUT”.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
+      await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}});});
+      await frame.getByRole('button',{name:'Share my score',exact:true}).click();await frame.getByRole('status').filter({hasText:'Your score was copied.'}).waitFor();
+      assert.match(await frame.locator('body').evaluate(()=>window.__copiedScore),/I scored 3,205 pts on SO\/ FACET pinball/);
       assert.equal(awards.size,1);assert.deepEqual([...awards.values()],[320]);assert.equal(events.filter(e=>e.path==='/rewards/auth').length,1);assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,2);
       const storage=await frame.locator('body').evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));for(const v of ['fixture-signature','fixture-partner-key','test@example.invalid','9876543210'])assert.ok(!storage.includes(v));
       await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('textbox',{name:'Name',exact:true}).fill('Updated Member');await page.getByRole('textbox',{name:'Leaderboard name',exact:true}).fill('Updated M.');await page.getByRole('textbox',{name:'Email',exact:true}).fill('updated@example.invalid');
@@ -117,7 +120,14 @@ try{
       await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();
       await frame.getByRole('button',{name:'Save my points',exact:true}).click();await frame.locator('#new-name').waitFor();
       assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.points),3205);
-      assert.deepEqual(errors,[]);console.log(engine+': game result → Reward → embedded Account, close guard and pending result passed');
+      await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
+      await fillCreate(frame);await frame.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY COINS',exact:true}).click();
+      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
+      await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedScore=data}});});
+      await frame.getByRole('button',{name:'Share my score',exact:true}).click();assert.match(await frame.locator('body').evaluate(()=>window.__sharedScore.text),/I scored 3,205 pts/);
+      await capture(page,'07-points-saved-game-desktop');await page.setViewportSize({width:375,height:844});await capture(page,'07-points-saved-game-mobile');
+      await frame.getByRole('button',{name:'Play again',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open&&(!document.querySelector('#gameplay-controls').hidden||document.querySelector('#controls-tutorial')?.open));
+      assert.deepEqual(errors,[]);console.log(engine+': game result → save → persistent success, Share my score and replay passed');
     }finally{await context.close();}
   });
 }finally{await browser.close();}

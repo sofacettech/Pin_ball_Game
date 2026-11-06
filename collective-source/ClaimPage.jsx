@@ -18,7 +18,7 @@ export default function ClaimPage({result,name = '',phone = '',dialCode = '+91',
     if (!changed && !/^\d{6}$/.test(otp)) {setMessage('Please enter the six-digit code.');return;}
     void submit(onClaim,{fullName:name,mobile,dialCode:dial,otp},'Phone verification is unavailable. Please try again later.');
   }
-  return <PageShell scene="claim" initialize={initialize} title="Claim your reward | SO/ FACET">
+  return <PageShell scene="claim" initialize={initialize} title="SO/ FACET — My points">
     <ClaimMesh />
     <main className="page text-layer">
       <ClaimArtwork />

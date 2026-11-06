@@ -39,7 +39,7 @@ export default function LaunchPage({onJoin, onPlay}) {
   const [joinOpen, setJoinOpen] = useState(()=>location.hash==='#join');
   useEffect(()=>{const update=()=>setJoinOpen(location.hash==='#join');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
   function closeJoin(){setJoinOpen(false);if(location.hash==='#join')history.replaceState(null,'',location.pathname+location.search);}
-  return <PageShell scene="launch" initialize={initialize} title="SO/FACET — Launching Soon">
+  return <PageShell scene="launch" initialize={initialize} title="SO/ FACET — What's yours?">
     <LaunchMesh /><LaunchArtwork />
     <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching soon"><div className="copy">
       <p className="eyebrow brand"><span>LAUNCHING SOON</span></p>

@@ -37,7 +37,7 @@ export function connectMembership(options:Options){
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}
-  if(event.data?.type==='contest-registration:close'){close(event.data.returnToScore===true&&pendingReward!==null);return}
+  if(event.data?.type==='contest-registration:close'){const saved=completed;close(event.data.returnToScore===true&&pendingReward!==null);if(saved)options.onLeaderboard();return}
   if(event.data?.type==='sofacet:reward-discarded'){pendingReward=null;options.onDiscard();return}
   if(event.data?.type==='sofacet:membership-replay'){close();options.onReplay();return}
   if(event.data?.type==='sofacet:membership-existing'){
@@ -48,7 +48,7 @@ export function connectMembership(options:Options){
   if(event.data?.type==='contest-registration:complete'&&!completed){
    const next=event.data.player;
    if(next?.member===true&&typeof next.display_name==='string'){
-    completed=true;updatePlayer(next as Player);close();await options.refreshPlayer();options.onLeaderboard();
+    completed=true;pendingReward=null;updatePlayer(next as Player);await options.refreshPlayer();
    }
   }
  });
