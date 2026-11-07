@@ -10,7 +10,7 @@ I’ve applied the November copy updates across the landing journey, pinball, sc
 
 I’ve kept the current artwork, fonts and responsive layouts. Home shows Instagram and LinkedIn as icons with their existing links. The extra “Click/Tap to reveal” captions and background hover tooltips have been removed; the background interactions still work. The score screen opens the save form, and the saved screen includes a route to My SO/ COINS.
 
-Cookie preferences and Cookie settings are available across the site. Optional analytics and advertising remain off; I’m leaving tracking integrations and font changes for later. I’m also holding the separate 404 design until it is supplied. Unknown page addresses currently return visitors to Home.
+Cookie preferences and Cookie settings are available across the site. Optional analytics and advertising remain off; I’m leaving tracking integrations and font changes for later. The supplied React 404 page handles unknown page addresses with an HTTP 404 response, the original animated artwork and mesh, and links back to Home and Pinball. Build it with `npm run build:404`; it is also included in the full site build.
 
 The signed-in My SO/ COINS page includes a leaderboard-name field connected to the existing profile update request. Live verification still needs the rewards service configuration. The review images use sample account and score data, and the browser checks do not certify performance on every physical phone.
 

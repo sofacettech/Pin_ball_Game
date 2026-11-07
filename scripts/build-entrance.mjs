@@ -31,6 +31,7 @@ const source=await readFile(resolve(root,'index.html'),'utf8');
 let sharedStyles='';
 for(const [,href] of source.matchAll(/<link rel="stylesheet" href="([^"]+)"[^>]*>/g)){
   const path=href.split('?')[0].replace(/^\.?\//,'');
+  if(path==='assets/typography.css')continue;
   let style=await readFile(resolve(root,path),'utf8');
   // Inline the small shared styles so the first visible UI needs no CSS round trip.
   for(const [rule,importPath] of style.matchAll(/@import (?:url\()?['"]([^'"]+)['"]\)?;?/g)){

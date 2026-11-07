@@ -1,0 +1,8 @@
+/* Approved Amethyst cursor; the hotspot is the centre of the hollow ring. */
+@media (hover: hover) and (pointer: fine) {
+  html, body,
+  body :where(*):not(:where(input, textarea, [contenteditable="true"], [contenteditable="true"] *, :disabled, :disabled *, [aria-disabled="true"], [aria-disabled="true"] *)) {
+    cursor: url('/assets/cursor-amethyst.svg') 22 22, url('/assets/cursor-amethyst.png') 22 22, auto !important;
+  }
+  [contenteditable="true"] { cursor: text; }
+}

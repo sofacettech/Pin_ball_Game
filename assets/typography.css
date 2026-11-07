@@ -1,0 +1,83 @@
+/* final font.zip + final font.docx: one registration per supplied file. */
+@font-face{font-family:'Josefin Sans';src:url('/assets/fonts/sofacet-score-josefin-regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Josefin Sans';src:url('/assets/fonts/sofacet-score-josefin-semibold.ttf') format('truetype');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Yeseva One';src:url('/assets/fonts/sofacet-score-yeseva.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Sofacet Actions';src:url('/assets/fonts/sofacet-score-actions.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/policy-wordmark.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Brilliant Cut Pro';src:url('/assets/loader-cards/BrilliantCutPro-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Brilliant Cut Pro';src:url('/assets/loader-cards/BrilliantCutPro-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Fancy Cut Pro';src:url('/assets/score-coins/fancy-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Helvetica Neue';src:url('/assets/loader-cards/HelveticaNeueRoman.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+
+:root{--font-body:'Josefin Sans',sans-serif;--font-heading:'Josefin Sans',sans-serif;--font-lead:'Yeseva One',serif;--font-action:'Sofacet Actions',sans-serif;--font-brand:SOFacetWordmark,sans-serif}
+html,body{font-family:var(--font-body);font-synthesis:none}
+*,*::before,*::after{font-synthesis:none}
+button,input,select,textarea{font-family:inherit}
+
+/* Existing restored designs and loading-card typography remain scoped to their artwork. */
+:is(h1,h2,h3):not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){
+  font-family:var(--font-heading)!important;font-weight:600!important;font-style:normal!important;
+}
+:is(h1,h2):not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){
+  text-transform:uppercase;letter-spacing:.04em;
+}
+h3:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){letter-spacing:.015em}
+:is(strong,b):not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){font-weight:600}
+:is(em,i):not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){font-style:normal}
+
+/* Short expressive leads only: headings and long reading copy stay in Josefin. */
+.intro-copy,.collection-intro>p:not(.eyebrow),.faq-intro>p,.launch-body>p:first-child{
+  font-family:var(--font-lead);font-weight:400;font-style:normal;line-height:1.45;
+}
+
+/* Compact actions retain their existing dimensions, icons and interactions. */
+button:not(:where(.menu-toggle,#nav-toggle,[role=tab],.tile,.text-button,#how-to-play-toggle,.flip-card,.practice-zone,.social-trigger,.site-sound,.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)),
+:is(.action,.primary,.secondary,.menu-join,.btn,.action-button,.join-button):not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.game-loader-cards *)){
+  font-family:var(--font-action);font-weight:400;text-transform:uppercase;letter-spacing:.08em;
+}
+:is(.menu-panel .menu-item:not(.menu-join),.site-nav .play-now,.site-nav .skip-game,.site-navigation a:not(.menu-join),.topic-nav button,[role=tab]){
+  font-family:var(--font-body)!important;font-weight:600!important;text-transform:uppercase;letter-spacing:.05em;
+}
+.menu-small-links a{font-family:var(--font-body);font-weight:400}
+.menu-panel .menu-join{font-family:var(--font-action)!important;font-weight:400!important;letter-spacing:.08em}
+.text-button:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.account-access *)){
+  font-family:var(--font-body);font-weight:600;letter-spacing:0;
+}
+label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.account-access *)){
+  font-family:var(--font-body);font-weight:600;
+}
+.faq-panel summary,.tile,.footer-column>summary,.footer-column>h2,.footer-social h2{
+  font-family:var(--font-body);font-weight:600;
+}
+.faq-panel summary{letter-spacing:.015em}
+.tile,.footer-column>summary,.footer-column>h2,.footer-social h2{text-transform:uppercase}
+
+:is(.score-number,.best-number,#card-score,#card-best,.score-facts .value,.score-block strong,.best-block strong):not(:where(.design-rewards *,.game-loader-cards *)){
+  font-family:var(--font-body)!important;font-weight:600!important;letter-spacing:.005em;
+}
+:is(.brand-word,.wordmark,.brand-inline,.inline-brand):not(.game-loader-cards *){
+  font-family:var(--font-brand)!important;font-weight:400!important;font-style:normal!important;font-synthesis:none;
+}
+/* Non-brand labels in restored artwork use its existing sans face. */
+.design-launch .launch-scope :is(.eyebrow,.dialog-label),.design-claim .eyebrow,
+.design-rewards .coin-brand{font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:500!important}
+
+/* Wrapping is allowed for text; artwork and component geometry stay unchanged. */
+.policy-main,.faq-panel,.account-grid .field,.launch-body{overflow-wrap:anywhere}
+.menu-join{white-space:normal;overflow-wrap:normal}
+.sf-legal h1,.sf-legal h2,.sf-legal h3{text-wrap:balance}
+
+/* The small green journey lines are supporting labels, not display headings. */
+#story-copy .story-line :is(h1,h2){font-family:var(--font-heading);font-weight:600;font-style:normal;text-transform:uppercase;letter-spacing:.035em}
+#story-copy .story-line p{font-family:var(--font-body);font-weight:400}
+.launch-copy h1 em{font-family:inherit;font-weight:600;font-style:normal}
+
+/* Keep the new number face and its unit together without a large inherited line box. */
+.account-grid>*{min-width:0}
+.score-panel .score-number{font-size:88px;line-height:96px;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:0}
+.score-panel .score-number small{margin-left:0;line-height:1.4}
+.join-button{font-size:18px;line-height:24px}
+@media(max-width:600px){
+  .score-panel .score-number{font-size:60px;line-height:68px}
+  .join-button{font-size:16px;line-height:22px}
+}

@@ -1,27 +1,9 @@
-@font-face {
-  font-family: Access Brilliant;
-  src: url('/assets/score-coins/brilliant-400.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: Access Brilliant;
-  src: url('/assets/score-coins/brilliant-600.woff2') format('woff2');
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: Access Fancy;
-  src: url('/assets/score-coins/fancy-400.woff2') format('woff2');
-  font-display: swap;
-}
-
 .shell.account-access {
   --access-text: #f3f0eb;
   --access-muted: #c4bdc7;
   --access-line: #9a939e;
-  --access-sans: 'Access Brilliant', Arial, sans-serif;
-  --access-serif: 'Access Fancy', Georgia, serif;
+  --access-sans:'Brilliant Cut Pro', sans-serif;
+  --access-serif:'Fancy Cut Pro', serif, serif;
   max-width: none;
   min-height: 100vh;
   min-height: 100svh;
@@ -32,7 +14,7 @@
 .access-screen { position: relative; z-index: 2; width: min(36vw,580px); margin-left: 14.2vw; }
 .access-screen h1 {
   margin: 0 0 26px;
-  font: 600 clamp(35px,3.4vw,52px)/1.12 var(--access-sans);
+  font:600 clamp(35px,3.4vw,52px)/1.12 var(--access-sans);
   letter-spacing: -.7px;
   text-transform: uppercase;
 }
@@ -40,20 +22,20 @@
 .access-links > * {
   display: flex; align-items: center; min-height: 44px; padding-bottom: 8px;
   color: var(--access-muted); border-bottom: 1px solid transparent; text-transform: uppercase;
-  font: 400 clamp(13px,1.09vw,18px)/1.35 var(--access-sans); text-decoration: none;
+  font:400 clamp(13px,1.09vw,18px)/1.35 var(--access-sans); text-decoration: none;
 }
 .access-links [aria-current], .access-links a:is(:hover,:focus-visible) { border-color: var(--access-text); color: var(--access-text); }
-.access-links [aria-current] { font-weight: 600; }
-.access-intro, .access-help { margin: 0 0 18px; font: 400 16px/1.5 var(--access-serif); }
+.access-links [aria-current] { font-weight:500; }
+.access-intro, .access-help { margin: 0 0 18px; font:400 16px/1.5 var(--access-serif); }
 .access-field { margin-bottom: 16px; }
-.access-field label { display: block; margin-bottom: 4px; font: 400 clamp(16px,1.18vw,19px)/1.35 var(--access-serif); }
+.access-field label { display: block; margin-bottom: 4px; font:400 clamp(16px,1.18vw,19px)/1.35 var(--access-serif); }
 .access-screen .access-phone, .access-screen .access-code input {
   border: 0; border-bottom: 1px solid var(--access-line); background: transparent; border-radius: 0;
 }
 .access-screen .access-phone, .access-screen .access-phone input, .access-screen .access-code input,
 .access-screen .calling-code-value, .access-screen .calling-code select { min-height: 44px; }
 .access-screen .access-phone input, .access-screen .access-code input {
-  padding: 0 0 0 10px; font: 400 16px/1.4 var(--access-sans); color: var(--access-text);
+  padding: 0 0 0 10px; font:400 16px/1.4 var(--access-sans); color: var(--access-text);
 }
 .access-screen .access-phone .calling-code { flex-basis: 76px; border-right-color: #5f5668; }
 .access-screen .calling-code-value { color: var(--access-muted); padding: 0 10px 0 0; }
@@ -63,14 +45,14 @@
 .access-button {
   position: relative; display: grid; place-items: center; min-height: 44px; padding: 0 12px;
   border: 1px solid #a8a4ac; border-radius: 0; background: transparent; color: var(--access-text);
-  font: 600 11px/1.3 var(--access-sans); letter-spacing: .045em; text-transform: uppercase;
+  font:600 11px/1.3 var(--access-sans); letter-spacing: .045em; text-transform: uppercase;
   transition: background-color .2s, color .2s;
 }
 .access-button:not(:disabled):is(:hover,:focus-visible) { background: var(--access-text); color: #08040d; }
 .access-submit { width: 100%; min-height: 51px; padding-inline: 38px; }
 .access-submit svg { position: absolute; right: 16px; width: 18px; height: 18px; pointer-events: none; }
 .access-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; margin: -7px 0 4px; }
-.access-tools .text-button { color: var(--access-text); font: 400 16px/1.3 var(--access-serif); }
+.access-tools .text-button { color: var(--access-text); font:400 16px/1.3 var(--access-serif); }
 .access-help { color: var(--access-muted); }
 .access-screen .under-form { flex-wrap: wrap; align-items: center; gap: 0 16px; margin-top: 8px; }
 
