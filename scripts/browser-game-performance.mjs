@@ -23,6 +23,8 @@ try{
    if(version==='baseline')await page.route(new URL(path,origin).href,route=>route.fulfill({contentType:'text/html',body:baselineHtml}));
    await page.goto(new URL(path,origin).href);
    await page.waitForSelector('#stage[data-ready="true"]',{timeout:60000});
+   const cookieNotice=page.locator('#sf-cookie-notice:not([hidden])');
+   if(await cookieNotice.count())await cookieNotice.getByRole('button',{name:'Essential only',exact:true}).click();
    if(version==='current')assert.equal(await page.locator('#quality').inputValue(),'full','new visitors start at Full quality');
    await page.locator('#start').click();
    const skip=page.getByRole('button',{name:'Skip guide ↗'});

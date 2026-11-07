@@ -20,6 +20,8 @@ try{
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto(new URL('/play.html',process.env.SOFACET_GAME_URL||'http://127.0.0.1:8879').href);
  await page.waitForSelector('#stage[data-ready="true"]',{timeout:60000});
+ const cookieNotice=page.locator('#sf-cookie-notice:not([hidden])');
+ if(await cookieNotice.count())await cookieNotice.getByRole('button',{name:'Essential only',exact:true}).click();
  assert.equal(await page.locator('#quality').inputValue(),'full');
  await page.locator('#start').click();
  await page.waitForFunction(()=>!document.querySelector('#touch-launch').disabled);
