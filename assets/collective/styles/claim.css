@@ -1,8 +1,4 @@
-@font-face{font-family:'BrilliantRegular';src:url(/assets/collective/71ea450f47efdb271f0e.woff2) format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'BrilliantMedium';src:url(/assets/collective/efb754d1e2ba00e37492.woff2) format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Fancy';src:url(/assets/collective/493b16e633873e0340e2.woff2) format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Wordmark';src:url(/assets/collective/d671b0e99463e8090b89.otf) format('opentype');font-weight:400;font-display:swap}
-:is(#account-root,#membership-root,#launch-root) .design-claim{color-scheme:dark;--white:#f3f0eb;--muted:#a5a3a1;--line:#555}:is(#account-root,#membership-root,#launch-root) .design-claim *{box-sizing:border-box}:is(#account-root,#membership-root,#launch-root) .design-claim,:is(#account-root,#membership-root,#launch-root) .design-claim{margin:0;min-height:100%;background:#000;color:var(--white)}:is(#account-root,#membership-root,#launch-root) .design-claim{font-family:'BrilliantRegular',Arial,sans-serif;-webkit-font-smoothing:antialiased}:is(#account-root,#membership-root,#launch-root) .design-claim button,:is(#account-root,#membership-root,#launch-root) .design-claim input{font:inherit}:is(#account-root,#membership-root,#launch-root) .design-claim .page{min-height:100vh;max-width:1480px;margin:auto;padding:58px 6.2% 120px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{display:flex;align-items:center;gap:24px;font-size:16px;letter-spacing:.7px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand:after{content:"";width:57px;height:1px;background:#343434}:is(#account-root,#membership-root,#launch-root) .design-claim .wordmark{font-family:'Wordmark','BrilliantRegular',sans-serif;font-weight:400;letter-spacing:0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{word-spacing:5px;white-space:nowrap}:is(#account-root,#membership-root,#launch-root) .design-claim .content{width:min(100%,620px);margin:85px 0 0 6.3%}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{font-family:'BrilliantMedium',sans-serif;font-size:11px;letter-spacing:2.5px;color:#969492;margin:0 0 19px}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(44px,4.6vw,64px);font-weight:400;line-height:1.08;letter-spacing:-1.5px;margin:0 0 20px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{font-size:16px;color:#c6c3c0;margin:0 0 65px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark{font-size:1.04em}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .field{display:block;width:100%;height:46px;border:0;border-bottom:1px solid #5c5b5a;border-radius:0;background:transparent;color:#f3f0eb;outline:0;font-family:'Fancy',Georgia,serif;font-size:19px;padding:6px 0 11px}:is(#account-root,#membership-root,#launch-root) .design-claim .field::placeholder{color:#aaa7a4;opacity:1}:is(#account-root,#membership-root,#launch-root) .design-claim .field:focus{border-bottom-color:#eee}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row{display:flex;align-items:center;gap:18px;margin-top:20px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap{position:relative;flex:0 0 90px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial{appearance:none;background:#000;color:#eee;border:1px solid #696969;width:100%;height:42px;padding:0 25px 0 12px;font-size:14px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap:after{content:'⌄';position:absolute;right:12px;top:8px;pointer-events:none;color:#ddd}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row .field{flex:1;min-width:0}:is(#account-root,#membership-root,#launch-root) .design-claim .signin{font-size:14px;color:#aaa7a4;margin:27px 0 18px}:is(#account-root,#membership-root,#launch-root) .design-claim .signin a,:is(#account-root,#membership-root,#launch-root) .design-claim .consent a{color:#dedbd7;text-underline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-family:'Fancy',Georgia,serif;font-size:15px;line-height:1.55;color:#aaa7a4;margin:0 0 27px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent{display:flex;align-items:flex-start;gap:13px;font-family:'Fancy',Georgia,serif;font-size:14px;line-height:1.55;color:#aaa7a4;margin:0 0 17px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input{appearance:none;flex:0 0 17px;width:17px;height:17px;margin:3px 0 0;border:1px solid #666;background:transparent;cursor:pointer;display:grid;place-content:center}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:checked:before{content:'✓';color:#fff;font-size:14px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:focus-visible{outline:2px solid white;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{display:flex;gap:14px;margin-top:35px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{height:55px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:transparent;border:1px solid #aaa;color:#f3f0eb;padding:0 22px;cursor:pointer;font-family:'BrilliantMedium',sans-serif;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;transition:background-color .25s,color .25s,border-color .25s}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child{flex:1}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:205px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:hover,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:active,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{background:#fff;color:#000;border-color:#fff}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{outline:2px solid #aaa;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn svg{width:17px;height:17px;flex-shrink:0}:is(#account-root,#membership-root,#launch-root) .design-claim .feedback{min-height:22px;color:#ddd;font-family:'Fancy',Georgia,serif;font-size:14px;margin:14px 0 0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:slide .85s cubic-bezier(.2,.75,.2,1) both}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{animation-delay:.05s}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{animation-delay:.17s}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{animation-delay:.27s}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{animation-delay:.39s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation-delay:.5s}@keyframes slide{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}@media(max-width:700px){:is(#account-root,#membership-root,#launch-root) .design-claim .page{padding:30px 7% 80px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{font-size:12px}:is(#account-root,#membership-root,#launch-root) .design-claim .content{margin:100px 0 0;width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(40px,9vw,60px)}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{margin-bottom:50px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{flex-direction:column}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:100%;flex:auto}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-size:14px}}@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:none}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{transition:none}}
+:is(#account-root,#membership-root,#launch-root) .design-claim{color-scheme:dark;--white:#f3f0eb;--muted:#a5a3a1;--line:#555}:is(#account-root,#membership-root,#launch-root) .design-claim *{box-sizing:border-box}:is(#account-root,#membership-root,#launch-root) .design-claim,:is(#account-root,#membership-root,#launch-root) .design-claim{margin:0;min-height:100%;background:#000;color:var(--white)}:is(#account-root,#membership-root,#launch-root) .design-claim{font-family:'Brilliant Cut Pro',sans-serif;-webkit-font-smoothing:antialiased}:is(#account-root,#membership-root,#launch-root) .design-claim button,:is(#account-root,#membership-root,#launch-root) .design-claim input{font:inherit}:is(#account-root,#membership-root,#launch-root) .design-claim .page{min-height:100vh;max-width:1480px;margin:auto;padding:58px 6.2% 120px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{display:flex;align-items:center;gap:24px;font-size:16px;letter-spacing:.7px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand:after{content:"";width:57px;height:1px;background:#343434}:is(#account-root,#membership-root,#launch-root) .design-claim .wordmark{font-family:SOFacetWordmark,'Brilliant Cut Pro',sans-serif;font-weight:400;letter-spacing:0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{word-spacing:5px;white-space:nowrap}:is(#account-root,#membership-root,#launch-root) .design-claim .content{width:min(100%,620px);margin:85px 0 0 6.3%}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{font-family:'Brilliant Cut Pro',sans-serif;font-size:11px;letter-spacing:2.5px;color:#969492;margin:0 0 19px;font-weight:500;}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(44px,4.6vw,64px);font-weight:400;line-height:1.08;letter-spacing:-1.5px;margin:0 0 20px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{font-size:16px;color:#c6c3c0;margin:0 0 65px}:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark{font-size:1.04em}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .field{display:block;width:100%;height:46px;border:0;border-bottom:1px solid #5c5b5a;border-radius:0;background:transparent;color:#f3f0eb;outline:0;font-family:'Fancy Cut Pro',serif,serif;font-size:19px;padding:6px 0 11px}:is(#account-root,#membership-root,#launch-root) .design-claim .field::placeholder{color:#aaa7a4;opacity:1}:is(#account-root,#membership-root,#launch-root) .design-claim .field:focus{border-bottom-color:#eee}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row{display:flex;align-items:center;gap:18px;margin-top:20px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap{position:relative;flex:0 0 90px}:is(#account-root,#membership-root,#launch-root) .design-claim .dial{appearance:none;background:#000;color:#eee;border:1px solid #696969;width:100%;height:42px;padding:0 25px 0 12px;font-size:14px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .dial-wrap:after{content:'⌄';position:absolute;right:12px;top:8px;pointer-events:none;color:#ddd}:is(#account-root,#membership-root,#launch-root) .design-claim .phone-row .field{flex:1;min-width:0}:is(#account-root,#membership-root,#launch-root) .design-claim .signin{font-size:14px;color:#aaa7a4;margin:27px 0 18px}:is(#account-root,#membership-root,#launch-root) .design-claim .signin a,:is(#account-root,#membership-root,#launch-root) .design-claim .consent a{color:#dedbd7;text-underline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-family:'Fancy Cut Pro',serif,serif;font-size:15px;line-height:1.55;color:#aaa7a4;margin:0 0 27px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent{display:flex;align-items:flex-start;gap:13px;font-family:'Fancy Cut Pro',serif,serif;font-size:14px;line-height:1.55;color:#aaa7a4;margin:0 0 17px;cursor:pointer}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input{appearance:none;flex:0 0 17px;width:17px;height:17px;margin:3px 0 0;border:1px solid #666;background:transparent;cursor:pointer;display:grid;place-content:center}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:checked:before{content:'✓';color:#fff;font-size:14px}:is(#account-root,#membership-root,#launch-root) .design-claim .consent input:focus-visible{outline:2px solid white;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{display:flex;gap:14px;margin-top:35px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{height:55px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:transparent;border:1px solid #aaa;color:#f3f0eb;padding:0 22px;cursor:pointer;font-family:'Brilliant Cut Pro',sans-serif;font-size:12px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;transition:background-color .25s,color .25s,border-color .25s}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child{flex:1}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:205px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:hover,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:active,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{background:#fff;color:#000;border-color:#fff}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:focus-visible{outline:2px solid #aaa;outline-offset:3px}:is(#account-root,#membership-root,#launch-root) .design-claim .btn svg{width:17px;height:17px;flex-shrink:0}:is(#account-root,#membership-root,#launch-root) .design-claim .feedback{min-height:22px;color:#ddd;font-family:'Fancy Cut Pro',serif,serif;font-size:14px;margin:14px 0 0}:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:slide .85s cubic-bezier(.2,.75,.2,1) both}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{animation-delay:.05s}:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow{animation-delay:.17s}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{animation-delay:.27s}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{animation-delay:.39s}:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation-delay:.5s}@keyframes slide{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}@media(max-width:700px){:is(#account-root,#membership-root,#launch-root) .design-claim .page{padding:30px 7% 80px}:is(#account-root,#membership-root,#launch-root) .design-claim .brand{font-size:12px}:is(#account-root,#membership-root,#launch-root) .design-claim .content{margin:100px 0 0;width:100%}:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(40px,9vw,60px)}:is(#account-root,#membership-root,#launch-root) .design-claim .summary{margin-bottom:50px}:is(#account-root,#membership-root,#launch-root) .design-claim .buttons{flex-direction:column}:is(#account-root,#membership-root,#launch-root) .design-claim .btn:first-child,:is(#account-root,#membership-root,#launch-root) .design-claim .btn:last-child{width:100%;flex:auto}:is(#account-root,#membership-root,#launch-root) .design-claim .help{font-size:14px}}@media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .brand,:is(#account-root,#membership-root,#launch-root) .design-claim .eyebrow,:is(#account-root,#membership-root,#launch-root) .design-claim .heading,:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .claim-form{animation:none}:is(#account-root,#membership-root,#launch-root) .design-claim .btn{transition:none}}
 
 /* Match Page 1: staggered entrance, 42px travel, 850ms ease. */
 @keyframes enterFromLeft{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
@@ -41,20 +37,20 @@
 
 /* Reward summary uses the same Fancy Cut Pro Regular as the Email field.
    Brand names retain their original SO/FACET wordmark face. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family: 'Fancy', Georgia, serif; font-weight: 400; }
-:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark { font-family: 'Wordmark', 'BrilliantRegular', sans-serif; font-weight: 400; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family:'Fancy Cut Pro', serif, serif; font-weight: 400; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark { font-family:SOFacetWordmark, 'Brilliant Cut Pro', sans-serif; font-weight: 400; }
 
 
 /* OTP claim page — matches the approved compact Page 2 typography. */
 :is(#account-root,#membership-root,#launch-root) .design-claim .content { width:min(100%, 600px); }
 :is(#account-root,#membership-root,#launch-root) .design-claim .otp-field { display:block; margin-top:25px; }
-:is(#account-root,#membership-root,#launch-root) .design-claim .otp-field .field { font-family:'Fancy',Georgia,serif; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .otp-field .field { font-family:'Fancy Cut Pro',serif,serif; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .signin { margin-top:25px; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .help { margin-bottom:28px; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .buttons { margin-top:27px; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { width:100%; flex:1; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .summary .wordmark, :is(#account-root,#membership-root,#launch-root) .design-claim .signin .wordmark, :is(#account-root,#membership-root,#launch-root) .design-claim .help .wordmark {
-  font-family:'Wordmark','BrilliantRegular',sans-serif;
+  font-family:SOFacetWordmark,'Brilliant Cut Pro',sans-serif;
   font-weight:400;
 }
 @media(min-width:701px){
@@ -75,9 +71,9 @@
 
 
 /* Changes limited to typography, button alignment, and country-code divider. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'Fancy',Georgia,serif !important; font-weight:400; letter-spacing:-.025em; }
-:is(#account-root,#membership-root,#launch-root) .design-claim .inline-coins { font-family:'Fancy',Georgia,serif !important; font-size:inherit; font-weight:400; letter-spacing:inherit; }
-:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family:'Fancy',Georgia,serif; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'Fancy Cut Pro',serif,serif !important; font-weight:400; letter-spacing:-.025em; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .inline-coins { font-family:'Fancy Cut Pro',serif,serif !important; font-size:inherit; font-weight:400; letter-spacing:inherit; }
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-family:'Fancy Cut Pro',serif,serif; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn { position:relative; justify-content:center !important; text-align:center; padding-left:44px; padding-right:44px; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn > span { display:block; width:100%; text-align:center; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .buttons .btn > svg { position:absolute; right:20px; top:50%; transform:translateY(-50%); }
@@ -88,11 +84,11 @@
 
 
 /* Match HERE’S what’s yours. from the preceding page */
-:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular',Arial,sans-serif !important;font-weight:400;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'Brilliant Cut Pro',sans-serif !important;font-weight:400;}
 /* Match the Email field typography, including the SO/ COINS phrase and sign-in link */
-:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .signin .inline-coins,:is(#account-root,#membership-root,#launch-root) .design-claim .signin a {font-family:'Fancy',Georgia,serif !important;font-weight:400;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .signin .inline-coins,:is(#account-root,#membership-root,#launch-root) .design-claim .signin a {font-family:'Fancy Cut Pro',serif,serif !important;font-weight:400;}
 
-:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{font-family:'Wordmark','BrilliantRegular',sans-serif!important;font-weight:400}
+:is(#account-root,#membership-root,#launch-root) .design-claim .brand .wordmark{font-family:SOFacetWordmark,'Brilliant Cut Pro',sans-serif!important;font-weight:400}
     :is(#account-root,#membership-root,#launch-root) .design-claim .artwork {
       --art-scale: var(--desktop-art-scale, 1);
       position: absolute;
@@ -125,7 +121,7 @@
   :is(#account-root,#membership-root,#launch-root) .design-claim .page>.artwork { --desktop-art-scale:.79; right:0; bottom:0; opacity:1; }
   :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand { position:absolute; left:11.7%; top:25.5vh; margin:0; z-index:2; }
   :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content { position:relative; left:11.7%; top:calc(25.5vh + 43px); margin:0; width:40.8%; max-width:668px; padding:0 0 28px; }
-  :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'BrilliantRegular',Arial,sans-serif!important; font-size:clamp(32px,2.6vw,43px)!important; line-height:1.1; white-space:nowrap; letter-spacing:-1px; margin:0 0 13px; }
+  :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'Brilliant Cut Pro',sans-serif!important; font-size:clamp(32px,2.6vw,43px)!important; line-height:1.1; white-space:nowrap; letter-spacing:-1px; margin:0 0 13px; }
   :is(#account-root,#membership-root,#launch-root) .design-claim .summary { font-size:13px; margin-bottom:34px!important; }
   :is(#account-root,#membership-root,#launch-root) .design-claim .field { height:39px; font-size:16px; }
   :is(#account-root,#membership-root,#launch-root) .design-claim .phone-row { margin-top:13px; }
@@ -158,10 +154,10 @@
 
 /* Page 1 typography and animation guide applied to OTP claim page.
    Artwork sizing/placement and left-column composition are unchanged. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {font-family:'Wordmark','BrilliantRegular',sans-serif;font-size:17px;letter-spacing:0;gap:25px;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular',Arial,sans-serif!important;font-weight:400;letter-spacing:-.7px;line-height:1.12;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .help,:is(#account-root,#membership-root,#launch-root) .design-claim .field {font-family:'Fancy',Georgia,serif;font-weight:400;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .btn {font-family:'BrilliantMedium','BrilliantRegular',Arial,sans-serif;font-weight:600;font-size:11px;letter-spacing:.7px;height:51px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {font-family:SOFacetWordmark,'Brilliant Cut Pro',sans-serif;font-size:17px;letter-spacing:0;gap:25px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:400;letter-spacing:-.7px;line-height:1.12;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .summary,:is(#account-root,#membership-root,#launch-root) .design-claim .signin,:is(#account-root,#membership-root,#launch-root) .design-claim .help,:is(#account-root,#membership-root,#launch-root) .design-claim .field {font-family:'Fancy Cut Pro',serif,serif;font-weight:400;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .btn {font-family:'Brilliant Cut Pro',sans-serif;font-weight:500;font-size:11px;letter-spacing:.7px;height:51px;}
 @media(min-width:901px){
  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.brand {top:23vh;}
  :is(#account-root,#membership-root,#launch-root) .design-claim .page>.content {top:calc(23vh + 46px);}
@@ -181,11 +177,11 @@
 
 
 /* Explicit heading face: Brilliant Cut Pro Regular, per Page 1 guide. */
-:is(#account-root,#membership-root,#launch-root) .design-claim h1.heading, :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'BrilliantRegular', 'Brilliant', Arial, sans-serif !important; font-weight:400 !important; font-style:normal !important; }
+:is(#account-root,#membership-root,#launch-root) .design-claim h1.heading, :is(#account-root,#membership-root,#launch-root) .design-claim .heading { font-family:'Brilliant Cut Pro', sans-serif !important; font-weight:400 !important; font-style:normal !important; }
 
 
 /* Match the two-line Page 1 heading treatment, preserving original casing. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular','Brilliant',Arial,sans-serif!important;font-weight:400!important;font-style:normal!important;line-height:1.12!important;letter-spacing:-.7px!important;white-space:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:400!important;font-style:normal!important;line-height:1.12!important;letter-spacing:-.7px!important;white-space:normal!important;}
 :is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line {display:block;white-space:nowrap;}
 @media(min-width:901px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,3vw,47px)!important;}}
 @media(max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,5.5vw,47px)!important;}}
@@ -202,15 +198,15 @@
 
 
 /* Match Page 1 headline typography, casing, weight, color and rhythm. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'BrilliantRegular','Brilliant',Arial,sans-serif!important;font-weight:400!important;font-style:normal!important;font-size:clamp(32px,3vw,47px)!important;line-height:1.12!important;letter-spacing:-.7px!important;color:#f3f0eb!important;text-transform:none!important;margin:0 0 20px!important;white-space:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .heading {font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:400!important;font-style:normal!important;font-size:clamp(32px,3vw,47px)!important;line-height:1.12!important;letter-spacing:-.7px!important;color:#f3f0eb!important;text-transform:none!important;margin:0 0 20px!important;white-space:normal!important;}
 :is(#account-root,#membership-root,#launch-root) .design-claim .heading .heading-line{display:block;white-space:nowrap;font-weight:400!important;}
 /* Page 1's reward typography: large Fancy number, Brilliant semibold coins, Fancy conversion. */
-:is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary{display:flex!important;flex-direction:column;align-items:flex-start;text-align:left;gap:0;font-family:'Fancy', 'FancyRegular',Georgia,serif!important;color:#f3f0eb!important;margin:0 0 30px!important;line-height:normal!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary{display:flex!important;flex-direction:column;align-items:flex-start;text-align:left;gap:0;font-family:'Fancy Cut Pro', 'FancyRegular',serif,serif!important;color:#f3f0eb!important;margin:0 0 30px!important;line-height:normal!important;}
 :is(#account-root,#membership-root,#launch-root) .design-claim .reward-amount-line{display:flex;align-items:baseline;gap:10px;white-space:nowrap;margin:0 0 12px;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-family:'Fancy','FancyRegular',Georgia,serif!important;font-weight:400;font-size:clamp(68px,6.5vw,100px);line-height:1;letter-spacing:-2px;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .reward-coins{font-family:'Brilliant','BrilliantMedium','BrilliantRegular',Arial,sans-serif!important;font-weight:600;font-size:clamp(12px,1.1vw,17px);line-height:1.2;letter-spacing:.6px;color:#aaa3aa;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .reward-conversion{font-family:'Fancy','FancyRegular',Georgia,serif!important;font-size:clamp(11px,.9vw,13px);line-height:1.45;color:#aaa3aa;white-space:normal;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .reward-facet{font-family:'SOFacetWordmark','Wordmark',Arial,sans-serif;letter-spacing:0;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-family:'Fancy Cut Pro','FancyRegular',serif,serif!important;font-weight:400;font-size:clamp(68px,6.5vw,100px);line-height:1;letter-spacing:-2px;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-coins{font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:500;font-size:clamp(12px,1.1vw,17px);line-height:1.2;letter-spacing:.6px;color:#aaa3aa;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-conversion{font-family:'Fancy Cut Pro','FancyRegular',serif,serif!important;font-size:clamp(11px,.9vw,13px);line-height:1.45;color:#aaa3aa;white-space:normal;}
+:is(#account-root,#membership-root,#launch-root) .design-claim .reward-facet{font-family:'SOFacetWordmark',SOFacetWordmark,sans-serif;letter-spacing:0;}
 /* Keep all form/button dimensions and art exactly as before. */
 @media(max-width:900px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,5.5vw,47px)!important}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-size:clamp(68px,10vw,94px)}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-coins{font-size:15px}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-conversion{font-size:13px}}
 @media(max-width:520px){:is(#account-root,#membership-root,#launch-root) .design-claim .heading{font-size:clamp(32px,8vw,47px)!important}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-number{font-size:clamp(65px,18vw,90px)}:is(#account-root,#membership-root,#launch-root) .design-claim .reward-summary{margin-bottom:26px!important}}
@@ -342,13 +338,13 @@
   margin:0 0 20px !important;
 }
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading .claim-medium{
-  font-family:'BrilliantMedium','BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-family:'Brilliant Cut Pro',sans-serif !important;
   font-weight:500 !important;
   font-style:normal !important;
   text-transform:uppercase;
 }
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading .claim-rest{
-  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-family:'Brilliant Cut Pro',sans-serif !important;
   font-weight:400 !important;
   font-style:normal !important;
   text-transform:none;
@@ -366,7 +362,7 @@
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .heading { margin-bottom: 13px !important; }
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
   margin:0 0 8px;
-  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif;
+  font-family:'Brilliant Cut Pro',sans-serif;
   font-weight:400;
   font-size:clamp(15px,1.25vw,18px);
   line-height:1.4;
@@ -376,7 +372,7 @@
 /* Fancy Cut Pro Regular, the same face used for the Email field on Page 1. */
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-reward-detail {
   margin:0 0 27px;
-  font-family:'Fancy',Georgia,serif;
+  font-family:'Fancy Cut Pro',serif,serif;
   font-weight:400;
   font-size:14px;
   line-height:1.5;
@@ -401,7 +397,7 @@
 
 /* Screenshot reference: only GAME COMPLETE, invitation and the claim form. */
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
-  font-family:'BrilliantRegular',Arial,sans-serif !important;
+  font-family:'Brilliant Cut Pro',sans-serif !important;
   font-size:clamp(30px,2.8vw,44px) !important;
   font-weight:400 !important;
   letter-spacing:-.7px !important;
@@ -436,7 +432,7 @@
   :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation { margin-bottom:28px !important; }
 }
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
-  font-family:'BrilliantMedium','BrilliantRegular',Arial,sans-serif !important;
+  font-family:'Brilliant Cut Pro',sans-serif !important;
   font-weight:500 !important;
   font-style:normal !important;
 }
@@ -514,7 +510,7 @@
 
 /* Page 1 headline typography: Brilliant Cut Pro Regular. */
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {
-  font-family:'BrilliantRegular','Brilliant',Arial,sans-serif !important;
+  font-family:'Brilliant Cut Pro',sans-serif !important;
   font-weight:400 !important;
   font-style:normal !important;
   font-size:clamp(32px,3vw,47px) !important;

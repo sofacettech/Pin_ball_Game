@@ -6,7 +6,7 @@
 #post-game-rewards .score-page .mesh-layer { position: fixed; inset: 0; min-height: 100svh; background: #08040d; }
 #post-game-rewards .score-page .mesh-layer canvas { display: block; width: 100%; height: 100%; }
 #post-game-rewards .score-page .mesh-layer:focus-visible { outline: 1px solid #89739f; outline-offset: -6px; }
-#post-game-rewards .score-page .mesh-caption { position: absolute; inset: auto 0 32px; margin: 0; color: #b8aec7; text-align: center; font: 400 9px ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; pointer-events: none; user-select: none; opacity: .65; }
+#post-game-rewards .score-page .mesh-caption { position: absolute; inset: auto 0 32px; margin: 0; color: #b8aec7; text-align: center; font:400 9px ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; pointer-events: none; user-select: none; opacity: .65; }
 #post-game-rewards .score-page .mesh-touch-hint { display: none; }
 @media (pointer: coarse) {
  #post-game-rewards .score-page .mesh-mouse-hint { display: none; }
@@ -17,35 +17,31 @@
 #post-game-rewards .score-page .btn { border-radius: 0; box-shadow: none; }
 #post-game-rewards .score-page #rewards-register::before,
 #post-game-rewards .score-page #rewards-register::after { content: none; }
-#post-game-rewards .score-page .page.text-layer{padding:0;max-width:none;margin:0;color:#f5f2ed;font-family:Brilliant,Arial,sans-serif;}
-@font-face { font-family: Brilliant; src: url("/assets/score-coins/brilliant-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: Brilliant; src: url("/assets/score-coins/brilliant-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
-@font-face { font-family: Fancy; src: url("/assets/score-coins/fancy-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: SOFacetWordmark; src: url("/assets/fonts/sofacet-wordmark.otf") format("opentype"); font-weight: 400; font-display: swap; }
+#post-game-rewards .score-page .page.text-layer{padding:0;max-width:none;margin:0;color:#f5f2ed;font-family:'Brilliant Cut Pro',sans-serif;}
 #post-game-rewards .score-page .text-layer, #post-game-rewards .score-page .text-layer *{box-sizing: border-box;}
 
 
 #post-game-rewards .score-page .page.text-layer{min-height: 100vh; position: relative; isolation: isolate; overflow: hidden;}
 
-#post-game-rewards .score-page .text-layer .coin-brand{position: absolute; left: 6.2%; top: 5.1%; display: flex; align-items: center; gap: 28px; font-family: SOFacetWordmark, Arial, sans-serif; font-size: 17px; white-space: nowrap; letter-spacing: 1px;}
+#post-game-rewards .score-page .text-layer .coin-brand{position: absolute; left: 6.2%; top: 5.1%; display: flex; align-items: center; gap: 28px; font-family:SOFacetWordmark, sans-serif; font-size: 17px; white-space: nowrap; letter-spacing: 1px;}
 #post-game-rewards .score-page .text-layer .coin-brand::after{content: ""; height: 1px; width: 62px; background: transparent;}
 #post-game-rewards .score-page .text-layer .reward{position: relative; margin-left: 49%; width: 47%; padding-top: clamp(110px, 15vh, 170px); padding-bottom: 55px; text-align: center; max-width: 770px;}
 
-#post-game-rewards .score-page .text-layer .eyebrow{font: 400 14px / 1.5 Fancy, Georgia, serif; color: rgb(170, 163, 169); margin: 0px 0px 17px;}
-#post-game-rewards .score-page .text-layer #rewards-heading{font: 400 calc(clamp(39px, 4.25vw, 63px) - 2px) / 1.13 Brilliant, Arial, sans-serif; letter-spacing: -1.1px; margin: 0px 0px 22px;}
+#post-game-rewards .score-page .text-layer .eyebrow{font:400 14px / 1.5 'Fancy Cut Pro', serif, serif; color: rgb(170, 163, 169); margin: 0px 0px 17px;}
+#post-game-rewards .score-page .text-layer #rewards-heading{font:400 calc(clamp(39px, 4.25vw, 63px) - 2px) / 1.13 'Brilliant Cut Pro', sans-serif; letter-spacing: -1.1px; margin: 0px 0px 22px;}
 #post-game-rewards .score-page .text-layer #rewards-heading span{display: block;}
 #post-game-rewards .score-page .text-layer .amount-line{display: flex; justify-content: center; align-items: baseline; gap: 16px; margin: 0px 0px 8px;}
-#post-game-rewards .score-page .text-layer .amount{font: 400 calc(clamp(92px, 9.3vw, 143px) - 3px) / 1 Fancy, Georgia, serif; letter-spacing: -3px;}
-#post-game-rewards .score-page .text-layer .coins{font: 600 calc(clamp(16px, 1.7vw, 25px) - 2px) / 1.2 Brilliant, Arial, sans-serif; letter-spacing: 0.6px; color: rgb(170, 163, 170); white-space: nowrap;}
-#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .notice{font: 400 14px / 1.55 Fancy, Georgia, serif; color: rgb(167, 160, 167); margin: 0px;}
-#post-game-rewards .score-page .text-layer .wordmark{font-family: SOFacetWordmark, Arial, sans-serif; letter-spacing: 0px; font-size: 0.95em; white-space: nowrap;}
+#post-game-rewards .score-page .text-layer .amount{font:400 calc(clamp(92px, 9.3vw, 143px) - 3px) / 1 'Fancy Cut Pro', serif, serif; letter-spacing: -3px;}
+#post-game-rewards .score-page .text-layer .coins{font:600 calc(clamp(16px, 1.7vw, 25px) - 2px) / 1.2 'Brilliant Cut Pro', sans-serif; letter-spacing: 0.6px; color: rgb(170, 163, 170); white-space: nowrap;}
+#post-game-rewards .score-page .text-layer .conversion,#post-game-rewards .score-page .text-layer .notice{font:400 14px / 1.55 'Fancy Cut Pro', serif, serif; color: rgb(167, 160, 167); margin: 0px;}
+#post-game-rewards .score-page .text-layer .wordmark{font-family:SOFacetWordmark, sans-serif; letter-spacing: 0px; font-size: 0.95em; white-space: nowrap;}
 #post-game-rewards .score-page .text-layer .rule{border-width: 1px 0px 0px; border-style: solid none none; border-color: rgb(64, 55, 66) currentcolor currentcolor; border-image: none; margin: 23px 0px 20px;}
 #post-game-rewards .score-page .text-layer .notice{margin: 0px 0px 21px;}
 #post-game-rewards .score-page .text-layer .buttons{display: flex; gap: 14px; width: 100%;}
-#post-game-rewards .score-page .text-layer .btn{flex: 1 1 0%; min-width: 0px; height: 54px; background: transparent; border: 1px solid rgb(136, 129, 138); color: rgb(247, 244, 242); padding: 0px 17px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; cursor: pointer; font: 600 10px / 18px Brilliant, Arial, sans-serif; letter-spacing: 0.7px; transition: background 0.25s, color 0.25s, border-color 0.25s;}
+#post-game-rewards .score-page .text-layer .btn{flex: 1 1 0%; min-width: 0px; height: 54px; background: transparent; border: 1px solid rgb(136, 129, 138); color: rgb(247, 244, 242); padding: 0px 17px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; cursor: pointer; font:600 10px / 18px 'Brilliant Cut Pro', sans-serif; letter-spacing: 0.7px; transition: background 0.25s, color 0.25s, border-color 0.25s;}
 #post-game-rewards .score-page .text-layer .btn:hover,#post-game-rewards .score-page .text-layer .btn:focus-visible,#post-game-rewards .score-page .text-layer .btn:active{background: rgb(255, 255, 255); color: rgb(0, 0, 0); border-color: rgb(255, 255, 255);}
 #post-game-rewards .score-page .text-layer .btn svg{width: 19px; height: 19px; flex: 0 0 auto;}
-#post-game-rewards .score-page .text-layer .coin-leaderboard{display: inline-flex; position: relative; margin-top: 26px; color: rgb(140, 132, 145); text-decoration: none; font: 600 10px / 18px Brilliant, Arial, sans-serif; letter-spacing: 2px; padding-bottom: 8px;}
+#post-game-rewards .score-page .text-layer .coin-leaderboard{display: inline-flex; position: relative; margin-top: 26px; color: rgb(140, 132, 145); text-decoration: none; font:600 10px / 18px 'Brilliant Cut Pro', sans-serif; letter-spacing: 2px; padding-bottom: 8px;}
 #post-game-rewards .score-page .text-layer .coin-leaderboard::after{content: ""; position: absolute; left: 0px; top: 25px; width: 100%; height: 1px; background: currentcolor; transform: scaleX(0); transform-origin: left center; transition: transform 0.38s;}
 #post-game-rewards .score-page .text-layer .coin-leaderboard:hover::after,#post-game-rewards .score-page .text-layer .coin-leaderboard:focus-visible::after{transform: scaleX(1);}
 @keyframes coin-score-enter {

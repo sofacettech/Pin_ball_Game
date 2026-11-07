@@ -1,13 +1,10 @@
-@import url('./assets/navigation.css?v=8d0d35aaa0d3');
-:root{font-family:Arial,Helvetica,sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
-@font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:Acumin;src:url('./assets/fonts/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-style:italic;font-display:swap}
-@font-face{font-family:Biarty;src:url('./assets/fonts/sofacet-biarty-regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@import url('./assets/navigation.css?v=d1972fd9e36e');
+:root{font-family:'Josefin Sans',sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 *{box-sizing:border-box}
 html{overscroll-behavior:none;scrollbar-width:none}
 html::-webkit-scrollbar{display:none}
 body{margin:0}
-body[data-phase]{font-family:Acumin,Arial,sans-serif}
+body[data-phase]{font-family:'Josefin Sans',sans-serif}
 body:is([data-phase="opening"],[data-phase="buffering"],[data-phase="settling"]){overflow:hidden}
 body:is([data-phase="buffering"],[data-phase="settling"]) :is(#story-copy,#scroll-cue,#status){visibility:hidden}
 body:is([data-phase="buffering"],[data-phase="settling"]) #story-copy{opacity:0}
@@ -38,8 +35,8 @@ body:not([data-phase="idle"]) #ball-canvas{pointer-events:none}
 #scene-frame #journey.native-renderer{position:absolute;inset:0;width:100%;height:100%;z-index:1;object-fit:contain;aspect-ratio:16/9}
 body[data-phase="journey"] #journey.native-renderer{opacity:1}
 #opening{z-index:3;object-fit:contain;pointer-events:none}
-#scroll-cue{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;fill:#fff;font-family:Acumin,Arial,sans-serif;font-size:28px;font-weight:500;letter-spacing:2.2px;text-shadow:0 1px 5px #000b;opacity:0;transition:opacity .16s linear}
-#story-copy{position:absolute;inset:0;z-index:3;pointer-events:none;color:#fff;font-family:Biarty,Acumin,Arial,sans-serif}
+#scroll-cue{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none;fill:#fff;font-family:'Josefin Sans',sans-serif;font-size:28px;font-weight:600;letter-spacing:2.2px;text-shadow:0 1px 5px #000b;opacity:0;transition:opacity .16s linear}
+#story-copy{position:absolute;inset:0;z-index:3;pointer-events:none;color:#fff;font-family:'Josefin Sans',sans-serif}
 body[data-loading] #story-copy{visibility:hidden}
 .story-line{position:absolute;width:min(33vw,550px);visibility:hidden;text-wrap:balance;text-shadow:0 1px 8px #0005}
 .story-line h1,.story-line h2{margin:0;font-size:clamp(24px,2.15vw,46px);font-weight:400;font-style:normal;font-variation-settings:normal;line-height:1.06;letter-spacing:-.025em}
@@ -102,7 +99,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .wordmark{text-shadow:0 1px 12px #0008;pointer-events:none}
 a.wordmark.site-brand{pointer-events:auto}
 .site-navigation{gap:16px}
-.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 Acumin,Arial,sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 'Josefin Sans',sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sound-text{display:grid;overflow:hidden;padding:2px 0}
 .sound-state{grid-area:1/1;justify-self:end;white-space:nowrap}
 .sound-char{display:inline-block;white-space:pre;transform:translateY(110%);opacity:0}
@@ -142,7 +139,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 .info-page .wordmark{pointer-events:auto;color:inherit;text-decoration:none}
 .info-page .back-link{position:absolute;top:28px;right:32px;color:#d4cfe0;font-size:12px;text-decoration:none}
 .info-page .info-content{position:static;display:block;width:min(680px,100%);margin:0 auto;padding:clamp(150px,25vh,260px) 24px 80px;overflow:visible}
-.info-content h1{font-size:clamp(36px,7vw,64px);font-weight:500;letter-spacing:-.04em;margin:0 0 28px}
+.info-content h1{font-size:clamp(36px,7vw,64px);font-weight:600;letter-spacing:-.04em;margin:0 0 28px}
 .info-content p{max-width:520px;color:#c4bfd0;font-size:16px;line-height:1.8;margin:0}
 
 /* Keep text and controls away from iPhone landscape cutouts. */
@@ -175,7 +172,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 
 .social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}
 .social-profiles{display:flex;align-items:center;gap:24px}
-.social-links a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;text-decoration:none;font:400 18px/1.2 Biarty;font-synthesis:none;white-space:nowrap}
+.social-links a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;text-decoration:none;font:400 18px/1.2 'Josefin Sans';font-synthesis:none;white-space:nowrap}
 .social-links a>svg{display:block;flex:none;width:19px;height:19px}
 .social-links a:hover{text-decoration:underline;text-underline-offset:4px}
 .social-trigger{display:none}

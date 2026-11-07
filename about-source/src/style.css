@@ -1,7 +1,7 @@
 :root{--paper:#f5f5f5;--ink:#18151b;--purple:#684175;--muted:#615a64;--line:#c9c1cd;--ease:cubic-bezier(.16,1,.3,1);--image-delay:1050ms;--image-duration:2000ms;color-scheme:light}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:110px;scrollbar-color:#aba0b0 var(--paper);scrollbar-width:thin}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"Acumin",sans-serif;font-weight:300;font-synthesis:none;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Josefin Sans',sans-serif;font-weight:400;font-synthesis:none;-webkit-font-smoothing:antialiased}
 body:has(dialog[open]){overflow:hidden}
 ::selection{background:#d9c5e4;color:#211729}
 button,a{-webkit-tap-highlight-color:transparent}
@@ -16,15 +16,15 @@ figure,p,h1,h2{margin:0}
 .skip-link:focus{transform:none}
 
 .wordmark{font-family:SOFacetWordmark,sans-serif;font-weight:400;font-variation-settings:normal;letter-spacing:0;white-space:nowrap}
-.wordmark-slash{font-family:"Acumin",sans-serif;font-weight:300;margin-inline:.035em}
+.wordmark-slash{font-family:'Josefin Sans',sans-serif;font-weight:400;margin-inline:.035em}
 
 .reading-progress{position:fixed;left:15px;top:calc(50% - 68px);height:136px;width:1px;z-index:8;background:#d4ced7;pointer-events:none}
 .reading-progress span{display:block;width:1px;height:100%;background:var(--purple);transform:scaleY(0);transform-origin:top}
 .intro{min-height:100svh;padding:128px 5% 150px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .intro-label{font-size:21px;line-height:1.3}
-h1{font-size:clamp(48px,6.1vw,88px);font-weight:200;line-height:1.04;letter-spacing:-.025em;text-transform:uppercase;margin-top:29px;max-width:1280px}
+h1{font-size:clamp(48px,6.1vw,88px);font-weight:400;line-height:1.04;letter-spacing:-.025em;text-transform:uppercase;margin-top:29px;max-width:1280px}
 h1 span{display:block}
-.intro-copy{font-size:clamp(24px,2.3vw,34px);line-height:1.32;max-width:740px;margin-top:68px;font-weight:250;letter-spacing:-.012em;text-wrap:pretty}
+.intro-copy{font-size:clamp(24px,2.3vw,34px);line-height:1.32;max-width:740px;margin-top:68px;font-weight:400;letter-spacing:-.012em;text-wrap:pretty}
 .image-window{display:block;overflow:hidden;background:#e3dee7}
 .opening-image{width:100%;padding:0 0 30px}
 .opening-image .image-window{aspect-ratio:1122/430;width:100%}
@@ -32,8 +32,8 @@ h1 span{display:block}
 .text-block{max-width:1100px;margin-inline:auto;text-align:center;padding-inline:35px}
 .philosophy{padding-top:154px}
 .section-label{font-size:14px;font-weight:400;text-transform:uppercase;letter-spacing:.13em;margin-bottom:30px}
-h2{font-size:clamp(38px,4.25vw,62px);font-weight:250;line-height:1.08;letter-spacing:-.025em;text-transform:uppercase;text-wrap:balance}
-.story-copy{font-size:clamp(22px,2vw,28px);font-weight:300;line-height:1.4;margin-top:42px}
+h2{font-size:clamp(38px,4.25vw,62px);font-weight:400;line-height:1.08;letter-spacing:-.025em;text-transform:uppercase;text-wrap:balance}
+.story-copy{font-size:clamp(22px,2vw,28px);font-weight:400;line-height:1.4;margin-top:42px}
 .philosophy-image{width:min(1080px,84%);margin:110px auto 0}
 .philosophy-image .image-window{aspect-ratio:1122/286}
 .philosophy-image img{object-position:20% center}
@@ -55,7 +55,7 @@ h2{font-size:clamp(38px,4.25vw,62px);font-weight:250;line-height:1.08;letter-spa
 .closing-intro{max-width:580px;margin-inline:auto;line-height:1.4;text-wrap:pretty}
 .closing h2{display:flex;flex-direction:column;align-items:center;gap:35px;text-transform:none}
 .closing .wordmark{font-size:clamp(42px,6vw,80px)}
-.closing-question{font-size:clamp(28px,3vw,42px);font-weight:250}
+.closing-question{font-size:clamp(28px,3vw,42px);font-weight:400}
 .text-link{display:inline-flex;gap:14px;align-items:center;margin-top:55px;font-size:13px;font-weight:400;min-height:44px;border-bottom:1px solid var(--ink)}
 .closing-actions{display:flex;justify-content:center;gap:16px;margin-top:45px;flex-wrap:wrap}
 .action-button{display:inline-flex;justify-content:center;align-items:center;gap:20px;min-width:185px;min-height:52px;padding:14px 24px;border:1px solid var(--ink);background:transparent;font-size:13px;font-weight:400;line-height:1.3;transition:background 250ms,color 250ms}
@@ -161,7 +161,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.25;strok
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 
 
-.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 Acumin,Arial,sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 'Josefin Sans',sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sound-text{display:grid;overflow:hidden;padding:2px 0}
 .sound-state{grid-area:1/1;justify-self:end;white-space:nowrap}
 .sound-char{display:inline-block;white-space:pre;transform:translateY(110%);opacity:0}

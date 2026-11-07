@@ -1,0 +1,139 @@
+:root {
+      color-scheme: dark;
+      --surface: #000000;
+      --text: #f6f2ff;
+      --silver: #e4dfeb;
+      --muted: #bcb0c9;
+      --accent: #d9ed37;
+      font-family:'Josefin Sans',sans-serif;
+      color: var(--text);
+      background: var(--surface);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; position: relative; isolation: isolate; }
+    .mesh-layer { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; z-index: 0; }
+    a { color: inherit; }
+    ::selection { color: var(--surface); background: var(--accent); }
+    :focus-visible { outline: 1px solid var(--accent); outline-offset: 7px; }
+
+    .not-found-content {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: 108px 24px 80px;
+    }
+
+    .message { width: 100%; text-align: center; }
+    .error-art {
+      display: block;
+      width: clamp(250px, 68vw, 350px);
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      overflow: visible;
+      color: var(--silver);
+    }
+
+    .numerals { fill: none; stroke: currentColor; stroke-width: 3.1; }
+    .gem { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: miter; }
+    .facet {
+      fill: #d9ed3712;
+      stroke: var(--accent);
+      stroke-width: 1.25;
+      stroke-linejoin: miter;
+      transform-box: fill-box;
+      transform-origin: center;
+      transform: translate(26px, -25px) rotate(12deg);
+      animation: find-facet 8s cubic-bezier(.45, 0, .2, 1) infinite;
+    }
+
+    @keyframes find-facet {
+      0%, 14%, 100% { transform: translate(26px, -25px) rotate(12deg); }
+      44%, 57% { transform: translate(4px, -4px) rotate(1deg); }
+      86% { transform: translate(26px, -25px) rotate(12deg); }
+    }
+
+    h1 {
+      font-family:'Josefin Sans', serif, serif;
+      margin: 30px 0 0;
+      font-size: 30px;
+      line-height: 1.25;
+      font-weight:400;
+      letter-spacing: -.018em;
+      text-wrap: balance;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px 64px;
+      margin-top: 36px;
+    }
+
+    .action {
+      pointer-events: auto;
+      font-family:'Sofacet Actions', 'Josefin Sans', sans-serif;
+      --line: var(--muted);
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 4px 0 12px;
+      font-size: 17px;
+      font-weight:400;
+      line-height: 1.35;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .action:first-child { --line: var(--accent); }
+    .action::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 4px;
+      height: 1px;
+      background: var(--line);
+      transform-origin: left;
+    }
+
+    .action:is(:hover, :focus-visible)::after { animation: redraw-underline 480ms ease both; }
+    @keyframes redraw-underline {
+      0% { transform: scaleX(1); transform-origin: right; }
+      45% { transform: scaleX(0); transform-origin: right; }
+      46% { transform: scaleX(0); transform-origin: left; }
+      100% { transform: scaleX(1); transform-origin: left; }
+    }
+
+    @media (max-width: 600px) {
+      .not-found-content { padding: 100px 24px 76px; }
+      h1 { margin-top: 24px; font-size: 25px; }
+      .actions { gap: 12px 32px; margin-top: 30px; }
+      .action { font-size: 15px; }
+    }
+
+    @media (max-height: 540px) and (min-width: 601px) {
+      .not-found-content { padding: 90px 24px 36px; }
+      .error-art { width: 250px; }
+      h1 { margin-top: 18px; font-size: 25px; }
+      .actions { margin-top: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .facet { animation: none; }
+      .action:is(:hover, :focus-visible)::after { animation: none; }
+      .action:is(:hover, :focus-visible) { color: var(--accent); }
+    }
+
+/* Same mesh surface as the supplied iframe, rendered directly by React. */
+.mesh-surface{position:relative;height:100svh;min-height:320px;overflow:hidden;touch-action:none;outline-offset:-6px;background:#000}
+.mesh-surface:focus-visible{outline:1px solid #89739f}
+.mesh-surface canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}

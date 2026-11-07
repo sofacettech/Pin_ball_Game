@@ -9,7 +9,7 @@ body.practising-controls #scorecard-panel,body.practising-controls #mobile-lives
 #controls-tutorial .practice-zone:not(:disabled){background:linear-gradient(0deg,#c6ff0024,transparent 75%);box-shadow:inset 0 -2px #c6ff00,inset 1px 0 #c6ff0055}
 #controls-tutorial .practice-zone:disabled{opacity:1;pointer-events:none}
 .practice-zone:disabled span{opacity:0}
-.practice-zone span{font-size:11px;font-weight:700;letter-spacing:1.7px;padding:9px 12px;border:1px solid #c6ff0060;border-radius:30px;background:#11170aca}
+.practice-zone span{font-size:11px;font-weight:600;letter-spacing:1.7px;padding:9px 12px;border:1px solid #c6ff0060;border-radius:30px;background:#11170aca}
 .practice-marker{position:absolute;width:74px;height:74px;transform:translate(-50%,-50%);pointer-events:none;display:grid;place-items:center}
 .practice-marker span{position:absolute;inset:0;border:1px solid #c6ff00;border-radius:50%;box-shadow:0 0 20px #c6ff0050,inset 0 0 16px #c6ff0020;animation:practice-pulse 1.8s ease-out infinite}
 .practice-marker i{width:10px;height:10px;border:2px solid #e7ff8f;border-radius:50%;box-shadow:0 0 12px #c6ff00}

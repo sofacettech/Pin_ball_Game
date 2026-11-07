@@ -120,7 +120,7 @@ async function api(request,response,path){
  }
  fail(404,'This endpoint was not found.');
 }
-const publicFiles=new Set(['index.html','entrance-3d.html','play.html','launching-soon.html','first-cuts-confirmation.html','about.html','privacy.html','terms.html','membership.html','faq.html','account.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
+const publicFiles=new Set(['index.html','entrance-3d.html','play.html','launching-soon.html','first-cuts-confirmation.html','about.html','privacy.html','terms.html','membership.html','faq.html','account.html','404.html','white_logo.svg','style.css','viewer.js','sequence.js','navigation.js','frame-placement.js','plate-hover.js','reference-appearance.js','sofacet-ball.js']);
 const publicDirectories=new Set(['assets','vendor','sounds','leaderboard','scoreboard','references']);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.json':'application/json','.glb':'model/gltf-binary','.bin':'application/octet-stream','.exr':'application/octet-stream','.hdr':'application/octet-stream','.woff2':'font/woff2','.otf':'font/otf','.ttf':'font/ttf','.mp4':'video/mp4','.m4a':'audio/mp4','.mp3':'audio/mpeg','.wav':'audio/wav'};
 const server=createServer(async(request,response)=>{
@@ -143,7 +143,7 @@ const server=createServer(async(request,response)=>{
   const acceptsBrotli=(request.headers['accept-encoding']||'').split(',').some(item=>/^br(?:\s*;|$)/i.test(item.trim())&&!/;\s*q=0(?:\.0*)?\s*$/i.test(item));
   const compressed=extname(target)==='.glb'&&!request.headers.range&&acceptsBrotli?await stat(target+'.br').catch(()=>null):null;
   if(compressed?.isFile()&&compressed.mtimeMs>=info.mtimeMs&&compressed.size<info.size){delivery=target+'.br';deliverySize=compressed.size;}
-  let start=0,end=deliverySize-1,status=200;
+  let start=0,end=deliverySize-1,status=relative==='404.html'?404:200;
   const headers={'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes','Cache-Control':publicDirectories.has(parts[0])&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'};
   if(extname(target)==='.glb')headers.Vary='Accept-Encoding';
   if(delivery!==target){headers['Content-Encoding']='br';headers['X-Uncompressed-Length']=info.size;}
@@ -165,7 +165,11 @@ const server=createServer(async(request,response)=>{
   stream.pipe(response);
  }catch(error){if(!response.headersSent){
   const known=error instanceof ServiceError;
-  if(known&&error.status===404&&!path.startsWith('/api/')&&['GET','HEAD'].includes(request.method)&&(request.headers.accept||'').includes('text/html')){response.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});response.end();return;}
+  if(known&&error.status===404&&!path.startsWith('/api/')&&['GET','HEAD'].includes(request.method)&&(request.headers.accept||'').includes('text/html')){
+   const document=readFileSync(resolve(root,'404.html'));
+   response.writeHead(404,{'Content-Type':'text/html; charset=utf-8','Content-Length':document.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+   response.end(request.method==='HEAD'?undefined:document);return;
+  }
   if(known&&Number.isFinite(error.retryAfter))response.setHeader('Retry-After',String(error.retryAfter));
   json(response,known?error.status:500,{message:known?error.message:'The service could not complete this request. Please try again.',...(known&&error.code?{code:error.code}:{}),...(known&&Number.isFinite(error.retryAfter)?{retryAfter:error.retryAfter}:{})});
  }else response.end();}
