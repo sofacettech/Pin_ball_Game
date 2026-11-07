@@ -21,9 +21,9 @@
 .game-loader-cards .sofacet-card[data-slot="2"] { z-index: 1; transform: translate(28px,-16px) rotate(6deg) scale(.94); filter: brightness(.48); }
 .game-loader-cards .card-turn { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(0deg); }
 .game-loader-cards .is-reversed .card-turn { transform: rotateY(180deg); }
-.game-loader-cards .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.game-loader-cards .face { position: absolute; inset: 0; backface-visibility: visible; -webkit-backface-visibility: visible; }
 .game-loader-cards .reverse-face { transform: rotateY(180deg); }
-.game-loader-cards .face[hidden] { display: none; }
+.game-loader-cards .face[hidden], .game-loader-cards .face[aria-hidden="true"] { display: none; }
 .game-loader-cards .sofacet-card img { pointer-events: none; user-select: none; }
 .game-loader-cards .sofacet-card__background { display: block; width: 100%; height: 100%; }
 .game-loader-cards .sofacet-card__product { position: absolute; left: 50%; transform: translateX(-50%); height: auto; display: block; filter: drop-shadow(0 7px 5px #0006); }

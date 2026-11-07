@@ -1,14 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="140 15 806 1330" fill="none" role="img" aria-labelledby="title">
-  <title id="title">Navy SO/FACET card with brushed silver border</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="140 15 806 1330" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">SO/FACET faceted platinum card reverse</title>
+  <desc id="description">Midnight navy face with eight straight edges, clipped corners and a planar platinum bevel.</desc>
   <defs>
-    <path id="shield" d="M543 42 C522 77 499 121 474 121 C451 121 440 106 432 96 C418 78 362 107 331 124 C278 154 229 194 179 203 Q163 205 163 222 V1097 C163 1170 232 1191 337 1207 C436 1223 489 1234 543 1318 C597 1234 650 1223 749 1207 C854 1191 923 1170 923 1097 V222 Q923 205 907 203 C857 194 808 154 755 124 C724 107 668 78 654 96 C646 106 635 121 612 121 C587 121 564 77 543 42 Z"/>
-    <path id="inset" d="M543 103 C521 140 499 155 474 155 C450 155 428 145 416 127 C332 141 269 211 193 232 V1090 C193 1148 244 1167 343 1183 C442 1198 493 1217 543 1270 C593 1217 644 1198 743 1183 C842 1167 893 1148 893 1090 V232 C817 211 754 141 670 127 C658 145 636 155 612 155 C587 155 565 140 543 103 Z"/>
-    <linearGradient id="silver" x1="150" y1="0" x2="936" y2="0" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#777b7b"/><stop offset=".035" stop-color="#f5f4ef"/><stop offset=".14" stop-color="#626665"/><stop offset=".25" stop-color="#f4f2ec"/><stop offset=".39" stop-color="#a8a9a7"/><stop offset=".5" stop-color="#fdfcf7"/><stop offset=".64" stop-color="#797d7c"/><stop offset=".77" stop-color="#eeede8"/><stop offset=".93" stop-color="#969996"/><stop offset="1" stop-color="#e2e3df"/>
-    </linearGradient>
-    <linearGradient id="reflections" x1="0" y1="40" x2="0" y2="1320" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff" stop-opacity=".72"/><stop offset=".13" stop-color="#000" stop-opacity=".1"/><stop offset=".2" stop-color="#fff" stop-opacity=".35"/><stop offset=".34" stop-color="#000" stop-opacity=".38"/><stop offset=".48" stop-color="#fff" stop-opacity=".35"/><stop offset=".61" stop-color="#000" stop-opacity=".42"/><stop offset=".73" stop-color="#fff" stop-opacity=".65"/><stop offset=".86" stop-color="#000" stop-opacity=".3"/><stop offset=".92" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#111" stop-opacity=".22"/>
-    </linearGradient>
+    <polygon id="outline" points="254,48 832,48 927,143 927,1217 832,1312 254,1312 159,1217 159,143"/>
+    <polygon id="face" points="263,70 823,70 905,152 905,1208 823,1290 263,1290 181,1208 181,152"/>
+    <clipPath id="surface"><use href="#face"/></clipPath>
     <radialGradient id="navy" cx="50%" cy="24%" r="65%" color-interpolation="sRGB">
       <stop stop-color="#021322"/><stop offset=".48" stop-color="#011220"/><stop offset="1" stop-color="#000F1B"/>
     </radialGradient>
@@ -24,28 +20,43 @@
       <feComponentTransfer><feFuncA type="linear" slope=".22"/></feComponentTransfer>
       <feBlend in="SourceGraphic" mode="soft-light"/>
     </filter>
-    <clipPath id="surface"><use href="#shield"/></clipPath>
     <linearGradient id="logoSilver" x1="0" y1="0" x2=".3" y2="1">
       <stop stop-color="#fbfaf5"/><stop offset=".26" stop-color="#aaaca9"/><stop offset=".53" stop-color="#e4e3de"/><stop offset=".74" stop-color="#8e918e"/><stop offset="1" stop-color="#c9cbc6"/>
     </linearGradient>
     <path id="mark" fill-rule="evenodd" d="M478 1091 L502 1065 H584 L608 1091 V1158 H565 L583 1126 H554 L543 1103 L532 1126 H503 L521 1158 H478 Z M503 1102 H583 V1098 L574 1086 H512 L503 1098 Z"/>
+    <linearGradient id="edge-top" x1="254" y1="48" x2="254" y2="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f0f0eb"/><stop offset="0.32" stop-color="#a1a49f"/><stop offset="0.7" stop-color="#626762"/><stop offset="1" stop-color="#d2d4cf"/></linearGradient>
+    <linearGradient id="edge-top-right" x1="832" y1="48" x2="905" y2="152" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d6d8d2"/><stop offset="0.32" stop-color="#969b96"/><stop offset="0.7" stop-color="#e3e5df"/><stop offset="1" stop-color="#5f6560"/></linearGradient>
+    <linearGradient id="edge-right" x1="905" y1="143" x2="927" y2="143" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4f5652"/><stop offset="0.32" stop-color="#c9ccc6"/><stop offset="0.7" stop-color="#929792"/><stop offset="1" stop-color="#d5d8d1"/></linearGradient>
+    <linearGradient id="edge-bottom-right" x1="905" y1="1208" x2="832" y2="1312" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#565d59"/><stop offset="0.32" stop-color="#dce0d8"/><stop offset="0.7" stop-color="#939a93"/><stop offset="1" stop-color="#f1f2eb"/></linearGradient>
+    <linearGradient id="edge-bottom" x1="254" y1="1290" x2="254" y2="1312" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#565e58"/><stop offset="0.32" stop-color="#b1b7ae"/><stop offset="0.7" stop-color="#e5e7df"/><stop offset="1" stop-color="#8a9188"/></linearGradient>
+    <linearGradient id="edge-bottom-left" x1="159" y1="1217" x2="263" y2="1290" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e8eae2"/><stop offset="0.32" stop-color="#a7aea4"/><stop offset="0.7" stop-color="#f5f6ee"/><stop offset="1" stop-color="#6b746b"/></linearGradient>
+    <linearGradient id="edge-left" x1="159" y1="143" x2="181" y2="143" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e1e4db"/><stop offset="0.32" stop-color="#a9b0a6"/><stop offset="0.7" stop-color="#6c756c"/><stop offset="1" stop-color="#d2d8cc"/></linearGradient>
+    <linearGradient id="edge-top-left" x1="159" y1="143" x2="263" y2="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7d877b"/><stop offset="0.32" stop-color="#fafbf3"/><stop offset="0.7" stop-color="#b3baae"/><stop offset="1" stop-color="#e8ece1"/></linearGradient>
+    <linearGradient id="edge-light" x1="0" y1="48" x2="0" y2="1312" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".18"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".68" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/>
+    </linearGradient>
+    <mask id="bevel"><use href="#outline" fill="#fff"/><use href="#face" fill="#000"/></mask>
   </defs>
-  <!-- The navy panel, grain and frame are all vector-native. -->
-  <use href="#shield" fill="#011220"/>
-  <g clip-path="url(#surface)"><rect x="145" y="22" width="795" height="1312" fill="url(#navy)"/><rect x="145" y="22" width="795" height="1312" fill="#000" filter="url(#grain)"/></g>
-  <!-- Layered strokes form the rolled outer and inner metal bevels. -->
-  <use href="#shield" stroke="#101517" stroke-width="32" stroke-linejoin="round"/>
-  <use href="#shield" stroke="#858985" stroke-width="28" stroke-linejoin="round"/>
-  <use href="#shield" stroke="#eeeee8" stroke-width="25" stroke-linejoin="round"/>
-  <use href="#shield" stroke="#5b5e5b" stroke-width="21" stroke-linejoin="round"/>
-  <use href="#shield" stroke="url(#silver)" stroke-width="18" stroke-linejoin="round" filter="url(#brush)"/>
-  <use href="#shield" stroke="url(#reflections)" stroke-width="17" stroke-linejoin="round"/>
-  <use href="#shield" stroke="#f5f4ed" stroke-opacity=".55" stroke-width=".75" transform="translate(543 680) scale(1.028 1.016) translate(-543 -680)"/>
-  <use href="#shield" stroke="#d5d7d0" stroke-opacity=".6" stroke-width=".9" transform="translate(543 680) scale(.977 .987) translate(-543 -680)"/>
-  <!-- Hand-shaped inset rules follow the reference's separate corner sweeps. -->
-  <use href="#inset" stroke="#d8d2c4" stroke-width="1.25" opacity=".88"/>
-  <path d="M543 121 C524 151 500 166 474 166 C451 166 428 155 414 139 C340 150 273 216 202 240 V1111 M543 121 C562 151 586 166 612 166 C635 166 658 155 672 139 C746 150 813 216 884 240 V1111 M202 282 C213 246 240 227 267 211 M884 282 C873 246 846 227 819 211 M202 1070 C212 1140 257 1158 345 1172 C445 1188 494 1205 543 1256 C592 1205 641 1188 741 1172 C829 1158 874 1140 884 1070" stroke="#ddd5c6" stroke-width="1.1" opacity=".9"/>
-  <!-- Same emblem and silver material as the front, enlarged for the reverse. -->
+  <use href="#outline" fill="#011220"/>
+  <g clip-path="url(#surface)">
+    <rect x="159" y="48" width="768" height="1264" fill="url(#navy)"/>
+    <rect x="159" y="48" width="768" height="1264" fill="#000" filter="url(#grain)"/>
+  </g>
+  <g id="platinum-facets">
+    <polygon points="254,48 832,48 823,70 263,70" fill="url(#edge-top)"/>
+    <polygon points="832,48 927,143 905,152 823,70" fill="url(#edge-top-right)"/>
+    <polygon points="927,143 927,1217 905,1208 905,152" fill="url(#edge-right)"/>
+    <polygon points="927,1217 832,1312 823,1290 905,1208" fill="url(#edge-bottom-right)"/>
+    <polygon points="832,1312 254,1312 263,1290 823,1290" fill="url(#edge-bottom)"/>
+    <polygon points="254,1312 159,1217 181,1208 263,1290" fill="url(#edge-bottom-left)"/>
+    <polygon points="159,1217 159,143 181,152 181,1208" fill="url(#edge-left)"/>
+    <polygon points="159,143 254,48 263,70 181,152" fill="url(#edge-top-left)"/>
+    <use href="#outline" fill="url(#edge-light)" mask="url(#bevel)"/>
+    <use href="#outline" stroke="#f2f4ec" stroke-opacity=".72" stroke-width="1.2" stroke-linejoin="miter"/>
+    <use href="#face" stroke="#1b2225" stroke-width="2" stroke-linejoin="miter"/>
+    <path d="M263 70 H823 L905 152 V1208 L823 1290 H263 L181 1208 V152 Z" stroke="#ecede5" stroke-opacity=".75" stroke-width="1" stroke-linejoin="miter"/>
+    <path id="inset-rule" d="M271 88 H815 L887 160 V1200 L815 1272 H271 L199 1200 V160 Z" stroke="#d3d1c9" stroke-opacity=".82" stroke-width="1.25" stroke-linejoin="miter"/>
+  </g>
   <g id="sofacet-logo" transform="translate(543 650) scale(2.56) translate(-543 -1111.5)">
     <use href="#mark" fill="#000" opacity=".7" transform="translate(0 5)"/>
     <use href="#mark" fill="url(#logoSilver)" stroke="#e4e3dc" stroke-width="1.2" filter="url(#brush)"/>
