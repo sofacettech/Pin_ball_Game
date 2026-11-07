@@ -53,8 +53,6 @@
 @media (max-width: 520px){#post-game-rewards .design-rewards .text-layer .reward{padding-top: 75px;}
 #post-game-rewards .design-rewards .text-layer .amount{font-size: 94px;}
 #post-game-rewards .design-rewards .text-layer .coins{font-size: 15px;}
-#post-game-rewards .design-rewards .text-layer .buttons{flex-direction: column;}
-#post-game-rewards .design-rewards .text-layer .btn{flex: 1 1 auto;}
 }
 @media (prefers-reduced-motion: reduce){#post-game-rewards .design-rewards .text-layer .brand,#post-game-rewards .design-rewards .text-layer .eyebrow,#post-game-rewards .design-rewards .text-layer h1,#post-game-rewards .design-rewards .text-layer .amount-line,#post-game-rewards .design-rewards .text-layer .conversion,#post-game-rewards .design-rewards .text-layer .rule,#post-game-rewards .design-rewards .text-layer .notice,#post-game-rewards .design-rewards .text-layer .buttons,#post-game-rewards .design-rewards .text-layer .leaderboard{animation: auto ease 0s 1 normal none running none;}
 #post-game-rewards .design-rewards .text-layer .btn,#post-game-rewards .design-rewards .text-layer .leaderboard::after{transition: none;}}
@@ -166,8 +164,8 @@
   #post-game-rewards .design-rewards .separator{margin-top:35px;}
   #post-game-rewards .design-rewards .actions{padding-top:30px;}
   #post-game-rewards .design-rewards .notice{font-size:14px;line-height:1.5;}
-  #post-game-rewards .design-rewards .buttons{flex-direction:column;}
-  #post-game-rewards .design-rewards .btn{width:100%;min-height:54px;font-size:12px;padding:0 26px;}
+  #post-game-rewards .design-rewards .buttons{flex-direction:row;gap:10px;}
+  #post-game-rewards .design-rewards .btn{width:50%;min-height:54px;font-size:12px;padding:0 10px;gap:8px;}
   #post-game-rewards .design-rewards .leaderboard{margin-top:27px;}
 }
 

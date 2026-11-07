@@ -12,7 +12,7 @@ export default function PageShell({scene, initialize, title, children}) {
     if (window.matchMedia('(max-width:900px)').matches) window.scrollTo(0, 0);
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = '/assets/collective/styles/' + scene + '.css?v=rules-20261106b';
+    stylesheet.href = '/assets/collective/styles/' + scene + '.css?v=rules-20261107a';
     let active = true;
     let scope;
     stylesheet.onload = async () => {

@@ -1,16 +1,58 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useId,useRef,useState} from 'react';
 import AccountPage from './AccountPage.jsx';
 import ClaimPage from './ClaimPage.jsx';
 import {request,pendingResult} from '../membership-source/src/api.js';
 import {phoneParts} from '../membership-source/src/phone.js';
 import {normaliseDesignPhone,registrationDetails,registrationPayload} from './auth-values.js';
-import {leaveCopy,exitCopy,rewardMoney,formatPoints} from '../game-source/src/player-copy.ts';
+import {leaveCopy,exitCopy,rewardMoney,formatPoints,leaderboardName} from '../game-source/src/player-copy.ts';
 import './flow.css';
 import {brandText} from '../shared/brand-react.jsx';
 import {accountNavigationHref} from '../shared/account-session.js';
 
 const embedded=window.parent!==window;
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
+export function SavedConfirmation({saved,status='',onReplay}) {
+  const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
+  const [shareStatus,setShareStatus]=useState('');
+  const title='SO/ FACET — Pinball',url='https://shopsofacet.com/play.html';
+  const text=saved?.pointsSaved?`${leaderboardName(saved.player?.display_name)} scored ${formatPoints(saved.score)} SO/ COINS in SO/ FACET Pinball. So/ what’s yours?`:'';
+  const shareText=text+'\n'+url;
+  const encode=encodeURIComponent;
+  async function copyScore(){
+    try{await navigator.clipboard.writeText(shareText);setShareStatus('Your score was copied.');}
+    catch{message.current.focus();message.current.select();setShareStatus('Copy the selected message to share it.');}
+  }
+  async function shareToApps(){
+    try{await navigator.share({title,text,url});}
+    catch(error){if(error.name!=='AbortError')setShareStatus('Choose an app here or copy your score.');}
+  }
+  return brandText(<section className="auth-flow-notice saved-confirmation">
+    <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
+    {saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}
+    <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn SO/ COINS.'}</p>
+    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms.html" target="_top">Terms apply.</a></p>}
+    {status&&<p role="status">{status}</p>}
+    <div className="auth-flow-actions">
+      <button type="button" onClick={onReplay??(()=>window.top.location.assign('/play.html'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
+      {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
+      <a href={accountNavigationHref('/account.html')} target="_top">My SO/ COINS</a>
+    </div>
+    {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
+      <h2 id={shareTitle}>Share my score</h2>
+      <textarea ref={message} aria-label="Score message" rows={4} readOnly value={shareText}/>
+      <div className="share-score-actions">
+        <a href={'https://wa.me/?text='+encode(shareText)} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a href={'https://t.me/share/url?url='+encode(url)+'&text='+encode(text)} target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a href={'https://twitter.com/intent/tweet?text='+encode(text)+'&url='+encode(url)} target="_blank" rel="noopener noreferrer">X</a>
+        <a href={'mailto:?subject='+encode(title)+'&body='+encode(shareText)} target="_top">Email</a>
+        {typeof navigator.share==='function'&&<button type="button" onClick={shareToApps}>More apps</button>}
+        <button type="button" onClick={copyScore}>Copy my score</button>
+        <button type="button" onClick={()=>shareDialog.current.close()}>Done</button>
+      </div>
+      {shareStatus&&<p role="status">{shareStatus}</p>}
+    </dialog>}
+  </section>);
+}
 export default function AuthFlow({pageTitle,pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
   const [tab,setTab]=useState(initialTab),[step,setStep]=useState(claimFirst&&!forceVerification?'claim':'identity'),[memberCheck,setMemberCheck]=useState(checkMembership?'checking':'guest');
   const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(null),[saved,setSaved]=useState(null);
@@ -112,17 +154,14 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
   const goBack=()=>{if(claimFirst&&embedded&&step==='claim'){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/play.html');};
-  async function shareScore(){
-    const text='I scored '+formatPoints(saved.score)+' SO/ COINS on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/';
-    if(navigator.share){try{await navigator.share({title:'SO/ FACET — Pinball',text});return}catch(error){if(error.name==='AbortError')return}}
-    try{await navigator.clipboard.writeText(text);setStatus('Your score was copied.')}catch{setStatus('Select and copy your score: '+text)}
-  }
   if(exit){const copy=exit==='confirm'?leaveCopy(pending?.points||0):exitCopy;return brandText(<section className="auth-flow-notice"><p>{exit==='confirm'?'BEFORE YOU GO':'LAUNCHING IN DECEMBER'}</p><h1 tabIndex={-1}>{copy.title}</h1><p>{exit==='confirm'?copy.support:exitCopy.support}</p><div className="auth-flow-actions">{exit==='confirm'?<><button onClick={()=>setExit(null)}>Save my SO/ COINS</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}</div>{exit==='left'&&<><a className="auth-flow-updates" href={accountNavigationHref('/membership.html?from=collective')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}</section>);}
   if(memberCheck!=='guest')return brandText(<section className="auth-flow-notice" role="status"><p>{memberCheck==='error'?"We couldn't load your SO/ COINS. Please try again.":memberCheck==='member'?'Opening your account…':'Checking your SO/ COINS…'}</p>{status&&memberCheck!=='error'&&<p>{status}</p>}{memberCheck==='error'&&<button onClick={()=>location.reload()}>Try again</button>}</section>);
-  if(step==='success')return brandText(<section className="auth-flow-notice"><p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>{saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}<p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn SO/ COINS.'}</p>{saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms.html" target="_top">Terms apply.</a></p>}{status&&<p role="status">{status}</p>}<div className="auth-flow-actions"><button onClick={replay}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>{saved?.pointsSaved&&<button onClick={()=>void shareScore()}>Share my score</button>}<a href={accountNavigationHref('/account.html')} target="_top">My SO/ COINS</a></div></section>);
+  const inlineSaved=step==='success'&&saved?.pointsSaved&&claimFirst;
+  const confirmation=step==='success'?<SavedConfirmation saved={saved} status={status} onReplay={replay}/>:null;
+  if(confirmation&&!inlineSaved)return confirmation;
   return <>
-    {embedded&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
+    {embedded&&!inlineSaved&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
-    {step==='claim'?<ClaimPage pageTitle={pageTitle} result={pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
+    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;
 }

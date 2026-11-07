@@ -8,3 +8,6 @@
 #post-game-rewards .design-rewards .reward .eyebrow{font-size:16px!important}
 #post-game-rewards .design-rewards .reward .notice{font-size:14px!important}
 #post-game-rewards .design-rewards #rewards-leaderboard{font-size:13px;letter-spacing:.06em;min-height:44px}
+@media(max-width:850px){
+ #post-game-rewards .react-page-root.design-rewards .text-layer .reward{padding-top:var(--post-game-content-top)}
+}

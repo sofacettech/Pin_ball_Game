@@ -22,7 +22,9 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
   const heading=views[view].querySelector<HTMLElement>('h1')!;
   dialog.setAttribute('aria-labelledby',heading.id);
   dialog.setAttribute('aria-describedby',view==='result'?(result!.points<10?'rewards-score rewards-low-copy':'rewards-score rewards-value-line rewards-expiry'):view==='leave'?'rewards-leave-copy':'rewards-exit-copy');
-  resize.disconnect();if(!dialog.open){dialog.prepend(header);dialog.showModal()}resize.observe(views[view]);placeFloor();heading.focus({preventScroll:true});
+  resize.disconnect();if(!dialog.open){dialog.prepend(header);dialog.showModal()}
+  dialog.scrollTop=0;
+  resize.observe(views[view]);placeFloor();heading.focus({preventScroll:true});
  }
  function register(){if(!result){dialog.close();return}if(result){const opener=$(current==='leave'?'rewards-keep':'rewards-register');dialog.close();onRegister(result,opener)}}
  function replay(){discarded=true;dialog.close();onRetry()}

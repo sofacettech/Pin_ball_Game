@@ -176,6 +176,15 @@ header #member{color:#b5ff42;border:1px solid #68408b}
  #game-menu,#registration-dialog,#leaderboard-dialog{max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 }
 
+@media(max-width:850px){
+ #leaderboard-dialog{
+  top:var(--post-game-content-top);
+  margin-block:0;
+  max-height:calc(100dvh - var(--post-game-content-top) - max(12px,env(safe-area-inset-bottom,0px)));
+  overflow:auto;
+ }
+}
+
 /* The navbar retreats on play; its logo and controls remain above the expanding canvas. */
 body{--nav-gap:var(--nav-height);display:grid;grid-template-rows:var(--nav-gap) minmax(0,1fr) auto;height:100svh;height:100dvh;transition:grid-template-rows 520ms cubic-bezier(.22,1,.36,1)}
 body.compact-navigation{--nav-gap:0px}

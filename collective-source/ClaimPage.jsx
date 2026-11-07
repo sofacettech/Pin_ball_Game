@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import PageShell from './PageShell.jsx';
 import {ClaimArtwork, ClaimMesh} from './artwork/ClaimArtwork.jsx';
 import initialize from './scenes/claim.js';
@@ -8,7 +8,22 @@ import {Arrow} from './icons.jsx';
 import {normaliseDesignPhone} from './auth-values.js';
 import {useSubmission} from './form-actions.js';
 
-export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,name = '',phone = '',dialCode = '+91',challengePhone,collectDetails=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onSignIn,status = '',resendSeconds = 0,working = false}) {
+export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,confirmation=null,name = '',phone = '',dialCode = '+91',challengePhone,collectDetails=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onSignIn,status = '',resendSeconds = 0,working = false}) {
+  const [showConfirmation,setShowConfirmation]=useState(Boolean(confirmation));
+  const page=useRef(null);
+  useEffect(()=>{
+    if(!confirmation||showConfirmation)return;
+    const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(reduced){setShowConfirmation(true);return;}
+    const timer=setTimeout(()=>setShowConfirmation(true),180);return()=>clearTimeout(timer);
+  },[confirmation,showConfirmation]);
+  useLayoutEffect(()=>{
+    if(!showConfirmation)return;
+    const heading=page.current?.querySelector('.claim-confirmation h1');
+    window.scrollTo(0,0);
+    heading?.setAttribute('tabindex','-1');
+    heading?.focus({preventScroll:true});
+  },[showConfirmation]);
   const [fullName,setFullName]=useState(name),[emailAddress,setEmail]=useState(email);
   const [mobile,setMobile] = useState(phone),[dial,setDial] = useState(dialCode),[otp,setOtp] = useState('');
   const {message,setMessage,busy,submit} = useSubmission();
@@ -26,11 +41,12 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
   }
   return <PageShell scene="claim" initialize={initialize} title={pageTitle}>
     <ClaimMesh />
-    <main className="page text-layer">
+    <main ref={page} className={"page text-layer"+(confirmation&&!showConfirmation?" claim-copy-leaving":"")}>
       <ClaimArtwork />
-      {onBack && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
-      <header className="brand"><span className="wordmark">{result?'MEMBERSHIP':'THE FIRST CUT'}</span></header>
-      <section aria-label="Claim your reward — OTP verification" className="content">
+      {onBack && !confirmation && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
+      <header className="brand"><span className="wordmark">{showConfirmation?'SO/ SAVED':result?'MEMBERSHIP':'THE FIRST CUT'}</span></header>
+      <section aria-label={showConfirmation?"Your saved SO/ COINS":"Claim your reward — OTP verification"} className={"content"+(showConfirmation?" claim-confirmation":"")} inert={confirmation&&!showConfirmation?true:undefined}>
+        {showConfirmation?confirmation:<>
         <p className="claim-invitation">JOIN <span className="collective-name">THE SO/ COLLECTIVE</span></p>
         {result&&<p className="claim-score">{formatPoints(result.points)} SO/ COINS · {rewardMoney(result.points)} off <span className="brand-word">SO/ FACET</span> diamond jewellery</p>}
         <form className="claim-form" id="claim" noValidate onSubmit={save}>
@@ -52,6 +68,7 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
           {!collectDetails&&<div className="claim-resend"><button type="button" disabled={working || busy || resendSeconds>0 || changed} onClick={()=>void submit(onResend,{},'Please request another code later.')}>{resendSeconds>0?'Resend code in '+resendSeconds+'s':'Resend code'}</button></div>}
           <p aria-live="polite" className="feedback" id="feedback" role="status">{status || message}</p>
         </form>
+        </>}
       </section>
     </main>
   </PageShell>;

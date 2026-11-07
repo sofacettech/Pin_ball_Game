@@ -64,6 +64,10 @@
 .reward-flow .rewards-actions{width:100%;margin-top:36px;grid-template-columns:1fr 1fr}
 .flow-signoff{margin:34px 0 0;font-size:14px;color:#c9b6d7}
 @media(max-width:700px){.reward-flow .rewards-actions{grid-template-columns:1fr}.reward-flow h1{font-size:38px}.reward-flow{padding-block:40px 70px}}
+@media(max-width:850px){
+ #post-game-rewards:not([data-view="result"]) .rewards-panel{margin-top:calc(var(--post-game-content-top) - 40px)}
+ #post-game-rewards .reward-flow{padding-top:40px}
+}
 
 /* Copy above the existing result heading, aligned with that heading. */
 .rewards-intro{margin:0 0 12px 6.3%;text-align:left}

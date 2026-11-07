@@ -3,5 +3,6 @@
 .launch-body{max-width:560px;margin-top:30px}
 .first-cuts{color:#cefa59;white-space:nowrap}
 .launch-signoff{margin-top:60px}
+@media(max-width:850px){.launch-page{align-items:flex-start;padding-top:var(--post-game-content-top)}}
 @media(max-width:600px){.launch-copy h1{font-size:72px}.launch-body{max-width:340px;margin-top:27px}.launch-signoff{margin-top:48px}}
 @media(max-width:360px){.launch-copy h1{font-size:62px}}

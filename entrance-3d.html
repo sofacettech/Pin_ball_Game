@@ -263,13 +263,8 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 body[data-loading] .social-links,body[data-game="visible"] .social-links{visibility:hidden;pointer-events:none}
 @media(max-width:600px){
  .social-links{right:calc(16px + env(safe-area-inset-right,0px))}
- .social-trigger{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-height:44px;padding:0;border:0;background:transparent;color:#fff;font:400 16px/1.2 Biarty;font-synthesis:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
- .social-trigger>svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5}
- .social-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
- .social-profiles{display:none;position:absolute;right:0;bottom:52px;flex-direction:column;align-items:stretch;gap:0;min-width:174px;padding:7px 13px;background:#100b1af2;border:1px solid #bda5d433;border-radius:8px;box-shadow:0 8px 22px #0006}
- .social-links[data-open] .social-profiles{display:flex}
- .social-profiles a{display:flex;gap:10px;font-size:16px}
- .social-profiles a>svg{width:17px;height:17px}
+ .social-profiles{gap:8px}
+ .social-profiles a{width:44px;justify-content:center}
 }
 </style>
 <style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
