@@ -16,11 +16,11 @@ export default function CardDeck({active=false}) {
       <div className="deck" tabIndex={0} role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions">
         {cards.map((card,index)=><article className="sofacet-card" key={card.product} data-slot={index} aria-label={card.name+' card'} aria-hidden={index!==0}>
           <div className="card-turn"><div className="face front-face" aria-hidden="false">
-            <img className="sofacet-card__background" src={artwork+'card.svg?v=navy-011220'} alt="" width={806} height={1330} loading="lazy" decoding="async"/>
+            <img className="sofacet-card__background" src={artwork+'card.svg?v=faceted-platinum-20261107'} alt="" width={806} height={1330} loading="lazy" decoding="async"/>
             <img className={'sofacet-card__product product--'+card.product} src={artwork+card.product+'.png'} alt={card.alt} width={card.width} height={card.height} loading="lazy" decoding="async"/>
             {card.copy}
           </div><div className="face reverse-face" aria-hidden="true">
-            <img className="sofacet-card__background" src={artwork+'card-back.svg?v=navy-011220'} alt="" width={806} height={1330} loading="lazy" decoding="async"/>
+            <img className="sofacet-card__background" src={artwork+'card-back.svg?v=faceted-platinum-20261107'} alt="" width={806} height={1330} loading="eager" decoding="async"/>
             <p className="back-name">SO/ FACET</p>
           </div></div>
         </article>)}

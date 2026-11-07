@@ -85,6 +85,7 @@ export function connectCardMotion(root) {
   async function flip() {
     if (disposed || busy) return;
     const showBack = backStates[current];
+    let faceFrame;
     clearTimeout(timer);
     busy = true;
     stage.setAttribute('aria-busy', 'true');
@@ -96,10 +97,21 @@ export function connectCardMotion(root) {
           {transform: `rotateY(${showBack ? 0 : 180}deg)`}
         ], {duration: 1000, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards'}));
         for (const animation of animations) {running.add(animation);if (!visible || document.hidden) animation.pause();}
+        // Switch faces at 90 degrees instead of relying on WebKit's backface compositing.
+        const swapAtEdge = () => {
+          if (disposed) return;
+          if ((animations[0].effect.getComputedTiming().progress ?? 0) < .5) {
+            faceFrame = requestAnimationFrame(swapAtEdge);return;
+          }
+          backStates[current] = !showBack;
+          render();
+        };
+        faceFrame = requestAnimationFrame(swapAtEdge);
         await Promise.all(animations.map(animation => animation.finished));
       }
       backStates[current] = !showBack;
     } catch (error) {if (!disposed) console.error('Card flip failed:', error);} finally {
+      cancelAnimationFrame(faceFrame);
       if (!disposed) render(true);
       animations.forEach(animation => {running.delete(animation);animation.cancel();});
       busy = false;

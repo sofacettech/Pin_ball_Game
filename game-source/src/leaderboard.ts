@@ -33,8 +33,11 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   if(!dialog.open||!matchMedia('(max-width:600px)').matches)return;
   const panel=mobileFrame.parentElement!.getBoundingClientRect(),rows=table.getBoundingClientRect(),scale=panel.width/1456;
   if(!scale||!rows.height)return;
-  // Leave 8px below the table; preserve the artwork's 334-unit header and 321-unit footer.
-  const height=Math.max(656,Math.ceil((rows.bottom-panel.top+8)/scale+267));
+  // Reserve ten rows even when empty; preserve the header, footer and 8px table clearance.
+  const body=table.tBodies[0];
+  const rowHeight=Math.max(body.rows[0]?.getBoundingClientRect().height||table.tHead!.getBoundingClientRect().height,parseFloat(getComputedStyle(table).lineHeight)+1);
+  const tableBottom=rows.bottom+Math.max(0,10-body.rows.length)*rowHeight;
+  const height=Math.max(656,Math.ceil((tableBottom-panel.top+8)/scale+267));
   mobileFrame.setAttribute('viewBox',`0 0 1456 ${height}`);
   mobileFrame.style.height=height*scale+'px';
   frameMiddle.setAttribute('height',String(height-655));
