@@ -41,7 +41,9 @@ function createTopology(width,height){
   function schedule(){if(!raf&&!document.hidden)raf=requestAnimationFrame(render);}
   function radial(cx,cy,r,color){const g=bg.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,color);g.addColorStop(1,'rgba(20,5,28,0)');bg.fillStyle=g;bg.fillRect(cx-r,cy-r,r*2,r*2);}
   function resize(){
-    width=Math.max(1,surface.clientWidth);height=Math.max(1,surface.clientHeight);scale=Math.min(devicePixelRatio||1,1.5);
+    const nextWidth=Math.max(1,surface.clientWidth),nextHeight=Math.max(1,surface.clientHeight),nextScale=Math.min(devicePixelRatio||1,1.5);
+    if(topology&&nextWidth===width&&nextHeight===height&&nextScale===scale)return;
+    width=nextWidth;height=nextHeight;scale=nextScale;
     for(const c of [canvas,background]){c.width=Math.ceil(width*scale);c.height=Math.ceil(height*scale);}
     bg.setTransform(scale,0,0,scale,0,0);bg.fillStyle=black?'#000':'#08040c';bg.fillRect(0,0,width,height);
     if(!black){
@@ -103,7 +105,7 @@ function createTopology(width,height){
   surface.addEventListener('click',e=>{e.preventDefault();if(performance.now()-lastTouch<500)return;const p=position(e);start(p.x,p.y);});
   if(black){
     // Let the notice handle scrolling and forward taps outside its controls.
-    const frame=window.frameElement,notice=frame?.parentElement;
+    const frame=window.frameElement,notice=frame?.closest('.reward-notice,#post-game-rewards')??frame?.parentElement;
     const reveal=event=>{
       if(!frame.getClientRects().length||event.target.closest('header,a,input,select,textarea,label'))return;
       if(event.target.closest('button')){clear();return;}
@@ -127,7 +129,7 @@ function createTopology(width,height){
   reduced.addEventListener('change',clear);
   document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseIntro();wave=null;cancelAnimationFrame(raf);raf=0;}else schedule();});
   canvas.addEventListener('contextlost',()=>{cancelAnimationFrame(raf);raf=0;wave=null;canvas.style.visibility='hidden';});
-  canvas.addEventListener('contextrestored',()=>{canvas.style.visibility='visible';resize();});
+  canvas.addEventListener('contextrestored',()=>{canvas.style.visibility='visible';topology=null;resize();});
   window.__startMeshWave=start;
   surface.dataset.renderer='canvas2d';new ResizeObserver(resize).observe(surface);resize();
 })();

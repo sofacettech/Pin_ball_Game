@@ -149,7 +149,6 @@ function App() {
   }
 
   return brandText(<>
-    <div className="faq-navbar-background" aria-hidden="true"/>
     <a className="faq-skip" href="#faqs">Skip to FAQs</a>
     <a className="site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></a>
     <main className={'faq-main'+(selected?' is-open':'')} id="faqs" ref={main} tabIndex={-1}>
