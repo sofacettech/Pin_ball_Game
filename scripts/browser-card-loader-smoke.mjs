@@ -47,14 +47,11 @@ try{await withRewardsSite(async({origin})=>{
    await settled(page,'Diamond');assert.equal(await page.locator('#game-loading-screen canvas,.loading-statement').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
    assert.ok(Math.abs(box.width/box.height-806/1330)<.01,'The smaller card preserves its aspect ratio');
-   const swipeHint=page.locator('.card-hint-swipe'),clickHint=page.locator('.card-hint-desktop');
-   assert.equal(await swipeHint.innerText(),'Swipe left to explore');
-   const swipeBox=await swipeHint.boundingBox();assert.ok(swipeBox.y>=0&&swipeBox.y+swipeBox.height<box.y-12,'Swipe hint fits above the deck');
-   assert.equal(await clickHint.isVisible(),!mobile);
-   if(!mobile){
-    assert.equal(await clickHint.innerText(),'Click to discover your next facet.');
-    const clickBox=await clickHint.boundingBox();assert.ok(clickBox.y>box.y+box.height+12&&clickBox.y+clickBox.height<=900,'Click hint fits below the deck');
-   }
+   const topHint=page.locator('.card-hint-top'),bottomHint=page.locator('.card-hint-bottom');
+   assert.equal(await topHint.innerText(),mobile?'Swipe left to explore':'Click to explore');
+   const hintBox=await topHint.boundingBox();assert.ok(hintBox.y>=0&&hintBox.y+hintBox.height<box.y-12,'Explore hint fits above the deck');
+   assert.equal(await bottomHint.innerText(),"Discover what's yours");
+   const bottomBox=await bottomHint.boundingBox();assert.ok(bottomBox.y>box.y+box.height+12&&bottomBox.y+bottomBox.height<=page.viewportSize().height,'Discover hint fits below the deck');
    await capture(page,width+'-diamond');
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Jewellery');await capture(page,width+'-jewellery');

@@ -68,15 +68,16 @@ test('the score heading receives focus after its styles finish loading without i
  f.node('nav-toggle').setAttribute('aria-expanded','true');f.captured.focused=null;
  f.controller.dialog['sofacet:page-readyListener']();assert.equal(f.captured.focused,null);
 });
-test('close, keep, leave-anyway, replay and leaderboard retain their established flow',async()=>{
+test('keyboard dismissal, keep, leave-anyway, replay and leaderboard retain their established flow',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(4800,'game');
+ const escape=()=>fixture.controller.dialog.oncancel({preventDefault(){}});
  fixture.captured.actions.onLeaderboard();assert.equal(fixture.boards.length,1);
- fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'leave');assert.equal(fixture.captured.scoreVisible,false);
- fixture.node('rewards-close').click();assert.equal(fixture.controller.dialog.dataset.view,'result');assert.equal(fixture.captured.scoreVisible,true);
- fixture.node('rewards-close').click();fixture.node('rewards-keep').click();assert.equal(fixture.registered[0].points,4800);assert.equal(fixture.openers[0],'rewards-keep');
- fixture.controller.show();fixture.node('rewards-close').click();fixture.node('rewards-leave-anyway').click();assert.equal(fixture.controller.dialog.dataset.view,'exit');
+ escape();assert.equal(fixture.controller.dialog.dataset.view,'leave');assert.equal(fixture.captured.scoreVisible,false);
+ escape();assert.equal(fixture.controller.dialog.dataset.view,'result');assert.equal(fixture.captured.scoreVisible,true);
+ escape();fixture.node('rewards-keep').click();assert.equal(fixture.registered[0].points,4800);assert.equal(fixture.openers[0],'rewards-keep');
+ fixture.controller.show();escape();fixture.node('rewards-leave-anyway').click();assert.equal(fixture.controller.dialog.dataset.view,'exit');
  fixture.node('rewards-exit-play').click();assert.equal(fixture.replays.length,1);
- fixture.controller.clear();fixture.controller.show(9);fixture.node('rewards-close').click();assert.equal(fixture.captured.destination,'/');
+ fixture.controller.clear();fixture.controller.show(9);escape();assert.equal(fixture.captured.destination,'/');
 });
 
 test('internal game pages can open over the score without treating it as discarded',async()=>{

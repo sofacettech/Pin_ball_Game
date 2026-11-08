@@ -41,7 +41,6 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
  dialog.addEventListener('close',()=>{if(dialog.open)return;resize.disconnect();scorePage.clear?.();showNoticeArtwork(null);if(toggle.getAttribute('aria-expanded')==='true')toggle.click();document.body.prepend(header)});
  $('rewards-keep').onclick=register;
  $('rewards-leave-anyway').onclick=()=>{discarded=true;setView('exit')};$('rewards-exit-play').onclick=replay;$('rewards-exit-world').onclick=world;
- $('rewards-close').onclick=()=>current==='leave'?(result?setView('result'):dialog.close()):current==='exit'?world():leave();
  dialog.addEventListener('sofacet:page-ready',()=>{if(dialog.open&&current==='result'&&toggle.getAttribute('aria-expanded')!=='true')views.result.querySelector<HTMLElement>('h1')!.focus({preventScroll:true})});
  dialog.oncancel=event=>{event.preventDefault();if(current==='leave'){if(result)setView('result');else dialog.close()}else if(current==='result')leave()};
  document.addEventListener('click',event=>{
@@ -51,7 +50,6 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
   const url=new URL(link.href,location.href);if(!['http:','https:'].includes(url.protocol)||url.href===location.href)return;
   event.preventDefault();leave(url.href);
  },true);
- addEventListener('beforeunload',event=>{if(dialog.open&&unsaved()){event.preventDefault();event.returnValue=''}});
  return{dialog,get result(){return result},
   show(finalScore?:number,gameId?:string){
    if(discarded)return;

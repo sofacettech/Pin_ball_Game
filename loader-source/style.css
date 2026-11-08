@@ -11,9 +11,13 @@
 .game-loader-cards {height:100%;display:grid;}
 .game-loader-cards .gallery { position:relative;min-height: 100%; display: grid; }
 .game-loader-cards .card-hint{position:absolute;left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
-.game-loader-cards .card-hint-swipe{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
-.game-loader-cards .card-hint-desktop{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
-@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}}
+.game-loader-cards .card-hint-top{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
+.game-loader-cards .card-hint-bottom{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
+.game-loader-cards .hint-swipe{display:none}
+@media(pointer:coarse),(max-width:600px){
+ .game-loader-cards .hint-click{display:none}
+ .game-loader-cards .hint-swipe{display:inline}
+}
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
 .game-loader-cards .floating { position: relative; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }

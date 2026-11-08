@@ -49,8 +49,6 @@
  .rewards-value-line,.rewards-expiry{overflow-wrap:anywhere}
 }
 
-.rewards-close{position:fixed;right:calc(var(--site-nav-right) + 60px + env(safe-area-inset-right,0px));top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));z-index:5;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font:400 35px/1 'Josefin Sans',sans-serif}
-.rewards-close:hover{opacity:.7}
 .rewards-actions.is-single{grid-template-columns:1fr;width:min(100%,480px);margin-inline:auto}
 .rewards-actions .flow-primary,#rewards-retry.flow-primary{color:#152000;border:1px solid #edffc5;background:#ddff36;box-shadow:0 0 24px #c5e93c20}
 .rewards-actions .flow-secondary{border:1px solid #b996d0;background:transparent;color:#ddc0ee}
