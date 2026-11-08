@@ -34,6 +34,8 @@ function createTopology(width,height){
   const surface=document.getElementById('mesh'),canvas=surface.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
   if(!ctx)return;
   const background=document.createElement('canvas'),bg=background.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const black=new URLSearchParams(location.search).get('theme')==='black';
+  if(black)surface.style.background='#000';
   let width=1,height=1,scale=1,topology,wave=null,raf=0,tap=null,down=null,lastTouch=-Infinity;
   const sweep=2100,tail=1100;
   function schedule(){if(!raf&&!document.hidden)raf=requestAnimationFrame(render);}
@@ -41,9 +43,11 @@ function createTopology(width,height){
   function resize(){
     width=Math.max(1,surface.clientWidth);height=Math.max(1,surface.clientHeight);scale=Math.min(devicePixelRatio||1,1.5);
     for(const c of [canvas,background]){c.width=Math.ceil(width*scale);c.height=Math.ceil(height*scale);}
-    bg.setTransform(scale,0,0,scale,0,0);bg.fillStyle='#08040c';bg.fillRect(0,0,width,height);
-    radial(width*.5,height*.16,Math.max(width,height)*.63,'rgba(20,5,28,.40)');
-    radial(width*.61,height*.72,Math.max(width,height)*.49,'rgba(22,5,31,.40)');
+    bg.setTransform(scale,0,0,scale,0,0);bg.fillStyle=black?'#000':'#08040c';bg.fillRect(0,0,width,height);
+    if(!black){
+      radial(width*.5,height*.16,Math.max(width,height)*.63,'rgba(20,5,28,.40)');
+      radial(width*.61,height*.72,Math.max(width,height)*.49,'rgba(22,5,31,.40)');
+    }
     topology=createTopology(width,height);wave=null;schedule();
   }
   let introCue=null;
@@ -97,6 +101,18 @@ function createTopology(width,height){
   }
   function position(e){const r=surface.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
   surface.addEventListener('click',e=>{e.preventDefault();if(performance.now()-lastTouch<500)return;const p=position(e);start(p.x,p.y);});
+  if(black){
+    // Let the notice handle scrolling and forward taps outside its controls.
+    const frame=window.frameElement,notice=frame?.parentElement;
+    const reveal=event=>{
+      if(!frame.getClientRects().length||event.target.closest('header,a,input,select,textarea,label'))return;
+      if(event.target.closest('button')){clear();return;}
+      const rect=frame.getBoundingClientRect();
+      start(event.clientX-rect.left,event.clientY-rect.top);
+    };
+    notice?.addEventListener('click',reveal);
+    window.addEventListener('pagehide',event=>{if(!event.persisted)notice?.removeEventListener('click',reveal);});
+  }
   surface.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;down={...position(e),id:e.pointerId,time:performance.now(),moved:false};});
   surface.addEventListener('pointermove',e=>{if(down&&e.pointerId===down.id){const p=position(e);if(Math.hypot(p.x-down.x,p.y-down.y)>14)down.moved=true;}});
   surface.addEventListener('pointercancel',()=>{down=null;tap=null;});

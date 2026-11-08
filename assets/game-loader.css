@@ -1,16 +1,19 @@
 .game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#000;opacity:1;transition:opacity .4s ease;touch-action:pan-y}
 .game-loading-screen[hidden]{display:none!important}
 .game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
-#game-loader-cards-root{height:100%}
-.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.game-loader-cards { color-scheme: dark; background: #000; color: #e2e4df; font-family:'Brilliant Cut Pro', sans-serif; --card-width: min(400px, 67vw, calc((100svh - var(--game-loader-top,96px) - 164px) * 806 / 1330)); }
+#game-loader-cards-root{height:100%;--game-loader-css-ready:1}
+#game-loader-cards-root[hidden]{display:none!important}
+.game-loading-screen .loading-copy{position:absolute;inset:50% 24px auto;margin:0;transform:translateY(-50%);color:#e4e3de;text-align:center;font:16px/1.4 'Brilliant Cut Pro',sans-serif}
+#game-loader-cards-root:not([hidden])+.loading-copy,.game-loading-screen[data-state="error"] .loading-copy{inset:auto;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-loader-cards { color-scheme: dark; background: #000; color: #e2e4df; font-family:'Brilliant Cut Pro', sans-serif; --card-base-width: min(400px, 67vw, calc((100svh - var(--game-loader-top,96px) - 164px) * 806 / 1330)); --card-width: calc(var(--card-base-width) * .94); }
 .game-loader-cards, .game-loader-cards * { box-sizing: border-box; }
 
 .game-loader-cards {height:100%;display:grid;}
 .game-loader-cards .gallery { position:relative;min-height: 100%; display: grid; }
-.game-loader-cards .card-hint{position:absolute;top:calc(50% + var(--card-width)*1330/806/2 + 24px);left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
-.game-loader-cards .card-hint-mobile{display:none}
-@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}.game-loader-cards .card-hint-mobile{display:inline}}
+.game-loader-cards .card-hint{position:absolute;left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
+.game-loader-cards .card-hint-swipe{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
+.game-loader-cards .card-hint-desktop{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
+@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}}
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
 .game-loader-cards .floating { position: relative; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }

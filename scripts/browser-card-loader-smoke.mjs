@@ -46,34 +46,47 @@ try{await withRewardsSite(async({origin})=>{
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#game-loader-cards-root img')].map(image=>image.decode()));});
    await settled(page,'Diamond');assert.equal(await page.locator('#game-loading-screen canvas,.loading-statement').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
-   assert.equal(await page.locator('.card-hint').innerText(),mobile?'Swipe to Explore':'Click to discover your next facet.');
-   const hint=await page.locator('.card-hint').boundingBox();assert.ok(hint.y>box.y+box.height+12&&hint.y+hint.height<=(width===320?568:900),'Card hint fits below the deck');
+   assert.ok(Math.abs(box.width/box.height-806/1330)<.01,'The smaller card preserves its aspect ratio');
+   const swipeHint=page.locator('.card-hint-swipe'),clickHint=page.locator('.card-hint-desktop');
+   assert.equal(await swipeHint.innerText(),'Swipe left to explore');
+   const swipeBox=await swipeHint.boundingBox();assert.ok(swipeBox.y>=0&&swipeBox.y+swipeBox.height<box.y-12,'Swipe hint fits above the deck');
+   assert.equal(await clickHint.isVisible(),!mobile);
+   if(!mobile){
+    assert.equal(await clickHint.innerText(),'Click to discover your next facet.');
+    const clickBox=await clickHint.boundingBox();assert.ok(clickBox.y>box.y+box.height+12&&clickBox.y+clickBox.height<=900,'Click hint fits below the deck');
+   }
    await capture(page,width+'-diamond');
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Jewellery');await capture(page,width+'-jewellery');
-    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Diamond');
     const {x,y}=await point(page);await page.touchscreen.tap(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');await capture(page,width+'-back');
     await page.touchscreen.tap(x,y);await page.waitForFunction(()=>!document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');
+    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Pinball');
    }else{
-    let {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Jewellery');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-jewellery');
-    ({x,y}=await point(page));await page.mouse.dblclick(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='true');
-    const moving=await page.locator('.game-loader-cards .sofacet-card').evaluateAll(cards=>cards.flatMap(card=>card.getAnimations().map(animation=>({name:card.getAttribute('aria-label'),frames:animation.effect.getKeyframes()}))).find(animation=>animation.frames.length===65));
-    assert.equal(moving.name,'Diamond card');assert.equal(moving.frames.length,65);await settled(page,'Diamond');
-    await page.waitForFunction(()=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').getAttribute('aria-label')==='Jewellery card',null,{timeout:13000});await settled(page,'Jewellery');
+    const {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Jewellery');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-jewellery');
+    await page.locator('.game-loader-cards .deck').press('ArrowLeft');await checkTravel(page,false);await settled(page,'Pinball');
    }
    // Hidden parent views suspend autoplay/floating, then resume the same deck.
    await page.evaluate(()=>window.sofacetGameLoader.setActive(false));assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationPlayState),'paused');
    await page.evaluate(()=>window.sofacetGameLoader.setActive(true));assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationPlayState),'running');
+   await (mobile?swipe(page,90):page.locator('.game-loader-cards .deck').press('ArrowRight'));
+   await page.locator('#game-loader-cards-root').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#game-loading-screen').isVisible(),true,'The final swipe waits for the actual table if it is still loading');
    if(engine==='chromium')release();else await page.evaluate(()=>window.sofacetGameLoader.ready());
    await page.waitForFunction(()=>document.querySelector('#stage').dataset.ready==='true'&&document.querySelector('#game-loading-screen').hidden&&!document.body.hasAttribute('data-game-loading'),null,{timeout:90000});
    if(engine==='chromium')await page.locator('#table-intro').waitFor();
-   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'React cards, next/previous, mobile flip or desktop autoplay, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
+   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'Three-card progression, mobile flip, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
   }finally{release();await context.close()}
  }
  const page=await browser.newPage({viewport:{width:375,height:844},reducedMotion:'reduce'});
  await page.route('**/assets/sofacet-game-*.js',r=>r.fulfill({body:'',contentType:'text/javascript'}));
  await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.sofacetGameLoader);await page.locator('#sf-cookie-notice [data-reject]').click();await page.evaluate(()=>window.sofacetGameLoader.fail(Error('WASM fixture failure'),'fixture'));
  await page.getByRole('button',{name:'Try again',exact:true}).waitFor();await capture(page,'retry');await page.getByRole('button',{name:'Try again',exact:true}).click();await page.waitForFunction(()=>!!window.sofacetGameLoader&&document.querySelector('.game-loading-error').hidden);
- await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Jewellery');assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationName),'none');await page.evaluate(()=>window.sofacetGameLoader.ready());await page.waitForFunction(()=>document.querySelector('#game-loading-screen').hidden);await page.close();
+ await page.locator('#game-loader-cards-root').waitFor();
+ await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Jewellery');
+ assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.evaluate(()=>window.sofacetGameLoader.ready());
+ assert.equal(await page.locator('#game-loading-screen').isVisible(),true);
+ await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Pinball');
+ await page.locator('.game-loader-cards .deck').press('ArrowRight');await page.waitForFunction(()=>document.querySelector('#game-loading-screen').hidden);await page.close();
  report.push({flows:'failure → retry reload; reduced-motion keyboard navigation and readiness'});
 });if(output)await writeFile(resolve(output,engine+'-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({engine,report}));}finally{await browser.close()}

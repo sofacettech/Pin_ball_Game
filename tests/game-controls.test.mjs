@@ -78,6 +78,18 @@ test('phone card alternates launch and score without exposing desktop instructio
  panel.setPhoneStage(false);send(card,'click');assert.equal(card.classes.has('flipped'),false);assert.equal(front.inert,false);assert.equal(card.getAttribute('aria-label'),'Show scoreboard');
 });
 
+test('the instructions return to the scoreboard after eight seconds and a manual flip resets the countdown',()=>{
+ const card=new Element(),front=new Element(),back=new Element();front.id='instructions';back.id='scoreboard';card.querySelector=s=>s==='.front'?front:back;
+ const panel=connectFlipScorecard(card,new Element(),new Element());
+ panel.setPregame(true);panel.advanceAutoFlip(8000);assert.equal(card.classes.has('flipped'),false);
+ panel.setPregame(false);panel.showScore(true);send(card,'click');
+ panel.advanceAutoFlip(7999);assert.equal(card.getAttribute('aria-label'),'Show scoreboard');
+ panel.advanceAutoFlip(1);assert.equal(card.getAttribute('aria-label'),'Show instructions');
+ send(card,'click');panel.advanceAutoFlip(6000);send(card,'click');
+ send(card,'click');panel.advanceAutoFlip(2000);assert.equal(card.classes.has('flipped'),false);
+ panel.advanceAutoFlip(6000);assert.equal(card.classes.has('flipped'),true);
+});
+
 test('pregame hides the scorecard for every player and preserves scores when play begins',()=>{
  const card=new Element(),front=new Element(),back=new Element(),score=new Element(),best=new Element();front.id='instructions';back.id='scoreboard';card.querySelector=s=>s==='.front'?front:back;
  const panel=connectFlipScorecard(card,score,best);

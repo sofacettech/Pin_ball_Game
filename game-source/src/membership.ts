@@ -7,6 +7,7 @@ export function connectMembership(options:Options){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
  const dialog=$<HTMLDialogElement>('registration-dialog'),frame=$<HTMLIFrameElement>('registration-frame');
  const member=$<HTMLButtonElement>('member'),menuMember=$<HTMLButtonElement>('menu-member');
+ const historyHost=window.top!,timeline=historyHost.history;
  let player:Player|null=null,checking=true,completed=false,opener:HTMLElement=$('nav-toggle');
  let pendingReward:CompletedGameResult|null=null;
  let joinHistory=false,pendingClose:{returnToScore:boolean;after?:()=>void}|null=null;
@@ -19,7 +20,7 @@ export function connectMembership(options:Options){
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member&&!verify){options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;options.beforeOpen();
-  if(pendingReward){history.pushState({...history.state,sofacetJoin:true},'');joinHistory=true;}
+  if(pendingReward){timeline.pushState({...timeline.state,sofacetJoin:true},'');joinHistory=true;}
   frame.contentWindow!.location.replace('/membership.html?nav=game'+(verify?'&verify=1':pendingReward?'&from=score':''));dialog.showModal();document.body.classList.add('membership-open');
  }
  function finishClose(returnToScore=false,after?:()=>void){
@@ -32,14 +33,16 @@ export function connectMembership(options:Options){
  function close(returnToScore=false,after?:()=>void){
   if(!dialog.open)return;
   // Consume the modal history step before resuming/replaying the game.
-  if(joinHistory){if(!pendingClose){pendingClose={returnToScore,after};history.back();}return;}
+  if(joinHistory){if(!pendingClose){pendingClose={returnToScore,after};timeline.back();}return;}
   finishClose(returnToScore,after);
  }
- window.addEventListener('popstate',()=>{
-  if(!joinHistory)return;
+ const restoreMembership=(event:PopStateEvent)=>{
+  if(!joinHistory||event.state?.sofacetJoin)return;
   joinHistory=false;const requested=pendingClose;pendingClose=null;
   finishClose(requested?.returnToScore??true,requested?.after??(completed?options.onLeaderboard:undefined));
- });
+ };
+ historyHost.addEventListener('popstate',restoreMembership);
+ window.addEventListener('pagehide',event=>{if(!event.persisted)historyHost.removeEventListener('popstate',restoreMembership)});
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
  const requestExit=()=>{if(joinHistory){close(true);return;}frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);};
  dialog.oncancel=event=>{event.preventDefault();requestExit()};

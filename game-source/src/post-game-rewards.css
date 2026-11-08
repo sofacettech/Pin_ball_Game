@@ -32,11 +32,10 @@
 #rewards-retry:hover svg{transform:rotate(-28deg)}
 
 #post-game-rewards[open] #rewards-heading{animation:rewards-rise .5s .1s both}
-#post-game-rewards[open] .rewards-divider{animation:rewards-arrive .55s .2s both}
 #post-game-rewards[open] .rewards-score{animation:rewards-rise .6s .22s both}
 #post-game-rewards[open] .rewards-value-line{animation:rewards-rise .5s .35s both}
 #post-game-rewards[open] .rewards-expiry{animation:rewards-arrive .5s .4s both}
-#post-game-rewards[open] .rewards-actions{animation:rewards-rise .35s .55s both}
+#post-game-rewards[open] .rewards-actions:not(.reward-notice-actions){animation:rewards-rise .35s .55s both}
 @keyframes rewards-arrive{from{opacity:0}to{opacity:1}}
 @keyframes rewards-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:1100px){.rewards-panel{width:calc(100% - 48px)}.rewards-content{width:calc(100% - 48px);max-width:900px;--rewards-score-size:clamp(90px,12vw,140px)}.rewards-actions{width:100%;gap:24px}.rewards-value-line{font-size:25px}.rewards-expiry{font-size:21px}.rewards-actions button{font-size:18px}}

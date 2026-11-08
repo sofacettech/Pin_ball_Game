@@ -3,9 +3,10 @@ const format=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,best:HTMLElement){
  const front=button.querySelector<HTMLElement>('.front')!,back=button.querySelector<HTMLElement>('.back')!;
  let previousScore:number|undefined,previousBest:number|null|undefined,phone=false,pregame=false,visible:boolean|undefined;
+ let instructionsMs=0;
  function applyPregame(){button.hidden=pregame;}
  function showScore(show:boolean){
-  if(visible===show)return;visible=show;
+  if(visible===show)return;visible=show;instructionsMs=0;
   button.classList.toggle('flipped',show);
   if(phone)button.removeAttribute('aria-pressed');else button.setAttribute('aria-pressed',String(show));
   button.setAttribute('aria-label',phone?(show?'Your score':'Launch the ball'):(show?'Show instructions':'Show scoreboard'));
@@ -16,7 +17,11 @@ export function connectFlipScorecard(button:HTMLButtonElement,score:HTMLElement,
  }
  button.addEventListener('click',()=>{if(!phone)showScore(!button.classList.contains('flipped'))});
  showScore(false);
- return {showScore,get hidden(){return button.hidden===true},setPregame(waiting:boolean){
+ return {showScore,advanceAutoFlip(elapsedMs:number){
+  if(phone||pregame||visible!==false)return;
+  instructionsMs+=elapsedMs;
+  if(instructionsMs>=8000)showScore(true);
+ },get hidden(){return button.hidden===true},setPregame(waiting:boolean){
   if(pregame===waiting)return;
   pregame=waiting;applyPregame();
  },setPhoneStage(mobile:boolean){

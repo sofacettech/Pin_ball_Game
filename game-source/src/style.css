@@ -1,4 +1,4 @@
-@import '../../assets/navigation.css?v=7f89985346d3';
+@import '../../assets/navigation.css?v=40e21131e43d';
 :root{font-family:'Josefin Sans',ui-sans-serif,system-ui,sans-serif;color:#ede4f8;background:#100b16;color-scheme:dark;font-synthesis:none;--accent:#d9ed37;--muted:#bdb1cc}
 #game-menu{width:min(380px,calc(100% - 32px));padding:28px;background:#16101e;color:inherit;border:1px solid #554466;border-radius:8px;text-align:left}
 #game-menu::backdrop{background:#08050d99}#game-menu h2{margin:0 0 10px;font-size:22px}#game-menu p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 24px}
@@ -348,7 +348,7 @@ body #stage .side-panel #action{position:static;left:auto;right:auto;bottom:auto
 .side-panel .touch-instructions{display:none}
 body.handheld .side-panel{--card-footer:56px}
 body.handheld .side-panel .flip-card{cursor:default;touch-action:pan-y}
-body.handheld .side-panel .card-inner{transition:none}
+body.handheld .side-panel .card-inner{transition:transform .78s cubic-bezier(.22,.7,.22,1)}
 body.handheld .side-panel .card-face.front{display:none}
 body.handheld .side-panel .flip-hint,body.handheld .side-panel .keyboard-instructions{display:none}
 body.handheld .side-panel .touch-instructions{display:grid;grid-template-columns:1fr 1fr;gap:12px 15px}
@@ -410,16 +410,13 @@ body.handheld .side-panel .card-face[aria-hidden="true"]{visibility:hidden}
 @media(max-width:700px){#loading img{width:min(max(9.85vw,93.58px),16.64dvh)}}
 @media(prefers-reduced-motion:reduce){#loading img{animation:none}}
 
-/* The same launch control works below the desktop card and as the phone card's front. */
+/* Keep the launch control outside both faces of the score card. */
 body #stage #scorecard-panel #touch-launch{display:block;position:relative;left:auto;bottom:auto;transform:none;width:calc(100% - 28px);min-height:48px;margin:16px 14px 0;background:var(--card-lime);border:1px solid var(--card-lime);border-radius:6px;color:#111600;font-weight:600;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 body #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#eeff6a;box-shadow:inset 0 0 0 2px #16100b}
-body.handheld #stage:not(.showing-play) .side-panel{--card-height:156px;--card-footer:0px;perspective:1300px}
-body.handheld .side-panel .card-inner{transition:transform .78s cubic-bezier(.22,.7,.22,1)}
-body.handheld #stage #scorecard-panel #touch-launch{position:absolute;inset:0 0 auto;width:100%;height:var(--card-height);margin:0;background:#08070b;color:var(--card-lime);border-color:transparent;transform:rotateY(0deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;opacity:1;transition:transform .78s cubic-bezier(.22,.7,.22,1),opacity .35s ease}
-body.handheld #stage #scorecard-panel[data-score-visible="true"] #touch-launch{transform:rotateY(180deg);opacity:0;pointer-events:none}
+body.handheld #stage:not(.showing-play) .side-panel{--card-height:156px}
+body.handheld #stage #scorecard-panel #touch-launch{margin-top:8px}
 body.handheld #stage.has-scorecard{padding-top:var(--site-header-clearance)}
-@media(prefers-reduced-motion:reduce){body.handheld .side-panel .card-inner,body.handheld #stage #scorecard-panel #touch-launch{transition:none}}
-body.handheld #stage #scorecard-panel #touch-launch[aria-pressed="true"]{background:#171022;box-shadow:inset 0 0 0 1px var(--card-lime)}
+@media(prefers-reduced-motion:reduce){body.handheld .side-panel .card-inner{transition:none}}
 
 /* Keep portrait play and its controls together without rendering a tall empty
    canvas. Preserve the former 156px card + 24px gap + 8px bottom render budget

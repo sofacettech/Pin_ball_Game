@@ -47,15 +47,15 @@ async function controllerFixture(){
  };
  const source=readFileSync(new URL('../game-source/src/post-game-rewards.ts',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'');
  const compiled=await transform(source,{loader:'ts',format:'cjs'}),exports={};
- const context={exports,module:{exports},Date,Math,Number,URL,location:{origin:'http://test.local',href:'http://test.local/play.html'},
+ const context={exports,module:{exports},Date,Math,Number,URL,Element:class{},location:{origin:'http://test.local',href:'http://test.local/play.html'},
   document:{getElementById:node,querySelector:()=>node('header'),body:{prepend(){}},addEventListener:(key,fn)=>events.set(key,fn)},
   ResizeObserver:class{observe(){}disconnect(){}},addEventListener:(key,fn)=>events.set(key,fn),leaveCopy,
-  mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
+  mountRewardNoticeArtwork:()=>()=>{},mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
  };
  vm.runInNewContext(compiled.code,context);
  const registered=[],openers=[],replays=[],boards=[];
  const controller=context.module.exports.connectPostGameRewards((value,opener)=>{registered.push(value);openers.push(opener.id)},()=>replays.push(true),()=>boards.push(true));
- return {controller,node,captured,registered,openers,replays,boards,events};
+ return {controller,node,captured,registered,openers,replays,boards,events,element:context.Element};
 }
 test('score controller passes the immutable completed result and game ID into registration',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(3205,'real-game-id');
@@ -79,12 +79,12 @@ test('close, keep, leave-anyway, replay and leaderboard retain their established
  fixture.controller.clear();fixture.controller.show(9);fixture.node('rewards-close').click();assert.equal(fixture.captured.destination,'/');
 });
 
-test('Skip game goes straight to its destination without a leave screen or unload prompt',async()=>{
- for(const points of [null,0,25,3205]){
-  const f=await controllerFixture();if(points!==null)f.controller.show(points,'completed-game');
-  f.controller.skip('/launching-soon.html?nav=game');
-  assert.equal(f.captured.destination,'/launching-soon.html?nav=game');
-  assert.notEqual(f.controller.dialog.dataset.view,'leave');assert.equal(f.registered.length,0);
-  let prompted=false;f.events.get('beforeunload')({preventDefault(){prompted=true}});assert.equal(prompted,false);
- }
+test('internal game pages can open over the score without treating it as discarded',async()=>{
+ const f=await controllerFixture();f.controller.show(3205,'completed-game');
+ const link={id:'skip-game',target:'_top',hasAttribute:name=>name==='data-game-info'};
+ let prevented=false;
+ f.events.get('click')({button:0,target:Object.assign(Object.create(f.element.prototype),{closest:()=>link}),preventDefault(){prevented=true;}});
+ assert.equal(prevented,false);
+ assert.equal(f.controller.result.points,3205);
+ assert.equal(f.controller.dialog.dataset.view,'result');
 });

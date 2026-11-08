@@ -23,6 +23,8 @@ function entrance(){
   ready(){this.readyCalls++;if(!this.failed)context.showGame()},
  };
  const context={cancelStartup(){},game,gameLoader:loader,main:{setAttribute(){}},
+  history:{state:null,replaceState(value){this.state=value},pushState(value){this.state=value}},
+  journeyScroll:{scrollAtFrame:()=>100},lastFrame:40,scrollY:100,
   document:{body:{dataset:{},setAttribute(){}}},location:{origin:'http://localhost',replace:url=>redirects.push(url)},
   siteSound:{handoff(){},save(){}},assembly:{finish(){}},
   journey:{suspend(){},dispose(){events.push('dispose-journey')}},

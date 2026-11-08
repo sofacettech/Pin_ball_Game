@@ -31,9 +31,9 @@ try{
  const launch=await page.locator('#touch-launch').boundingBox();
  await page.mouse.move(launch.x+launch.width/2,launch.y+launch.height/2);
  await page.mouse.down();await page.waitForTimeout(2000);await page.mouse.up();
- await page.waitForFunction(()=>document.querySelector('#scorecard-panel').dataset.scoreVisible==='true');
+ await page.locator('#touch-launch:disabled').waitFor();
  try{await page.waitForFunction(()=>document.querySelector('#quality').value==='auto',null,{timeout:15000})}
- catch(error){console.error(await page.evaluate(()=>({quality:document.querySelector('#quality').value,message:document.querySelector('#message').textContent,stage:document.querySelector('#stage').className,pause:document.querySelector('#pause').getAttribute('aria-label'),scoreVisible:document.querySelector('#scorecard-panel').dataset.scoreVisible})));throw error}
+ catch(error){console.error(await page.evaluate(()=>({quality:document.querySelector('#quality').value,message:document.querySelector('#message').textContent,stage:document.querySelector('#stage').className,pause:document.querySelector('#pause').getAttribute('aria-label'),launchReady:document.querySelector('#stage').classList.contains('launch-ready')})));throw error}
  assert.equal(await page.evaluate(()=>localStorage.getItem('sofacet.game-quality.v1')),null,'automatic fallback must not save Auto as a preference');
  await page.locator('#settings').click();await page.locator('#quality').selectOption('full');
  await page.waitForTimeout(4500);

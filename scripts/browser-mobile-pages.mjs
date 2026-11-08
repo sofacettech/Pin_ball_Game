@@ -85,33 +85,58 @@ try{await withRewardsSite(async({origin})=>{
    console.log(engine+': Claim opening/position, Account tabs and Launch fit '+width+'×'+height);
   }
   await page.goto(origin+'/faq.html');await page.getByRole('heading',{name:'HOW SO/ COINS WORK',exact:true}).waitFor();
+  await page.setViewportSize({width:390,height:844});
   if(engine==='webkit'){
    // Test the actual Reward React component in its existing shipped shell.
    // The Windows WebKit game-loader stall is outside this mobile UI change.
    const html=(await readFile(new URL('../play.html',import.meta.url),'utf8')).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace('<head>','<head><base href="'+origin+'/">').replace('media="print"','media="all"');
-   const bundle=await build({stdin:{contents:`import {mountScorePage} from './game-source/src/score-page.jsx';mountScorePage(document.getElementById('score-page-root'),{onSave(){},onReplay(){},onLeaderboard(){}}).render({SO/ COINS:3205,rewardValue:320.5,completedAt:Date.now(),gameId:'${gameId}',status:'completed'});const dialog=document.getElementById('post-game-rewards');dialog.dataset.view='result';dialog.prepend(document.querySelector('body > header'));dialog.showModal();document.getElementById('rewards-heading').focus();`,resolveDir:fileURLToPath(new URL('../',import.meta.url)),loader:'jsx'},bundle:true,platform:'browser',format:'iife',loader:{'.css':'empty'},write:false});
+   const bundle=await build({stdin:{contents:`import {mountScorePage} from './game-source/src/score-page.jsx';mountScorePage(document.getElementById('score-page-root'),{onSave(){},onReplay(){},onLeaderboard(){}}).render({points:3205,rewardValue:320.5,completedAt:Date.now(),gameId:'${gameId}',status:'completed'});const dialog=document.getElementById('post-game-rewards');dialog.dataset.view='result';dialog.prepend(document.querySelector('body > header'));dialog.showModal();document.getElementById('rewards-heading').focus();`,resolveDir:fileURLToPath(new URL('../',import.meta.url)),loader:'jsx'},bundle:true,platform:'browser',format:'iife',loader:{'.css':'empty'},write:false});
    await page.goto(origin+'/health');await page.setContent(html);await page.evaluate(()=>{document.body.removeAttribute('data-game-loading');document.getElementById('game-loading-screen')?.remove();});
    await page.addScriptTag({content:bundle.outputFiles[0].text});
   }else{
    await page.route('**/assets/sofacet-game-*.js',async route=>{const response=await route.fetch();let source=await response.text(),i=source.indexOf('post-game-rewards');if(i>=0){const name=[...source.slice(0,i).matchAll(/function ([\w$]+)\(/g)].at(-1)[1],binding=source.match(new RegExp('([\\w$]+)='+name+'\\('))[1];source+=';window.__testRewards='+binding+';';}await route.fulfill({response,body:source});});
-   await page.goto(origin+'/play.html');await page.waitForFunction(()=>window.__testRewards&&!document.body.hasAttribute('data-game-loading'),{},{timeout:90000});
+   await page.goto(origin+'/play.html');
+   for(const name of ['Diamond','Jewellery','Pinball']){
+    await page.getByRole('button',{name:name+' card. Front view',exact:true}).press('ArrowRight');
+   }
+   await page.waitForFunction(()=>window.__testRewards&&!document.body.hasAttribute('data-game-loading'),{},{timeout:90000});
    await page.evaluate(id=>window.__testRewards.show(3205,id),gameId);
   }
-  await page.locator('.design-rewards[data-scene-ready="true"]').waitFor();
+  const reward=page.locator('.design-rewards[data-scene-ready="true"]');
+  await reward.waitFor();
+  const opening=await reward.evaluate(root=>({
+   art:+getComputedStyle(root.querySelector('.art-layer')).opacity,
+   text:+getComputedStyle(root.querySelector('h1')).opacity,
+   background:getComputedStyle(root.querySelector('.mesh-layer')).display,
+   scroll:root.closest('dialog').scrollTop,
+  }));
+  assert.deepEqual(opening,{art:1,text:0,background:'none',scroll:0});
+  await page.waitForFunction(()=>{
+   const root=document.querySelector('.design-rewards');
+   const art=+getComputedStyle(root.querySelector('.art-layer')).opacity;
+   const heading=getComputedStyle(root.querySelector('h1'));
+   return art>.18&&art<1&&+heading.opacity>0&&new DOMMatrixReadOnly(heading.transform).m41<0;
+  });
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.design-rewards .art-layer')).opacity==='0.18');
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    await fits(page,'.design-rewards .reward');
    assert.equal(await page.locator('#rewards-register').innerText(),'SAVE MY SO/ COINS');
-   assert.ok(!(await page.locator('#rewards-expiry').innerText()).includes('/'),'Reward supporting copy has no decorative slash');
+   assert.equal(await page.locator('#rewards-expiry').innerText(),'Unsaved SO/ COINS disappear when you leave this page.');
    if(mobile(width)){await minimumText(page,'.design-rewards .conversion',14);await minimumText(page,'.design-rewards .notice',13);}
    if(engine==='webkit'){
     const art=await page.locator('.design-rewards .art-layer').evaluate(e=>({quality:e.dataset.petalQuality,visible:[...e.querySelectorAll('.flower-image')].filter(i=>i.getBoundingClientRect().width>0&&getComputedStyle(i).visibility==='visible').length}));
     assert.equal(art.quality,'css-motion');assert.equal(art.visible,3,'Safari keeps every flower visible after resize');
    }
-   const top=parseFloat(await page.locator('.design-rewards .art-canvas').evaluate(e=>getComputedStyle(e).top));
-   if(width<=700)assert.ok(top<=-24&&top>=-40,'Reward artwork raised slightly');else assert.ok(Number.isNaN(top)||top===0,'Desktop artwork position unchanged');
+   const artwork=await reward.evaluate(root=>{
+    const art=root.querySelector('.art-layer'),bloom=[...art.querySelectorAll('.flower-top img')].find(img=>img.offsetWidth);
+    const rect=bloom.getBoundingClientRect();
+    return {position:getComputedStyle(art).position,top:rect.top,bottom:rect.bottom};
+   });
+   assert.equal(artwork.position,width<=850?'fixed':'absolute');
+   if(width<=850)assert.ok(artwork.top<height&&artwork.bottom>0,'A bloom is visible in the first viewport');
    if([390,844,1440].includes(width))await shot(page,width+'-reward');
-   results.push({page:'reward',width,height,artOffset:top});
+   results.push({page:'reward',width,height,artwork});
   }
   assert.deepEqual(errors,[]);console.log(engine+': all Reward sizes fit, desktop position unchanged, no browser errors');
  }finally{await context.close();}
