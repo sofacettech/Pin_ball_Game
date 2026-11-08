@@ -19,7 +19,7 @@ function entrance(){
  game.contentWindow={postMessage(){}};
  game.removeAttribute=()=>{};game.focus=()=>{};
  const loader={failed:false,shown:0,failures:0,readyCalls:0,
-  show(){this.shown++;events.push('show-loader')},fail(){this.failed=true;this.failures++},
+  show(options){this.shown++;this.options=options;events.push('show-loader')},fail(){this.failed=true;this.failures++},
   ready(){this.readyCalls++;if(!this.failed)context.showGame()},
  };
  const context={cancelStartup(){},game,gameLoader:loader,main:{setAttribute(){}},
@@ -67,6 +67,7 @@ test('a delayed iframe document can load after the former deadline',()=>{
 
 test('chess handoff releases the entrance before allocating the game',()=>{
  const view=entrance();view.enter({fromChess:true});
+ assert.equal(view.loader.options.story,true,'The chess-room handoff explicitly keeps the cards');
  assert.deepEqual(view.events,['show-loader','dispose-journey','load-game']);
  assert.equal(view.context.journey,null,'No concurrent entrance and table GPU allocations');
  view.enter();assert.equal(view.events.length,3,'Repeated input cannot allocate twice');
@@ -75,7 +76,7 @@ test('chess handoff releases the entrance before allocating the game',()=>{
 test('child initialization failures recover once in a fresh standalone game document',()=>{
  const view=entrance();view.enter();view.frameLoaded();view.fail();
  view.fail();
- assert.deepEqual(view.redirects,['/play.html?recovery=entrance']);
+ assert.deepEqual(view.redirects,['/game?recovery=entrance']);
  assert.equal(view.loader.failures,0,'Do not strand the visitor behind the parent error screen');
  assert.equal(view.context.state().gameVisible,false);
  assert.equal(view.loader.readyCalls,0);
@@ -83,6 +84,6 @@ test('child initialization failures recover once in a fresh standalone game docu
 
 test('an iframe response without the game stage is an actual failure',()=>{
  const view=entrance();view.enter();view.game.contentDocument=null;view.frameLoaded();
- assert.deepEqual(view.redirects,['/play.html?recovery=entrance']);
+ assert.deepEqual(view.redirects,['/game?recovery=entrance']);
  assert.equal(view.context.state().gameVisible,false);
 });

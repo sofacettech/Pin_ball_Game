@@ -159,7 +159,7 @@ test('a real scene failure automatically opens the game without another user act
 test('failure before the shared game loader is available navigates directly to the game',async()=>{
  const view=await startupFixture();view.context.gameLoader=undefined;
  view.model.reject(Error('Presentation unavailable'));await view.done;
- assert.equal(view.redirect,'/play.html');assert.equal(view.handoffs,0);assert.equal(view.disposed,1);
+ assert.equal(view.redirect,'/game');assert.equal(view.handoffs,0);assert.equal(view.disposed,1);
 });
 
 test('manual Skip to Game during recovery does not start a second handoff',async()=>{

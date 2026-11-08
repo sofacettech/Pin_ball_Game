@@ -14,6 +14,8 @@ import {connectPostGameRewards} from './post-game-rewards';
 import {formatPoints} from './player-copy';
 import {connectControlsTutorial} from './controls-tutorial';
 import {parseGameQuality,gameQualityStorageKey} from './render-resolution';
+import {readScreenData,setScreenRoute} from '../../site-routes.js';
+import {pendingResult} from '../../membership-source/src/api.js';
 
 if(import.meta.env.DEV){
  const controls=document.createElement('section');controls.id='inspection';controls.hidden=true;
@@ -238,15 +240,18 @@ window.addEventListener('resize',()=>{clearKeys();tutorial?.cancelHold();applyDe
 function bindFeedback(){caveEjecting=false;physics.onHit=(id,delta)=>{view.hit(id);if(delta>0)view.scoreDiamonds();sound.play(id==='cave'?'teleport':id.startsWith('ring_')||id.startsWith('triangle_')||id.startsWith('bumper_neutral_')?'rebound':'bumper',id.includes('left')?-.5:id.includes('right')?.5:0)};physics.onTarget=()=>{view.scoreDiamonds();sound.play('collect')};physics.onTransport=source=>{view.teleport(source,physics.pose().position);sound.play('teleport')}}
 async function start(){let phase='styles';try{
  await window.sofacetGameLoader?.stylesReady;
+ window.sofacetGameLoader?.progress(5);
  phase='table';
- await view.load(()=>{});
+ await view.load(value=>window.sofacetGameLoader?.progress(5+value*.8));
  phase='collision';
  $('loading-detail').textContent='';
  const fetchAsset=async(name:string)=>{const response=await fetch('/assets/'+name+'?v='+(view.manifest.asset_checksums[name]||view.manifest.asset_revision));if(!response.ok)throw new Error('Missing physics asset: '+name);return response};
  const [vertices,indices,obstacles]=await Promise.all([fetchAsset('collision-vertices.bin').then(r=>r.arrayBuffer()),fetchAsset('collision-indices.bin').then(r=>r.arrayBuffer()),fetchAsset('collider-entities.json').then(r=>r.json())]);
+ window.sofacetGameLoader?.progress(92);
  await new Promise<void>(resolve=>setTimeout(resolve,0));
  phase='physics';
  physicsAssets={vertices:new Float32Array(vertices),indices:new Uint32Array(indices),obstacles};physics=await PinballPhysics.create(view.manifest,physicsAssets.vertices,physicsAssets.indices,obstacles);bindFeedback();
+ window.sofacetGameLoader?.progress(98);
  phase='first-frame';
  loaded=true;view.needsRender=true;for(const id of ['start','settings'])$<HTMLButtonElement>(id).disabled=false;sync();view.render();
  if(view.renderer.getContext().isContextLost())throw new Error('WebGL context lost during game startup');
@@ -277,8 +282,24 @@ if(import.meta.env.DEV){
  if(import.meta.env.DEV)Object.defineProperty((window as any).__facet,'physics',{get:()=>physics});
 }
 const gameReady=start();
-if(location.hash==='#leaderboard')void Promise.all([leaderboard.ready,gameReady]).then(()=>{if(loaded)showLeaderboard()});
-if(location.hash==='#profile')location.replace('/account.html?nav=game');
+if(location.hash==='#leaderboard')setScreenRoute('/leaderboard');
+async function restoreScreenRoute(){
+ await Promise.all([leaderboard.ready,gameReady]);
+ if(!loaded||window.top!.history.state?.sofacetInfo||window.top!.history.state?.sofacetJoin)return;
+ const route=window.top!.location.pathname;
+ if(!['/game','/leaderboard','/reward','/exit'].includes(route))return;
+ if(route==='/leaderboard'){showLeaderboard();return;}
+ if(leaderboard.dialog.open){leaderboard.dialog.close();if(resumeAfterLeaderboard&&physics.active&&physics.state!=='finished')setGamePaused(false);resumeAfterLeaderboard=false;}
+ if(route==='/reward'){
+  const result=rewards.result??pendingResult(readScreenData('reward'));
+  if(result)rewards.show(result.points,result.gameId);else setScreenRoute('/game');
+ }else if(route==='/exit')rewards.showExit();
+ else rewards.dialog.close();
+}
+window.top!.addEventListener('popstate',restoreScreenRoute);
+window.addEventListener('pagehide',event=>{if(!event.persisted)window.top!.removeEventListener('popstate',restoreScreenRoute)});
+void restoreScreenRoute();
+if(location.hash==='#profile')location.replace('/my-coins?nav=game');
 if(location.hash==='#settings')void gameReady.then(()=>{
  if(!loaded)return;
  settings.click();

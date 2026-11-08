@@ -8,7 +8,7 @@ function createTopology(width,height){
 }
 
 
-export function mountScoreMesh(surface, onOpeningHit) {
+export function mountScoreMesh(surface, onOpeningHit, {backgroundColor='#08040c',ambient=true}={}) {
   const canvas=surface.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
   const controller=new AbortController(),options={signal:controller.signal};
   if(!ctx)return;
@@ -22,9 +22,11 @@ export function mountScoreMesh(surface, onOpeningHit) {
     width=surface.clientWidth;height=surface.clientHeight;if(!width||!height)return;
     scale=Math.min(devicePixelRatio||1,1.5);
     for(const c of [canvas,background]){c.width=Math.ceil(width*scale);c.height=Math.ceil(height*scale);}
-    bg.setTransform(scale,0,0,scale,0,0);bg.fillStyle='#08040c';bg.fillRect(0,0,width,height);
-    radial(width*.5,height*.16,Math.max(width,height)*.63,'rgba(20,5,28,.40)');
-    radial(width*.61,height*.72,Math.max(width,height)*.49,'rgba(22,5,31,.40)');
+    bg.setTransform(scale,0,0,scale,0,0);bg.fillStyle=backgroundColor;bg.fillRect(0,0,width,height);
+    if(ambient){
+      radial(width*.5,height*.16,Math.max(width,height)*.63,'rgba(20,5,28,.40)');
+      radial(width*.61,height*.72,Math.max(width,height)*.49,'rgba(22,5,31,.40)');
+    }
     topology=createTopology(width,height);wave=null;schedule();
   }
   let introCue=null;

@@ -29,7 +29,7 @@ function NotFoundPage() {
         <h1 id="page-title">Page not found.</h1>
         <div className="actions">
           <a className="action" href="/">Back to the world</a>
-          <a className="action" href="/play.html">Play Pinball</a>
+          <a className="action" href="/game">Play Pinball</a>
         </div>
       </section>
     </main>

@@ -4,6 +4,7 @@ import type {InputRun} from './simulation';
 import type {Input} from './physics';
 import {formatPoints,resultHeadline,leaderboardName} from './player-copy';
 import type {CompletedGameResult} from './post-game-rewards';
+import {setScreenRoute} from '../../site-routes.js';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
 export type Player={display_name:string;member:boolean;best_score:number|null};
@@ -47,7 +48,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
  let player:Player|null=null,run:Run={inputs:[],ticks:0,ended:false,submitted:false},revision=0,playerRevision=0;
  const refreshPlayer=async()=>{const current=++playerRevision;try{const next=await request<Player>('/api/player');if(typeof next.member!=='boolean')throw Error('Invalid player');if(current!==playerRevision)return;player=next;onBest(player.best_score);onPlayer(player)}catch{if(current===playerRevision){player=null;onPlayer(null)}}};
  const ready=refreshPlayer();
- function close(){revision++;dialog.close();onClose()}
+ function close(){revision++;dialog.close();setScreenRoute('/game');onClose()}
  document.getElementById('leaderboard-close')!.onclick=close;
  document.getElementById('leaderboard-play')!.onclick=()=>{close();onReplay()};
  dialog.oncancel=event=>{event.preventDefault();close()};
@@ -98,7 +99,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   finish(){run.ended=true;return submit(run)},
   async start(){const next:Run={inputs:[],ticks:0,ended:false,submitted:false,previousBest:player?.member?player.best_score:null};run=next;try{const result=await request<{id:string;seed:number;version:number}>('/api/games/start',{},10000);if(result.version!==REPLAY_VERSION||!Number.isInteger(result.seed))throw new Error('Please refresh the game to start a verified run.');next.id=result.id;next.seed=result.seed}catch(error){next.error=error instanceof Error?error.message:'This run is offline and cannot enter the leaderboard.'}return next.seed??crypto.getRandomValues(new Uint32Array(1))[0]},
   record(input:Input){if(run.error||run.ended)return;const bits=packInput(input),last=run.inputs.at(-1);run.ticks++;if(last&&last[0]===bits)last[1]++;else run.inputs.push([bits,1]);if(run.ticks>MAX_GAME_TICKS||run.inputs.length>MAX_INPUT_RUNS){run.error='This game exceeded the verification limit. Please play a shorter game to enter the leaderboard.';run.inputs=[]}},
-  async show(){const current=++revision;await refreshPlayer();if(current!==revision)return;document.getElementById('leaderboard-save')!.hidden=player?.member===true;if(!run.ended)summary.textContent='';else if(!run.submitted)summary.textContent='This run: awaiting verification';rows.replaceChildren();if(!dialog.open)dialog.showModal();void refresh()},
+  async show(){const current=++revision;await refreshPlayer();if(current!==revision)return;document.getElementById('leaderboard-save')!.hidden=player?.member===true;if(!run.ended)summary.textContent='';else if(!run.submitted)summary.textContent='This run: awaiting verification';rows.replaceChildren();if(!dialog.open)dialog.showModal();setScreenRoute('/leaderboard',{replace:false});void refresh()},
   async memberChanged(){await refreshPlayer();if(dialog.open)await refresh()},
  };
 }

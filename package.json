@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-loader.mjs && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs && node scripts/build-launch.mjs && node scripts/build-entrance.mjs && node scripts/build-not-found.mjs",
+    "build": "node scripts/materialize-video.mjs && node scripts/build-frame-index.mjs && tsc --noEmit --project game-source/tsconfig.json && node scripts/build-cookie-popup.mjs && node scripts/build-loader.mjs && node scripts/build-game.mjs && node scripts/build-membership.mjs && node scripts/build-faq.mjs && node scripts/build-about.mjs && node scripts/build-account.mjs && node scripts/build-launch.mjs && node scripts/build-notify.mjs && node scripts/build-entrance.mjs && node scripts/build-not-found.mjs",
     "build:404": "node scripts/build-not-found.mjs",
     "build:membership": "node scripts/build-membership.mjs",
     "test:membership": "node --test tests/membership.test.mjs",
@@ -20,11 +20,13 @@
     "build:about": "node scripts/build-about.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "build:account": "node scripts/build-account.mjs",
+    "build:notify": "node scripts/build-notify.mjs",
     "build:launch": "node scripts/build-launch.mjs",
     "build:entrance": "node scripts/build-entrance.mjs",
     "render:entrance-video": "node scripts/render-entrance-video.mjs",
     "encode:entrance-video": "node scripts/encode-entrance-video.mjs",
     "prepare:entrance-cdn": "node scripts/prepare-entrance-cdn.mjs",
+    "build:cookie": "node scripts/build-cookie-popup.mjs",
     "build:loader": "node scripts/build-loader.mjs"
   },
   "dependencies": {

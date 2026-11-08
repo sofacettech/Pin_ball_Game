@@ -84,13 +84,13 @@ function gameVisibility(visible){
   game.contentWindow?.postMessage({type:'sofacet:experience-visibility',visible},location.origin);
 }
 // This parent owns the reward story; the hidden game must not wait on a second story.
-function loadGame(){if(!game.getAttribute('src'))game.src='/play.html?loader=parent';}
+function loadGame(){if(!game.getAttribute('src'))game.src='/game?loader=parent';}
 function recoverGame(){
   if(gameRecovering||gameVisible)return;
   gameRecovering=true;gameReadyObserver?.disconnect();
   // A fresh document releases both scenes and a partially initialized game.
   // The standalone loader has no route back here, so recovery cannot loop.
-  location.replace('/play.html?recovery=entrance');
+  location.replace('/game?recovery=entrance');
 }
 function showGame(){
   if(!gameLoaded||!gameRequested||gameVisible)return;
@@ -106,7 +106,7 @@ function enterGame({fromChess=false}={}){
   if(!history.state?.sofacetGame){
     const scroll=Math.min(scrollY,journeyScroll.scrollAtFrame(lastFrame-1));
     history.replaceState({...history.state,sofacetWorldScroll:scroll},'');
-    history.pushState({...history.state,sofacetGame:true},'');
+    history.pushState({...history.state,sofacetGame:true},'','/game');
   }
   gameRequested=true;cancelStartup();
   cancelAnimationFrame(raf);raf=0;journey?.suspend();siteSound.handoff();
@@ -239,7 +239,7 @@ try{
     // of stopping visitors on a separate error screen that needs another tap.
     if(!gameRequested){
       if(gameLoader)enterGame();
-      else location.replace('/play.html');
+      else location.replace('/game');
     }
   }
 }

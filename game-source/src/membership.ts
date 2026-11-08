@@ -20,12 +20,13 @@ export function connectMembership(options:Options){
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member&&!verify){options.onLeaderboard();return}
   opener=source;pendingReward=pending??options.pendingResult();completed=false;options.beforeOpen();
-  if(pendingReward){timeline.pushState({...timeline.state,sofacetJoin:true},'');joinHistory=true;}
-  frame.contentWindow!.location.replace('/membership.html?nav=game'+(verify?'&verify=1':pendingReward?'&from=score':''));dialog.showModal();document.body.classList.add('membership-open');
+  const route=verify?'/sign-in':pendingReward?'/claim':'/join';
+  timeline.pushState({...timeline.state,sofacetJoin:true},'',route);joinHistory=true;
+  frame.contentWindow!.location.replace(verify?'/join?nav=game&verify=1':route+'?nav=game');dialog.showModal();document.body.classList.add('membership-open');
  }
  function finishClose(returnToScore=false,after?:()=>void){
   if(!dialog.open)return;
-  dialog.close();frame.contentWindow!.location.replace('about:blank');pendingReward=null;document.body.classList.remove('membership-open');
+  dialog.close();frame.remove();dialog.append(frame);pendingReward=null;document.body.classList.remove('membership-open');
   (!opener.isConnected||opener.hidden||opener.closest('[hidden],[inert]')?$('nav-toggle'):opener).focus();
   options.afterClose(completed,returnToScore);
   after?.();
@@ -42,6 +43,9 @@ export function connectMembership(options:Options){
   finishClose(requested?.returnToScore??true,requested?.after??(completed?options.onLeaderboard:undefined));
  };
  historyHost.addEventListener('popstate',restoreMembership);
+ window.addEventListener('beforeunload',event=>{
+  if(dialog.open&&pendingReward&&pendingReward.points>=10&&!completed){event.preventDefault();event.returnValue='';}
+ });
  window.addEventListener('pagehide',event=>{if(!event.persisted)historyHost.removeEventListener('popstate',restoreMembership)});
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
  const requestExit=()=>{if(joinHistory){close(true);return;}frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);};
@@ -53,6 +57,9 @@ export function connectMembership(options:Options){
  });
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
+  if(event.data?.type==='sofacet:screen-route'&&['/claim','/join','/sign-in','/verify','/coins-saved','/exit'].includes(event.data.href)){
+   timeline.replaceState({...timeline.state},'',event.data.href);return;
+  }
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}
   if(event.data?.type==='contest-registration:close'){close(event.data.returnToScore===true&&pendingReward!==null,completed?options.onLeaderboard:undefined);return}
   if(event.data?.type==='sofacet:reward-discarded'){pendingReward=null;options.onDiscard();return}

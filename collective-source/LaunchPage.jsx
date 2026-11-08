@@ -29,14 +29,14 @@ function JoinDialog({open, onClose, onJoin}) {
       <label className="field-label" htmlFor="join-name">Full name</label><input autoComplete="name" id="join-name" name="fullName" maxLength={80} required disabled={busy}/>
       <label className="field-label" htmlFor="join-phone">Mobile number</label><input autoComplete="tel" id="join-phone" name="phoneNumber" type="tel" inputMode="tel" maxLength={30} required disabled={busy}/>
       <label className="field-label" htmlFor="email">Email</label><input autoComplete="email" id="email" name="email" required type="email" maxLength={254} disabled={busy}/>
-      <label className="join-consent"><input id="join-privacy" name="adultPrivacyAccepted" type="checkbox" required disabled={busy}/><span>I'm 18 or older and I agree to the <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span></label>
+      <label className="join-consent"><input id="join-privacy" name="adultPrivacyAccepted" type="checkbox" required disabled={busy}/><span>I'm 18 or older and I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span></label>
       <label className="join-consent"><input id="join-updates" name="marketingConsent" type="checkbox" required disabled={busy}/><span>Send me <span className="brand-word">SO/ FACET</span> updates and early access.</span></label>
       <button className="dialog-action" type="submit" disabled={busy}>{busy?'Please wait…':'JOIN THE SO/ COLLECTIVE'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p>
     </form>
   </dialog>;
 }
 
-export default function LaunchPage({onJoin, onPlay}) {
+export default function LaunchPage({onJoin, onPlay, isMember=false, checkingMember=false}) {
   const [joinOpen, setJoinOpen] = useState(()=>location.hash==='#join');
   useEffect(()=>{const update=()=>setJoinOpen(location.hash==='#join');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
   function closeJoin(){setJoinOpen(false);if(location.hash==='#join')history.replaceState(null,'',location.pathname+location.search);}
@@ -47,10 +47,10 @@ export default function LaunchPage({onJoin, onPlay}) {
       <h1><span>Your diamond</span><em>is being cut.</em></h1>
       <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> JOIN THE SO/ COLLECTIVE for updates and early access, before anyone else.</p>
       <div className="action-group">
-        <button className="join-button" type="button" onClick={() => {
-          const href=accountNavigationHref('/membership.html?from=collective');
+        <button className="join-button" type="button" disabled={checkingMember} aria-busy={checkingMember} onClick={() => {
+          const href=accountNavigationHref(isMember?'/notify':'/join');
           if(window.sofacetGameInfo)window.sofacetGameInfo.visit(href);else window.top.location.assign(href);
-        }}><span>JOIN THE SO/ COLLECTIVE</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
+        }}><span>{isMember?'Notify me':'JOIN THE SO/ COLLECTIVE'}</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball is unavailable'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>
       </div>
     </div></section></main>

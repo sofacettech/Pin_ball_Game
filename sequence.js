@@ -194,7 +194,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }
 
   function preloadGame() {
-    if (!game.getAttribute('src')) game.src = './play.html?from=chess';
+    if (!game.getAttribute('src')) game.src = '/game?from=chess';
   }
   function setGameVisibility(visible) {
     if (gameVisible === visible) return;
@@ -206,7 +206,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (!gameLoaded || scrollFrame() !== frameCount - 1 || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1 || !cache.settled) return;
     if(!history.state?.sofacetGame){
       history.replaceState({...history.state,sofacetWorldScroll:travel-8},'');
-      history.pushState({...history.state,sofacetGame:true},'');
+      history.pushState({...history.state,sofacetGame:true},'','/game');
     }
     status.hidden = true;
     document.body.dataset.game = 'visible';
