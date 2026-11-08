@@ -23,6 +23,8 @@ try{
    if(version==='baseline')await page.route(new URL(path,origin).href,route=>route.fulfill({contentType:'text/html',body:baselineHtml}));
    await page.goto(new URL(path,origin).href);
    await page.waitForSelector('#stage[data-ready="true"]',{timeout:60000});
+   const cookieNotice=page.locator('#sf-cookie-notice:not([hidden])');
+   if(await cookieNotice.count())await cookieNotice.getByRole('button',{name:'Essential only',exact:true}).click();
    if(version==='current')assert.equal(await page.locator('#quality').inputValue(),'full','new visitors start at Full quality');
    await page.locator('#start').click();
    const skip=page.getByRole('button',{name:'Skip guide ↗'});
@@ -40,7 +42,8 @@ try{
    const result={engine,name,version,...await measure(),errors};results.push(result);
    await page.screenshot({path:resolve(output,`${engine}-${name}-${version}.png`)});
    if(version==='current'){
-    assert.equal(result.panel.height,96,'portrait launch/score panel leaves room inside the score borders');
+    assert.equal(result.panel.height,152,'portrait panel fits the 96px scoreboard and 56px launch row');
+    assert.ok(result.launch.y>=result.panel.y+96,'the launch control sits below the score card');
     assert.ok(result.board.height<=(viewport.width-20)*1.2+1,'extra height does not expand the WebGL buffer');
     assert.ok(result.buffer[0]*result.buffer[1]<=result.layout[0]*3*result.layout[1]*3,'Full phone pixels stay within the native 3x drawing budget');
     assert.ok(result.buffer[0]>=result.layout[0]*3,'Full phone view uses native 3x pixels for crisp rails and lettering');
@@ -53,7 +56,8 @@ try{
     const full=await measure();assert.deepEqual(full.buffer,result.buffer,'selecting Full keeps the default sharpness on phones');
     const launch=await page.locator('#touch-launch').boundingBox();await page.mouse.move(launch.x+launch.width/2,launch.y+launch.height/2);await page.mouse.down();await page.waitForTimeout(350);
     assert.ok(Number(await page.locator('.charge').getAttribute('aria-valuenow'))>0,'charge remains responsive while other UI is cached');
-    await page.mouse.up();await page.waitForFunction(()=>document.querySelector('#scorecard-panel').dataset.scoreVisible==='true');
+    await page.mouse.up();await page.locator('#touch-launch:disabled').waitFor();
+    assert.equal(await page.locator('#touch-launch').isVisible(),true,'the launch control stays visible while the ball is in play');
     assert.equal(await page.locator('#scoreboard').getAttribute('aria-hidden'),'false');
     const scoreSpacing=await page.locator('#scoreboard').evaluate(card=>[...card.querySelectorAll('.score-block,.best-block')].map(block=>{
      const box=block.getBoundingClientRect(),label=block.querySelector('.section-label').getBoundingClientRect(),value=block.querySelector('strong').getBoundingClientRect();

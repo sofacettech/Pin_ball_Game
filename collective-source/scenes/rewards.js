@@ -1,18 +1,23 @@
 export default function initialize(scope) {
 const {document,window,requestAnimationFrame,cancelAnimationFrame,setTimeout,clearTimeout,addEventListener,matchMedia,ResizeObserver,IntersectionObserver,MutationObserver} = scope;
-if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("wave-intro-pending");setTimeout(()=>document.documentElement.classList.remove("wave-intro-pending"),6000);}
-
-// Route taps through the mobile text layer while allowing normal vertical scrolling.
-const meshFrame=document.querySelector('.mesh-layer');
-for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
-  document.querySelector('.page').addEventListener(type,event=>{
-    if(!matchMedia('(max-width:700px)').matches||event.pointerType==='mouse'||event.target.closest('button,a'))return;
-    const target=meshFrame.contentDocument?.getElementById('mesh');
-    if(target)target.dispatchEvent(new meshFrame.contentWindow.PointerEvent(type,{
-      bubbles:true,clientX:event.clientX,clientY:event.clientY,pointerType:event.pointerType,
-      pointerId:event.pointerId,isPrimary:event.isPrimary
-    }));
-  });
+const mobile=matchMedia('(max-width:850px)');
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const root=document.documentElement;
+  if(mobile.matches){
+    const scene=matchMedia('(max-width:767px)').matches?'.scene-mobile':'.scene-desktop';
+    const artwork=root.querySelector(scene).querySelectorAll('.flower-top .flower-image,.white-butterfly img');
+    const reveal=()=>root.classList.remove('mobile-art-intro');
+    root.classList.add('mobile-art-intro');
+    const fallback=setTimeout(reveal,2600);
+    Promise.all([...artwork].map(image=>image.decode())).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!root.classList.contains('mobile-art-intro'))return;
+      clearTimeout(fallback);
+      setTimeout(reveal,1300);
+    })),()=>{});
+  }else{
+    root.classList.add('wave-intro-pending');
+    setTimeout(()=>root.classList.remove('wave-intro-pending'),6000);
+  }
 }
 
 // Decode before exchanging the original resting artwork for its separated parts.
@@ -134,16 +139,12 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
   document.documentElement.dataset.textWaveStart=String(performance.now());
   document.documentElement.classList.remove('wave-intro-pending');
  });
- document.querySelector('.page').addEventListener('click',e=>{
-  if(!matchMedia('(max-width:700px)').matches||e.pointerType==='touch'||e.target.closest('button,a'))return;
-  const mesh=frame.contentDocument?.getElementById('mesh');
-  mesh?.dispatchEvent(new frame.contentWindow.MouseEvent('click',{bubbles:true,clientX:e.clientX,clientY:e.clientY}));
- });
  async function openingWave(){
-  if(opened)return;opened=true;
+  if(opened||mobile.matches)return;opened=true;
   await Promise.all([document.fonts.ready,...[...document.querySelectorAll('.flower-image')].map(i=>i.decode())]);
   for(let tries=0;tries<120;tries++){
    await new Promise(requestAnimationFrame);
+   if(mobile.matches){document.documentElement.classList.remove('wave-intro-pending');return;}
    const start=frame.contentWindow?.__startMeshWave;if(!start)continue;
    await new Promise(requestAnimationFrame);
    const pin=document.querySelector((innerWidth<=767?'.scene-mobile':'.scene-desktop')+' .right-bloom-origin');

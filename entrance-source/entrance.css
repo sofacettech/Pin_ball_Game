@@ -5,8 +5,9 @@ body[data-loading]{overflow:hidden}
 #scene-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 /* The opening copy shares a clear slot above the relocated ball. Keep the
    welcome and scroll chapters exclusive, even when a fast swipe skips ahead. */
-#story-copy .story-opening{--opening-left:8.5%;--opening-top:16.5%;--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
-#story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:16.5%;bottom:auto;width:min(31vw,480px)}
+#story-copy{--opening-story-top:25%}
+#story-copy .story-opening{--opening-left:8.5%;--opening-top:var(--opening-story-top);--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
+#story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:var(--opening-story-top);bottom:auto;width:min(31vw,480px)}
 body[data-scrolled] #story-copy .story-opening{visibility:hidden!important}
 body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility:hidden!important}
 @media(max-width:1024px),(any-pointer:coarse){

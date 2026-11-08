@@ -7,12 +7,14 @@ const cards=[
   {name:'Jewellery',product:'earrings',width:515,height:415,alt:'Pair of SO/ FACET black and white diamond star earrings',copy:<div className="card-copy jewellery-copy"><p className="offer">10 <span className="coin-word">SO/ COINS</span> = <span className="rupee">₹</span>1 OFF</p><p className="offer-detail">SO/ FACET DIAMOND JEWELLERY</p></div>},
   {name:'Pinball',product:'pinball',width:740,height:595,alt:'SO/ FACET pinball table',copy:<div className="card-copy table-copy"><p className="table-title">Score <span className="coin-word">SO/ COINS</span>.</p><p className="table-detail">Save them for<br/>SO/ FACET diamond jewellery.</p></div>},
 ];
-export default function CardDeck({active=false}) {
+export default function CardDeck({active=false,onComplete}) {
   const root=useRef(null),motion=useRef(null);
-  useLayoutEffect(()=>{motion.current=connectCardMotion(root.current);return()=>motion.current.dispose();},[]);
+  useLayoutEffect(()=>{motion.current=connectCardMotion(root.current,onComplete);return()=>motion.current.dispose();},[onComplete]);
   useLayoutEffect(()=>{motion.current.setActive(active);},[active]);
   return <div className="game-loader-cards" ref={root}>
-    <div className="gallery" aria-label="SO/ FACET silver card collection"><div className="stage" aria-busy="false"><div className="floating">
+    <div className="gallery" aria-label="SO/ FACET silver card collection">
+      <p className="card-hint card-hint-swipe">Swipe left to explore</p>
+      <div className="stage" aria-busy="false"><div className="floating">
       <div className="deck" tabIndex={0} role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions">
         {cards.map((card,index)=><article className="sofacet-card" key={card.product} data-slot={index} aria-label={card.name+' card'} aria-hidden={index!==0}>
           <div className="card-turn"><div className="face front-face" aria-hidden="false">
@@ -26,9 +28,9 @@ export default function CardDeck({active=false}) {
         </article>)}
       </div>
     </div></div>
-      <p className="card-hint"><span className="card-hint-desktop">Click to discover your next facet.</span><span className="card-hint-mobile">Swipe to Explore</span></p>
+      <p className="card-hint card-hint-desktop">Click to discover your next facet.</p>
     </div>
-    <p className="sr-only" id="loader-card-instructions">Desktop: click for the next card; double-click for the previous card. Mobile: swipe right for the next card, swipe left for the previous card, and tap to flip. Keyboard: use arrow keys to change cards, Enter to flip, and Space to pause or resume motion.</p>
+    <p className="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p>
     <p className="sr-only" data-card-status aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p>
   </div>;
 }

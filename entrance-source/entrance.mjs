@@ -24,7 +24,7 @@ let gameRecovering=false;
 let startupFailed=false;
 let frame=firstFrame,presentedFrame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 document.documentElement.style.setProperty('--travel',travel+'px');
-history.scrollRestoration='manual';window.scrollTo(0,0);
+history.scrollRestoration='manual';
 const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
   compareURL:'/video?perf=1',compareLabel:'Video debug ↗',
   getState:()=>{const renderer=journey?.renderer,canvas=renderer?.domElement;return {
@@ -67,6 +67,8 @@ function startScene(){
   $('scene-loading-status').setAttribute('data-ready','');
   setTimeout(()=>{$('scene-loading-status').hidden=true},1500);
   phase=assembly.active?'assembly':'idle';document.body.dataset.phase=phase;ready=true;
+  if(history.state?.sofacetGame){enterGame();return;}
+  window.scrollTo(0,history.state?.sofacetWorldScroll || 0);
   siteSound.setActive(true);syncScroll();requestTick();
 }
 async function prepareScene(){
@@ -82,7 +84,7 @@ function gameVisibility(visible){
   game.contentWindow?.postMessage({type:'sofacet:experience-visibility',visible},location.origin);
 }
 // This parent owns the reward story; the hidden game must not wait on a second story.
-function loadGame(){if(!game.getAttribute('src'))game.src='/play.html';}
+function loadGame(){if(!game.getAttribute('src'))game.src='/play.html?loader=parent';}
 function recoverGame(){
   if(gameRecovering||gameVisible)return;
   gameRecovering=true;gameReadyObserver?.disconnect();
@@ -100,7 +102,13 @@ function showGame(){
   gameVisibility(!document.hidden);game.focus();
 }
 function enterGame({fromChess=false}={}){
-  if(gameRequested)return;gameRequested=true;cancelStartup();
+  if(gameRequested)return;
+  if(!history.state?.sofacetGame){
+    const scroll=Math.min(scrollY,journeyScroll.scrollAtFrame(lastFrame-1));
+    history.replaceState({...history.state,sofacetWorldScroll:scroll},'');
+    history.pushState({...history.state,sofacetGame:true},'');
+  }
+  gameRequested=true;cancelStartup();
   cancelAnimationFrame(raf);raf=0;journey?.suspend();siteSound.handoff();
   assembly.finish();
   // Keep game work after the 3D loop stops. The origin/main loader covers real
@@ -166,6 +174,10 @@ function syncScroll(){
   target=journeyScroll.frameAtScroll(scrollY);requestTick();
 }
 window.addEventListener('scroll',syncScroll,{passive:true});
+window.addEventListener('popstate',event=>{
+  if(gameRequested&&!event.state?.sofacetGame)location.reload();
+  else if(ready&&event.state?.sofacetGame)enterGame();
+});
 const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.resize();requestTick();}});
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
@@ -173,7 +185,11 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
-window.addEventListener('pagehide',event=>{assembly.suspend();if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}});
+window.addEventListener('pagehide',event=>{
+  if(ready&&!gameRequested)history.replaceState({...history.state,sofacetWorldScroll:scrollY},'');
+  assembly.suspend();
+  if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}
+});
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get displayedFrame(){return journey?.displayedFrame??frame;},get settled(){return journey?.settled??true;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get resolution(){return journey?.resolution;},get batching(){return journey?.batchingMode;}};

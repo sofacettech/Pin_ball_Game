@@ -61,7 +61,7 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
           <p className="help">{collectDetails?'We’ll send a code by WhatsApp or SMS to confirm it’s you.':changed?'Your number changed. Send a new code to verify it.':'Enter the code sent by WhatsApp or SMS to confirm it’s you.'}</p>
           <p className="help">Use your SO/ COINS from our launch in December. They expire 6 months after it. Terms apply.</p>
           {collectDetails&&<div className="claim-consents">
-            <label className="consent"><input name="terms" type="checkbox" required disabled={working}/><span>I'm 18 or older and I agree to the <a href={termsUrl||'/terms.html'}>Terms and Conditions</a> and <a href={privacyUrl||'/privacy.html'}>Privacy Policy</a>, and I agree to receive a verification code.</span></label>
+            <label className="consent"><input name="terms" type="checkbox" required disabled={working}/><span>I'm 18 or older and I agree to the <a href={termsUrl||'/terms.html'} target="_blank" rel="noopener">Terms and Conditions</a> and <a href={privacyUrl||'/privacy.html'} target="_blank" rel="noopener">Privacy Policy</a>, and I agree to receive a verification code.</span></label>
             <label className="consent"><input name="updates" type="checkbox" disabled={working}/><span>Send me <span className="brand-word">SO/ FACET</span> news and launch updates.</span></label>
           </div>}
           <div className="buttons"><button className="btn" type="submit" disabled={working || busy || (!collectDetails&&changed) && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':!collectDetails&&changed?'SEND NEW CODE':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>

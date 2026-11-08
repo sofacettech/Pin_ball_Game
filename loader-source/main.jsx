@@ -5,7 +5,7 @@ import CardDeck from './CardDeck.jsx';
 import {installGameLoader} from './controller.js';
 
 let root;
-installGameLoader((container,active)=>{
+installGameLoader((container,active,run,onComplete)=>{
   if(!root)root=createRoot(container);
-  flushSync(()=>root.render(<CardDeck active={active}/>));
+  flushSync(()=>root.render(<CardDeck key={run} active={active} onComplete={onComplete}/>));
 });

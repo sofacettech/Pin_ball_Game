@@ -4,7 +4,9 @@ const key='sofacet-account-preview';
 let memory=null;
 export function accountNavigationHref(href,search=globalThis.location?.search||''){
  if(new URLSearchParams(search).get('nav')!=='game')return href;
- const [path,query='']=href.split('?'),params=new URLSearchParams(query);params.set('nav','game');return path+'?'+params;
+ const [route,hash]=href.split('#'),[path,query='']=route.split('?');
+ const params=new URLSearchParams(query);params.set('nav','game');
+ return path+'?'+params+(hash===undefined?'':'#'+hash);
 }
 export const accountHref=accountNavigationHref('/account.html');
 export const accountSignInHref=accountNavigationHref('/account.html?view=signin');

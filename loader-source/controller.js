@@ -4,24 +4,58 @@ export function installGameLoader(renderCards) {
  if(!root)return;
  const cards=root.querySelector('#game-loader-cards-root'),status=root.querySelector('.loading-copy'),error=root.querySelector('.game-loading-error');
  const gamePage=document.body.hasAttribute('data-game-loading'),motion=matchMedia('(prefers-reduced-motion: reduce)');
- let mounted=false,active=false,failed=false,parentVisible=parent===window,fade,delay,observer,events,blocked=[];
+ const parentOwnsCards=gamePage&&parent!==window&&new URL(location.href).searchParams.get('loader')==='parent';
+ let active=false,failed=false,parentVisible=parent===window,fade,delay,observer,pageObserver,events,blocked=[];
+ let run=0,tableReady=false,cardsComplete=false;
  function measure(){
   const anchors=gamePage?document.querySelectorAll('.navbar-backdrop,.nav-trim,#game-header .site-brand,#nav-toggle'):document.querySelectorAll('.site-brand,[data-menu-toggle]');
   let top=0;
   for(const element of anchors){const box=element.getBoundingClientRect();if(box.width&&box.height&&getComputedStyle(element).visibility!=='hidden')top=Math.max(top,box.bottom)}
   root.style.setProperty('--game-loader-top',Math.ceil(top+4)+'px');
  }
- function paint(){if(!mounted&&!active)return;mounted=true;renderCards(cards,active&&!failed&&parentVisible&&!document.hidden);}
- function cleanup(){events?.abort();observer?.disconnect();events=observer=null;clearTimeout(delay);}
+ function paint(){
+  if(!run||parentOwnsCards)return;
+  renderCards(cards,!cards.hidden&&active&&!failed&&parentVisible&&!document.hidden&&document.documentElement?.dataset.loaded!=='false',run,completeCards);
+ }
+ function completeCards(){
+  if(!active||cardsComplete)return;
+  cardsComplete=true;
+  cards.hidden=true;
+  paint();
+  handoff();
+ }
+ function loadCards(){
+  if(parentOwnsCards)return;
+  paint();
+  const session=events.signal;
+  const images=[...cards.querySelectorAll('img')];
+  // Safari can defer lazy images in a hidden deck, so request them before decoding.
+  for(const image of images)image.loading='eager';
+  Promise.all(images.map(image=>image.decode())).then(()=>{
+   if(session.aborted)return;
+   if(!document.getElementById('game-loader-critical')?.sheet||
+      getComputedStyle(cards).getPropertyValue('--game-loader-css-ready').trim()!=='1'){
+    completeCards();return;
+   }
+   cards.hidden=false;
+   paint();
+  },()=>{if(!session.aborted)completeCards();});
+ }
+ function cleanup(){events?.abort();observer?.disconnect();pageObserver?.disconnect();events=observer=pageObserver=null;clearTimeout(delay);}
  function show(){
   if(active&&!failed)return;
   clearTimeout(fade);cleanup();active=true;failed=false;root.hidden=false;delete root.dataset.state;error.hidden=true;
+  run++;tableReady=false;cardsComplete=parentOwnsCards;cards.hidden=true;
   status.firstChild.textContent='Polishing your table… ';
   blocked=[...document.querySelectorAll('#stage')].map(element=>[element,element.inert]);for(const [element] of blocked)element.inert=true;
   events=new AbortController();const signal=events.signal;
   addEventListener('resize',measure,{signal});visualViewport?.addEventListener('resize',measure,{signal});document.addEventListener('visibilitychange',paint,{signal});
   observer=new ResizeObserver(measure);for(const element of document.querySelectorAll('#game-header,.navbar-backdrop,.site-brand,[data-menu-toggle]'))observer.observe(element);
-  measure();paint();
+  if(document.documentElement?.dataset.loaded==='false'){
+   pageObserver=new MutationObserver(paint);
+   pageObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-loaded']});
+  }
+  measure();loadCards();
   delay=setTimeout(()=>{if(active&&!failed)status.firstChild.textContent='Still preparing your game. Please wait. '},20000);
  }
  function hide(){
@@ -30,7 +64,11 @@ export function installGameLoader(renderCards) {
   const stage=document.getElementById('stage');if(gamePage&&stage?.dataset.ready==='true'){stage.inert=false;document.body.removeAttribute('data-game-loading')}
  }
  function ready(){
-  if(failed||!active)return;
+  tableReady=true;
+  handoff();
+ }
+ function handoff(){
+  if(failed||!active||!tableReady||!cardsComplete)return;
   cleanup();active=false;
   const stage=document.getElementById('stage');if(stage){stage.inert=false;stage.dataset.ready='true';stage.setAttribute('aria-busy','false')}
   blocked=[];root.dataset.state='leaving';
@@ -43,7 +81,7 @@ export function installGameLoader(renderCards) {
   const code=/memory|allocation|array buffer|out of bounds/i.test(message)?'memory':/webgl|context lost|gpu/i.test(message)?'graphics':/wasm|webassembly|unreachable/i.test(message)?'wasm':/fetch|network|load|asset|http/i.test(message)?'asset':'runtime';
   console.error('[SOFACET game startup]',phase,code,reason);root.dataset.errorCode=code;root.dataset.errorPhase=phase;
   if(gamePage)try{void fetch('/api/game-load-failure',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'omit',keepalive:true,body:JSON.stringify({phase,code,embedded:parent!==window})}).catch(()=>{})}catch{}
-  if(root.hidden)show();clearTimeout(fade);failed=true;cleanup();active=false;paint();error.hidden=false;root.dataset.state='error';document.getElementById('stage')?.setAttribute('aria-busy','false');
+  if(root.hidden)show();clearTimeout(fade);failed=true;cleanup();active=false;cards.hidden=true;paint();error.hidden=false;root.dataset.state='error';document.getElementById('stage')?.setAttribute('aria-busy','false');
  }
  const style=document.getElementById('game-entry-style');
  const stylesReady=style?.dataset.failed?Promise.reject(Error('Game styles unavailable')):!style||style.sheet?Promise.resolve():new Promise((resolve,reject)=>{style.addEventListener('load',resolve,{once:true});style.addEventListener('error',()=>reject(Error('Game styles unavailable')),{once:true})});
@@ -58,7 +96,13 @@ export function installGameLoader(renderCards) {
  },true);
  addEventListener('message',event=>{if(event.source===parent&&event.origin===location.origin&&event.data?.type==='sofacet:experience-visibility'&&typeof event.data.visible==='boolean')window.sofacetGameLoader.setActive(event.data.visible)});
  addEventListener('pagehide',()=>{cleanup();clearTimeout(fade);active=false;paint();});
- addEventListener('pageshow',event=>{if(event.persisted){if(gamePage&&failed){root.hidden=false;return}if(gamePage&&document.getElementById('stage')?.dataset.ready!=='true'){active=false;show()}else hide()}});
+ addEventListener('pageshow',event=>{
+  if(!event.persisted)return;
+  if(gamePage&&failed){root.hidden=false;return}
+  const prepared=document.getElementById('stage')?.dataset.ready==='true';
+  if(gamePage&&(!prepared||!cardsComplete)){active=false;show();if(prepared)ready()}
+  else hide();
+ });
  if(gamePage){
   show();
   const entry=document.getElementById('game-loader-controller').dataset.gameEntry;

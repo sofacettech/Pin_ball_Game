@@ -23,7 +23,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=bcb917980736">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  <style data-shared-style="./style.css?v=6fced99fc4bd">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--post-game-content-top:124px}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 5px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -41,17 +41,23 @@ body[data-menu-open]{overflow:hidden}
 .menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(1){transform:translateY(6px) rotate(45deg)}
 .menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(2){opacity:0;transform:scaleX(0)}
 .menu-toggle[aria-expanded="true"] .hamburger-lines span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
-.menu-panel{position:fixed;inset:0 0 0 auto;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(420px,100vw);height:100vh;height:100dvh;max-height:none;margin:0;padding:calc(112px + env(safe-area-inset-top,0px)) max(36px,env(safe-area-inset-right,0px)) calc(36px + env(safe-area-inset-bottom,0px)) 36px;border:0;border-left:1px solid #ffffff18;border-radius:0;background:#0b0e18;color:#fff;box-shadow:none;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;visibility:hidden;pointer-events:none;opacity:0;transition:opacity .2s ease,visibility 0s .2s;text-align:left}
+.menu-panel{box-sizing:border-box;position:fixed;inset:0 0 0 auto;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(420px,100vw);height:100vh;height:100dvh;max-height:none;margin:0;padding:calc(112px + env(safe-area-inset-top,0px)) max(36px,env(safe-area-inset-right,0px)) calc(36px + env(safe-area-inset-bottom,0px)) 36px;border:0;border-left:1px solid #ffffff18;border-radius:0;background:#0b0e18;color:#fff;box-shadow:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;visibility:hidden;pointer-events:none;opacity:0;transition:opacity .2s ease,visibility 0s .2s;text-align:left}
 .menu-panel[data-open]{visibility:visible;pointer-events:auto;opacity:1;transition-delay:0s}
-.menu-panel>:is(.menu-item,.menu-small-links){opacity:0;transform:translateX(-32px);transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .35s ease}
-.menu-panel[data-open]>:is(.menu-item,.menu-small-links){opacity:1;transform:translateX(0)}
+@media(prefers-reduced-motion:no-preference){
+  .menu-panel[data-open] > :is(.menu-item,.menu-small-links){
+    animation:site-menu-enter .65s cubic-bezier(.2,.75,.2,1);
+  }
+  @keyframes site-menu-enter{
+    from{opacity:0;transform:translateX(-18px)}
+  }
+}
 .menu-panel a{display:block;margin:0;padding:14px 0;border:0;border-radius:0;color:#fff;background:transparent;font-size:var(--site-menu-size);font-weight:400;line-height:1.2;letter-spacing:-.02em;text-decoration:none}
 .menu-panel a:hover{color:#fff;opacity:.7}
 .menu-panel[data-open] a[aria-current="page"]{opacity:.45;cursor:default}
 .menu-backdrop{position:fixed;inset:0;z-index:1;background:#0007;opacity:0;visibility:hidden;pointer-events:none;touch-action:none;transition:opacity .5s ease,visibility 0s .7s}
 body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
 .menu-toggle:focus-visible,.menu-panel :is(a,button):focus-visible{outline:1px solid #fff;outline-offset:5px}
-@media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:28px}}
+@media(max-width:600px){.menu-panel{padding-right:max(28px,env(safe-area-inset-right,0px));padding-left:max(28px,env(safe-area-inset-left,0px))}}
 @media(max-height:500px) and (orientation:landscape){.menu-panel{padding-top:76px;padding-bottom:20px;gap:0}}
 @media(prefers-reduced-motion:reduce){.hamburger-lines,.hamburger-lines span,.menu-panel,.menu-panel .menu-item,.menu-panel .menu-small-links,.menu-backdrop{transition:none}}
 .brand-word{font-family:SOFacetWordmark,sans-serif!important;font-synthesis:none;white-space:nowrap}
@@ -77,6 +83,8 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(max-width:700px){.menu-panel{padding-top:calc(76px + env(safe-area-inset-top,0px))}}
 
 @media(max-width:700px){body[data-menu-open] .site-sound{visibility:hidden;pointer-events:none}}
+#game-info-dialog{position:fixed;inset:0;margin:0;padding:0;border:0;width:100%;height:100%;max-width:none;max-height:none;background:#090710;overflow:hidden}
+#game-info-dialog iframe{display:block;width:100%;height:100%;border:0;background:#090710}
 
 :root{font-family:'Josefin Sans',sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 *{box-sizing:border-box}
@@ -246,7 +254,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 /* Feathered contrast stays with the text, clear of the interactive world. */
 .story-butterflies,.story-rules,.story-finale{isolation:isolate}
 .story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
-.story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
+.story-finale p{width:calc(100% + 5.5vw);white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
 :root .site-nav .play-now{font-size:13px}
 
 .social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}
@@ -300,8 +308,9 @@ body[data-loading]{overflow:hidden}
 #scene-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 /* The opening copy shares a clear slot above the relocated ball. Keep the
    welcome and scroll chapters exclusive, even when a fast swipe skips ahead. */
-#story-copy .story-opening{--opening-left:8.5%;--opening-top:16.5%;--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
-#story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:16.5%;bottom:auto;width:min(31vw,480px)}
+#story-copy{--opening-story-top:25%}
+#story-copy .story-opening{--opening-left:8.5%;--opening-top:var(--opening-story-top);--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
+#story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:var(--opening-story-top);bottom:auto;width:min(31vw,480px)}
 body[data-scrolled] #story-copy .story-opening{visibility:hidden!important}
 body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility:hidden!important}
 @media(max-width:1024px),(any-pointer:coarse){
@@ -450,16 +459,19 @@ body[data-loading] #scroll-hint{visibility:hidden}
 </script><!-- /cookie-preferences --><!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{position:fixed;inset:var(--game-loader-top,96px) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#000;opacity:1;transition:opacity .4s ease;touch-action:pan-y}
 .game-loading-screen[hidden]{display:none!important}
 .game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
-#game-loader-cards-root{height:100%}
-.game-loading-screen .loading-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.game-loader-cards { color-scheme: dark; background: #000; color: #e2e4df; font-family:'Brilliant Cut Pro', sans-serif; --card-width: min(400px, 67vw, calc((100svh - var(--game-loader-top,96px) - 164px) * 806 / 1330)); }
+#game-loader-cards-root{height:100%;--game-loader-css-ready:1}
+#game-loader-cards-root[hidden]{display:none!important}
+.game-loading-screen .loading-copy{position:absolute;inset:50% 24px auto;margin:0;transform:translateY(-50%);color:#e4e3de;text-align:center;font:16px/1.4 'Brilliant Cut Pro',sans-serif}
+#game-loader-cards-root:not([hidden])+.loading-copy,.game-loading-screen[data-state="error"] .loading-copy{inset:auto;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-loader-cards { color-scheme: dark; background: #000; color: #e2e4df; font-family:'Brilliant Cut Pro', sans-serif; --card-base-width: min(400px, 67vw, calc((100svh - var(--game-loader-top,96px) - 164px) * 806 / 1330)); --card-width: calc(var(--card-base-width) * .94); }
 .game-loader-cards, .game-loader-cards * { box-sizing: border-box; }
 
 .game-loader-cards {height:100%;display:grid;}
 .game-loader-cards .gallery { position:relative;min-height: 100%; display: grid; }
-.game-loader-cards .card-hint{position:absolute;top:calc(50% + var(--card-width)*1330/806/2 + 24px);left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
-.game-loader-cards .card-hint-mobile{display:none}
-@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}.game-loader-cards .card-hint-mobile{display:inline}}
+.game-loader-cards .card-hint{position:absolute;left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
+.game-loader-cards .card-hint-swipe{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
+.game-loader-cards .card-hint-desktop{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
+@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}}
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
 .game-loader-cards .floating { position: relative; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }
@@ -522,263 +534,140 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:700px){.game-loading-screen{--game-loader-top:calc(122px + env(safe-area-inset-top,0px))}body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
-</style><link rel="preload" href="/assets/game-loader.js?v=c645e075df85" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=c645e075df85" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --><link rel="stylesheet" href="/assets/typography.css?v=554d222e4172" data-brand-typography><link rel="stylesheet" href="/assets/brand-cursor.css?v=e232fbbbf989" data-brand-cursor></head>
+</style><link rel="preload" href="/assets/game-loader.js?v=fbceeae45958" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=fbceeae45958" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --><link rel="stylesheet" href="/assets/typography.css?v=554d222e4172" data-brand-typography><link rel="stylesheet" href="/assets/brand-cursor.css?v=e232fbbbf989" data-brand-cursor></head>
 <body data-phase="buffering" data-loading>
   <div id="site-loader" role="region" aria-label="Loading SO/ FACET">
-
     <div id="loading-stage" tabindex="0" aria-label="SO/ FACET logo reveal" aria-describedby="loading-instructions">
-
       <p id="loading-instructions">SO/ FACET is loading. Tap or press Enter to enable the intro sound. Escape skips the animation. Press M to mute or unmute.</p>
-
       <audio id="introAudio" src="./assets/loading/sofacet-intro-audio.m4a" preload="auto" aria-hidden="true"></audio>
-
     <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3648 2160" aria-hidden="true">
-
       <defs>
 
-
-
         <path id="mark" fill-rule="evenodd" d="M60 0H284L344 60V275H229L286 177H198L172 117L145 177H58L115 275H0V60ZM92 59L58 93V117H286V93L252 59Z"/>
-
         <linearGradient id="lime" x1="0" y1="0" x2=".25" y2="1">
-
           <stop stop-color="#b5ca42"/><stop offset=".5" stop-color="#bbcf47"/><stop offset="1" stop-color="#b9cd45"/>
-
         </linearGradient>
-
         <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
-
           <stop stop-color="#13180b"/><stop offset=".32" stop-color="#060904"/>
-
           <stop offset=".55" stop-color="#1b200f"/><stop offset=".72" stop-color="#050703"/><stop offset="1" stop-color="#0e1107"/>
-
         </linearGradient>
-
         <radialGradient id="ambient">
-
           <stop stop-color="#323b1d" stop-opacity=".34"/><stop offset=".42" stop-color="#151e0f" stop-opacity=".18"/>
-
           <stop offset="1" stop-color="#000100" stop-opacity="0"/>
-
         </radialGradient>
-
         <radialGradient id="floorSheen">
-
           <stop stop-color="#6a7735" stop-opacity=".16"/><stop offset=".5" stop-color="#27331c" stop-opacity=".08"/>
-
           <stop offset="1" stop-color="#000100" stop-opacity="0"/>
-
         </radialGradient>
-
         <linearGradient id="reflectionFade" x1="0" y1="0" x2="0" y2="1">
-
           <stop stop-color="white" stop-opacity=".21"/><stop offset=".25" stop-color="white" stop-opacity=".065"/>
-
           <stop offset=".7" stop-color="white" stop-opacity="0"/>
-
         </linearGradient>
-
         <linearGradient id="sideFade">
-
           <stop stop-color="black"/><stop offset=".3" stop-color="white" stop-opacity=".5"/>
-
           <stop offset=".5" stop-color="white"/><stop offset=".7" stop-color="white" stop-opacity=".5"/><stop offset="1" stop-color="black"/>
-
         </linearGradient>
-
         <linearGradient id="beamInk" x1="0" y1="1" x2="1" y2="0">
-
           <stop stop-color="#a6b941" stop-opacity="0"/><stop offset=".17" stop-color="#d3df88"/>
-
           <stop offset=".8" stop-color="#c4d16b"/><stop offset="1" stop-color="#a6b941" stop-opacity="0"/>
-
         </linearGradient>
-
         <pattern id="hatching" width="11" height="12" patternUnits="userSpaceOnUse">
-
           <path d="M1 9L6 3" fill="none" stroke="#b9cd62" stroke-width="1.6" stroke-linecap="square"/>
-
         </pattern>
-
         <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/></filter>
-
         <filter id="bloom" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="16"/></filter>
-
         <filter id="beamBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
-
         <clipPath id="topReveal"><path id="revealEdge" d="M0 0H344V275H0Z"/></clipPath>
-
         <clipPath id="scanReveal"><path id="scanArea" d="M0 0H344V275H0Z"/></clipPath>
-
         <mask id="floorMask" maskUnits="userSpaceOnUse" x="1300" y="1225" width="1050" height="195">
-
           <rect x="1300" y="1225" width="1050" height="195" fill="url(#reflectionFade)"/>
-
         </mask>
-
         <mask id="sidesMask" maskUnits="userSpaceOnUse" x="1370" y="880" width="906" height="345">
-
           <rect x="1370" y="880" width="906" height="345" fill="url(#sideFade)"/>
-
         </mask>
-
         <clipPath id="lightBounds"><rect x="1368" y="825" width="912" height="515"/></clipPath>
-
         <g id="litMark">
-
           <use href="#mark" fill="url(#metal)" opacity=".3"/>
-
           <g clip-path="url(#topReveal)">
-
             <use id="texture" href="#mark" fill="url(#hatching)" opacity=".68"/>
-
           </g>
-
           <g clip-path="url(#scanReveal)">
-
             <use href="#mark" fill="url(#lime)"/>
-
             <use href="#mark" fill="none" stroke="#d2e183" stroke-width=".65" opacity=".36"/>
-
           </g>
-
         </g>
-
       </defs>
-
       <rect width="3648" height="2160" fill="#000100"/>
-
       <g id="atmosphere">
-
         <ellipse cx="1824" cy="1073" rx="660" ry="360" fill="url(#ambient)"/>
-
         <path d="M1372 1225H2276V1375H1372Z" fill="#10180d" opacity=".16"/>
-
         <ellipse cx="1824" cy="1226" rx="480" ry="116" fill="url(#floorSheen)"/>
-
         <path d="M1372 1225H2276" stroke="#485139" stroke-width="1" opacity=".1"/>
-
       </g>
-
-
 
       <g id="sideReflections" mask="url(#sidesMask)" opacity=".055">
-
         <use href="#litMark" transform="translate(1568 943) scale(-1 1)"/>
-
         <use href="#litMark" transform="translate(2424 943) scale(-1 1)"/>
-
       </g>
-
       <g id="groundReflection" mask="url(#floorMask)" filter="url(#soft)">
-
         <use href="#litMark" transform="translate(1652 1420) scale(1 -.69)"/>
-
       </g>
-
       <use id="logoBloom" href="#mark" transform="translate(1652 943)" fill="#b9cd45" filter="url(#bloom)" opacity=".025"/>
-
       <use href="#litMark" transform="translate(1652 943)"/>
-
       <g id="scanner" clip-path="url(#lightBounds)" opacity="0">
-
         <g id="lightReflection" opacity=".13" filter="url(#beamBlur)" stroke="#8c9a48" stroke-width="8">
-
           <path id="reflectedBeamA"/><path id="reflectedBeamB"/>
-
         </g>
-
         <g fill="none" stroke="url(#beamInk)" stroke-width="1.8">
-
           <path id="beamA"/><path id="beamB"/>
-
         </g>
-
       </g>
-
     </svg>
-
     </div>
-
   <div class="startup-feedback"><p data-scene-status role="status">Growing the diamonds…</p><progress data-scene-progress max="100" aria-label="World download"></progress><span data-video-progress hidden></span></div></div>
-  <script type="module" src="/assets/entrance-3d/entry-DIFM25BQ.js"></script>
+  <script type="module" src="/assets/entrance-3d/entry-WHFKMOQZ.js"></script>
   <main id="entrance" aria-label="Explore the SO/ FACET world" inert aria-hidden="true">
     <div id="scene-viewport">
       <div id="scene-frame" aria-hidden="true"></div>
       <img id="scene-poster" src="/assets/opening-poster.webp" alt="" aria-hidden="true">
     </div>
     <div id="story-copy" aria-label="The SO/ FACET story">
-
       <section class="story-line story-opening" data-from="51" data-until="241" aria-hidden="true">
-
         <h1><span class="opening-welcome">Welcome to</span> <span class="opening-brand"><span class="kinetic-line-mask" aria-hidden="true"><span class="opening-wordmark"><img src="./assets/sofacet-wordmark.svg" width="2048" height="278" alt=""></span></span><span class="kinetic-sr">SO/ FACET</span></span></h1>
-
         <p><span class="story-text-line">LAB-GROWN DIAMONDS</span> <span class="story-text-line">REDEFINED</span></p>
-
       </section>
-
       <section class="story-line story-outside" data-from="241" data-until="516" aria-hidden="true">
-
         <h2><span class="story-text-line">For years,</span> <span class="story-text-line">diamonds came</span> <span class="story-text-line">with rules/</span></h2>
-
       </section>
-
       <section class="story-line story-approach" data-from="516" data-until="951" aria-hidden="true">
-
         <h2><span class="story-text-line">So we</span> <span class="story-text-line">built a world without</span> <span class="story-text-line">them/</span></h2>
-
         <p>Step inside.</p>
-
       </section>
-
       <section class="story-line story-butterflies" data-from="951" data-until="1301" aria-hidden="true">
-
         <h2><span class="story-text-line">Here, diamonds come</span> <span class="story-text-line">in shapes that mean</span> <span class="story-text-line">something/</span></h2>
-
       </section>
-
       <section class="story-line story-choice" data-from="1301" data-until="1630" aria-hidden="true">
-
         <h2><span class="story-text-line">And you're</span> <span class="story-text-line">the one who</span> <span class="story-text-line">chooses/</span></h2>
-
         <p><span class="story-text-line">No special</span> <span class="story-text-line">occasion needed.</span> <span class="story-text-line">Just you, today.</span></p>
-
       </section>
-
       <section class="story-line story-rules" data-from="1630" data-until="2000" aria-hidden="true">
-
         <h2><span class="story-text-line">Your rules/</span> <span class="story-text-line">Your shape/</span> <span class="story-text-line">Your diamond/</span></h2>
-
       </section>
-
       <section class="story-line story-finale" data-from="2000" aria-hidden="true">
-
         <h2><span class="story-text-line">So/</span> <span class="story-text-line">what's yours?</span></h2>
-
-        <p>Find out in a game of pinball. Every 10 <span class="coin-word">SO/ COINS</span> you score is ₹1 off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
-
+        <p>Find out in<br> a game of pinball.<br> Every 10 <span class="coin-word">SO/ COINS</span> you score is<br> ₹1 off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
       </section>
-
     </div>
     <a class="wordmark brand-logo site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="./assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></a>
     <header class="site-navigation site-nav">
-
       <a id="skip-game" class="play-now" href="./play.html">Play Pinball</a>
-
       <button id="menu-toggle" class="menu-toggle" data-menu-toggle type="button" aria-label="Open navigation menu" aria-controls="menu-panel" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"><span></span><span></span><span></span></span></button>
-
       <nav id="menu-panel" class="menu-panel" data-menu-panel aria-label="Main navigation" aria-hidden="true" inert>
-
           <a class="menu-item" href="./account.html" target="_top" data-account-link>My <span class="coin-word">SO/ COINS</span></a>
-
           <a class="menu-item" href="./about.html" target="_top">About</a>
-
           <a class="menu-item" href="./faq.html" target="_top">HOW <span class="coin-word">SO/ COINS</span> WORKS</a>
-
           <a class="menu-item" href="./privacy.html" target="_top">Privacy</a>
-
         </nav>
-
     </header>
     <div id="scene-loading-status"><span data-scene-status role="status">Growing the diamonds…</span><progress data-scene-progress max="100" aria-label="World download"></progress></div>
     <section id="journey-preparation" aria-label="Preparing your journey" hidden>
@@ -788,17 +677,11 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
     </section>
     <button id="scroll-hint" type="button">Scroll Up to Explore <span aria-hidden="true">↑</span></button>
     <div class="social-links">
-
       <button class="social-trigger" type="button" aria-expanded="false" aria-controls="social-profiles">Socials<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button>
-
       <nav id="social-profiles" class="social-profiles" aria-label="Follow SO/ FACET">
-
       <a href="https://www.instagram.com/so.facet" target="_blank" rel="noopener noreferrer" aria-label="SO/ FACET on Instagram (opens in a new tab)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
-
       <a href="https://www.linkedin.com/company/so-facet" target="_blank" rel="noopener noreferrer" aria-label="SO/ FACET on LinkedIn (opens in a new tab)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.75H4.98V9.2h2.95v9.55ZM6.45 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.3 10.85H15.8V14.1c0-1.11-.02-2.54-1.55-2.54-1.55 0-1.79 1.21-1.79 2.46v4.73H9.51V9.2h2.83v1.3h.04c.39-.74 1.35-1.53 2.79-1.53 2.98 0 3.58 1.96 3.58 4.51v5.27Z"/></svg></a>
-
       </nav>
-
     </div>
     <div id="progress" aria-hidden="true"></div>
   </main>
@@ -806,7 +689,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/play.html">Play SOFACET</a></noscript>
   <script type="module" src="./assets/social-links.js?v=restored-20261106"></script>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=234ef0c1cca0"></script>
-  <script type="module" src="/assets/entrance-3d/entry-ANKV7CYE.js"></script>
-<!-- game-loader-body --><div id="game-loading-screen" class="game-loading-screen" hidden><div id="game-loader-cards-root"><link rel="preload" as="image" href="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107"/><div class="game-loader-cards"><div class="gallery" aria-label="SO/ FACET silver card collection"><div class="stage" aria-busy="false"><div class="floating"><div class="deck" tabindex="0" role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions"><article class="sofacet-card" data-slot="0" aria-label="Diamond card" aria-hidden="false"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--diamond" src="/assets/loader-cards/diamond.png" alt="Faceted diamond" width="535" height="425" loading="lazy" decoding="async"/><div class="card-copy diamond-copy"><p>Up Next:</p><h1>Pinball</h1></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article><article class="sofacet-card" data-slot="1" aria-label="Jewellery card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--earrings" src="/assets/loader-cards/earrings.png" alt="Pair of SO/ FACET black and white diamond star earrings" width="515" height="415" loading="lazy" decoding="async"/><div class="card-copy jewellery-copy"><p class="offer">10 <span class="coin-word">SO/ COINS</span> = <span class="rupee">₹</span>1 OFF</p><p class="offer-detail">SO/ FACET DIAMOND JEWELLERY</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article><article class="sofacet-card" data-slot="2" aria-label="Pinball card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--pinball" src="/assets/loader-cards/pinball.png" alt="SO/ FACET pinball table" width="740" height="595" loading="lazy" decoding="async"/><div class="card-copy table-copy"><p class="table-title">Score <span class="coin-word">SO/ COINS</span>.</p><p class="table-detail">Save them for<br/>SO/ FACET diamond jewellery.</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article></div></div></div><p class="card-hint"><span class="card-hint-desktop">Click to discover your next facet.</span><span class="card-hint-mobile">Swipe to Explore</span></p></div><p class="sr-only" id="loader-card-instructions">Desktop: click for the next card; double-click for the previous card. Mobile: swipe right for the next card, swipe left for the previous card, and tap to flip. Keyboard: use arrow keys to change cards, Enter to flip, and Space to pause or resume motion.</p><p class="sr-only" data-card-status="true" aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p></div></div><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=ac08af6e0a85"></script>
+  <script type="module" src="/assets/entrance-3d/entry-FLX3ECXK.js"></script>
+<!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><div id="game-loader-cards-root" hidden><link rel="preload" as="image" href="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107"/><div class="game-loader-cards"><div class="gallery" aria-label="SO/ FACET silver card collection"><p class="card-hint card-hint-swipe">Swipe left to explore</p><div class="stage" aria-busy="false"><div class="floating"><div class="deck" tabindex="0" role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions"><article class="sofacet-card" data-slot="0" aria-label="Diamond card" aria-hidden="false"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--diamond" src="/assets/loader-cards/diamond.png" alt="Faceted diamond" width="535" height="425" loading="lazy" decoding="async"/><div class="card-copy diamond-copy"><p>Up Next:</p><h1>Pinball</h1></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article><article class="sofacet-card" data-slot="1" aria-label="Jewellery card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--earrings" src="/assets/loader-cards/earrings.png" alt="Pair of SO/ FACET black and white diamond star earrings" width="515" height="415" loading="lazy" decoding="async"/><div class="card-copy jewellery-copy"><p class="offer">10 <span class="coin-word">SO/ COINS</span> = <span class="rupee">₹</span>1 OFF</p><p class="offer-detail">SO/ FACET DIAMOND JEWELLERY</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article><article class="sofacet-card" data-slot="2" aria-label="Pinball card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--pinball" src="/assets/loader-cards/pinball.png" alt="SO/ FACET pinball table" width="740" height="595" loading="lazy" decoding="async"/><div class="card-copy table-copy"><p class="table-title">Score <span class="coin-word">SO/ COINS</span>.</p><p class="table-detail">Save them for<br/>SO/ FACET diamond jewellery.</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name">SO/ FACET</p></div></div></article></div></div></div><p class="card-hint card-hint-desktop">Click to discover your next facet.</p></div><p class="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p><p class="sr-only" data-card-status="true" aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p></div></div><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

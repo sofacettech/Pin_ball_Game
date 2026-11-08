@@ -9,5 +9,17 @@
 #post-game-rewards .design-rewards .reward .notice{font-size:14px!important}
 #post-game-rewards .design-rewards #rewards-leaderboard{font-size:13px;letter-spacing:.06em;min-height:44px}
 @media(max-width:850px){
+ #post-game-rewards .react-page-root.design-rewards{background:radial-gradient(ellipse at 61% 72%,rgba(22,5,31,.4),transparent 60%),#08040d}
+ #post-game-rewards .react-page-root.design-rewards .mesh-layer{display:none}
+ #post-game-rewards .react-page-root.design-rewards .page.text-layer{padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
  #post-game-rewards .react-page-root.design-rewards .text-layer .reward{padding-top:var(--post-game-content-top)}
+ #post-game-rewards .react-page-root.design-rewards .art-layer{position:fixed;opacity:.18}
+ #post-game-rewards .react-page-root.design-rewards .art-layer .art-canvas{position:absolute;inset:auto auto max(20px,env(safe-area-inset-bottom,0px)) 50%;width:min(100%,500px,90svh);transform:translateX(-50%)}
+}
+@media(max-width:850px) and (prefers-reduced-motion:no-preference){
+ #post-game-rewards .react-page-root.design-rewards .art-layer{transition:opacity 1.8s ease-in-out}
+ #post-game-rewards .design-rewards.mobile-art-intro .art-layer{opacity:1;transition:none}
+ #post-game-rewards .design-rewards .text-layer #rewards-heading{animation:.85s cubic-bezier(.2,.75,.2,1) .25s both enter}
+ #post-game-rewards .design-rewards:is([data-loaded="false"],.mobile-art-intro) .text-layer :is(.brand,.eyebrow,#rewards-heading,.amount-line,.conversion,.rule,.notice,.buttons,.leaderboard){animation-play-state:paused}
+ #post-game-rewards .design-rewards.mobile-art-intro .text-layer :is(.buttons,.leaderboard){visibility:hidden}
 }

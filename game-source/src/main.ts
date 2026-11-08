@@ -27,19 +27,24 @@ const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const stage=$('stage'),viewport=$('viewport'),canvas=$<HTMLCanvasElement>('game');
 const chargeFill=$('charge-fill'),chargeMeter=document.querySelector<HTMLElement>('.charge')!;
 const mobileLives=$('mobile-lives'),lifeHearts=mobileLives.querySelectorAll<HTMLImageElement>('img');
-const scorecardPanel=$('scorecard-panel'),scorecard=connectFlipScorecard($<HTMLButtonElement>('flip-card'),$('card-score'),$('card-best'));
+const scorecardPanel=$('scorecard-panel'),flipCard=$<HTMLButtonElement>('flip-card');
+const scorecard=connectFlipScorecard(flipCard,$('card-score'),$('card-best'));
 scorecard.update(0,null);
 const quality=$<HTMLSelectElement>('quality');
 try{quality.value=parseGameQuality(localStorage.getItem(gameQualityStorageKey))}catch{quality.value='full'}
 const view=new TableView(canvas,viewport,parseGameQuality(quality.value));let inspecting=false,loaded=false,physics:PinballPhysics;
+flipCard.addEventListener('click',event=>{
+ if(event.detail>0&&document.activeElement===flipCard&&loaded&&physics.active&&!physics.paused)canvas.focus({preventScroll:true});
+});
 quality.onchange=()=>{const mode=parseGameQuality(quality.value);view.setQuality(mode);try{localStorage.setItem(gameQualityStorageKey,mode)}catch{}requestGameFrame()};
 let tutorial:ReturnType<typeof connectControlsTutorial>|undefined;
 let physicsAssets:{vertices:Float32Array;indices:Uint32Array;obstacles:Obstacle[]},starting=false,highScore:number|null=null;
 const keys=new Set<string>(),sound=createGameSound();void sound.load();let accumulator=0,lastFrame=0,holdCharge=false;
 let animationFrame=0,parentVisible=window.sofacetGameLoader?.isActive()??window.parent===window;
+let infoOpen=false,resumeAfterInfo=false;
 function syncLoadingAnimation(){window.sofacetGameLoader?.setActive(parentVisible&&!document.hidden)}
 syncLoadingAnimation();
-function requestGameFrame(){if(!animationFrame&&parentVisible&&!document.hidden)animationFrame=requestAnimationFrame(frame)}
+function requestGameFrame(){if(!animationFrame&&parentVisible&&!document.hidden&&!infoOpen)animationFrame=requestAnimationFrame(frame)}
 window.addEventListener('message',event=>{
  if(window.parent===window||event.source!==window.parent||event.origin!==location.origin||event.data?.type!=='sofacet:experience-visibility'||typeof event.data.visible!=='boolean')return;
  parentVisible=event.data.visible;cancelAnimationFrame(animationFrame);animationFrame=0;lastFrame=0;accumulator=0;view.resetPerformanceSampling();
@@ -51,6 +56,18 @@ const playbackControls=$('gameplay-controls'),pauseButton=$<HTMLButtonElement>('
 const howToPlay=$('how-to-play-toggle'),controlsGuide=$('how-to-play-controls');
 function closeSettings(){menu.hidden=true;settings.setAttribute('aria-expanded','false');howToPlay.setAttribute('aria-expanded','false');howToPlay.parentElement!.classList.remove('is-open');controlsGuide.inert=true}
 function closeNavigation(){if(navToggle.getAttribute('aria-expanded')==='true')navToggle.click()}
+addEventListener('sofacet:game-info',event=>{
+ infoOpen=(event as CustomEvent<boolean>).detail;
+ if(infoOpen){
+  resumeAfterInfo=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';
+  if(resumeAfterInfo)setGamePaused(true);
+  cancelAnimationFrame(animationFrame);animationFrame=0;
+ }else{
+  if(resumeAfterInfo&&!document.hidden)setGamePaused(false);
+  resumeAfterInfo=false;lastFrame=0;accumulator=0;
+  requestGameFrame();
+ }
+});
 new MutationObserver(()=>{if(navToggle.getAttribute('aria-expanded')==='true'&&!menu.hidden){closeSettings();setGamePaused(false)}}).observe(navToggle,{attributes:true,attributeFilter:['aria-expanded']});
 howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!=='true';howToPlay.setAttribute('aria-expanded',String(expanded));howToPlay.parentElement!.classList.toggle('is-open',expanded);controlsGuide.inert=!expanded};
 const registration=$<HTMLDialogElement>('registration-dialog');
@@ -93,7 +110,7 @@ const narrowView=matchMedia('(max-width:1024px)');
 const mobileView=()=>completeViewOnly(navigator.userAgent,navigator.maxTouchPoints,primaryTouch.matches)||narrowView.matches;
 function applyScoreboardLayout(){
  const mobile=mobileView();scorecard.setPhoneStage(mobile);scorecard.setPregame(!loaded||!physics.active);
- if(mobile)scorecard.showScore(!loaded||!physics.active||physics.state==='playing'||physics.state==='finished');
+ if(mobile)scorecard.showScore(true);
  const playOnly=scorecard.hidden,visible=!inspecting;
  const changed=scorecardPanel.hidden===visible||scorecardPanel.classList.contains('play-only')!==playOnly;
  const label=playOnly?'Play pinball':mobile?'Scoreboard':'How to play and scoreboard';
@@ -173,8 +190,6 @@ function sync(p=physics.pose()){
  if(!launchReady&&p.state==='playing'&&document.activeElement===launchButton)canvas.focus({preventScroll:true});
  launchButton.hidden=!(showHold||launchReady);launchButton.disabled=!launchReady;launchButton.inert=!launchReady;
  launchButton.setAttribute('aria-hidden',String(!launchReady));
- const scoreVisible=String(!mobile||p.state==='playing'||!physics.active||p.state==='finished');
- if(scorecardPanel.dataset.scoreVisible!==scoreVisible)scorecardPanel.dataset.scoreVisible=scoreVisible;
  stage.classList.toggle('launch-ready',launchReady);
  $('table-intro').hidden=physics.active;$('table-help').hidden=physics.active;
  $('start').hidden=physics.active&&p.state!=='finished';$<HTMLButtonElement>('start').disabled=starting;$('start-label').textContent=starting?'Preparing…':physics.active?'Play again':'Play';
@@ -206,10 +221,9 @@ async function beginGame(){if(!loaded||starting)return;sound.unlock();sound.setM
 }
 $('start').onclick=()=>{if(!loaded||starting||tutorial?.active)return;if(!tutorial!.seen)openPractice('onboarding');else void beginGame()};
 $('restart').onclick=()=>{closeSettings();$('pause-panel').hidden=true;if(loaded&&!starting&&physics.active&&physics.state!=='finished')$('start').click()};
-$('skip-game').onclick=event=>{event.preventDefault();rewards.skip(($('skip-game') as HTMLAnchorElement).href)};
 const playKeys=new Set(['ArrowLeft','ArrowRight','KeyA','KeyD','Space']);
 addEventListener('keydown',event=>{
- if(cookieSettingsOpen||starting||tutorial?.active||registration.open||rewards.dialog.open||leaderboard.dialog.open)return;
+ if(infoOpen||cookieSettingsOpen||starting||tutorial?.active||registration.open||rewards.dialog.open||leaderboard.dialog.open)return;
  if(event.code==='Escape'){if(loaded&&!inspecting){event.preventDefault();if(!event.repeat)togglePause()}return}
  if(!menu.hidden&&playKeys.has(event.code)){if(!(event.target as HTMLElement).matches('button,select,input,textarea,a'))event.preventDefault();return}
  const target=event.target as HTMLElement;if(target.matches('input,select,textarea,button,a')&&target!==canvas)return;
@@ -243,7 +257,8 @@ function sampleGameplayPerformance(now:number){
  // Automatic fallback is for this session; retain the player's saved choice.
  if(view.adaptResolution(now))quality.value=view.quality;
 }
-function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(!cookieSettingsOpen&&!physics.paused&&!tutorial?.active)accumulator+=delta;else accumulator=0;
+function frame(now:number){animationFrame=0;if(!loaded||!parentVisible||document.hidden)return;const elapsed=lastFrame?now-lastFrame:0,delta=Math.min(elapsed/1000,.05);lastFrame=now;
+ if(physics.active&&canTouch('paddle')&&navToggle.getAttribute('aria-expanded')!=='true')scorecard.advanceAutoFlip(elapsed);if(!cookieSettingsOpen&&!physics.paused&&!tutorial?.active)accumulator+=delta;else accumulator=0;
  while(accumulator>=DT){const controls=input(),launches=physics.launches;
   if(physics.active&&!physics.paused&&physics.state!=='finished')leaderboard.record(controls);physics.tick(controls);if(physics.launches>launches)sound.play('launch',.5);accumulator-=DT}
  const p=physics.pose();view.updateFeedback(physics.active&&!physics.paused&&!inspecting?delta:0);view.updateBall(p.position,p.rotation,p.ballVisible);for(const paddle of p.paddles)view.updatePaddle(paddle.id,paddle.angle);

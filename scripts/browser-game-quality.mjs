@@ -20,6 +20,8 @@ try{
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto(new URL('/play.html',process.env.SOFACET_GAME_URL||'http://127.0.0.1:8879').href);
  await page.waitForSelector('#stage[data-ready="true"]',{timeout:60000});
+ const cookieNotice=page.locator('#sf-cookie-notice:not([hidden])');
+ if(await cookieNotice.count())await cookieNotice.getByRole('button',{name:'Essential only',exact:true}).click();
  assert.equal(await page.locator('#quality').inputValue(),'full');
  await page.locator('#start').click();
  await page.waitForFunction(()=>!document.querySelector('#touch-launch').disabled);
@@ -29,9 +31,9 @@ try{
  const launch=await page.locator('#touch-launch').boundingBox();
  await page.mouse.move(launch.x+launch.width/2,launch.y+launch.height/2);
  await page.mouse.down();await page.waitForTimeout(2000);await page.mouse.up();
- await page.waitForFunction(()=>document.querySelector('#scorecard-panel').dataset.scoreVisible==='true');
+ await page.locator('#touch-launch:disabled').waitFor();
  try{await page.waitForFunction(()=>document.querySelector('#quality').value==='auto',null,{timeout:15000})}
- catch(error){console.error(await page.evaluate(()=>({quality:document.querySelector('#quality').value,message:document.querySelector('#message').textContent,stage:document.querySelector('#stage').className,pause:document.querySelector('#pause').getAttribute('aria-label'),scoreVisible:document.querySelector('#scorecard-panel').dataset.scoreVisible})));throw error}
+ catch(error){console.error(await page.evaluate(()=>({quality:document.querySelector('#quality').value,message:document.querySelector('#message').textContent,stage:document.querySelector('#stage').className,pause:document.querySelector('#pause').getAttribute('aria-label'),launchReady:document.querySelector('#stage').classList.contains('launch-ready')})));throw error}
  assert.equal(await page.evaluate(()=>localStorage.getItem('sofacet.game-quality.v1')),null,'automatic fallback must not save Auto as a preference');
  await page.locator('#settings').click();await page.locator('#quality').selectOption('full');
  await page.waitForTimeout(4500);

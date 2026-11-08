@@ -1,4 +1,4 @@
-@import url('./assets/navigation.css?v=d1972fd9e36e');
+@import url('./assets/navigation.css?v=40e21131e43d');
 :root{font-family:'Josefin Sans',sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 *{box-sizing:border-box}
 html{overscroll-behavior:none;scrollbar-width:none}
@@ -167,7 +167,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 /* Feathered contrast stays with the text, clear of the interactive world. */
 .story-butterflies,.story-rules,.story-finale{isolation:isolate}
 .story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
-.story-finale p{white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
+.story-finale p{width:calc(100% + 5.5vw);white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
 :root .site-nav .play-now{font-size:13px}
 
 .social-links{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;color:#fff}

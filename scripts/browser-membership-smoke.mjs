@@ -110,6 +110,10 @@ try{
         await route.fulfill({response,body:source});
       });
       await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.__testRewards);
+      for(const name of ['Diamond','Jewellery','Pinball']){
+        const card=page.getByRole('button',{name:name+' card. Front view',exact:true});
+        await card.press('ArrowRight');
+      }
       await page.waitForFunction(()=>!document.body.hasAttribute('data-game-loading'),{},{timeout:60000});
       await page.evaluate(id=>window.__testRewards.show(3205,id),gameId);await page.locator('.design-rewards[data-scene-ready="true"]').waitFor();
       assert.equal(await page.locator('#rewards-points').innerText(),'3,205');assert.match(await page.locator('#rewards-value').innerText(),/320\.5/);

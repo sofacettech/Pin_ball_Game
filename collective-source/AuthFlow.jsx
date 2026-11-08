@@ -1,15 +1,17 @@
 import React,{useEffect,useId,useRef,useState} from 'react';
 import AccountPage from './AccountPage.jsx';
 import ClaimPage from './ClaimPage.jsx';
+import {RewardNoticeArtwork} from './artwork/RewardNoticeArtwork.jsx';
 import {request,pendingResult} from '../membership-source/src/api.js';
 import {phoneParts} from '../membership-source/src/phone.js';
 import {normaliseDesignPhone,registrationDetails,registrationPayload} from './auth-values.js';
 import {leaveCopy,exitCopy,rewardMoney,formatPoints,leaderboardName} from '../game-source/src/player-copy.ts';
 import './flow.css';
+import './reward-notice.css';
 import {brandText} from '../shared/brand-react.jsx';
 import {accountNavigationHref} from '../shared/account-session.js';
 
-const embedded=window.parent!==window;
+const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
 export function SavedConfirmation({saved,status='',onReplay}) {
   const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
@@ -30,12 +32,12 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
     {saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}
     <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn SO/ COINS.'}</p>
-    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms.html" target="_top">Terms apply.</a></p>}
+    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms.html" target="_blank" rel="noopener">Terms apply.</a></p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
       <button type="button" onClick={onReplay??(()=>window.top.location.assign('/play.html'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
       {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
-      <a href={accountNavigationHref('/account.html')} target="_top">My SO/ COINS</a>
+      <a href={accountNavigationHref('/account.html')} target="_top" onClick={event=>{if(embedded&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();post({type:'sofacet:visit-saved-account'});}}}>My SO/ COINS</a>
     </div>
     {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
       <h2 id={shareTitle}>Share my score</h2>
@@ -58,6 +60,8 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(null),[saved,setSaved]=useState(null);
   const [challenge,setChallenge]=useState(null),[status,setStatus]=useState(''),[busy,setBusy]=useState(false),[config,setConfig]=useState(null),[resendAt,setResendAt]=useState(0),[seconds,setSeconds]=useState(0),[exit,setExit]=useState(null);
   const pendingRef=useRef(null),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),mounted=useRef(true),destination=useRef('/'),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
+  const exitHeading=useRef(null);
+  useEffect(()=>{if(exit)exitHeading.current?.focus({preventScroll:true});},[exit]);
   completeRef.current=onComplete;backRef.current=onBack;
   const unsaved=()=>!!pendingRef.current&&pendingRef.current.points>=10&&!savedRef.current;
   function leave(target='/') {
@@ -72,7 +76,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     request('/api/membership/config',undefined,abort.signal).then(setConfig).catch(error=>{if(!abort.signal.aborted)setStatus(error.message);});
     if(checkMembership)request('/api/player',undefined,abort.signal).then(player=>{
       if(typeof player.member!=='boolean')throw Error('Your account could not be checked.');
-      if(player.member&&!forceVerification){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace('/account.html');}
+      if(player.member&&!forceVerification){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountNavigationHref('/account.html'));}
       else {setMemberCheck('guest');if(forceVerification){setTab('registered');setStatus('Please verify your phone again to save your SO/ COINS.');}}
     }).catch(error=>{if(!abort.signal.aborted){setMemberCheck('error');setStatus(error.message);}});
     const receive=event=>{
@@ -119,7 +123,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     savedRef.current=true;pendingRef.current=null;setSaved({...value,score});setStep('success');setResendAt(0);
     if(embedded)post({type:'contest-registration:complete',player:value.player});
     else if(completeRef.current)await completeRef.current(value);
-    else location.replace(firstCut?'/first-cuts-confirmation.html':'/account.html');
+    else location.replace(accountNavigationHref(firstCut?'/first-cuts-confirmation.html':'/account.html'));
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);setDefaults(values);setDetails(profile);
@@ -152,15 +156,31 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   });
   const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,details,signal));
   function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
-  const goBack=()=>{if(claimFirst&&embedded&&step==='claim'){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
+  const goBack=()=>{if(claimFirst&&embedded){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/play.html');};
-  if(exit){const copy=exit==='confirm'?leaveCopy(pending?.points||0):exitCopy;return brandText(<section className="auth-flow-notice"><p>{exit==='confirm'?'BEFORE YOU GO':'LAUNCHING IN DECEMBER'}</p><h1 tabIndex={-1}>{copy.title}</h1><p>{exit==='confirm'?copy.support:exitCopy.support}</p><div className="auth-flow-actions">{exit==='confirm'?<><button onClick={()=>setExit(null)}>Save my SO/ COINS</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}</div>{exit==='left'&&<><a className="auth-flow-updates" href={accountNavigationHref('/membership.html?from=collective')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}</section>);}
+  if(exit){
+    const confirming=exit==='confirm',copy=confirming?leaveCopy(pending?.points||0):exitCopy;
+    return brandText(<section className="auth-flow-notice reward-notice">
+      <iframe className="reward-notice-mesh" src="/assets/collective/meshes/rewards.html?theme=black" title="Interactive background"/>
+      <RewardNoticeArtwork key={'art-'+exit}/>
+      <React.Fragment key={exit}>
+        <p>{confirming?'BEFORE YOU GO':'LAUNCHING IN DECEMBER'}</p>
+        <h1 ref={exitHeading} tabIndex={-1}>{copy.title}</h1>
+        <p>{copy.support}</p>
+        <div className="auth-flow-actions reward-notice-actions">
+          {confirming?<><button onClick={()=>setExit(null)}>Save my SO/ COINS</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}
+        </div>
+        {!confirming&&<><a className="auth-flow-updates" href={accountNavigationHref('/membership.html?from=collective')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}
+      </React.Fragment>
+    </section>);
+  }
   if(memberCheck!=='guest')return brandText(<section className="auth-flow-notice" role="status"><p>{memberCheck==='error'?"We couldn't load your SO/ COINS. Please try again.":memberCheck==='member'?'Opening your account…':'Checking your SO/ COINS…'}</p>{status&&memberCheck!=='error'&&<p>{status}</p>}{memberCheck==='error'&&<button onClick={()=>location.reload()}>Try again</button>}</section>);
   const inlineSaved=step==='success'&&saved?.pointsSaved&&claimFirst;
   const confirmation=step==='success'?<SavedConfirmation saved={saved} status={status} onReplay={replay}/>:null;
   if(confirmation&&!inlineSaved)return confirmation;
   return <>
     {embedded&&!inlineSaved&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
+    {embedded&&claimFirst&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={goBack}>← Back</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
     {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;

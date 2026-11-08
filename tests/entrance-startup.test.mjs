@@ -80,6 +80,7 @@ async function startupFixture({reduced=false,reveal=Promise.resolve()}={}){
   document:{body:{dataset:{}}},fetch:async()=>({ok:true,json:async()=>({points:[]})}),
   gameRequested:false,startupFailed:false,ready:false,firstFrame:334,assembly:createAssemblyClock({reducedMotion:reduced}),
   gameLoader:{},enterGame(){handoffs++;context.gameRequested=true},location:{replace(url){redirect=url}},
+  history:{state:null},window:{scrollTo(){}},
   presentationReady:reveal,modelDownload:model.promise,
   loadMainPresentation:async()=>{},createLandingCopy:async()=>frame=>copyFrames.push(frame),placeStage(){},syncScroll(){},requestTick(){},setStartupStatus(){},finishStartupStatus(){},setTimeout(){},
   completePreparation(){prepared++},cancelStartup(){aborted++},journey:undefined,rendererModuleFixture:{createJourneyRenderer:async()=>renderer},

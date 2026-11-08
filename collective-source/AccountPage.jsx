@@ -41,7 +41,7 @@ export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',poin
     if (showValidation(form, validateAccount(values), create.setMessage)) return;
     void create.submit(onCreateAccount, {...values, terms:values.terms === 'on', updates:values.updates === 'on'}, 'Account creation is not connected in this preview.');
   }
-  const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy.html':'/terms.html')}>{label}</a>;
+  const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy.html':'/terms.html')} target="_blank" rel="noopener">{label}</a>;
   return <PageShell scene="account" initialize={initialize} title={pageTitle}>
     <AccountMesh />
     <main className="shell"><div className="container">

@@ -67,13 +67,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
   const travel = (frameCount - 1) * 8;
   document.documentElement.style.setProperty('--travel', `${travel}px`);
   history.scrollRestoration = 'manual';
-  window.scrollTo(0, 0);
+  let restoreScroll = history.state?.sofacetWorldScroll || 0;
   let phase = 'opening';
   let desiredFrame = 0;
   let displayedFrame = 0;
   let interactive = false;
   let gameLoaded = false;
-  let waitingForGameDocument = false;
   let gameVisible = false;
   let scrollDirty = false;
   let wantedFrame = 0;
@@ -204,10 +203,12 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }
 
   function showGame() {
-    if (!gameLoaded || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1 || !cache.settled) return;
+    if (!gameLoaded || scrollFrame() !== frameCount - 1 || desiredFrame !== frameCount - 1 || displayedFrame !== frameCount - 1 || !cache.settled) return;
+    if(!history.state?.sofacetGame){
+      history.replaceState({...history.state,sofacetWorldScroll:travel-8},'');
+      history.pushState({...history.state,sofacetGame:true},'');
+    }
     status.hidden = true;
-    waitingForGameDocument = false;
-    window.sofacetGameLoader?.cancel();
     document.body.dataset.game = 'visible';
     document.title = 'SO/ FACET — Pinball';
     setGameVisibility(true);
@@ -292,13 +293,11 @@ export async function createSequence(setInteractive, requestFrame, media) {
     if (main.inert !== atEnd) main.inert = atEnd;
     if (displayedFrame === frameCount - 1 && cache.settled) {
       siteSound.handoff();
-      if (!gameLoaded) { waitingForGameDocument = true; window.sofacetGameLoader?.show(); }
       preloadGame();
       status.hidden = gameLoaded;
       status.textContent = 'Loading game…';
       showGame();
     } else {
-      if (waitingForGameDocument) { waitingForGameDocument = false; window.sofacetGameLoader?.cancel(); }
       siteSound.setActive(true);
       if (!status.hidden) status.hidden = true;
       if (document.body.hasAttribute('data-game')) {delete document.body.dataset.game;document.title = "SO/ FACET — What's yours?";}
@@ -317,7 +316,14 @@ export async function createSequence(setInteractive, requestFrame, media) {
     progress.style.transform = `scaleX(${displayedFrame / (frameCount - 1)})`;
   }
   const destroy = () => { nativeScheduler.destroy(); openingPlayback.destroy(); cache.destroy(); events.abort(); updateCopy.destroy(); frame.width = frame.height = 1; };
-  window.addEventListener('pagehide', event => { resetBufferPacing(); setGameVisibility(false); nativeScheduler.suspend(); event.persisted ? cache.suspend() : destroy(); }, {signal: events.signal});
+  window.addEventListener('pagehide', event => {
+    if(!gameVisible)history.replaceState({...history.state,sofacetWorldScroll:scrollY},'');
+    resetBufferPacing();setGameVisibility(false);nativeScheduler.suspend();event.persisted?cache.suspend():destroy();
+  }, {signal: events.signal});
+  window.addEventListener('popstate', event => {
+    if (event.state?.sofacetGame) window.scrollTo(0,travel);
+    else if (document.body.dataset.game==='visible') window.scrollTo(0,event.state?.sofacetWorldScroll || 0);
+  }, {signal: events.signal});
   window.addEventListener('pageshow', event => { if (event.persisted) { resetBufferPacing(); refreshFrame = true; nativeScheduler.resume(); cache.resume(); setGameVisibility(document.body.dataset.game === 'visible' && !document.hidden); scrollDirty = true; requestFrame(); } }, {signal: events.signal});
   status.hidden = true;
   await finishLoading();
@@ -327,6 +333,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
 
   return {
     tick(delta, hoverWeight) {
+      if(restoreScroll && phase==='idle'){window.scrollTo(0,history.state?.sofacetGame?travel:restoreScroll);restoreScroll=0;}
       paintedFrame = displayedFrame;
       nativeMotionReady = false;
       if (phase === 'opening') {
