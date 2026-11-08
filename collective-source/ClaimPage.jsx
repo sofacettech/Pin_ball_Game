@@ -23,6 +23,16 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
     window.scrollTo(0,0);
     heading?.setAttribute('tabindex','-1');
     heading?.focus({preventScroll:true});
+    // A fresh claim scene already runs its own opening wave.
+    const butterfly = page.current?.querySelector('.butterfly-position[data-flight="cyan"]');
+    if (butterfly && window.__startMeshWave) {
+      const bounds = butterfly.getBoundingClientRect();
+      window.__startMeshWave(
+        Math.max(0, Math.min(window.innerWidth - 1, bounds.left + bounds.width * .65)),
+        Math.max(0, Math.min(window.innerHeight - 1, bounds.top + bounds.height * .25)),
+        'opening'
+      );
+    }
   },[showConfirmation]);
   const [fullName,setFullName]=useState(name),[emailAddress,setEmail]=useState(email);
   const [mobile,setMobile] = useState(phone),[dial,setDial] = useState(dialCode),[otp,setOtp] = useState('');

@@ -161,7 +161,6 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   if(exit){
     const confirming=exit==='confirm',copy=confirming?leaveCopy(pending?.points||0):exitCopy;
     return brandText(<section className="auth-flow-notice reward-notice">
-      <iframe className="reward-notice-mesh" src="/assets/collective/meshes/rewards.html?theme=black" title="Interactive background"/>
       <RewardNoticeArtwork key={'art-'+exit}/>
       <React.Fragment key={exit}>
         <p>{confirming?'BEFORE YOU GO':'LAUNCHING IN DECEMBER'}</p>

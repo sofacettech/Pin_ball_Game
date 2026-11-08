@@ -1,6 +1,6 @@
 html.policy-root{background:#050505;color-scheme:dark;scroll-padding-top:calc(var(--site-header-clearance,78px) + 24px)}
 body.policy-page{margin:0;min-height:100vh;min-height:100svh;background:#050505;color:#f2efe9;font:400 16px/1.6 'Josefin Sans',serif;letter-spacing:normal;font-synthesis:none}
-body.policy-page>header{position:fixed;inset:0 0 auto;z-index:30;height:var(--site-header-clearance,78px);background:#050505}
+body.policy-page>header{position:fixed;inset:0 0 auto;z-index:30;height:var(--site-header-clearance,78px)}
 body.policy-page>.site-sound{position:static;display:flex;justify-content:flex-start;width:min(760px,calc(100% - 80px));margin:0 auto 32px;padding:0;font:400 13px/1.4 'Josefin Sans',sans-serif}
 .policy-main{position:static;inset:auto;display:block;overflow:visible;width:min(760px,calc(100% - 80px));margin:0 auto;padding:calc(var(--site-header-clearance,78px) + 36px) 0 88px}
 .policy-main .sf-legal{margin:0;padding:0;min-width:0;overflow-wrap:anywhere}
