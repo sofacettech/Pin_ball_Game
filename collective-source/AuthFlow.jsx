@@ -189,7 +189,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     </section>);
   }
   if(memberCheck!=='guest')return brandText(<section className="auth-flow-notice" role="status"><p>{memberCheck==='error'?"We couldn't load your SO/ COINS. Please try again.":memberCheck==='member'?'Opening your account…':'Checking your SO/ COINS…'}</p>{status&&memberCheck!=='error'&&<p>{status}</p>}{memberCheck==='error'&&<button onClick={()=>location.reload()}>Try again</button>}</section>);
-  const inlineSaved=step==='success'&&saved?.pointsSaved&&claimFirst;
+  const inlineSaved=step==='success'&&saved?.pointsSaved&&(claimFirst||restoredSaved.current?.pointsSaved===true);
   const confirmation=step==='success'?<SavedConfirmation saved={saved} status={status} onReplay={replay}/>:null;
   if(confirmation&&!inlineSaved)return confirmation;
   return <>
