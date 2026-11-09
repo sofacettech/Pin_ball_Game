@@ -3,6 +3,7 @@ import {mountRewardNoticeArtwork} from '../../collective-source/artwork/RewardNo
 import './post-game-rewards.css';
 import '../../collective-source/reward-notice.css';
 import {leaveCopy} from './player-copy';
+import {setScreenRoute,writeScreenData} from '../../site-routes.js';
 
 export type CompletedGameResult=Readonly<{points:number;rewardValue:number;completedAt:number;status:'completed';gameId?:string}>;
 export function captureGameResult(finalScore:number,gameId?:string):CompletedGameResult{
@@ -20,6 +21,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
  const placeFloor=()=>{if(current==='result')return;const actions=views[current].querySelector<HTMLElement>('.rewards-actions')!;if(dialog.open)dialog.style.setProperty('--rewards-floor-top',actions.offsetTop+actions.offsetHeight+12+'px')};
  const resize=new ResizeObserver(placeFloor);
  function setView(view:keyof typeof views){
+  if(view!=='leave')setScreenRoute(view==='result'?'/reward':'/exit',{replace:false});
   current=view;dialog.dataset.view=view;for(const [key,element] of Object.entries(views))element.hidden=key!==view;
   showNoticeArtwork(view==='result'?null:view);
   if(view==='result')scorePage.render(result!);else scorePage.clear();
@@ -40,7 +42,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
  }
  dialog.addEventListener('close',()=>{if(dialog.open)return;resize.disconnect();scorePage.clear?.();showNoticeArtwork(null);if(toggle.getAttribute('aria-expanded')==='true')toggle.click();document.body.prepend(header)});
  $('rewards-keep').onclick=register;
- $('rewards-leave-anyway').onclick=()=>{discarded=true;setView('exit')};$('rewards-exit-play').onclick=replay;$('rewards-exit-world').onclick=world;
+ $('rewards-leave-anyway').onclick=()=>{discarded=true;writeScreenData('reward',null);setView('exit')};$('rewards-exit-play').onclick=replay;$('rewards-exit-world').onclick=world;
  dialog.addEventListener('sofacet:page-ready',()=>{if(dialog.open&&current==='result'&&toggle.getAttribute('aria-expanded')!=='true')views.result.querySelector<HTMLElement>('h1')!.focus({preventScroll:true})});
  dialog.oncancel=event=>{event.preventDefault();if(current==='leave'){if(result)setView('result');else dialog.close()}else if(current==='result')leave()};
  document.addEventListener('click',event=>{
@@ -50,13 +52,14 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
   const url=new URL(link.href,location.href);if(!['http:','https:'].includes(url.protocol)||url.href===location.href)return;
   event.preventDefault();leave(url.href);
  },true);
- return{dialog,get result(){return result},
+ return{dialog,get result(){return discarded?null:result},
   show(finalScore?:number,gameId?:string){
    if(discarded)return;
-   if(!result){if(finalScore===undefined)return;result=captureGameResult(finalScore,gameId)}
+   if(!result){if(finalScore===undefined)return;result=captureGameResult(finalScore,gameId);writeScreenData('reward',result)}
    setView('result');
   },
-  discard(){discarded=true;result=null},
-  clear(){dialog.close();result=null;discarded=false;destination='/'},
+  showExit(){discarded=true;setView('exit')},
+  discard(){discarded=true;result=null;writeScreenData('reward',null)},
+  clear(){dialog.close();result=null;discarded=false;destination='/';writeScreenData('reward',null);setScreenRoute('/game')},
  };
 }

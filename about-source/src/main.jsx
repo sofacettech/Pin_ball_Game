@@ -164,7 +164,7 @@ function App() {
     <h2 id="closing-title" data-reveal style={{'--order':1}}><Wordmark/><span className="closing-question">So/ what’s yours?</span></h2>
     <div className="closing-actions" data-reveal style={{'--order':2}}>
       <a className="action-button" href="/" target="_top">Back to the world</a>
-      <a className="action-button action-primary" href="/play.html" target="_top">Play the game <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+      <a className="action-button action-primary" href="/game" target="_top">Play the game <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
     </div>
     <a className="text-link" href="#top" data-reveal style={{'--order':3}}>Back to the top <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></a>
   </section>

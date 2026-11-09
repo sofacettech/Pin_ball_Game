@@ -10,13 +10,14 @@ import './flow.css';
 import './reward-notice.css';
 import {brandText} from '../shared/brand-react.jsx';
 import {accountNavigationHref} from '../shared/account-session.js';
+import {readScreenData,writeScreenData,setScreenRoute} from '../site-routes.js';
 
 const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
 export function SavedConfirmation({saved,status='',onReplay}) {
   const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
   const [shareStatus,setShareStatus]=useState('');
-  const title='SO/ FACET — Pinball',url='https://shopsofacet.com/play.html';
+  const title='SO/ FACET — Pinball',url='https://shopsofacet.com/game';
   const text=saved?.pointsSaved?`${leaderboardName(saved.player?.display_name)} scored ${formatPoints(saved.score)} SO/ COINS in SO/ FACET Pinball. So/ what’s yours?`:'';
   const shareText=text+'\n'+url;
   const encode=encodeURIComponent;
@@ -32,12 +33,12 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
     {saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}
     <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn SO/ COINS.'}</p>
-    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms.html" target="_blank" rel="noopener">Terms apply.</a></p>}
+    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
-      <button type="button" onClick={onReplay??(()=>window.top.location.assign('/play.html'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
+      <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
       {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
-      <a href={accountNavigationHref('/account.html')} target="_top" onClick={event=>{if(embedded&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();post({type:'sofacet:visit-saved-account'});}}}>My SO/ COINS</a>
+      <a href={accountNavigationHref('/my-coins')} target="_top" onClick={event=>{if(embedded&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();post({type:'sofacet:visit-saved-account'});}}}>My SO/ COINS</a>
     </div>
     {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
       <h2 id={shareTitle}>Share my score</h2>
@@ -57,9 +58,20 @@ export function SavedConfirmation({saved,status='',onReplay}) {
 }
 export default function AuthFlow({pageTitle,pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
   const [tab,setTab]=useState(initialTab),[step,setStep]=useState(claimFirst&&!forceVerification?'claim':'identity'),[memberCheck,setMemberCheck]=useState(checkMembership?'checking':'guest');
-  const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(null),[saved,setSaved]=useState(null);
+  const restoredResult=useRef(!embedded&&claimFirst?pendingResult(readScreenData('reward')):null);
+  const restoredSaved=useRef(location.pathname==='/coins-saved'?readScreenData('saved'):null);
+  const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(restoredResult.current),[saved,setSaved]=useState(restoredSaved.current);
   const [challenge,setChallenge]=useState(null),[status,setStatus]=useState(''),[busy,setBusy]=useState(false),[config,setConfig]=useState(null),[resendAt,setResendAt]=useState(0),[seconds,setSeconds]=useState(0),[exit,setExit]=useState(null);
-  const pendingRef=useRef(null),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),mounted=useRef(true),destination=useRef('/'),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
+  const pendingRef=useRef(restoredResult.current),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),mounted=useRef(true),destination=useRef('/'),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
+  useEffect(()=>{
+    if(restoredSaved.current?.pointsSaved===true){setStep('success');setMemberCheck('guest');savedRef.current=true;}
+  },[]);
+  useEffect(()=>{
+    if(memberCheck!=='guest')return;
+    const route=exit==='left'?'/exit':step==='success'?'/coins-saved':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
+    if(exit==='confirm')return;
+    setScreenRoute(route);
+  },[memberCheck,step,tab,challenge,exit]);
   const exitHeading=useRef(null);
   useEffect(()=>{if(exit)exitHeading.current?.focus({preventScroll:true});},[exit]);
   completeRef.current=onComplete;backRef.current=onBack;
@@ -74,9 +86,9 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   useEffect(()=>{
     const abort=new AbortController();mounted.current=true;
     request('/api/membership/config',undefined,abort.signal).then(setConfig).catch(error=>{if(!abort.signal.aborted)setStatus(error.message);});
-    if(checkMembership)request('/api/player',undefined,abort.signal).then(player=>{
+    if(checkMembership&&!restoredSaved.current?.pointsSaved)request('/api/player',undefined,abort.signal).then(player=>{
       if(typeof player.member!=='boolean')throw Error('Your account could not be checked.');
-      if(player.member&&!forceVerification){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountNavigationHref('/account.html'));}
+      if(player.member&&!forceVerification){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountNavigationHref('/my-coins'));}
       else {setMemberCheck('guest');if(forceVerification){setTab('registered');setStatus('Please verify your phone again to save your SO/ COINS.');}}
     }).catch(error=>{if(!abort.signal.aborted){setMemberCheck('error');setStatus(error.message);}});
     const receive=event=>{
@@ -119,10 +131,12 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   async function complete(value) {
     if(value.player?.member!==true)throw Error('Your account could not be confirmed.');
     const score=pendingRef.current?.points??value.player.best_score??value.savedPoints;
-    savedRef.current=true;pendingRef.current=null;setSaved({...value,score});setStep('success');setResendAt(0);
+    const confirmation={...value,score};
+    savedRef.current=true;pendingRef.current=null;setSaved(confirmation);setStep('success');setResendAt(0);
+    writeScreenData('reward',null);if(value.pointsSaved)writeScreenData('saved',{pointsSaved:true,savedPoints:value.savedPoints,score,player:{member:true,display_name:value.player.display_name}});
     if(embedded)post({type:'contest-registration:complete',player:value.player});
     else if(completeRef.current)await completeRef.current(value);
-    else location.replace(accountNavigationHref(firstCut?'/first-cuts-confirmation.html':'/account.html'));
+    else location.replace(accountNavigationHref(firstCut?'/confirmation':'/my-coins'));
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);setDefaults(values);setDetails(profile);
@@ -156,7 +170,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,details,signal));
   function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
   const goBack=()=>{if(claimFirst&&embedded){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
-  const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/play.html');};
+  const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/game');};
   if(exit){
     const confirming=exit==='confirm',copy=confirming?leaveCopy(pending?.points||0):exitCopy;
     return brandText(<section className="auth-flow-notice reward-notice">
@@ -168,7 +182,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
         <div className="auth-flow-actions reward-notice-actions">
           {confirming?<><button onClick={()=>setExit(null)}>Save my SO/ COINS</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}
         </div>
-        {!confirming&&<><a className="auth-flow-updates" href={accountNavigationHref('/membership.html?from=collective')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}
+        {!confirming&&<><a className="auth-flow-updates" href={accountNavigationHref('/join')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}
       </React.Fragment>
     </section>);
   }

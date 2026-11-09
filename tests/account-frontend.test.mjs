@@ -15,7 +15,7 @@ test('frontend account preview uses existing membership fields and clears its ta
  writePreviewAccount({...account,name:'Asha Kapoor',leaderboardName:'Asha K.',email:'asha@example.test',marketingConsent:true});
  assert.equal(readPreviewAccount().leaderboardName,'Asha K.');
  assert.ok(![...storage.values()].join('').includes('123456'),'No verification code belongs in account storage');
- assert.match(accountSignInHref,/view=signin/);assert.doesNotMatch(accountSignInHref,/preview=/);
+ assert.equal(accountSignInHref,'/sign-in');assert.doesNotMatch(accountSignInHref,/preview=/);
  clearPreviewAccount();assert.equal(readPreviewAccount(),null);assert.equal(storage.size,0);
 });
 
@@ -42,8 +42,8 @@ test('international calling codes survive preview sign-in, account editing and t
 
 
 test('account navigation preserves explicit game context without leaking into website visits',()=>{
- assert.equal(accountNavigationHref('/account.html','?nav=game'),'/account.html?nav=game');
- assert.equal(accountNavigationHref('/membership.html?from=account','?nav=game'),'/membership.html?from=account&nav=game');
- assert.equal(accountNavigationHref('/account.html?view=signin&preview=1','?nav=game'),'/account.html?view=signin&preview=1&nav=game');
- for(const search of ['', '?from=account', '?nav=website', '?nav=https://example.test'])assert.equal(accountNavigationHref('/account.html',search),'/account.html');
+ assert.equal(accountNavigationHref('/account.html','?nav=game'),'/my-coins?nav=game');
+ assert.equal(accountNavigationHref('/membership.html?from=account','?nav=game'),'/join?from=account&nav=game');
+ assert.equal(accountNavigationHref('/account.html?view=signin&preview=1','?nav=game'),'/sign-in?preview=1&nav=game');
+ for(const search of ['', '?from=account', '?nav=website', '?nav=https://example.test'])assert.equal(accountNavigationHref('/account.html',search),'/my-coins');
 });

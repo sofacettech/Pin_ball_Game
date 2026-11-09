@@ -4,26 +4,100 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {withGameLoader} from '../scripts/game-loader-shell.mjs';
 const source=readFileSync(new URL('../loader-source/controller.js',import.meta.url),'utf8').replace('export function','function');
-function loader({reduced=false,embedded=false,parentOwnsCards=false,managed=false,images=[],cssReady=true}={}){
+function loader({reduced=false,embedded=false,parentOwnsCards=false,managed=false,images=[],cssReady=true,visited=false,chess=false,storageBlocked=false}={}){
  const timers=new Map(),renders=[],reports=[];let id=0;
  const node=()=>({hidden:false,dataset:{},style:{setProperty(){}},firstChild:{textContent:''},setAttribute(name,value){this[name]=value}});
- const root=node(),stage=node(),error=node(),status=node(),cards=node(),retry=node(),rootEvents=new EventTarget();
- cards.hidden=true;cards.querySelectorAll=()=>images;
+ const root=node(),stage=node(),error=node(),status=node(),cards=node(),progress=node(),retry=node(),rootEvents=new EventTarget();
+ const fill=node(),statement=node(),childWindow={},parentMessages=[];
+ progress.querySelector=selector=>({'.game-loading-fill':fill,'.game-loading-statement':statement}[selector]);
+ const storage=new Map(visited?[['sofacet-game-visited','1']]:[]);
+ const sessionStorage={getItem:key=>{if(storageBlocked)throw Error('Storage unavailable');return storage.get(key)??null},setItem(key,value){if(storageBlocked)throw Error('Storage unavailable');storage.set(key,value)}};
+ cards.hidden=true;cards.querySelectorAll=selector=>selector==='img'?images:[['Up Next:','Pinball'],['10 SO/ COINS = ₹1 OFF','SO/ FACET DIAMOND JEWELLERY'],['Score SO/ COINS.','Save them for<br>SO/ FACET diamond jewellery.']].map(lines=>({children:lines.map(innerHTML=>({innerHTML}))}));
  root.addEventListener=rootEvents.addEventListener.bind(rootEvents);root.dispatchEvent=rootEvents.dispatchEvent.bind(rootEvents);root.hasAttribute=name=>managed&&name==='data-managed';stage.inert=true;stage.dataset.ready='false';
- root.querySelector=selector=>({'#game-loader-cards-root':cards,'.loading-copy':status,'.game-loading-error':error,'[data-game-retry]':retry}[selector]);
+ root.querySelector=selector=>({'#game-loader-cards-root':cards,'.loading-copy':status,'.game-loading-progress':progress,'.game-loading-error':error,'[data-game-retry]':retry}[selector]);
  const document=new EventTarget(),window=new EventTarget();document.body={hasAttribute:name=>!managed&&name==='data-game-loading',removeAttribute(){}};document.hidden=false;
- document.getElementById=id=>({'game-loading-screen':root,stage,'game-loader-controller':{dataset:{gameEntry:''}},'game-loader-critical':{sheet:{}}}[id]);document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];
- const context={CustomEvent,window,document,parent:embedded?{}:window,location:{origin:'http://localhost',href:'http://localhost/play.html'+(parentOwnsCards?'?loader=parent':'')},URL,matchMedia:()=>({matches:reduced}),AbortController,ResizeObserver:class{observe(){}disconnect(){}},visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key),console:{error(){}},fetch:async(url,options)=>reports.push({url,...options}),renderCards:(element,active,run,onComplete)=>renders.push({element,active,run,onComplete})};
+ document.getElementById=id=>({'game-loading-screen':root,stage,'game-page':{contentWindow:childWindow},'game-loader-controller':{dataset:{gameEntry:''}},'game-loader-critical':{sheet:{}}}[id]);document.querySelectorAll=selector=>selector==='#stage'?[stage]:[];
+ const url=new URL('http://localhost/play.html');if(parentOwnsCards)url.searchParams.set('loader','parent');if(chess)url.searchParams.set('from','chess');
+ const context={CustomEvent,window,document,sessionStorage,parent:embedded?{postMessage:data=>parentMessages.push(data)}:window,location:{origin:'http://localhost',href:url.href},URL,matchMedia:()=>({matches:reduced}),AbortController,ResizeObserver:class{observe(){}disconnect(){}},visualViewport:null,addEventListener:window.addEventListener.bind(window),requestAnimationFrame:()=>++id,setTimeout:(callback,duration)=>{const key=++id;timers.set(key,{callback,duration});return key},clearTimeout:key=>timers.delete(key),console:{error(){}},fetch:async(url,options)=>reports.push({url,...options}),renderCards:(element,active,run,onComplete)=>renders.push({element,active,run,onComplete})};
  context.getComputedStyle=()=>({getPropertyValue:()=>cssReady?'1':''});
  vm.runInNewContext(source+';installGameLoader(renderCards)',context);
- return{api:window.sofacetGameLoader,root,stage,error,status,renders,reports,document,window,timers,finishCards(){renders.at(-1).onComplete()},flushFade(){for(const [key,timer]of timers)if(timer.duration<=400){timers.delete(key);timer.callback()}}};
+ return{api:window.sofacetGameLoader,root,stage,error,status,progress,fill,statement,childWindow,parentMessages,storage,renders,reports,document,window,timers,finishCards(){renders.at(-1).onComplete()},flushFade(){for(const [key,timer]of timers)if(timer.duration<=400){timers.delete(key);timer.callback()}}};
 }
+
+test('determinate progress never regresses and reaches 100 only when the game is ready',()=>{
+ const view=loader({visited:true});assert.match(view.statement.innerHTML,/Up Next:/);assert.equal(view.fill.style.transform,'scaleX(0)');
+ view.api.progress(42.4);assert.match(view.statement.innerHTML,/10 SO\/ COINS/);assert.equal(view.fill.style.transform,'scaleX(0.42)');
+ for(const value of [12,-1,NaN,Infinity])view.api.progress(value);
+ assert.equal(view.progress['aria-valuenow'],'42');
+ view.api.progress(100);assert.match(view.statement.innerHTML,/Score SO\/ COINS/);assert.equal(view.stage.inert,true);
+ view.api.ready();assert.match(view.statement.innerHTML,/Score SO\/ COINS/);assert.equal(view.fill.style.transform,'scaleX(1)');
+ view.flushFade();assert.equal(view.root.hidden,true);
+ const failed=loader({visited:true});failed.api.progress(35);failed.api.fail(Error('Missing asset'));failed.api.ready();failed.api.progress(100);
+ assert.equal(failed.progress['aria-valuenow'],'35');assert.equal(failed.error.hidden,false);
+});
+
+
+test('card statements change only after 33 and 66 percent, with the last held through readiness',()=>{
+ const view=loader({visited:true});
+ for(const [value,copy] of [[0,'Up Next:'],[33,'Up Next:'],[34,'10 SO/ COINS'],[66,'10 SO/ COINS'],[67,'Score SO/ COINS.'],[99,'Score SO/ COINS.']]){
+  view.api.progress(value);assert.ok(view.statement.innerHTML.includes(copy),String(value));
+ }
+ view.api.ready();assert.equal(view.progress['aria-valuenow'],'100');assert.match(view.statement.innerHTML,/Score SO\/ COINS/);
+ view.flushFade();view.api.show();assert.match(view.statement.innerHTML,/Up Next:/);
+});
+
+test('parent-owned game progress is forwarded only from the trusted game frame',()=>{
+ const child=loader({embedded:true,parentOwnsCards:true});child.api.progress(64);
+ assert.equal(child.parentMessages.at(-1).value,64);
+ const view=loader({managed:true,visited:true});view.api.show();
+ const send=(origin,source)=>view.window.dispatchEvent(Object.assign(new Event('message'),{origin,source,data:{type:'sofacet:game-load-progress',value:64}}));
+ send('https://other.invalid',view.childWindow);send('http://localhost',{});assert.match(view.statement.innerHTML,/Up Next:/);
+ send('http://localhost',view.childWindow);assert.match(view.statement.innerHTML,/10 SO\/ COINS/);
+});
+
+test('returning visitors get only a progress bar until the real table is ready',()=>{
+ const view=loader({visited:true});
+ assert.equal(view.root.dataset.loader,'progress');assert.equal(view.progress.hidden,false);
+ assert.equal(view.renders.length,0);assert.equal(view.stage.inert,true);assert.equal(view.root.hidden,false);
+ view.api.ready();view.flushFade();
+ assert.equal(view.root.hidden,true);assert.equal(view.stage.inert,false);assert.equal(view.stage.dataset.ready,'true');
+});
+
+test('the game is remembered only after the first cards and table have handed off',async()=>{
+ const view=loader();await Promise.resolve();
+ assert.equal(view.root.dataset.loader,'cards');assert.equal(view.progress.hidden,true);
+ view.api.ready();assert.equal(view.storage.get('sofacet-game-visited'),undefined);
+ view.finishCards();assert.equal(view.storage.get('sofacet-game-visited'),'1');view.flushFade();
+ view.api.show();assert.equal(view.root.dataset.loader,'progress');assert.equal(view.progress.hidden,false);
+});
+
+test('the chess-room story retains cards even after an earlier game visit',async()=>{
+ for(const options of [{managed:true},{chess:true}]){
+  const view=loader({...options,visited:true});if(options.managed)view.api.show({story:true});await Promise.resolve();
+  assert.equal(view.root.dataset.loader,'cards');assert.equal(view.progress.hidden,true);
+  view.api.ready();assert.equal(view.root.hidden,false);view.finishCards();view.flushFade();assert.equal(view.root.hidden,true);
+ }
+});
+
+test('secondary pages use progress on return while a parent-owned game has no second loader',()=>{
+ const page=loader({managed:true,visited:true});assert.equal(page.renders.length,0);page.api.show();
+ assert.equal(page.root.dataset.loader,'progress');assert.equal(page.renders.length,0);
+ const child=loader({embedded:true,parentOwnsCards:true,visited:true});
+ assert.equal(child.progress.hidden,true);assert.equal(child.renders.length,0);child.api.ready();child.flushFade();assert.equal(child.root.hidden,true);
+});
+
+test('progress loading keeps retry errors and blocked storage cannot break the game',async()=>{
+ const returning=loader({visited:true});returning.api.fail(Error('Asset unavailable'));
+ assert.equal(returning.progress.hidden,true);assert.equal(returning.error.hidden,false);assert.equal(returning.root.dataset.state,'error');
+ const first=loader({storageBlocked:true});await Promise.resolve();first.api.ready();first.finishCards();first.flushFade();
+ assert.equal(first.stage.dataset.ready,'true');assert.equal(first.root.hidden,true);
+});
 test('all generated shells contain the approved React card artwork and replace the old ball',()=>{
  const shell=withGameLoader('<html><head></head><body></body></html>',{game:true,entry:'./assets/game.js'});
- assert.match(shell,/data-game-entry="\.\/assets\/game.js"/);assert.match(shell,/game-loader-cards-root/);assert.doesNotMatch(shell,/<canvas|loading-statement/);assert.equal((shell.match(/class="sofacet-card"/g)||[]).length,3);
+ assert.match(shell,/data-game-entry="\.\/assets\/game.js"/);assert.match(shell,/game-loader-cards-root/);assert.doesNotMatch(shell,/<canvas|id="loading-statement"/);assert.equal((shell.match(/class="sofacet-card"/g)||[]).length,3);
  assert.equal((withGameLoader(shell,{game:true,entry:'./assets/game.js'}).match(/id="game-loading-screen"/g)||[]).length,1);
  for(const file of ['index.html','play.html','about.html','account.html','faq.html','membership.html','privacy.html','terms.html','launching-soon.html','first-cuts-confirmation.html','entrance-3d.html']){
-  const html=readFileSync(new URL('../'+file,import.meta.url),'utf8'),markup=html.match(/<!-- game-loader-body -->([\s\S]*?)<!-- \/game-loader-body -->/)?.[1];assert.match(markup,/game-loader-cards-root/,file);assert.doesNotMatch(markup,/<canvas|loading-statement/,file);
+  const html=readFileSync(new URL('../'+file,import.meta.url),'utf8'),markup=html.match(/<!-- game-loader-body -->([\s\S]*?)<!-- \/game-loader-body -->/)?.[1];assert.match(markup,/game-loader-cards-root/,file);assert.doesNotMatch(markup,/<canvas|id="loading-statement"/,file);
  }
 });
 test('handoff waits for both the table and the three cards, in either order',async()=>{

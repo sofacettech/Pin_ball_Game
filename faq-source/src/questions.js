@@ -127,7 +127,7 @@ export const sections = [
         "question": "What do you do with my details?",
         "answer": [
           "We use them to save your SO/ COINS, run the leaderboard and tell you about our launch. We don't sell your personal information. Our ",
-          {"href":"/privacy.html","text":"Privacy Policy"},
+          {"href":"/privacy","text":"Privacy Policy"},
           " has the full detail."
         ]
       },
@@ -135,7 +135,7 @@ export const sections = [
         "question": "How do I stop updates or delete my data?",
         "answer": [
           "Sign in to ",
-          {"href":"/account.html","text":"My SO/ COINS"},
+          {"href":"/my-coins","text":"My SO/ COINS"},
           ", or email us at ",
           {
             "href": "mailto:privacy@sofacet.com",

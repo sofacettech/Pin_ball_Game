@@ -5,6 +5,7 @@ import {BrandText} from '../../assets/brand-text.jsx';
 import {brandText} from '../../shared/brand-react.jsx';
 import {sections} from './questions';
 import './style.css';
+import {setScreenRoute} from '../../site-routes.js';
 
 const topics = [
   {...sections[0], icon: 'basics.png', alias: 'basics'},
@@ -13,6 +14,7 @@ const topics = [
   {id: 'contact', navTitle: 'Contact us', alias: 'contact'},
 ];
 const topicFromHash = () => {
+  if(location.pathname==='/contact')return 'contact';
   const hash = location.hash.slice(1);
   if (!hash || hash === 'faqs') return null;
   return topics.find(topic => [topic.id, 'topic-'+topic.alias, 'faq-'+topic.alias].includes(hash))?.id;
@@ -41,23 +43,23 @@ function Footer({mobile, onTopic}) {
   return <footer className="site-footer">
     <div className="footer-inner">
       <section className="collective-invite" aria-label="Join the SO/ COLLECTIVE">
-        <a href="/membership.html?from=collective" target="_top">JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a>
+        <a href="/join" target="_top">JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a>
       </section>
       <div className="footer-menu">
         <FooterColumn title="Customer" mobile={mobile}>
-          <li><a href="#contact" onClick={event => topicLink(event,'contact')}>Contact us</a></li>
+          <li><a href="/contact" onClick={event => topicLink(event,'contact')}>Contact us</a></li>
           <li><a href="mailto:hello@sofacet.com">Email us</a></li>
-          <li><a href="#faqs" onClick={event => topicLink(event,null)}>Help &amp; FAQs</a></li>
+          <li><a href="/how-coins-work" onClick={event => topicLink(event,null)}>Help &amp; FAQs</a></li>
         </FooterColumn>
         <FooterColumn title="Our company" mobile={mobile}>
-          <li><a href="/about.html" target="_top"><BrandText>About SO/ FACET</BrandText></a></li>
-          <li><a href="#game-and-points" onClick={event => topicLink(event,'game-and-points')}>The game &amp; your SO/ COINS</a></li>
-          <li><a href="#your-details" onClick={event => topicLink(event,'your-details')}>Your details</a></li>
+          <li><a href="/about" target="_top"><BrandText>About SO/ FACET</BrandText></a></li>
+          <li><a href="/how-coins-work#game-and-points" onClick={event => topicLink(event,'game-and-points')}>The game &amp; your SO/ COINS</a></li>
+          <li><a href="/how-coins-work#your-details" onClick={event => topicLink(event,'your-details')}>Your details</a></li>
         </FooterColumn>
         <FooterColumn title="Legal and privacy" mobile={mobile}>
-          <li><a href="/terms.html">Terms</a></li>
-          <li><a href="/privacy.html">Privacy</a></li>
-          <li><a href="/privacy.html#privacy-9-cookies-pixels-and-similar-technologies" data-cookie-settings>Cookie settings</a></li>
+          <li><a href="/terms">Terms</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/privacy#privacy-9-cookies-pixels-and-similar-technologies" data-cookie-settings>Cookie settings</a></li>
           <li><a href="mailto:privacy@sofacet.com">Data requests</a></li>
         </FooterColumn>
         <section className="footer-social">
@@ -74,7 +76,7 @@ function Footer({mobile, onTopic}) {
       </div>
       <div className="footer-bottom">
         <div className="footer-contact"><span>Still have a question?</span><a href="mailto:hello@sofacet.com">hello@sofacet.com</a></div>
-        <a className="pinball" href="/play.html" target="_top">Play Pinball <span aria-hidden="true">→</span></a>
+        <a className="pinball" href="/game" target="_top">Play Pinball <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </footer>;
@@ -89,6 +91,7 @@ function App() {
   const buttons = useRef([]);
 
   useEffect(() => {
+    if(topicFromHash()==='contact'&&location.pathname!=='/contact')setScreenRoute('/contact');
     const media = matchMedia('(max-width: 700px)');
     const resize = event => setMobile(event.matches);
     const hash = () => {
@@ -114,10 +117,10 @@ function App() {
 
   function select(id,fromFooter=false) {
     setSelected(id);
-    const hash = '#'+(id || 'faqs');
-    if (location.hash !== hash) {
-      if (window.sofacetGameInfo) window.sofacetGameInfo.visit(location.pathname+location.search+hash);
-      else history.pushState(history.state,'',hash);
+    const href=(id==='contact'?'/contact':'/how-coins-work')+location.search+(id&&id!=='contact'?'#'+id:'');
+    if (location.pathname+location.search+location.hash !== href) {
+      if (window.sofacetGameInfo) window.sofacetGameInfo.visit(href);
+      else history.pushState(history.state,'',href);
     }
     if (fromFooter) {
       main.current.focus({preventScroll:true});

@@ -41,7 +41,7 @@ export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',poin
     if (showValidation(form, validateAccount(values), create.setMessage)) return;
     void create.submit(onCreateAccount, {...values, terms:values.terms === 'on', updates:values.updates === 'on'}, 'Account creation is not connected in this preview.');
   }
-  const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy.html':'/terms.html')} target="_blank" rel="noopener">{label}</a>;
+  const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy':'/terms')} target="_blank" rel="noopener">{label}</a>;
   return <PageShell scene="account" initialize={initialize} title={pageTitle}>
     <AccountMesh />
     <main className="shell"><div className="container">
@@ -53,13 +53,13 @@ export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',poin
       </nav>
       <section aria-labelledby="registered-tab" className="panel login-panel" id="registered-panel" role="tabpanel" hidden={tab !== 'registered'}>
         <p className="intro stagger">Sign in with the mobile number you saved your SO/ COINS with.</p>
-        {pointsContext&&<a className="points-play" href={accountNavigationHref('/play.html')}>New here? Play pinball to earn SO/ COINS →</a>}
+        {pointsContext&&<a className="points-play" href={accountNavigationHref('/game')}>New here? Play pinball to earn SO/ COINS →</a>}
         <form id="login-form" noValidate onSubmit={signIn}>
           <div className="field-group stagger"><label className="field-title" htmlFor="login-phone">Mobile number</label><input ref={phone} autoComplete="tel-national" className="text-line" id="login-phone" inputMode="tel" name="phone" pattern="[+0-9 ()-]{7,22}" defaultValue={defaults.phone || ''} required type="tel" /></div>
           <div className="field-group stagger"><label className="field-title" htmlFor="login-otp">Code</label><div className="otp-grid"><input autoComplete="one-time-code" className="text-line" id="login-otp" inputMode="numeric" maxLength={6} name="otp" pattern="[0-9]{6}" required type="text" /><button className="small-button" id="generate" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>SEND CODE</button></div></div>
           <div className="stagger"><button className="under-link" id="resend" type="button" onClick={requestCode} disabled={login.busy || working || resendSeconds > 0}>{resendSeconds > 0 ? 'Resend code in ' + resendSeconds + 's' : 'Resend code'}</button><p className="privacy-text">How we use your details: {policyLink('Privacy Policy',privacyUrl)}</p><button className="cta" type="submit" disabled={login.busy || working}>{login.busy || working ? 'PLEASE WAIT…' : 'SIGN IN'} <Arrow /></button><p aria-live="polite" className="feedback" id="login-feedback" role="status">{status || login.message}</p></div>
         </form>
-        {pointsContext&&<div className="points-notes"><p>No password to remember.</p><p>Your best score stays yours.</p><a href={accountNavigationHref('/faq.html')}>HOW SO/ COINS WORK</a></div>}
+        {pointsContext&&<div className="points-notes"><p>No password to remember.</p><p>Your best score stays yours.</p><a href={accountNavigationHref('/how-coins-work')}>HOW SO/ COINS WORK</a></div>}
       </section>
       <section aria-labelledby="create-tab" className="panel create-panel" hidden={tab !== 'create'} id="create-panel" role="tabpanel">
         <form id="create-form" noValidate onSubmit={createAccount}>
