@@ -7,6 +7,7 @@ export function AboutPage(){
  const page=useRef(null);
  useLayoutEffect(()=>initializeAbout(page.current),[]);
  return <div className="about-explore" ref={page}>
+<div className="about-mesh" aria-hidden="true"><canvas/></div>
 
 <a className="skip-link" href="#main">Skip to content</a>
 
@@ -14,7 +15,7 @@ export function AboutPage(){
 <main id="main">
   <section className="intro scene" aria-labelledby="intro-title">
     <p className="intro-label" data-reveal>About <span className="wordmark inline-wordmark">SO/ FACET</span></p>
-    <h1 id="intro-title" data-reveal style={{"--order": "1"}}><span>Diamonds,</span><span>made for who you are.</span></h1>
+    <h1 id="intro-title" data-reveal style={{"--order": "1"}}><span>Diamonds,</span><span><span data-mesh-start>m</span>ade for who you are.</span></h1>
     <p className="intro-copy" data-reveal style={{"--order": "2"}}><span className="wordmark inline-wordmark">SO/ FACET</span> is a lab-grown diamond jewellery house from India. Real diamonds, grown.</p>
   </section>
 

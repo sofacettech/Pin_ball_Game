@@ -1,11 +1,25 @@
 import content from './content.json';
 import {createAnimationScope} from '../../collective-source/animation-scope.js';
+import {mountScoreMesh} from '../../game-source/src/score-mesh.js';
 export function initializeAbout(contentRoot){
  const scope=createAnimationScope(contentRoot);
  const {document,window,matchMedia,IntersectionObserver,requestAnimationFrame,addEventListener}=scope;
 const config = content;
   const root = document.documentElement;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const meshLayer = root.querySelector('.about-mesh');
+  const mesh = mountScoreMesh(meshLayer,()=>{},{backgroundColor:'#050505',ambient:false});
+  let meshActive=true,openingStarted=false;
+  function startOpeningMesh(line){
+    if(!meshActive||openingStarted||!mesh||reducedMotion.matches)return;
+    const letter=line.querySelector('[data-mesh-start]')?.getBoundingClientRect();
+    if(!letter)return;
+    const bounds=meshLayer.getBoundingClientRect();
+    const x=letter.left-bounds.left,y=letter.top+letter.height/2-bounds.top;
+    openingStarted=true;
+    meshLayer.dataset.waveOrigin=`${x},${y}`;meshLayer.dataset.waveCount='1';
+    mesh.start(x,y,'opening');
+  }
   const images = [...document.querySelectorAll('img[data-image]')];
   for (const img of images) {
     const replacement = config.images[img.dataset.image];
@@ -34,6 +48,7 @@ const config = content;
     const animation = element.animate(frames, {duration, delay, easing: motionEase, fill: 'backwards'});
     liveAnimations.add(animation);
     animation.finished.then(() => liveAnimations.delete(animation), () => liveAnimations.delete(animation));
+    return animation;
   }
   function slide(element, delay = 0) {
     arrival(element, [{opacity: 0, transform: 'translateX(-42px)'}, {opacity: 1, transform: 'translateX(0)'}], delay);
@@ -45,8 +60,11 @@ const config = content;
     if (reducedMotion.matches) return;
     if (section.matches('.intro')) {
       slide(section.querySelector('.intro-label'));
-      section.querySelectorAll('h1>span').forEach((line, index) => arrival(line,
-        [{opacity: .1, clipPath: 'inset(0 100% 0 0)', transform: 'translateX(-42px)'}, {opacity: 1, clipPath: 'inset(0)', transform: 'translateX(0)'}], 120 + index * 120));
+      section.querySelectorAll('h1>span').forEach((line, index) => {
+        const animation=arrival(line,
+        [{opacity: .1, clipPath: 'inset(0 100% 0 0)', transform: 'translateX(-42px)'}, {opacity: 1, clipPath: 'inset(0)', transform: 'translateX(0)'}], 120 + index * 120);
+        if(index===1)animation?.finished.then(()=>startOpeningMesh(line),()=>{});
+      });
       slide(section.querySelector('.intro-copy'), 420);
     } else if (section.matches('.opening-image')) {
       arrival(section.querySelector('.image-window'),
@@ -196,5 +214,5 @@ const config = content;
     if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) soon.close();
   });
   soon.addEventListener('close', () => soonOpener?.focus({ preventScroll: true }));
- return ()=>{contentRoot.getAnimations({subtree:true}).forEach(animation=>animation.cancel());scope.dispose();};
+ return ()=>{meshActive=false;mesh?.dispose();contentRoot.getAnimations({subtree:true}).forEach(animation=>animation.cancel());scope.dispose();};
 }
