@@ -10,7 +10,7 @@ import './flow.css';
 import './reward-notice.css';
 import {brandText} from '../shared/brand-react.jsx';
 import {accountNavigationHref} from '../shared/account-session.js';
-import {readScreenData,writeScreenData,setScreenRoute} from '../site-routes.js';
+import {readScreenData,writeScreenData,setScreenRoute,registrationScreenRoute} from '../site-routes.js';
 
 const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
@@ -57,6 +57,7 @@ export function SavedConfirmation({saved,status='',onReplay}) {
   </section>);
 }
 export default function AuthFlow({pageTitle,pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
+  const fromAccount=useRef(new URLSearchParams(location.search).get('from')==='account');
   const [tab,setTab]=useState(initialTab),[step,setStep]=useState(claimFirst&&!forceVerification?'claim':'identity'),[memberCheck,setMemberCheck]=useState(checkMembership?'checking':'guest');
   const restoredResult=useRef(!embedded&&claimFirst?pendingResult(readScreenData('reward')):null);
   const restoredSaved=useRef(location.pathname==='/coins-saved'?readScreenData('saved'):null);
@@ -68,9 +69,8 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   },[]);
   useEffect(()=>{
     if(memberCheck!=='guest')return;
-    const route=exit==='left'?'/exit':step==='success'?'/coins-saved':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
-    if(exit==='confirm')return;
-    setScreenRoute(route);
+    const route=registrationScreenRoute({step,tab,challenge,exit,fromAccount:fromAccount.current});
+    if(route)setScreenRoute(route);
   },[memberCheck,step,tab,challenge,exit]);
   const exitHeading=useRef(null);
   useEffect(()=>{if(exit)exitHeading.current?.focus({preventScroll:true});},[exit]);
