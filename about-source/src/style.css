@@ -6,8 +6,10 @@
 :root{--paper:#050505;--ink:#f3f0eb;--muted:#aaa9a7;--line:#a8a4ac;--purple:#cbb8dc;--ease:cubic-bezier(.2,.75,.2,1);color-scheme:dark;font-synthesis:none}
 #about-root *{box-sizing:border-box}
 #about-root .about-explore{position:relative;isolation:isolate}
-#about-root .about-mesh{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;background:#050505}
+#about-root .about-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#050505}
 #about-root .about-mesh canvas{display:block;width:100%;height:100%}
+#about-root .about-explore>main{position:relative;z-index:1}
+#about-root :is(.opening-pin,.philosophy-image,.image-button){background:var(--paper)}
 html{scroll-behavior:smooth;scroll-padding-top:110px;scrollbar-color:#716b76 var(--paper);scrollbar-width:thin}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.5 BrilliantRegular,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 body:has(dialog[open]){overflow:hidden}

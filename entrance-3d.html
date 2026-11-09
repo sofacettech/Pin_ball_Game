@@ -23,7 +23,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=c7edc88f8352">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  <style data-shared-style="./style.css?v=ca1148872646">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--post-game-content-top:124px}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 5px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -117,6 +117,7 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 :root body #game-header .skip-game:focus-visible::before,
 :root #journey-resume:focus-visible::before{inset:2px}
 :root #journey-resume{width:264px;max-width:calc(100% - 40px)}
+:root #journey-resume[hidden]{display:none}
 @media(max-width:600px){
  :root body :is(.site-nav,.site-navigation) .play-now,
  :root body #game-header .skip-game{width:154px;padding-inline:12px;font-size:13px;letter-spacing:.025em}
@@ -138,6 +139,31 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
  :root body #game-header .skip-game::before,
  :root #journey-resume::before{transition:none}
 }
+@media(max-width:600px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:128px;height:32px;min-height:32px;padding-inline:10px;font-size:12px;transform:scale(.72);transform-origin:right center}
+ :root #journey-resume{height:32px;min-height:32px;transform:translate(-50%,-50%) scale(.72);transform-origin:center}
+}
+@media(max-width:360px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:118px}
+}
+@media(max-width:340px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:96px;padding-inline:4px}
+}
+:root body :is(.site-nav,.site-navigation) .play-now,
+:root body :is(.site-nav,.site-navigation) .play-now:is(:hover,:focus-visible),
+:root body #game-header .skip-game,
+:root body #game-header .skip-game:is(:hover,:focus-visible),
+:root #journey-resume,
+:root #journey-resume:is(:hover,:focus-visible){color:#000}
+:root body :is(.site-nav,.site-navigation) .play-now::before,
+:root body #game-header .skip-game::before,
+:root #journey-resume::before{background:#f6f2ff}
+:root body :is(.site-nav,.site-navigation) .play-now:is(:hover,:focus-visible)::before,
+:root body #game-header .skip-game:is(:hover,:focus-visible)::before,
+:root #journey-resume:is(:hover,:focus-visible)::before{background:#e5d8f3}
 
 :root{font-family:'Josefin Sans',sans-serif;color:#f6f2ff;background:#0b1022;color-scheme:dark;font-synthesis:none;--travel:15912px}
 *{box-sizing:border-box}

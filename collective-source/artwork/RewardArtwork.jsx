@@ -5,5 +5,5 @@ export function RewardArtwork() {
 }
 
 export function RewardMesh() {
-  return (<iframe className="mesh-layer" aria-label="Interactive background" src="/assets/collective/meshes/rewards.html?v=no-hints-20261106"></iframe>);
+  return (<iframe className="mesh-layer" aria-label="Interactive background" src="/assets/collective/meshes/rewards.html?v=logo-cursor-20261110"></iframe>);
 }

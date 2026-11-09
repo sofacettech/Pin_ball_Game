@@ -36,7 +36,7 @@ function JoinDialog({open, onClose, onJoin}) {
   </dialog>;
 }
 
-export default function LaunchPage({onJoin, onPlay, isMember=false, checkingMember=false}) {
+export default function LaunchPage({onJoin, onPlay}) {
   const [joinOpen, setJoinOpen] = useState(()=>location.hash==='#join');
   useEffect(()=>{const update=()=>setJoinOpen(location.hash==='#join');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
   function closeJoin(){setJoinOpen(false);if(location.hash==='#join')history.replaceState(null,'',location.pathname+location.search);}
@@ -47,10 +47,10 @@ export default function LaunchPage({onJoin, onPlay, isMember=false, checkingMemb
       <h1><span>Your diamond</span><em>is being cut.</em></h1>
       <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> JOIN THE SO/ COLLECTIVE for updates and early access, before anyone else.</p>
       <div className="action-group">
-        <button className="join-button" type="button" disabled={checkingMember} aria-busy={checkingMember} onClick={() => {
-          const href=accountNavigationHref(isMember?'/notify':'/join');
+        <button className="join-button" type="button" onClick={() => {
+          const href=accountNavigationHref('/notify');
           if(window.sofacetGameInfo)window.sofacetGameInfo.visit(href);else window.top.location.assign(href);
-        }}><span>{isMember?'Notify me':'JOIN THE SO/ COLLECTIVE'}</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
+        }}><span>Notify me</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball is unavailable'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>
       </div>
     </div></section></main>

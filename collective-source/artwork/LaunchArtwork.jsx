@@ -5,5 +5,5 @@ export function LaunchArtwork() {
 }
 
 export function LaunchMesh() {
-  return (<iframe className="mesh-layer" aria-label="Interactive background" src="/assets/collective/meshes/launch.html?v=no-hints-20261106"></iframe>);
+  return (<iframe className="mesh-layer" aria-label="Interactive background" src="/assets/collective/meshes/launch.html?v=logo-cursor-20261110"></iframe>);
 }
