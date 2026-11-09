@@ -1,0 +1,77 @@
+{
+  "images": {
+    "hero": {
+      "src": "/assets/about/campaign/campaign-1.webp",
+      "alt": "Campaign portrait with a diamond ring and reflective glove.",
+      "position": "50% 44%",
+      "caption": "Diamonds, made for who you are.",
+      "width": 1800,
+      "height": 2234
+    },
+    "philosophy": {
+      "src": "/assets/about/campaign/campaign-2.webp",
+      "alt": "Detail of the campaign model’s diamond bracelet.",
+      "position": "50% 70%",
+      "caption": "A small detail. A personal signature.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection1": {
+      "src": "/assets/about/campaign/campaign-1.webp",
+      "alt": "Campaign portrait with a diamond ring and reflective glove.",
+      "position": "50% 50%",
+      "caption": "Diamonds, made for who you are.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection2": {
+      "src": "/assets/about/campaign/campaign-3.webp",
+      "alt": "Campaign portrait with a star-shaped ring and reflective cuff.",
+      "position": "50% 50%",
+      "caption": "For every side of you.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection3": {
+      "src": "/assets/about/campaign/campaign-2.webp",
+      "alt": "Campaign portrait with a diamond bracelet.",
+      "position": "50% 50%",
+      "caption": "A small detail. A personal signature.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection4": {
+      "src": "/assets/about/campaign/campaign-4.webp",
+      "alt": "Campaign portrait with flower-shaped diamond earrings.",
+      "position": "50% 50%",
+      "caption": "Bloom in your own way.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection5": {
+      "src": "/assets/about/campaign/campaign-5.webp",
+      "alt": "Campaign portrait with a rectangular diamond pendant necklace.",
+      "position": "50% 50%",
+      "caption": "Real diamonds, grown.",
+      "width": 1800,
+      "height": 2234
+    },
+    "collection6": {
+      "src": "/assets/about/campaign/campaign-6.webp",
+      "alt": "Campaign portrait with a circular diamond pendant necklace.",
+      "position": "50% 50%",
+      "caption": "So/ what’s yours?",
+      "width": 1800,
+      "height": 2234
+    }
+  },
+  "links": {
+    "world": "/",
+    "game": "/game"
+  },
+  "motion": {
+    "imageDelay": 120,
+    "imageDuration": 1100,
+    "scrollScenes": false
+  }
+}
