@@ -122,7 +122,7 @@ function preparePage2Flights(art,reduced){
   const stage=art.querySelector('.art-stage').getBoundingClientRect(),r=node.getBoundingClientRect(),style=getComputedStyle(node);
   const hx=parseFloat(style.getPropertyValue('--hinge-x'))/100,hy=parseFloat(style.getPropertyValue('--hinge-y'))/100;
   if(node.dataset.flight==='yellow'){
-   const heading=document.querySelector('.claim-invitation'),range=document.createRange();range.selectNodeContents(heading);const text=range.getBoundingClientRect(),style=getComputedStyle(heading),transform=new DOMMatrixReadOnly(style.transform==='none'?undefined:style.transform);
+   const heading=document.querySelector('.claim-invitation')||document.querySelector('.claim-confirmation h1'),range=document.createRange();range.selectNodeContents(heading);const text=range.getBoundingClientRect(),style=getComputedStyle(heading),transform=new DOMMatrixReadOnly(style.transform==='none'?undefined:style.transform);
    const x=clamp(text.right-transform.m41+clamp(innerWidth*.019,26,50),r.width*hx+12,innerWidth-r.width*(1-hx)-14);
    const y=text.bottom-transform.m42-4;
    node.style.left=(x-stage.left-r.width*hx)+'px';node.style.top=(y-stage.top-r.height*hy)+'px';

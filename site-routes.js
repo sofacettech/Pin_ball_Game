@@ -31,6 +31,12 @@ export function canonicalHref(href){
  return url.pathname+url.search+url.hash;
 }
 
+export function registrationScreenRoute({step,tab,challenge,exit,fromAccount=false}){
+ if(exit==='confirm')return null;
+ const route=exit==='left'?'/exit':step==='success'?'/coins-saved':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
+ return fromAccount&&['/join','/verify','/sign-in'].includes(route)?route+'?from=account':route;
+}
+
 export function setScreenRoute(href,{replace=true}={}){
  const route=canonicalHref(href),host=window.top;
  if(window!==host&&(window.name==='sofacet-game-info'||window.frameElement?.id==='registration-frame')){
