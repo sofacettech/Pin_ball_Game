@@ -60,3 +60,56 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 @media(max-width:700px){body[data-menu-open] .site-sound{visibility:hidden;pointer-events:none}}
 #game-info-dialog{position:fixed;inset:0;margin:0;padding:0;border:0;width:100%;height:100%;max-width:none;max-height:none;background:#090710;overflow:hidden}
 #game-info-dialog iframe{display:block;width:100%;height:100%;border:0;background:#090710}
+
+/* Shared faceted actions: the frame follows the same two cut corners on every page. */
+:root body :is(.site-nav,.site-navigation) .play-now,
+:root body #game-header .skip-game,
+:root #journey-resume{
+ box-sizing:border-box;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;
+ width:180px;height:40px;min-height:40px;padding:0 16px;border:0;border-radius:0;
+ background:#a18db7;color:#f3eef8;font-family:'Josefin Sans',sans-serif;font-size:12px;
+ font-weight:600;line-height:1;letter-spacing:.07em;text-transform:uppercase;text-align:center;
+ white-space:nowrap;text-decoration:none;cursor:pointer;
+ clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+ transition:background .3s ease,color .3s ease;
+}
+:root body :is(.site-nav,.site-navigation) .play-now,
+:root body #game-header .skip-game{position:relative}
+:root body :is(.site-nav,.site-navigation) .play-now::before,
+:root body #game-header .skip-game::before,
+:root #journey-resume::before{
+ content:'';position:absolute;z-index:-1;inset:1px;background:#110b19;
+ clip-path:polygon(7.5px 0,100% 0,100% calc(100% - 7.5px),calc(100% - 7.5px) 100%,0 100%,0 7.5px);
+ transition:background .3s ease;
+}
+:root body :is(.site-nav,.site-navigation) .play-now:is(:hover,:focus-visible),
+:root body #game-header .skip-game:is(:hover,:focus-visible),
+:root #journey-resume:is(:hover,:focus-visible){background:#d6b0f5;color:#f3eef8;outline:none}
+:root body :is(.site-nav,.site-navigation) .play-now:is(:hover,:focus-visible)::before,
+:root body #game-header .skip-game:is(:hover,:focus-visible)::before,
+:root #journey-resume:is(:hover,:focus-visible)::before{background:#271533}
+:root body :is(.site-nav,.site-navigation) .play-now:focus-visible::before,
+:root body #game-header .skip-game:focus-visible::before,
+:root #journey-resume:focus-visible::before{inset:2px}
+:root #journey-resume{width:264px;max-width:calc(100% - 40px)}
+@media(max-width:600px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:154px;padding-inline:12px;font-size:13px;letter-spacing:.025em}
+ :root #journey-resume{font-size:12px;letter-spacing:.055em}
+}
+@media(max-width:360px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:134px;padding-inline:8px;font-size:12px}
+}
+@media(max-width:340px){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game{width:100px;padding-inline:6px;margin-right:0}
+}
+@media(prefers-reduced-motion:reduce){
+ :root body :is(.site-nav,.site-navigation) .play-now,
+ :root body #game-header .skip-game,
+ :root #journey-resume,
+ :root body :is(.site-nav,.site-navigation) .play-now::before,
+ :root body #game-header .skip-game::before,
+ :root #journey-resume::before{transition:none}
+}

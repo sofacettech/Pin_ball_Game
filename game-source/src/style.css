@@ -1,4 +1,4 @@
-@import '../../assets/navigation.css?v=40e21131e43d';
+@import '../../assets/navigation.css?v=ec616fc8924a';
 :root{font-family:'Josefin Sans',ui-sans-serif,system-ui,sans-serif;color:#ede4f8;background:#100b16;color-scheme:dark;font-synthesis:none;--accent:#d9ed37;--muted:#bdb1cc}
 #game-menu{width:min(380px,calc(100% - 32px));padding:28px;background:#16101e;color:inherit;border:1px solid #554466;border-radius:8px;text-align:left}
 #game-menu::backdrop{background:#08050d99}#game-menu h2{margin:0 0 10px;font-size:22px}#game-menu p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 24px}
