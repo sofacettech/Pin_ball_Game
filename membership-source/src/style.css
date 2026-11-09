@@ -193,3 +193,15 @@ dialog .share-copy { white-space: pre-wrap; overflow-wrap: anywhere; user-select
  .is-details :is(.details-eyebrow,.save-heading,.save-form > *, .closing-line),
  .claim-crystal-arrival, .claim-crystal, .claim-butterfly.is-settled :is(.claim-butterfly-hover,img) { animation: none; }
 }
+
+/* Lift the membership form's text colors by 10%, capped at white. */
+#membership-root .design-claim .claim-score { color: #faefff; }
+#membership-root .design-claim .claim-form :is(.help, .consent),
+#membership-root .design-claim .claim-form .field::placeholder { color: #bbb8b4; }
+#membership-root .design-claim .page .claim-form .signin { color: #d8d3d7 !important; }
+#membership-root .design-claim .claim-form .consent a { color: #f4f1ed; }
+#membership-root .design-claim .claim-form .feedback { color: #f3f3f3; }
+#membership-root .design-claim .claim-form .claim-resend button { color: #fff2ff; }
+#membership-root .design-claim .claim-back,
+#membership-root .design-claim .claim-form :is(.field, .dial, .claim-sign-in),
+#membership-root .design-claim .claim-form .btn:not(:hover, :active, :focus-visible) > span { color: #fff; }

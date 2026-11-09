@@ -18,9 +18,13 @@
 .game-loader-cards {height:100%;display:grid;}
 .game-loader-cards .gallery { position:relative;min-height: 100%; display: grid; }
 .game-loader-cards .card-hint{position:absolute;left:20px;right:20px;margin:0;color:#e4e3de;text-align:center;font:500 14px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.08em;pointer-events:none}
-.game-loader-cards .card-hint-swipe{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
-.game-loader-cards .card-hint-desktop{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
-@media(pointer:coarse),(max-width:600px){.game-loader-cards .card-hint-desktop{display:none}}
+.game-loader-cards .card-hint-top{bottom:calc(50% + var(--card-width)*1330/806/2 + 24px)}
+.game-loader-cards .card-hint-bottom{top:calc(50% + var(--card-base-width)*1330/806/2 + 24px)}
+.game-loader-cards .hint-swipe{display:none}
+@media(pointer:coarse),(max-width:600px){
+ .game-loader-cards .hint-click{display:none}
+ .game-loader-cards .hint-swipe{display:inline}
+}
 .game-loader-cards .stage { display: grid; place-items: center; padding: 40px 0; overflow: hidden; overflow: clip; }
 .game-loader-cards .floating { position: relative; }
 .game-loader-cards .deck { position: relative; width: var(--card-width); aspect-ratio: 806 / 1330; isolation: isolate; container-type: inline-size; touch-action: pan-y; cursor: pointer; }
@@ -67,7 +71,7 @@ body[data-game-loading]{margin:0;background:#000;overflow:hidden;--nav-height:90
 body[data-game-loading] #stage{pointer-events:none}
 #stage[data-ready="false"] #viewport,#stage[data-ready="false"] #scorecard-panel{visibility:hidden}
 body[data-game-loading] #game-header{position:fixed;inset:0 0 auto;height:0;z-index:40}
-body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);background:#07060d;transform:none!important}
+body[data-game-loading] .navbar-backdrop{position:absolute;inset:0 0 auto;height:var(--nav-height);transform:none!important}
 body[data-game-loading] .nav-trim{position:absolute;bottom:-2px;left:0;width:100%;height:27px;overflow:visible;pointer-events:none}
 body[data-game-loading] .nav-trim path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 body[data-game-loading] .trim-shadow{stroke:#9905ef;stroke-width:7;opacity:.22;filter:blur(4px)}

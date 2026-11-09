@@ -43,9 +43,6 @@ export function connectMembership(options:Options){
   finishClose(requested?.returnToScore??true,requested?.after??(completed?options.onLeaderboard:undefined));
  };
  historyHost.addEventListener('popstate',restoreMembership);
- window.addEventListener('beforeunload',event=>{
-  if(dialog.open&&pendingReward&&pendingReward.points>=10&&!completed){event.preventDefault();event.returnValue='';}
- });
  window.addEventListener('pagehide',event=>{if(!event.persisted)historyHost.removeEventListener('popstate',restoreMembership)});
  member.onclick=()=>open(member);menuMember.onclick=()=>open(menuMember);
  const requestExit=()=>{if(joinHistory){close(true);return;}frame.contentWindow?.postMessage({type:'sofacet:request-exit'},location.origin);};

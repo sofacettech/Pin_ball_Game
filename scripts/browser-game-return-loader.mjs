@@ -34,12 +34,12 @@ try{await withRewardsSite(async({origin})=>{
    const game=page.frameLocator('#game-page');await game.locator('#table-intro').waitFor();
 
    await game.locator('[data-menu-toggle]').click();
-   await game.locator('[data-menu-panel] a[href*="about.html"]').click();
+   await game.locator('[data-menu-panel] a[href^="/about"]').click();
    await game.frameLocator('#game-info-dialog iframe').locator('#intro-title').waitFor();
    await page.goBack();await game.locator('#game-info-dialog').waitFor({state:'hidden'});
    assert.equal(await game.locator('#game-loading-screen').isVisible(),false,'A retained table returns immediately');
 
-   await page.goto(origin+'/about.html');await page.locator('#intro-title').waitFor();
+   await page.goto(origin+'/about');await page.locator('#intro-title').waitFor();
    const gate=new Promise(r=>release=r);
    const assetsGate=new Promise(r=>releaseAssets=r);
    await page.route('**/assets/sofacet-game-*.js',async route=>{
@@ -54,8 +54,8 @@ try{await withRewardsSite(async({origin})=>{
     const record=()=>window.__gameProgress.push(Number(bar.getAttribute('aria-valuenow')));
     record();new MutationObserver(record).observe(bar,{attributes:true,attributeFilter:['aria-valuenow']});
    }));
-   await page.locator('a[href="/play.html"]').first().click();
-   await page.waitForURL('**/play.html');
+   await page.locator('a[href="/game"]').first().click();
+   await page.waitForURL('**/game');
    await page.locator('.game-loading-progress').waitFor({state:'visible'});
    assert.equal(await page.locator('#game-loading-screen').getAttribute('data-loader'),'progress');
    assert.equal(await page.locator('#game-loader-cards-root').isVisible(),false);

@@ -103,12 +103,11 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
       const url=new URL(link.href,location.href);if(!['http:','https:'].includes(url.protocol)||url.href===location.href)return;
       event.preventDefault();exitRef.current(url.href);
     };
-    const unload=event=>{if(!embedded&&unsaved()){event.preventDefault();event.returnValue='';}};
     const escape=event=>{if(event.key!=='Escape'||event.defaultPrevented||document.body.hasAttribute('data-menu-open'))return;if(claimFirst&&embedded&&pendingRef.current){post({type:'contest-registration:close',returnToScore:true});return;}exitRef.current(embedded?()=>post({type:'contest-registration:close'}):'/',true);};
-    window.addEventListener('message',receive);window.addEventListener('beforeunload',unload);document.addEventListener('click',navigate,true);document.addEventListener('keydown',escape);
+    window.addEventListener('message',receive);document.addEventListener('click',navigate,true);document.addEventListener('keydown',escape);
     Object.defineProperty(window,'sofacetPendingReward',{get:()=>pendingRef.current,configurable:true});
     post({type:'sofacet:membership-ready'});
-    return()=>{mounted.current=false;abort.abort();controller.current?.abort();window.removeEventListener('message',receive);window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);document.removeEventListener('keydown',escape);delete window.sofacetPendingReward;};
+    return()=>{mounted.current=false;abort.abort();controller.current?.abort();window.removeEventListener('message',receive);document.removeEventListener('click',navigate,true);document.removeEventListener('keydown',escape);delete window.sofacetPendingReward;};
   },[checkMembership,forceVerification,claimFirst]);
   useEffect(()=>{const tick=()=>setSeconds(Math.max(0,Math.ceil((resendAt-Date.now())/1000)));tick();const timer=setInterval(tick,1000);return()=>clearInterval(timer);},[resendAt]);
   async function perform(action) {
@@ -175,7 +174,6 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   if(exit){
     const confirming=exit==='confirm',copy=confirming?leaveCopy(pending?.points||0):exitCopy;
     return brandText(<section className="auth-flow-notice reward-notice">
-      <iframe className="reward-notice-mesh" src="/assets/collective/meshes/rewards.html?theme=black" title="Interactive background"/>
       <RewardNoticeArtwork key={'art-'+exit}/>
       <React.Fragment key={exit}>
         <p>{confirming?'BEFORE YOU GO':'LAUNCHING IN DECEMBER'}</p>
@@ -192,10 +190,11 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   const inlineSaved=step==='success'&&saved?.pointsSaved&&(claimFirst||restoredSaved.current?.pointsSaved===true);
   const confirmation=step==='success'?<SavedConfirmation saved={saved} status={status} onReplay={replay}/>:null;
   if(confirmation&&!inlineSaved)return confirmation;
+  const close=embedded&&!inlineSaved?()=>leave('/'):undefined;
   return <>
-    {embedded&&!inlineSaved&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={()=>leave('/')}>×</button>}
+    {close&&step!=='claim'&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={close}>×</button>}
     {embedded&&claimFirst&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={goBack}>← Back</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
-    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
+    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onClose={close} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;
 }

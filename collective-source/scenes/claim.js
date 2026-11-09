@@ -432,11 +432,12 @@ function preparePage2Flights(art,reduced){
  document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
  // Layer 1 is the previous page's exact mesh. Forward input without blocking form controls or scrolling.
  let down=null;
- page.addEventListener('pointerdown',e=>{if(!e.target.closest('input,select,button,a,label'))down={x:e.clientX,y:e.clientY,moved:false};});
+ const isMeshTarget = event => !event.target.closest('input,select,button,a,label,textarea,dialog');
+ page.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0&&isMeshTarget(e))down={x:e.clientX,y:e.clientY,moved:false};});
  page.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>12)down.moved=true;},{passive:true});
  page.addEventListener('pointercancel',()=>down=null);
- page.addEventListener('pointerup',e=>{if(down&&!down.moved&&!e.target.closest('input,select,button,a,label'))window.__startMeshWave?.(e.clientX,e.clientY);down=null;});
- document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.code==='Space')&&!e.target.closest('input,select,button,a,textarea')){e.preventDefault();window.__startMeshWave?.(innerWidth*.5,innerHeight*.5);}});
+ page.addEventListener('pointerup',e=>{if(down&&!down.moved&&isMeshTarget(e))window.__startMeshWave?.(e.clientX,e.clientY);down=null;});
+ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.code==='Space')&&isMeshTarget(e)){e.preventDefault();window.__startMeshWave?.(innerWidth*.5,innerHeight*.5);}});
  document.addEventListener('keydown',event=>{if(event.key==='Escape')window.__clearMeshWave?.();});
  function reveal(){
   document.documentElement.classList.remove('wave-intro-pending');

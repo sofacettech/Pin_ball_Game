@@ -118,7 +118,7 @@ try{
       await page.evaluate(id=>window.__testRewards.show(3205,id),gameId);await page.locator('.design-rewards[data-scene-ready="true"]').waitFor();
       assert.equal(await page.locator('#rewards-points').innerText(),'3,205');assert.match(await page.locator('#rewards-value').innerText(),/320\.5/);
       await capture(page,'01-reward-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'01-reward-mobile');await page.setViewportSize({width:1440,height:900});
-      await page.locator('#rewards-close').click();await page.locator('#rewards-keep').waitFor({state:'visible'});await page.locator('#rewards-close').click();
+      await page.locator('#post-game-rewards .site-brand').click();await page.locator('#rewards-keep').waitFor({state:'visible'});await page.keyboard.press('Escape');
       const frame=page.frameLocator('#registration-frame');
       async function openClaim(){await page.locator('#rewards-register').click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();await frame.locator('[name="fullName"]').waitFor();assert.equal(await frame.locator('[name="fullName"]').isEditable(),true);assert.equal(await frame.locator('#final-otp').isDisabled(),true);assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);}
       async function scoreRestored(){await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open);await page.locator('#rewards-register').waitFor();assert.equal(await page.locator('#rewards-points').innerText(),'3,205');}

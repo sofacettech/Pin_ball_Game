@@ -81,3 +81,122 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
   .score-panel .score-number{font-size:60px;line-height:68px}
   .join-button{font-size:16px;line-height:22px}
 }
+
+/* Mobile type sizes from the typography hierarchy. Keep existing smaller labels and input sizes. */
+@media (max-width: 600px), (max-width: 767px) and (pointer: coarse),
+  (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  #intro-title { font-size: clamp(35px, 9.4vw, 38px); }
+
+  /* The wordmark has one weight. Trim its edges with the table background. */
+  #table-intro .table-facts .brand-word { -webkit-text-stroke: 0.45px #08050d; }
+
+  .side-panel #table-intro:not([hidden]) ~ #start {
+    width: 72%;
+    margin-inline: auto;
+  }
+
+  #post-game-rewards .design-rewards .text-layer .reward :is(.eyebrow, .coins, #rewards-expiry, #rewards-leaderboard) {
+    color: #d7cfd7;
+  }
+
+  #post-game-rewards .design-rewards .text-layer .reward #rewards-value-line {
+    color: #e2d9e2;
+  }
+
+  .launch-page .launch-copy h1,
+  .reward-flow h1,
+  .auth-flow-notice h1,
+  .sf-legal h1,
+  :is(#account-root, #membership-root) .design-claim .claim-confirmation h1,
+  #post-game-rewards .design-rewards .text-layer .reward .headline-left #rewards-heading {
+    font-size: 25px;
+  }
+
+  :is(#account-root, #membership-root) .react-page-root.design-account .shell .welcome-heading,
+  #launch-root .react-page-root.design-launch .launch-scope h1,
+  :is(#account-root, #membership-root, #launch-root) .react-page-root.design-claim .page > .content > .claim-invitation {
+    font-size: 25px !important;
+  }
+
+  .faq-panel h2,
+  .philosophy h2,
+  .collection-intro h2,
+  .coming-soon h2,
+  .closing-question,
+  .share-score h2,
+  #journey-preparation h2 {
+    font-size: 22px;
+  }
+
+  #launch-root .react-page-root.design-launch .launch-scope #join h2 { font-size: 22px !important; }
+
+  .intro .intro-copy { font-size: 17px; }
+
+  .sf-legal h3,
+  .score-facts .value { font-size: 16px; }
+
+  .story-copy,
+  .closing > .closing-intro,
+  .coming-soon p,
+  .faq-panel :is(summary, p),
+  .sf-legal :is(p, li),
+  .launch-page .launch-body,
+  .reward-flow .flow-copy,
+  .rewards-unlocked-copy,
+  #game-loading-screen :is(.loading-copy, .game-loading-error p),
+  :is(#account-root, #membership-root) .design-claim .claim-confirmation p {
+    font-size: 15px;
+  }
+
+  :is(#account-root, #membership-root) .react-page-root.design-account .shell .intro,
+  #launch-root .react-page-root.design-launch .launch-scope .description,
+  #post-game-rewards .react-page-root.design-rewards .reward .eyebrow {
+    font-size: 15px !important;
+  }
+
+  .collective-invite a,
+  .launch-page .launch-signoff,
+  .sf-legal :is(.sf-legal-meta, table),
+  .message .action,
+  .side-panel #start,
+  #game-loading-screen .game-loading-error button,
+  .menu-panel .menu-join,
+  .reward-flow .rewards-actions button,
+  :is(#account-root, #membership-root) .design-claim .claim-back {
+    font-size: 14px;
+  }
+
+  :is(#account-root, #membership-root) .react-page-root.design-account .shell :is(.field-title, .login-panel .privacy-text),
+  #launch-root .react-page-root.design-launch .launch-scope :is(.field-label, .pinball-link) {
+    font-size: 14px !important;
+  }
+
+  .menu-panel .menu-item:not(.menu-join),
+  .site-navigation .play-now {
+    font-size: 13px;
+  }
+
+  :is(#account-root, #membership-root) .react-page-root.design-account .shell .tab {
+    font-size: 13px !important;
+  }
+
+  .intro .intro-label,
+  #story-copy .story-opening .opening-welcome {
+    font-size: 12px;
+  }
+
+  #launch-root .react-page-root.design-launch .launch-scope :is(.eyebrow, .dialog-label) { font-size: 12px !important; }
+
+  .score-panel .score-number,
+  #post-game-rewards .design-rewards .text-layer .reward .headline-right .amount-line .amount {
+    font-size: 54px;
+  }
+}
+
+@media (max-width: 600px) {
+  :root #game-header .site-nav .skip-game { font-size: 13px; }
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  #story-copy .story-line:not(.story-opening, .story-choice) p { font-size: 15px; }
+}

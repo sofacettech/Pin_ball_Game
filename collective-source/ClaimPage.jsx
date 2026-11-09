@@ -8,7 +8,7 @@ import {Arrow} from './icons.jsx';
 import {normaliseDesignPhone} from './auth-values.js';
 import {useSubmission} from './form-actions.js';
 
-export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,confirmation=null,name = '',phone = '',dialCode = '+91',challengePhone,collectDetails=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onSignIn,status = '',resendSeconds = 0,working = false}) {
+export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,confirmation=null,name = '',phone = '',dialCode = '+91',challengePhone,collectDetails=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onClose,onSignIn,status = '',resendSeconds = 0,working = false}) {
   const [showConfirmation,setShowConfirmation]=useState(Boolean(confirmation));
   const page=useRef(null);
   useEffect(()=>{
@@ -23,6 +23,16 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
     window.scrollTo(0,0);
     heading?.setAttribute('tabindex','-1');
     heading?.focus({preventScroll:true});
+    // A fresh claim scene already runs its own opening wave.
+    const butterfly = page.current?.querySelector('.butterfly-position[data-flight="cyan"]');
+    if (butterfly && window.__startMeshWave) {
+      const bounds = butterfly.getBoundingClientRect();
+      window.__startMeshWave(
+        Math.max(0, Math.min(window.innerWidth - 1, bounds.left + bounds.width * .65)),
+        Math.max(0, Math.min(window.innerHeight - 1, bounds.top + bounds.height * .25)),
+        'opening'
+      );
+    }
   },[showConfirmation]);
   const [fullName,setFullName]=useState(name),[emailAddress,setEmail]=useState(email);
   const [mobile,setMobile] = useState(phone),[dial,setDial] = useState(dialCode),[otp,setOtp] = useState('');
@@ -43,7 +53,10 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
     <ClaimMesh />
     <main ref={page} className={"page text-layer"+(confirmation&&!showConfirmation?" claim-copy-leaving":"")}>
       <ClaimArtwork />
-      {onBack && !confirmation && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
+      {!confirmation && (onBack || onClose) && <div className="claim-navigation">
+        {onBack && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
+        {onClose && <button type="button" className="auth-flow-close" aria-label="Close account form" onClick={onClose}>×</button>}
+      </div>}
       <header className="brand"><span className="wordmark">{showConfirmation?'SO/ SAVED':result?'MEMBERSHIP':'THE FIRST CUT'}</span></header>
       <section aria-label={showConfirmation?"Your saved SO/ COINS":"Claim your reward — OTP verification"} className={"content"+(showConfirmation?" claim-confirmation":"")} inert={confirmation&&!showConfirmation?true:undefined}>
         {showConfirmation?confirmation:<>

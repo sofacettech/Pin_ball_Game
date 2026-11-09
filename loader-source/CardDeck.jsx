@@ -13,7 +13,7 @@ export default function CardDeck({active=false,onComplete}) {
   useLayoutEffect(()=>{motion.current.setActive(active);},[active]);
   return <div className="game-loader-cards" ref={root}>
     <div className="gallery" aria-label="SO/ FACET silver card collection">
-      <p className="card-hint card-hint-swipe">Swipe left to explore</p>
+      <p className="card-hint card-hint-top"><span className="hint-click">Click to explore</span><span className="hint-swipe">Swipe left to explore</span></p>
       <div className="stage" aria-busy="false"><div className="floating">
       <div className="deck" tabIndex={0} role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions">
         {cards.map((card,index)=><article className="sofacet-card" key={card.product} data-slot={index} aria-label={card.name+' card'} aria-hidden={index!==0}>
@@ -28,7 +28,7 @@ export default function CardDeck({active=false,onComplete}) {
         </article>)}
       </div>
     </div></div>
-      <p className="card-hint card-hint-desktop">Click to discover your next facet.</p>
+      <p className="card-hint card-hint-bottom">Discover what's yours</p>
     </div>
     <p className="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p>
     <p className="sr-only" data-card-status aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p>

@@ -113,7 +113,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   .faq-shell{animation:none}
   .tile{transition:none}
 }
-.faq-navbar-background{position:fixed;inset:0 0 auto;height:var(--site-header-clearance,78px);z-index:3;background:var(--background);pointer-events:none}
 .faq-main,.faq-panel{scroll-margin-top:calc(var(--site-header-clearance,78px) + 12px)}
 .faq-skip{position:fixed;top:8px;left:12px;z-index:41;transform:translateY(-150%);background:var(--paper);color:var(--background);padding:12px}
 .faq-skip:focus{transform:none}
@@ -131,7 +130,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 }
 @media print{
  :root{--background:white;--paper:black;--muted:#333;color-scheme:light}
- .faq-navbar-background,.site-brand,.standalone-navigation,.faq-skip,.help-grid,.site-footer,.faq-panel summary::after{display:none!important}
+ .site-brand,.standalone-navigation,.faq-skip,.help-grid,.site-footer,.faq-panel summary::after{display:none!important}
  .faq-main,.faq-main.is-open{display:block;width:100%;margin:0;padding:0}
  .faq-intro{margin:0 0 24px;text-align:left}
  .faq-shell[hidden],.faq-panel[hidden]{display:block!important}

@@ -15,11 +15,11 @@ try{await withRewardsSite(async({origin,readStore})=>{
   await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin}]);
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>{if(request.method()==='POST')posts.push(request.url())});
   try{
-   await page.goto(origin+'/launching-soon.html');
+   await page.goto(origin+'/launch');
    await page.getByRole('button',{name:'Notify me',exact:true}).waitFor();
    await page.waitForFunction(()=>document.querySelector('.design-launch')?.dataset.sceneReady==='true');
    if(width===1440||width===390){await page.waitForTimeout(6200);await capture(page,width+'-member-launch')}
-   await page.getByRole('button',{name:'Notify me',exact:true}).click();await page.waitForURL('**/notify.html');
+   await page.getByRole('button',{name:'Notify me',exact:true}).click();await page.waitForURL('**/notify');
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#notify-root img')].map(img=>img.decode()))});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);
@@ -52,7 +52,7 @@ try{await withRewardsSite(async({origin,readStore})=>{
   }finally{await context.close()}
  }
  const guest=await browser.newContext({viewport:{width:390,height:844}});await guest.addCookies([{name:'sofacet_pinball_player',value:other,url:origin}]);
- try{const page=await guest.newPage();await page.goto(origin+'/launching-soon.html');const join=page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true});await join.waitFor();await page.waitForFunction(()=>!document.querySelector('.join-button').disabled);await join.click();await page.waitForURL('**/membership.html?from=collective');report.push({guestJoinUnchanged:true})}finally{await guest.close()}
+ try{const page=await guest.newPage();await page.goto(origin+'/launch');const join=page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true});await join.waitFor();await page.waitForFunction(()=>!document.querySelector('.join-button').disabled);await join.click();await page.waitForURL('**/join');report.push({guestJoinUnchanged:true})}finally{await guest.close()}
  assert.equal((await readStore()).firstCuts,undefined);
 }, {returningMember:true});}finally{await browser.close()}
 if(output)await writeFile(resolve(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
