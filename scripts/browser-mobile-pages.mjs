@@ -96,7 +96,7 @@ try{await withRewardsSite(async({origin})=>{
   }else{
    await page.route('**/assets/sofacet-game-*.js',async route=>{const response=await route.fetch();let source=await response.text(),i=source.indexOf('post-game-rewards');if(i>=0){const name=[...source.slice(0,i).matchAll(/function ([\w$]+)\(/g)].at(-1)[1],binding=source.match(new RegExp('([\\w$]+)='+name+'\\('))[1];source+=';window.__testRewards='+binding+';';}await route.fulfill({response,body:source});});
    await page.goto(origin+'/play.html');
-   for(const name of ['Diamond','Jewellery','Pinball']){
+   for(const name of ['Diamond','Pinball','Jewellery']){
     await page.getByRole('button',{name:name+' card. Front view',exact:true}).press('ArrowRight');
    }
    await page.waitForFunction(()=>window.__testRewards&&!document.body.hasAttribute('data-game-loading'),{},{timeout:90000});

@@ -4,8 +4,8 @@ import {connectCardMotion} from './card-motion.js';
 const artwork='/assets/loader-cards/';
 const cards=[
   {name:'Diamond',product:'diamond',width:535,height:425,alt:'Faceted diamond',copy:<div className="card-copy diamond-copy"><p>Up Next:</p><h1>Pinball</h1></div>},
-  {name:'Jewellery',product:'earrings',width:515,height:415,alt:'Pair of SO/ FACET black and white diamond star earrings',copy:<div className="card-copy jewellery-copy"><p className="offer">10 <span className="coin-word">SO/ COINS</span> = <span className="rupee">₹</span>1 OFF</p><p className="offer-detail"><span className="brand-word">SO/ FACET</span> DIAMOND JEWELLERY</p></div>},
   {name:'Pinball',product:'pinball',width:740,height:595,alt:'SO/ FACET pinball table',copy:<div className="card-copy table-copy"><p className="table-title">Score <span className="coin-word">SO/ COINS</span>.</p><p className="table-detail">Save them for<br/><span className="brand-word">SO/ FACET</span> diamond jewellery.</p></div>},
+  {name:'Jewellery',product:'earrings',width:515,height:415,alt:'Pair of SO/ FACET black and white diamond star earrings',copy:<div className="card-copy jewellery-copy"><p className="offer">1,000 <span className="coin-word">SO/ COINS</span> = <span className="rupee">₹</span>100 OFF</p><p className="offer-detail"><span className="brand-word">SO/ FACET</span> DIAMOND JEWELLERY</p></div>},
 ];
 export default function CardDeck({active=false,onComplete}) {
   const root=useRef(null),motion=useRef(null);
@@ -13,7 +13,7 @@ export default function CardDeck({active=false,onComplete}) {
   useLayoutEffect(()=>{motion.current.setActive(active);},[active]);
   return <div className="game-loader-cards" ref={root}>
     <div className="gallery" aria-label="SO/ FACET silver card collection">
-      <p className="card-hint card-hint-top"><span className="hint-click">Click to explore</span><span className="hint-swipe">Swipe left to explore</span></p>
+      <p className="card-hint card-hint-top"><span className="hint-click">Click to Explore</span><span className="hint-swipe">Swipe left to explore</span></p>
       <div className="stage" aria-busy="false"><div className="floating">
       <div className="deck" tabIndex={0} role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions">
         {cards.map((card,index)=><article className="sofacet-card" key={card.product} data-slot={index} aria-label={card.name+' card'} aria-hidden={index!==0}>
@@ -28,7 +28,6 @@ export default function CardDeck({active=false,onComplete}) {
         </article>)}
       </div>
     </div></div>
-      <p className="card-hint card-hint-bottom">Discover what's yours</p>
     </div>
     <p className="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p>
     <p className="sr-only" data-card-status aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p>

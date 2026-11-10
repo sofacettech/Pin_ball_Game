@@ -5,7 +5,7 @@ export function connectCardMotion(root, onComplete) {
   let disposed = false, visible = false, completed = false;
   const listen = (target, type, handler) => target.addEventListener(type, handler, {signal: lifetime.signal});
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const names = ['Diamond', 'Jewellery', 'Pinball'];
+  const names = ['Diamond', 'Pinball', 'Jewellery'];
   const poses = ['translate(0,0) rotate(0deg) scale(1)', 'translate(14px,-8px) rotate(3deg) scale(.97)', 'translate(28px,-16px) rotate(6deg) scale(.94)'];
   const brightness = [1, .68, .48];
   const DURATION = 1600, INTERVAL = 8000;

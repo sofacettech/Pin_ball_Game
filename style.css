@@ -165,8 +165,9 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 .site-sound[data-on="true"] .sound-off-icon,.site-sound:not([data-on="true"]) .sound-on-icon{display:none}
 
 /* Feathered contrast stays with the text, clear of the interactive world. */
-.story-butterflies,.story-rules,.story-finale{isolation:isolate}
-.story-butterflies::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
+.story-butterflies,.story-choice,.story-rules,.story-finale{isolation:isolate}
+.story-butterflies::before,.story-choice::before,.story-rules::before,.story-finale::before{content:"";position:absolute;inset:-1.5em -2em;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,#060814b8 0%,#06081480 40%,#06081400 75%)}
+.story-choice::before{opacity:.65}
 .story-finale p{width:calc(100% + 5.5vw);white-space:normal;text-wrap:pretty;line-height:1.5;font-size:clamp(14px,1.1vw,20px)}
 :root .site-nav .play-now{font-size:13px}
 

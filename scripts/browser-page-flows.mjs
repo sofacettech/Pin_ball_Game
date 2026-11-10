@@ -57,7 +57,7 @@ try{
     await page.goto(origin+'/');await page.waitForFunction(()=>window.entrancePreview?.ready&&!document.body.hasAttribute('data-loading'),null,{timeout:90000});
     await page.evaluate(y=>scrollTo(0,y),createJourneyScrollMap().travel);
     const deck=page.locator('#game-loader-cards-root .deck');
-    for(const name of ['Diamond','Jewellery','Pinball']){
+    for(const name of ['Diamond','Pinball','Jewellery']){
      await page.getByRole('button',{name:name+' card. Front view',exact:true}).waitFor({timeout:90000});
      await deck.press('ArrowRight');
     }

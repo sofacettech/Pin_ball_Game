@@ -25,7 +25,7 @@ try{await withRewardsSite(async({origin})=>{
    assert.equal(await page.locator('.game-loading-progress').isVisible(),false);
    await capture(page,width+'-chess-cards');
    const deck=page.locator('#game-loader-cards-root .deck');
-   for(const name of ['Diamond','Jewellery','Pinball']){
+   for(const name of ['Diamond','Pinball','Jewellery']){
     await page.getByRole('button',{name:name+' card. Front view',exact:true}).waitFor();
     await deck.press('ArrowRight');
    }
@@ -75,7 +75,7 @@ try{await withRewardsSite(async({origin})=>{
    }
    release();
    await page.waitForFunction(()=>document.querySelector('.game-loading-progress').getAttribute('aria-valuenow')==='85',null,{timeout:120000});
-   assert.match(await page.locator('.game-loading-statement').innerText(),/^Score SO\/ COINS\./);
+   assert.match(await page.locator('.game-loading-statement').innerText(),/^1,000 SO\/ COINS = ₹100 OFF/);
    assert.equal(await page.locator('#stage').getAttribute('data-ready'),'false');
    await page.emulateMedia({reducedMotion:'no-preference'});
    await page.waitForTimeout(250);
@@ -91,7 +91,7 @@ try{await withRewardsSite(async({origin})=>{
    const values=await page.evaluate(()=>window.__gameProgress);
    assert.equal(values[0],0);assert.equal(values.at(-1),100);
    assert.ok(values.every((value,i)=>value>=0&&value<=100&&(!i||value>=values[i-1])));
-   assert.match(await page.locator('.game-loading-statement').innerText(),/^Score SO\/ COINS\./);
+   assert.match(await page.locator('.game-loading-statement').innerText(),/^1,000 SO\/ COINS = ₹100 OFF/);
    await capture(page,width+'-return-ready');
    report.push({width,height,chessCards:true,retainedGameReturnsImmediately:true,returnFromAboutUsesOnlyProgress:true,waitsForRealReadiness:true,progressValues:[...new Set(values)],noOverflow:true});
   }finally{release?.();releaseAssets?.();await context.close()}

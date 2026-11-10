@@ -25,7 +25,7 @@ export function installGameLoader(renderCards) {
   const anchors=gamePage?document.querySelectorAll('.navbar-backdrop,.nav-trim,#game-header .site-brand,#nav-toggle'):document.querySelectorAll('.site-brand,[data-menu-toggle]');
   let top=0;
   for(const element of anchors){const box=element.getBoundingClientRect();if(box.width&&box.height&&getComputedStyle(element).visibility!=='hidden')top=Math.max(top,box.bottom)}
-  root.style.setProperty('--game-loader-top',Math.ceil(top+4)+'px');
+  root.style.setProperty('--game-loader-measured-top',Math.ceil(top+4)+'px');
  }
  function paint(){
   if(!run||parentOwnsCards||progressOnly)return;
@@ -70,7 +70,7 @@ export function installGameLoader(renderCards) {
   addEventListener('resize',measure,{signal});visualViewport?.addEventListener('resize',measure,{signal});document.addEventListener('visibilitychange',paint,{signal});
   observer=new ResizeObserver(measure);for(const element of document.querySelectorAll('#game-header,.navbar-backdrop,.site-brand,[data-menu-toggle]'))observer.observe(element);
   if(document.documentElement?.dataset.loaded==='false'){
-   pageObserver=new MutationObserver(paint);
+   pageObserver=new MutationObserver(()=>{measure();paint()});
    pageObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-loaded']});
   }
   measure();if(!progressOnly)loadCards();

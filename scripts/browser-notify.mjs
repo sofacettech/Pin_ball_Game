@@ -10,7 +10,7 @@ if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){await page.evaluate(()=>document.fonts.ready);if(output)await page.screenshot({path:resolve(output,name+'.png'),fullPage:true})}
 async function settled(page){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.waitForFunction(()=>Math.abs(Number(document.querySelector('#orbit').dataset.position)-Number(document.querySelector('#orbit').dataset.target))<.01)}
 try{await withRewardsSite(async({origin,readStore})=>{
- for(const [width,height] of [[1440,900],[390,844],[320,568],[844,390]]){
+ for(const [width,height] of [[1440,801],[390,844],[320,568],[844,390]]){
   const context=await browser.newContext({viewport:{width,height},hasTouch:width<900,isMobile:width<900}),page=await context.newPage(),errors=[],posts=[];
   await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin}]);
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>{if(request.method()==='POST')posts.push(request.url())});
@@ -25,7 +25,8 @@ try{await withRewardsSite(async({origin,readStore})=>{
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);
    const styles=await page.locator('#notify-root h1,.lead,.notify-button,#email').evaluateAll(nodes=>nodes.map(e=>({selector:e.id||e.className,family:getComputedStyle(e).fontFamily,weight:getComputedStyle(e).fontWeight,size:getComputedStyle(e).fontSize})));
    assert.match(styles[0].family,/Josefin Sans/);assert.equal(styles[0].weight,'600');assert.match(styles[1].family,/Yeseva One/);assert.match(styles[3].family,/Sofacet Actions/);
-   assert.equal(await page.locator('.form-note').textContent(),'Preview only. No email is sent.');
+   assert.equal(await page.getByText('Preview only. No email is sent.',{exact:true}).count(),0);
+   if(width===1440)assert.ok(await page.locator('.form-row').evaluate(form=>form.getBoundingClientRect().bottom<=innerHeight),'Desktop email field and button fit in the initial viewport');
    await capture(page,width+'-notify');
    assert.equal(await page.locator('#scene').getAttribute('data-intro-turns'),'1');
    await page.getByRole('button',{name:'Previous photograph',exact:true}).click();await settled(page);assert.equal(await page.locator('#orbit').getAttribute('data-target'),'-1.000');

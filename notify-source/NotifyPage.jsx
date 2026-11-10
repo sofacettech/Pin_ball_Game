@@ -54,9 +54,8 @@ export default function NotifyPage(){
     <section className="notification" id="notify" aria-label="Collection launch notification">
      <form id="notify-form" noValidate onSubmit={submit} hidden={confirmed}>
       <div className="form-row"><div className="email-field">
-       <label htmlFor="email">Email address</label><input ref={email} id="email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" required maxLength={254} aria-describedby="form-note form-message" aria-invalid={error?true:undefined} onInput={()=>setError('')}/>
+       <label htmlFor="email">Email address</label><input ref={email} id="email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" required maxLength={254} aria-describedby="form-message" aria-invalid={error?true:undefined} onInput={()=>setError('')}/>
       </div><button className="notify-button" type="submit">Notify me</button></div>
-      <p className="form-note" id="form-note">Preview only. No email is sent.</p>
       <p className="form-message" id="form-message" role="status" aria-live="polite">{error}</p>
      </form>
      <div className="confirmation" id="confirmation" ref={confirmation} hidden={!confirmed}><h2 tabIndex={-1}>You're in the loop.</h2><p>Preview complete. No signup has been sent.</p><button type="button" id="reset-form" onClick={reset}>Try again</button></div>

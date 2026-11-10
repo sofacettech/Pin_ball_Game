@@ -277,8 +277,8 @@ body.phone-layout #touch-launch{bottom:calc(12px + env(safe-area-inset-bottom,0p
 @media(orientation:landscape){body.phone-layout:not(.inspect-mode) #stage{padding-top:calc(60px + env(safe-area-inset-top,0px));padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}}
 
 /* Reference card and table placement; the existing navbar and renderer stay independent. */
-#stage.has-scorecard{--card-lime:#c6ff00;--edge:clamp(24px,3.8vw,74px);--side-width:clamp(292px,18vw,338px);--play-gap:clamp(24px,3vw,52px);--table-width:min(calc((100cqh - 16px)*1.1125),calc(100cqw - var(--side-width) - var(--edge)*2 - var(--play-gap)));--group-left:max(var(--edge),calc((100cqw - var(--table-width) - var(--side-width) - var(--play-gap))/2));container-type:size;display:block}
-#stage.has-scorecard #viewport{position:absolute;width:var(--table-width);height:calc(var(--table-width)/1.1125);left:calc(var(--group-left) + var(--table-width)/2);top:50%;transform:translate(-50%,-50%)}
+#stage.has-scorecard{--card-lime:#c6ff00;--edge:clamp(24px,3.8vw,74px);--side-width:clamp(292px,18vw,338px);--play-gap:clamp(24px,3vw,52px);--table-heading-space:0px;--table-width:min(calc((100cqh - 16px - var(--table-heading-space))*1.1125),calc(100cqw - var(--side-width) - var(--edge)*2 - var(--play-gap)));--group-left:max(var(--edge),calc((100cqw - var(--table-width) - var(--side-width) - var(--play-gap))/2));container-type:size;display:block}
+#stage.has-scorecard #viewport{position:absolute;width:var(--table-width);height:calc(var(--table-width)/1.1125);left:calc(var(--group-left) + var(--table-width)/2);top:calc(50% + var(--table-heading-space)/2);transform:translate(-50%,-50%)}
 .side-panel{--card-height:min(410px,calc(100dvh - var(--nav-gap) - 116px));--card-footer:109px;position:absolute;left:calc(var(--group-left) + var(--table-width) + var(--play-gap));top:50%;transform:translateY(-50%);width:var(--side-width);height:calc(var(--card-height) + var(--card-footer));font-family:'Josefin Sans',sans-serif}
 .side-panel .flip-card { width: 100%; height: var(--card-height); display: block; border: 0; padding: 0; background: transparent; text-align: left; perspective: 1300px; position: relative; isolation: isolate; }
 .side-panel .card-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .78s cubic-bezier(.22,.7,.22,1); }
@@ -471,10 +471,17 @@ body[data-game-loading] #mobile-lives{display:none}
 body>#game-menu{position:fixed;z-index:45;top:calc(var(--site-header-clearance) + 48px);right:max(16px,var(--site-nav-right));max-height:calc(100dvh - var(--site-header-clearance) - 64px);box-shadow:0 20px 60px #0008}
 /* Table intro and the two in-game panels retain the existing game palette. */
 #table-intro h1{font-size:24px;line-height:1.15;margin:8px 0 12px;font-weight:600}
-#table-intro .table-label{font-size:11px;letter-spacing:.12em;margin:0}
+#stage.has-scorecard:has(#table-intro:not([hidden])){--table-heading-space:calc(24px + max(0px,var(--site-header-clearance) - var(--nav-gap)))}
+#viewport .table-label{display:none;position:absolute;inset:auto 0 calc(100% + 4px);margin:0;text-align:center;font:400 11px/1.2 'Josefin Sans',sans-serif;letter-spacing:.12em;pointer-events:none}
+#stage.has-scorecard:has(#action:not([hidden]) #table-intro:not([hidden])) .table-label{display:block}
+@media(max-width:1024px) and (orientation:portrait){
+ body #stage.has-scorecard:has(#table-intro:not([hidden])){padding-top:var(--table-heading-space)}
+}
 #table-intro .table-facts{font-size:14px;font-weight:300;line-height:1.5;margin:0 0 14px}
 #table-help{background:transparent;border:0;color:inherit;text-decoration:underline;text-underline-offset:4px;font-size:13px;min-height:44px}
 #pause-panel{position:fixed;z-index:46;top:calc(var(--site-header-clearance) + 48px);right:max(16px,var(--site-nav-right));width:min(380px,calc(100% - 32px));max-height:calc(100dvh - var(--site-header-clearance) - 64px);overflow:auto;padding:28px;background:#16101e;border:1px solid #554466;border-radius:8px;box-shadow:0 20px 60px #0008}
+body[data-menu-open] #pause-panel{visibility:hidden}
+@media(prefers-reduced-motion:no-preference){body:not([data-menu-open]) #pause-panel{transition:visibility 0s .2s}}
 #pause-panel h2{font-size:22px;margin:0 0 10px}#pause-panel p{font-size:14px;line-height:1.5;margin:0 0 24px}
 #pause-panel button{display:block;width:100%;min-height:44px;margin-top:10px;font-size:14px}
 #pause-panel #restart svg{display:none}

@@ -5,7 +5,7 @@ import {RewardNoticeArtwork} from './artwork/RewardNoticeArtwork.jsx';
 import {request,pendingResult} from '../membership-source/src/api.js';
 import {phoneParts} from '../membership-source/src/phone.js';
 import {normaliseDesignPhone,registrationDetails,registrationPayload} from './auth-values.js';
-import {leaveCopy,exitCopy,rewardMoney,formatPoints,leaderboardName} from '../game-source/src/player-copy.ts';
+import {leaveCopy,exitCopy,rewardMoney,formatPoints,leaderboardName,validPlayerName} from '../game-source/src/player-copy.ts';
 import './flow.css';
 import './reward-notice.css';
 import {brandText} from '../shared/brand-react.jsx';
@@ -31,8 +31,8 @@ export function SavedConfirmation({saved,status='',onReplay}) {
   }
   return brandText(<section className="auth-flow-notice saved-confirmation">
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
-    {saved?.pointsSaved&&<p>You made “THE FIRST CUT”.</p>}
-    <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You made “THE FIRST CUT”. Play a round to earn SO/ COINS.'}</p>
+    {saved?.pointsSaved&&<p>You joined THE SO/ COLLECTIVE.</p>}
+    <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You joined THE SO/ COLLECTIVE. Play a round to earn SO/ COINS.'}</p>
     {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
@@ -69,9 +69,9 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   },[]);
   useEffect(()=>{
     if(memberCheck!=='guest')return;
-    const route=registrationScreenRoute({step,tab,challenge,exit,fromAccount:fromAccount.current});
+    const route=registrationScreenRoute({step,tab,challenge:claimFirst&&step==='claim'?null:challenge,exit,fromAccount:fromAccount.current});
     if(route)setScreenRoute(route);
-  },[memberCheck,step,tab,challenge,exit]);
+  },[memberCheck,step,tab,challenge,exit,claimFirst]);
   const exitHeading=useRef(null);
   useEffect(()=>{if(exit)exitHeading.current?.focus({preventScroll:true});},[exit]);
   completeRef.current=onComplete;backRef.current=onBack;
@@ -88,7 +88,11 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     request('/api/membership/config',undefined,abort.signal).then(setConfig).catch(error=>{if(!abort.signal.aborted)setStatus(error.message);});
     if(checkMembership&&!restoredSaved.current?.pointsSaved)request('/api/player',undefined,abort.signal).then(player=>{
       if(typeof player.member!=='boolean')throw Error('Your account could not be checked.');
-      if(player.member&&!forceVerification){setMemberCheck('member');if(embedded)post({type:'sofacet:membership-existing'});else location.replace(accountNavigationHref('/my-coins'));}
+      if(player.member&&!forceVerification){
+        setMemberCheck('member');
+        if(embedded)post({type:'sofacet:membership-existing'});
+        else location.replace(accountNavigationHref(location.pathname==='/join'?'/notify':'/my-coins'));
+      }
       else {setMemberCheck('guest');if(forceVerification){setTab('registered');setStatus('Please verify your phone again to save your SO/ COINS.');}}
     }).catch(error=>{if(!abort.signal.aborted){setMemberCheck('error');setStatus(error.message);}});
     const receive=event=>{
@@ -114,15 +118,15 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     if(lock.current)throw Error('Please wait for the current request to finish.');
     lock.current=true;setBusy(true);setStatus('');controller.current=new AbortController();
     try{return await action(controller.current.signal);}
-    catch(error){if(mounted.current&&!controller.current.signal.aborted){setStatus(error.message||'Please try again.');if(Number.isFinite(error.retryAfter))setResendAt(Date.now()+error.retryAfter*1000);if(['invalid_token','rewards_verification_required'].includes(error.code)){proof.current=null;setChallenge(null);setStep('identity');setTab('registered');}}throw error;}
+    catch(error){if(mounted.current&&!controller.current.signal.aborted){setStatus(error.message||'Please try again.');if(Number.isFinite(error.retryAfter))setResendAt(Date.now()+error.retryAfter*1000);if(['invalid_token','rewards_verification_required'].includes(error.code)){proof.current=null;setChallenge(null);if(!claimFirst||step!=='claim'){setStep('identity');setTab('registered');}}}throw error;}
     finally{lock.current=false;if(mounted.current)setBusy(false);}
   }
-  async function sendCode(kind,phoneNumber,profile,signal) {
+  async function sendCode(kind,phoneNumber,{name,consent}={},signal) {
     if(!phoneNumber)throw Error('Please enter a valid mobile number.');
     if(seconds>0)throw Error('Please wait '+seconds+' seconds before requesting another code.');
     if(kind==='signup'&&(!config?.policies?.terms||!config?.policies?.privacy))throw Error('Account terms are not available yet. Please try again later.');
     proof.current=null;
-    const sent=await request(kind==='signin'?'/api/account/otp/request':'/api/membership/otp/request',kind==='signin'?{phoneNumber}:{phoneNumber,name:profile.name,consent:profile.termsAccepted},signal);
+    const sent=await request(kind==='signin'?'/api/account/otp/request':'/api/membership/otp/request',kind==='signin'?{phoneNumber}:{phoneNumber,name,consent},signal);
     if(sent.success!==true||typeof sent.challengeId!=='string'||!Number.isFinite(sent.expiresIn)||sent.expiresIn<=0)throw Error('Your code could not be sent. Please try again.');
     setChallenge({id:sent.challengeId,phoneNumber,kind,expiresAt:Date.now()+sent.expiresIn*1000,channel:sent.deliveryChannel});
     setResendAt(Date.now()+Math.max(60,sent.resendAfter||60)*1000);
@@ -136,14 +140,23 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     writeScreenData('reward',null);if(value.pointsSaved)writeScreenData('saved',{pointsSaved:true,savedPoints:value.savedPoints,score,player:{member:true,display_name:value.player.display_name}});
     if(embedded)post({type:'contest-registration:complete',player:value.player});
     else if(completeRef.current)await completeRef.current(value);
-    else location.replace(accountNavigationHref(firstCut?'/confirmation':'/my-coins'));
+    else if(!claimFirst||!value.pointsSaved)location.replace(accountNavigationHref(firstCut&&challenge?.kind==='signup'?'/confirmation':'/my-coins'));
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);setDefaults(values);setDetails(profile);
     if(challenge?.kind==='signup'&&challenge.expiresAt>Date.now()&&details?.name===profile.name&&challenge.phoneNumber===profile.phoneNumber){setStep('claim');setStatus('Enter the code already sent to your mobile number.');return;}
-    await sendCode('signup',profile.phoneNumber,profile,signal);setStep('claim');
+    await sendCode('signup',profile.phoneNumber,{name:profile.name,consent:profile.termsAccepted},signal);setStep('claim');
   });
-  const requestSignIn=values=>perform(signal=>sendCode('signin',normaliseDesignPhone(values.phone),null,signal));
+  const startClaim=values=>perform(async signal=>{
+    const name=values.name.trim();
+    if(!validPlayerName(name))throw Error('Please enter your full name using letters.');
+    const phoneNumber=normaliseDesignPhone(values.phone,values.country);
+    const result=await sendCode('signup',phoneNumber,{name,consent:true},signal);
+    setDetails({name,phoneNumber});
+    setDefaults(current=>({...current,...values}));
+    return result;
+  });
+  const requestSignIn=values=>perform(signal=>sendCode('signin',normaliseDesignPhone(values.phone),undefined,signal));
   const signIn=values=>perform(async signal=>{
     const phoneNumber=normaliseDesignPhone(values.phone);
     if(pendingRef.current&&!pendingRef.current.gameId)throw Error('This game could not connect for verification. Play another round to save SO/ COINS.');
@@ -158,16 +171,18 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   const confirm=values=>perform(async signal=>{
     if(!details||!challenge||challenge.kind!=='signup')throw Error('Please return to your details and request a code.');
     const phoneNumber=normaliseDesignPhone(values.mobile,values.dialCode);
-    if(phoneNumber!==challenge.phoneNumber){const updated={...details,phoneNumber};setDetails(updated);setDefaults(current=>({...current,phone:values.mobile,country:values.dialCode}));return sendCode('signup',phoneNumber,updated,signal);}
-    if(!/^\d{6}$/.test(values.otp||''))throw Error('Enter the six-digit code.');
+    if(phoneNumber!==challenge.phoneNumber){if(claimFirst)throw Error('Request an OTP for this mobile number first.');const updated={...details,phoneNumber};setDetails(updated);setDefaults(current=>({...current,phone:values.mobile,country:values.dialCode}));return sendCode('signup',phoneNumber,{name:updated.name,consent:updated.termsAccepted},signal);}
+    if(values.otp!==undefined&&!/^\d{6}$/.test(values.otp))throw Error('Enter the six-digit code.');
     if(pendingRef.current&&!pendingRef.current.gameId)throw Error('This game could not connect for verification. Play another round to save SO/ COINS.');
     let token=proof.current;
-    if(!token){if(Date.now()>=challenge.expiresAt)throw Error('This code expired. Please request another code.');const verified=await request('/api/membership/otp/verify',{phoneNumber,otp:values.otp,challengeId:challenge.id},signal);if(verified.verified!==true||typeof verified.verificationToken!=='string')throw Error('Your code could not be verified.');token=verified.verificationToken;proof.current=token;}
-    const response=await request('/api/membership',registrationPayload({...details,phoneNumber},token,pendingRef.current?.gameId),signal);
+    if(!token){if(!values.otp||Date.now()>=challenge.expiresAt)throw Error('This code expired. Please request another code.');const verified=await request('/api/membership/otp/verify',{phoneNumber,otp:values.otp,challengeId:challenge.id},signal);if(verified.verified!==true||typeof verified.verificationToken!=='string')throw Error('Your code could not be verified.');token=verified.verificationToken;proof.current=token;}
+    if(values.verifyOnly)return;
+    const profile=claimFirst?registrationDetails({name:details.name,phone:values.mobile,country:values.dialCode,email:values.email,terms:values.terms,updates:values.updates}):details;
+    const response=await request('/api/membership',registrationPayload({...profile,phoneNumber},token,pendingRef.current?.gameId),signal);
     if(response.success!==true||response.player?.member!==true||pendingRef.current&&response.pointsSaved!==true||!Number.isSafeInteger(response.savedPoints)||response.savedPoints<0)throw Error('Your account and SO/ COINS have not been confirmed as saved. Please try again.');
     await complete(response);
   });
-  const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,details,signal));
+  const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,{name:details.name,consent:claimFirst||details.termsAccepted},signal));
   function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
   const goBack=()=>{if(claimFirst&&embedded){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/game');};
@@ -195,6 +210,6 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     {close&&step!=='claim'&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={close}>×</button>}
     {embedded&&claimFirst&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={goBack}>← Back</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
-    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} key={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} collectDetails={claimFirst&&!challenge} email={defaults.email} onStart={createAccount} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onClose={close} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
+    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} challengeId={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} twoStep={claimFirst} email={defaults.email} onStart={startClaim} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onClose={close} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;
 }

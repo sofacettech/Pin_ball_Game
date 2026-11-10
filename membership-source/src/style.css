@@ -13,6 +13,8 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
+:root body:has(#membership-root .design-claim) > .site-brand,
+:root body:has(#membership-root .design-claim):not([data-menu-open]) > .standalone-navigation { position: absolute; }
 button, input, select { font:inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; opacity: .6; }

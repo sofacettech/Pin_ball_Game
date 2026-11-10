@@ -58,7 +58,7 @@ export const sections = [
       {
         "question": "What are my SO/ COINS worth?",
         "answer": [
-          "10 SO/ COINS = ₹1 off SO/ FACET diamond jewellery. Score 3,200 and that's ₹320 off."
+          "1,000 SO/ COINS = ₹100 off SO/ FACET diamond jewellery. Score 3,200 and that's ₹320 off."
         ]
       },
       {
@@ -134,9 +134,9 @@ export const sections = [
       {
         "question": "How do I stop updates or delete my data?",
         "answer": [
-          "Sign in to ",
+          "To stop updates, sign in to ",
           {"href":"/my-coins","text":"My SO/ COINS"},
-          ", or email us at ",
+          ". To delete your data, email us at ",
           {
             "href": "mailto:privacy@sofacet.com",
             "text": "privacy@sofacet.com"

@@ -8,9 +8,21 @@ import {Arrow} from './icons.jsx';
 import {normaliseDesignPhone} from './auth-values.js';
 import {useSubmission} from './form-actions.js';
 
-export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,confirmation=null,name = '',phone = '',dialCode = '+91',challengePhone,collectDetails=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onClose,onSignIn,status = '',resendSeconds = 0,working = false}) {
+export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result,confirmation=null,name = '',phone = '',dialCode = '+91',challengePhone,challengeId,twoStep=false,email='',onStart,termsUrl,privacyUrl,onClaim,onResend,onBack,onClose,onSignIn,status = '',resendSeconds = 0,working = false}) {
   const [showConfirmation,setShowConfirmation]=useState(Boolean(confirmation));
-  const page=useRef(null);
+  const [detailsStep,setDetailsStep]=useState(false);
+  const [leaving,setLeaving]=useState(false);
+  const page=useRef(null),detailsHeading=useRef(null);
+  useEffect(()=>{
+    if(!leaving)return;
+    const timer=setTimeout(()=>{setDetailsStep(true);setLeaving(false);},180);
+    return()=>clearTimeout(timer);
+  },[leaving]);
+  useLayoutEffect(()=>{
+    if(!detailsStep)return;
+    window.scrollTo(0,0);
+    detailsHeading.current?.focus({preventScroll:true});
+  },[detailsStep]);
   useEffect(()=>{
     if(!confirmation||showConfirmation)return;
     const reduced=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -34,51 +46,80 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
       );
     }
   },[showConfirmation]);
-  const [fullName,setFullName]=useState(name),[emailAddress,setEmail]=useState(email);
+  const [fullName,setFullName]=useState(name);
   const [mobile,setMobile] = useState(phone),[dial,setDial] = useState(dialCode),[otp,setOtp] = useState('');
+  useEffect(()=>{setOtp('');if(!challengeId)setDetailsStep(false);},[challengeId]);
   const {message,setMessage,busy,submit} = useSubmission();
-  const changed = normaliseDesignPhone(mobile,dial) !== challengePhone;
-  function save(event) {
-    event.preventDefault();
-    if (collectDetails) {
-      const form=event.currentTarget;if(!form.reportValidity())return;
-      void submit(onStart,{name:fullName,phone:mobile,country:dial,email:emailAddress,terms:form.elements.terms.checked,updates:form.elements.updates.checked},'Phone verification is unavailable. Please try again later.');
+  const changed = normaliseDesignPhone(mobile,dial) !== challengePhone || (twoStep && fullName.trim() !== name);
+  const sending=working||busy;
+  const verificationUnavailable='Phone verification is unavailable. Please try again later.';
+  function sendOtp(event) {
+    if (!event.currentTarget.form.reportValidity()) return;
+    if (!normaliseDesignPhone(mobile,dial)) {setMessage('Please enter a valid mobile number.');return;}
+    if (twoStep&&changed) {
+      void submit(onStart,{name:fullName,phone:mobile,country:dial},verificationUnavailable);
       return;
     }
-    if (!normaliseDesignPhone(mobile,dial)) {setMessage('Please enter a valid mobile number.');return;}
-    if (!changed && !/^\d{6}$/.test(otp)) {setMessage('Please enter the six-digit code.');return;}
-    void submit(onClaim,{fullName:name,mobile,dialCode:dial,otp},'Phone verification is unavailable. Please try again later.');
+    if (changed) {
+      void submit(onClaim,{mobile,dialCode:dial,otp:''},verificationUnavailable);
+    } else {
+      void submit(onResend,{},'Please request another code later.');
+    }
+  }
+  function saveDetails(event) {
+    event.preventDefault();
+    const fields=event.currentTarget.elements;
+    void submit(onClaim,{mobile,dialCode:dial,email:fields.email.value,terms:fields.terms.checked,updates:fields.updates.checked},verificationUnavailable);
+  }
+  function save(event) {
+    event.preventDefault();
+    if (changed) {setMessage('Send an OTP to verify your mobile number first.');return;}
+    if (!/^\d{6}$/.test(otp)) {setMessage('Please enter the six-digit code.');return;}
+    void submit(async values=>{
+      await onClaim(values);
+      if(twoStep){
+        if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)setDetailsStep(true);
+        else setLeaving(true);
+      }
+    },{mobile,dialCode:dial,otp,verifyOnly:twoStep},verificationUnavailable);
   }
   return <PageShell scene="claim" initialize={initialize} title={pageTitle}>
     <ClaimMesh />
-    <main ref={page} className={"page text-layer"+(confirmation&&!showConfirmation?" claim-copy-leaving":"")}>
+    <main ref={page} className={"page text-layer"+(leaving||confirmation&&!showConfirmation?" claim-copy-leaving":"")}>
       <ClaimArtwork />
       {!confirmation && (onBack || onClose) && <div className="claim-navigation">
         {onBack && <button className="claim-back" type="button" onClick={onBack} disabled={working}>← Back</button>}
         {onClose && <button type="button" className="auth-flow-close" aria-label="Close account form" onClick={onClose}>×</button>}
       </div>}
-      <header className="brand"><span className="wordmark">{showConfirmation?'SO/ SAVED':result?'MEMBERSHIP':'THE FIRST CUT'}</span></header>
-      <section aria-label={showConfirmation?"Your saved SO/ COINS":"Claim your reward — OTP verification"} className={"content"+(showConfirmation?" claim-confirmation":"")} inert={confirmation&&!showConfirmation?true:undefined}>
-        {showConfirmation?confirmation:<>
+      <header className="brand"><span className="wordmark">{showConfirmation?'SO/ SAVED':result?'MEMBERSHIP':'THE SO/ COLLECTIVE'}</span></header>
+      <section aria-label={showConfirmation?"Your saved SO/ COINS":detailsStep?"Confirm your details":"Claim your reward — OTP verification"} className={"content"+(showConfirmation?" claim-confirmation":detailsStep?" claim-details":"")} inert={leaving||confirmation&&!showConfirmation?true:undefined}>
+        {showConfirmation?confirmation:detailsStep?<>
+          <h1 ref={detailsHeading} className="claim-invitation" tabIndex={-1}>Confirm your details</h1>
+          <form className="claim-form" onSubmit={saveDetails}>
+            <label><span className="sr-only">Email address</span><input autoComplete="email" className="field" name="email" placeholder="Email address" type="email" required maxLength={254} defaultValue={email} disabled={sending}/></label>
+            <div className="claim-consents">
+              <label className="consent"><input name="terms" type="checkbox" required disabled={sending}/><span>I'm 18 or older and I agree to the <a href={termsUrl||'/terms'} target="_blank" rel="noopener">Terms and Conditions</a> and <a href={privacyUrl||'/privacy'} target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+              <label className="consent"><input name="updates" type="checkbox" disabled={sending}/><span>Send me <span className="brand-word">SO/ FACET</span> news and launch updates.</span></label>
+            </div>
+            <div className="buttons"><button className="btn" type="submit" disabled={sending}><span>{sending?'PLEASE WAIT…':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
+            <p className="feedback" role="status">{status || message}</p>
+          </form>
+        </>:<>
         <p className="claim-invitation">JOIN <span className="collective-name">THE SO/ COLLECTIVE</span></p>
         {result&&<p className="claim-score">{formatPoints(result.points)} SO/ COINS · {rewardMoney(result.points)} off <span className="brand-word">SO/ FACET</span> diamond jewellery</p>}
         <form className="claim-form" id="claim" noValidate onSubmit={save}>
-          <label><span className="sr-only">Full name</span><input autoComplete="name" className="field" name="fullName" placeholder="Full name" value={fullName} readOnly={!collectDetails} required maxLength={80} disabled={working} onChange={event=>setFullName(capitaliseName(event.target.value))} /></label>
+          <label><span className="sr-only">Full name</span><input autoComplete="name" className="field" name="fullName" placeholder="Full name" value={fullName} readOnly={!twoStep} required maxLength={80} disabled={working} onChange={event=>setFullName(capitaliseName(event.target.value))} /></label>
           <div className="phone-row">
             <label className="dial-wrap"><span className="sr-only">Country code</span><select className="dial" name="dialCode" value={dial} onChange={event=>setDial(event.target.value)} disabled={working}>{countries.map(country=><option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select></label>
             <label style={{flex:1,minWidth:0}}><span className="sr-only">Mobile number</span><input autoComplete="tel-national" className="field" inputMode="tel" name="mobile" placeholder="Mobile number" type="tel" required value={mobile} onChange={event=>setMobile(event.target.value)} disabled={working} /></label>
           </div>
-          {collectDetails&&<label className="claim-email"><span className="sr-only">Email address</span><input autoComplete="email" className="field" name="email" placeholder="Email address" type="email" required maxLength={254} value={emailAddress} onChange={event=>setEmail(event.target.value)} disabled={working}/></label>}
-          <label className="otp-field"><span className="sr-only">Six-digit confirmation code</span><input id="final-otp" autoComplete="one-time-code" className="field" inputMode="numeric" maxLength={6} name="otp" placeholder="OTP" value={otp} onChange={event=>setOtp(event.target.value.replace(/\D/g,''))} disabled={working||collectDetails} /></label>
+          <div className="claim-otp-row">
+            <label className="otp-field"><span className="sr-only">Six-digit confirmation code</span><input id="final-otp" autoComplete="one-time-code" className="field" inputMode="numeric" maxLength={6} name="otp" placeholder="OTP" value={otp} onChange={event=>setOtp(event.target.value.replace(/\D/g,''))} disabled={working||changed} /></label>
+            <button className="btn claim-send-otp" type="button" disabled={sending||resendSeconds>0} onClick={sendOtp} aria-describedby={twoStep?"claim-otp-consent":undefined}>{resendSeconds>0?'Resend in '+resendSeconds+'s':changed?'Send OTP':'Resend OTP'}</button>
+          </div>
+          {twoStep&&<p id="claim-otp-consent" className="help">By requesting an OTP, you agree to receive a verification code by WhatsApp or SMS.</p>}
           <p className="signin">Already saved your <span className="inline-coins">SO/ COINS</span>? {onSignIn&&<button className="claim-sign-in" type="button" disabled={working} onClick={onSignIn}>Sign in</button>}</p>
-          <p className="help">{collectDetails?'We’ll send a code by WhatsApp or SMS to confirm it’s you.':changed?'Your number changed. Send a new code to verify it.':'Enter the code sent by WhatsApp or SMS to confirm it’s you.'}</p>
-          <p className="help">Use your SO/ COINS from our launch in December. They expire 6 months after it. Terms apply.</p>
-          {collectDetails&&<div className="claim-consents">
-            <label className="consent"><input name="terms" type="checkbox" required disabled={working}/><span>I'm 18 or older and I agree to the <a href={termsUrl||'/terms'} target="_blank" rel="noopener">Terms and Conditions</a> and <a href={privacyUrl||'/privacy'} target="_blank" rel="noopener">Privacy Policy</a>, and I agree to receive a verification code.</span></label>
-            <label className="consent"><input name="updates" type="checkbox" disabled={working}/><span>Send me <span className="brand-word">SO/ FACET</span> news and launch updates.</span></label>
-          </div>}
-          <div className="buttons"><button className="btn" type="submit" disabled={working || busy || (!collectDetails&&changed) && resendSeconds>0}><span>{working || busy?'PLEASE WAIT…':!collectDetails&&changed?'SEND NEW CODE':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
-          {!collectDetails&&<div className="claim-resend"><button type="button" disabled={working || busy || resendSeconds>0 || changed} onClick={()=>void submit(onResend,{},'Please request another code later.')}>{resendSeconds>0?'Resend code in '+resendSeconds+'s':'Resend code'}</button></div>}
+          <div className="buttons"><button className="btn" type="submit" disabled={sending||changed}><span>{sending?'PLEASE WAIT…':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
           <p aria-live="polite" className="feedback" id="feedback" role="status">{status || message}</p>
         </form>
         </>}

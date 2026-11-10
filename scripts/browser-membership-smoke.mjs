@@ -56,7 +56,7 @@ try{
         await frame.locator('#feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
         await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
       }
-      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();await frame.getByText('You made “THE FIRST CUT”.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
+      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();await frame.getByText('You joined THE SO/ COLLECTIVE.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
       await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}});});
       await frame.getByRole('button',{name:'Share my score',exact:true}).click();await frame.getByRole('status').filter({hasText:'Your score was copied.'}).waitFor();
       assert.match(await frame.locator('body').evaluate(()=>window.__copiedScore),/I scored 3,205 pts on SO\/ FACET pinball/);
@@ -110,7 +110,7 @@ try{
         await route.fulfill({response,body:source});
       });
       await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.__testRewards);
-      for(const name of ['Diamond','Jewellery','Pinball']){
+      for(const name of ['Diamond','Pinball','Jewellery']){
         const card=page.getByRole('button',{name:name+' card. Front view',exact:true});
         await card.press('ArrowRight');
       }
@@ -130,7 +130,17 @@ try{
       await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();await frame.getByRole('button',{name:'Save my SO/ COINS',exact:true}).click();await frame.locator('[name="fullName"]').waitFor();
       assert.equal(await frame.locator('.claim-invitation').innerText(),'JOIN THE SO/ COLLECTIVE');assert.match(await frame.locator('.claim-score').innerText(),/3,205 pts/);
       await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
-      await frame.locator('[name="fullName"]').fill('Test Member');await frame.locator('[name="mobile"]').fill('9876543210');await frame.locator('[name="email"]').fill('test@example.invalid');await frame.locator('[name="terms"]').check();await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#final-otp:not([disabled])').waitFor();await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      await frame.locator('[name="fullName"]').fill('Test Member');await frame.locator('[name="mobile"]').fill('9876543210');
+      await frame.getByRole('button',{name:'Send OTP',exact:true}).click();
+      await frame.locator('#final-otp:not([disabled])').waitFor();
+      assert.equal(await frame.getByRole('dialog',{name:'Confirm your details'}).count(),0);
+      assert.equal(await frame.getByRole('textbox',{name:'Email address'}).count(),0);
+      await frame.locator('#final-otp').fill('012345');
+      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+      const details=frame.getByRole('region',{name:'Confirm your details'});
+      await details.getByRole('textbox',{name:'Email address'}).fill('test@example.invalid');
+      await details.locator('[name="terms"]').check();
+      await details.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
       await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
       await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedScore=data}});});
       await frame.getByRole('button',{name:'Share my score',exact:true}).click();assert.match(await frame.locator('body').evaluate(()=>window.__sharedScore.text),/I scored 3,205 pts/);

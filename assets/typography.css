@@ -38,8 +38,9 @@ button:not(:where(.menu-toggle,#nav-toggle,[role=tab],.tile,.text-button,#how-to
 :is(.menu-panel .menu-item:not(.menu-join),.site-nav .play-now,.site-nav .skip-game,.site-navigation a:not(.menu-join),.topic-nav button,[role=tab]){
   font-family:var(--font-body)!important;font-weight:600!important;text-transform:uppercase;letter-spacing:.05em;
 }
+:is(.menu-panel,#nav-panel) > .menu-item:not(.menu-join){font-size:calc(var(--site-menu-size) - 7px)}
 .menu-small-links a{font-family:var(--font-body);font-weight:400}
-.menu-panel .menu-join{font-family:var(--font-action)!important;font-weight:400!important;letter-spacing:.08em}
+.menu-panel .menu-join{font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:600!important;letter-spacing:.08em}
 .text-button:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.account-access *)){
   font-family:var(--font-body);font-weight:600;letter-spacing:0;
 }
@@ -171,7 +172,6 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
     font-size: 14px !important;
   }
 
-  .menu-panel .menu-item:not(.menu-join),
   .site-navigation .play-now {
     font-size: 13px;
   }

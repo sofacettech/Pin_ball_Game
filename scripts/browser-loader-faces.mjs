@@ -48,7 +48,7 @@ try{await withRewardsSite(async({origin})=>{
   await page.locator('#sf-cookie-notice [data-reject]').click({timeout:1200}).catch(()=>{});
   await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('.sofacet-card img')].map(i=>i.decode()))});
   await deck.press(' '); // Pause automatic changes; manual flips keep their real animation.
-  for(const name of ['Diamond','Jewellery','Pinball']){
+  for(const name of ['Diamond','Pinball','Jewellery']){
    if(name!=='Diamond')await deck.press('ArrowRight');
    await page.waitForFunction(name=>document.querySelector('.sofacet-card[data-slot="0"]').getAttribute('aria-label')===name+' card'&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false',name);
    await faces(page,false);await deck.evaluate(e=>e.blur());

@@ -12,7 +12,7 @@ function loader({reduced=false,embedded=false,parentOwnsCards=false,managed=fals
  progress.querySelector=selector=>({'.game-loading-fill':fill,'.game-loading-statement':statement}[selector]);
  const storage=new Map(visited?[['sofacet-game-visited','1']]:[]);
  const sessionStorage={getItem:key=>{if(storageBlocked)throw Error('Storage unavailable');return storage.get(key)??null},setItem(key,value){if(storageBlocked)throw Error('Storage unavailable');storage.set(key,value)}};
- cards.hidden=true;cards.querySelectorAll=selector=>selector==='img'?images:[['Up Next:','Pinball'],['10 SO/ COINS = ₹1 OFF','SO/ FACET DIAMOND JEWELLERY'],['Score SO/ COINS.','Save them for<br>SO/ FACET diamond jewellery.']].map(lines=>({children:lines.map(innerHTML=>({innerHTML}))}));
+ cards.hidden=true;cards.querySelectorAll=selector=>selector==='img'?images:[['Up Next:','Pinball'],['Score SO/ COINS.','Save them for<br>SO/ FACET diamond jewellery.'],['1,000 SO/ COINS = ₹100 OFF','SO/ FACET DIAMOND JEWELLERY']].map(lines=>({children:lines.map(innerHTML=>({innerHTML}))}));
  root.addEventListener=rootEvents.addEventListener.bind(rootEvents);root.dispatchEvent=rootEvents.dispatchEvent.bind(rootEvents);root.hasAttribute=name=>managed&&name==='data-managed';stage.inert=true;stage.dataset.ready='false';
  root.querySelector=selector=>({'#game-loader-cards-root':cards,'.loading-copy':status,'.game-loading-progress':progress,'.game-loading-error':error,'[data-game-retry]':retry}[selector]);
  const document=new EventTarget(),window=new EventTarget();document.body={hasAttribute:name=>!managed&&name==='data-game-loading',removeAttribute(){}};document.hidden=false;
@@ -26,11 +26,11 @@ function loader({reduced=false,embedded=false,parentOwnsCards=false,managed=fals
 
 test('determinate progress never regresses and reaches 100 only when the game is ready',()=>{
  const view=loader({visited:true});assert.match(view.statement.innerHTML,/Up Next:/);assert.equal(view.fill.style.transform,'scaleX(0)');
- view.api.progress(42.4);assert.match(view.statement.innerHTML,/10 SO\/ COINS/);assert.equal(view.fill.style.transform,'scaleX(0.42)');
+ view.api.progress(42.4);assert.match(view.statement.innerHTML,/Score SO\/ COINS/);assert.equal(view.fill.style.transform,'scaleX(0.42)');
  for(const value of [12,-1,NaN,Infinity])view.api.progress(value);
  assert.equal(view.progress['aria-valuenow'],'42');
- view.api.progress(100);assert.match(view.statement.innerHTML,/Score SO\/ COINS/);assert.equal(view.stage.inert,true);
- view.api.ready();assert.match(view.statement.innerHTML,/Score SO\/ COINS/);assert.equal(view.fill.style.transform,'scaleX(1)');
+ view.api.progress(100);assert.match(view.statement.innerHTML,/1,000 SO\/ COINS = ₹100 OFF/);assert.equal(view.stage.inert,true);
+ view.api.ready();assert.match(view.statement.innerHTML,/1,000 SO\/ COINS = ₹100 OFF/);assert.equal(view.fill.style.transform,'scaleX(1)');
  view.flushFade();assert.equal(view.root.hidden,true);
  const failed=loader({visited:true});failed.api.progress(35);failed.api.fail(Error('Missing asset'));failed.api.ready();failed.api.progress(100);
  assert.equal(failed.progress['aria-valuenow'],'35');assert.equal(failed.error.hidden,false);
@@ -39,10 +39,10 @@ test('determinate progress never regresses and reaches 100 only when the game is
 
 test('card statements change only after 33 and 66 percent, with the last held through readiness',()=>{
  const view=loader({visited:true});
- for(const [value,copy] of [[0,'Up Next:'],[33,'Up Next:'],[34,'10 SO/ COINS'],[66,'10 SO/ COINS'],[67,'Score SO/ COINS.'],[99,'Score SO/ COINS.']]){
+ for(const [value,copy] of [[0,'Up Next:'],[33,'Up Next:'],[34,'Score SO/ COINS.'],[66,'Score SO/ COINS.'],[67,'1,000 SO/ COINS'],[99,'1,000 SO/ COINS']]){
   view.api.progress(value);assert.ok(view.statement.innerHTML.includes(copy),String(value));
  }
- view.api.ready();assert.equal(view.progress['aria-valuenow'],'100');assert.match(view.statement.innerHTML,/Score SO\/ COINS/);
+ view.api.ready();assert.equal(view.progress['aria-valuenow'],'100');assert.match(view.statement.innerHTML,/1,000 SO\/ COINS = ₹100 OFF/);
  view.flushFade();view.api.show();assert.match(view.statement.innerHTML,/Up Next:/);
 });
 
@@ -52,7 +52,7 @@ test('parent-owned game progress is forwarded only from the trusted game frame',
  const view=loader({managed:true,visited:true});view.api.show();
  const send=(origin,source)=>view.window.dispatchEvent(Object.assign(new Event('message'),{origin,source,data:{type:'sofacet:game-load-progress',value:64}}));
  send('https://other.invalid',view.childWindow);send('http://localhost',{});assert.match(view.statement.innerHTML,/Up Next:/);
- send('http://localhost',view.childWindow);assert.match(view.statement.innerHTML,/10 SO\/ COINS/);
+ send('http://localhost',view.childWindow);assert.match(view.statement.innerHTML,/Score SO\/ COINS/);
 });
 
 test('returning visitors get only a progress bar until the real table is ready',()=>{

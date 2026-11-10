@@ -47,20 +47,20 @@ try{await withRewardsSite(async({origin})=>{
    await settled(page,'Diamond');assert.equal(await page.locator('#game-loading-screen canvas,.loading-statement').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
    assert.ok(Math.abs(box.width/box.height-806/1330)<.01,'The smaller card preserves its aspect ratio');
-   const topHint=page.locator('.card-hint-top'),bottomHint=page.locator('.card-hint-bottom');
-   assert.equal(await topHint.innerText(),mobile?'Swipe left to explore':'Click to explore');
-   const hintBox=await topHint.boundingBox();assert.ok(hintBox.y>=0&&hintBox.y+hintBox.height<box.y-12,'Explore hint fits above the deck');
-   assert.equal(await bottomHint.innerText(),"Discover what's yours");
-   const bottomBox=await bottomHint.boundingBox();assert.ok(bottomBox.y>box.y+box.height+12&&bottomBox.y+bottomBox.height<=page.viewportSize().height,'Discover hint fits below the deck');
+   const topHint=page.locator('.card-hint-top');
+   assert.equal(await topHint.innerText(),mobile?'Swipe left to explore':'Click to Explore');
+   const hintBox=await topHint.boundingBox(),trim=await page.locator('#game-header .nav-trim').boundingBox();
+   assert.ok(hintBox.y>trim.y+trim.height&&hintBox.y+hintBox.height<box.y-12,'Explore hint fits between the navbar trim and the deck');
+   assert.equal(await page.locator('#game-loader-cards-root').getByText("Discover what's yours",{exact:true}).count(),0);
    await capture(page,width+'-diamond');
    if(mobile){
-    await swipe(page,90);await checkTravel(page,true);await settled(page,'Jewellery');await capture(page,width+'-jewellery');
+    await swipe(page,90);await checkTravel(page,true);await settled(page,'Pinball');await capture(page,width+'-pinball');
     const {x,y}=await point(page);await page.touchscreen.tap(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');await capture(page,width+'-back');
     await page.touchscreen.tap(x,y);await page.waitForFunction(()=>!document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');
-    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Pinball');
+    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Jewellery');
    }else{
-    const {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Jewellery');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-jewellery');
-    await page.locator('.game-loader-cards .deck').press('ArrowLeft');await checkTravel(page,false);await settled(page,'Pinball');
+    const {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Pinball');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-pinball');
+    await page.locator('.game-loader-cards .deck').press('ArrowLeft');await checkTravel(page,false);await settled(page,'Jewellery');
    }
    // Hidden parent views suspend autoplay/floating, then resume the same deck.
    await page.evaluate(()=>window.sofacetGameLoader.setActive(false));assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationPlayState),'paused');
@@ -79,11 +79,11 @@ try{await withRewardsSite(async({origin})=>{
  await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.sofacetGameLoader);await page.locator('#sf-cookie-notice [data-reject]').click();await page.evaluate(()=>window.sofacetGameLoader.fail(Error('WASM fixture failure'),'fixture'));
  await page.getByRole('button',{name:'Try again',exact:true}).waitFor();await capture(page,'retry');await page.getByRole('button',{name:'Try again',exact:true}).click();await page.waitForFunction(()=>!!window.sofacetGameLoader&&document.querySelector('.game-loading-error').hidden);
  await page.locator('#game-loader-cards-root').waitFor();
- await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Jewellery');
+ await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Pinball');
  assert.equal(await page.locator('.game-loader-cards .floating').evaluate(e=>getComputedStyle(e).animationName),'none');
  await page.evaluate(()=>window.sofacetGameLoader.ready());
  assert.equal(await page.locator('#game-loading-screen').isVisible(),true);
- await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Pinball');
+ await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Jewellery');
  await page.locator('.game-loader-cards .deck').press('ArrowRight');await page.waitForFunction(()=>document.querySelector('#game-loading-screen').hidden);await page.close();
  report.push({flows:'failure → retry reload; reduced-motion keyboard navigation and readiness'});
 });if(output)await writeFile(resolve(output,engine+'-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({engine,report}));}finally{await browser.close()}
