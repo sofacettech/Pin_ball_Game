@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React from 'react';
 import {createRoot} from 'react-dom/client';
 import LaunchPage from '../../collective-source/LaunchPage.jsx';
 import '../../collective-source/flow.css';
@@ -10,15 +10,4 @@ async function join(values){
   const href=accountNavigationHref('/confirmation');
   if(window.sofacetGameInfo)window.sofacetGameInfo.visit(href);else window.top.location.assign(href);
 }
-function App(){
- const [member,setMember]=useState(null);
- useEffect(()=>{
-  const controller=new AbortController();
-  const refresh=()=>request('/api/player',undefined,controller.signal).then(player=>{if(!controller.signal.aborted)setMember(player.member===true)},()=>{if(!controller.signal.aborted)setMember(false)});
-  const restored=event=>{if(event.persisted)void refresh()};
-  void refresh();window.addEventListener('pageshow',restored);
-  return()=>{controller.abort();window.removeEventListener('pageshow',restored)};
- },[]);
- return <LaunchPage onJoin={join} onPlay={()=>window.top.location.assign('/game')} isMember={member===true} checkingMember={member===null}/>;
-}
-createRoot(document.getElementById('launch-root')).render(<App/>);
+createRoot(document.getElementById('launch-root')).render(<LaunchPage onJoin={join} onPlay={()=>window.top.location.assign('/game')}/>);

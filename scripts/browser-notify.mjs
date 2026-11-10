@@ -52,7 +52,7 @@ try{await withRewardsSite(async({origin,readStore})=>{
   }finally{await context.close()}
  }
  const guest=await browser.newContext({viewport:{width:390,height:844}});await guest.addCookies([{name:'sofacet_pinball_player',value:other,url:origin}]);
- try{const page=await guest.newPage();await page.goto(origin+'/launch');const join=page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true});await join.waitFor();await page.waitForFunction(()=>!document.querySelector('.join-button').disabled);await join.click();await page.waitForURL('**/join');report.push({guestJoinUnchanged:true})}finally{await guest.close()}
+ try{const page=await guest.newPage();await page.goto(origin+'/launch');const notify=page.getByRole('button',{name:'Notify me',exact:true});await notify.waitFor();assert.equal(await notify.isEnabled(),true);await notify.click();await page.waitForURL('**/notify');report.push({guestNotify:true})}finally{await guest.close()}
  assert.equal((await readStore()).firstCuts,undefined);
 }, {returningMember:true});}finally{await browser.close()}
 if(output)await writeFile(resolve(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));

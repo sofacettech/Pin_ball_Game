@@ -10,15 +10,26 @@ const config = content;
   const meshLayer = root.querySelector('.about-mesh');
   const mesh = mountScoreMesh(meshLayer,()=>{},{backgroundColor:'#050505',ambient:false});
   let meshActive=true,openingStarted=false;
+  function startMesh(x,y,source){
+    if(!meshActive||!mesh)return;
+    const bounds=meshLayer.getBoundingClientRect();
+    meshLayer.dataset.waveOrigin=`${x-bounds.left},${y-bounds.top}`;
+    meshLayer.dataset.waveSource=source;
+    meshLayer.dataset.waveCount=String(Number(meshLayer.dataset.waveCount||0)+1);
+    mesh.start(x-bounds.left,y-bounds.top,source);
+  }
+  document.addEventListener('click',event=>{
+    if(event.defaultPrevented||event.button!==0||document.body.hasAttribute('data-menu-open')||
+      event.target.closest('a,button,input,select,textarea,dialog,[role="button"]'))return;
+    openingStarted=true;
+    startMesh(event.clientX,event.clientY,'input');
+  });
   function startOpeningMesh(line){
     if(!meshActive||openingStarted||!mesh||reducedMotion.matches)return;
     const letter=line.querySelector('[data-mesh-start]')?.getBoundingClientRect();
     if(!letter)return;
-    const bounds=meshLayer.getBoundingClientRect();
-    const x=letter.left-bounds.left,y=letter.top+letter.height/2-bounds.top;
     openingStarted=true;
-    meshLayer.dataset.waveOrigin=`${x},${y}`;meshLayer.dataset.waveCount='1';
-    mesh.start(x,y,'opening');
+    startMesh(letter.left,letter.top+letter.height/2,'opening');
   }
   const images = [...document.querySelectorAll('img[data-image]')];
   for (const img of images) {
