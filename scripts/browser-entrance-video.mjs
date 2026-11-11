@@ -14,7 +14,7 @@ const scroll=createJourneyScrollMap(),report=[];
 const browser=await browserType.launch({...engine==='chromium'&&process.platform==='darwin'?{args:['--enable-gpu']}:{}});
 try{
   for(const [name,viewport,reducedMotion] of [['desktop',{width:1440,height:900},'no-preference'],['phone',{width:393,height:852},'reduce']]){
-    const context=await browser.newContext({viewport,reducedMotion});
+    const context=await browser.newContext({viewport,reducedMotion,...name==='phone'?{isMobile:true,hasTouch:true}:{}});
     const page=await context.newPage(),requests=[],errors=[];
     page.on('request',request=>requests.push(request.url()));
     page.on('pageerror',error=>errors.push(error.message));
@@ -37,11 +37,11 @@ try{
     }
     for(const frame of [850,1100,1840,1000,334]){
       await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(frame));
-      await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.2&&window.entrancePreview.settled&&Math.abs(window.entrancePreview.displayedFrame-frame)<1,frame,{timeout:15000});
+      await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.2&&window.entrancePreview.settled&&Math.abs(window.entrancePreview.displayedFrame-frame)<1,frame,{timeout:60000});
     }
     await page.setViewportSize({width:viewport.height,height:viewport.width});
     await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(1840));
-    await page.waitForFunction(()=>window.entrancePreview.displayedFrame===1840&&window.entrancePreview.settled);
+    await page.waitForFunction(()=>window.entrancePreview.displayedFrame===1840&&window.entrancePreview.settled,null,{timeout:60000});
     await page.screenshot({path:new URL(`${engine}-${name}-chess.png`,output).pathname});
     const quality=await page.evaluate(()=>window.entrancePreview.quality);
     assert.equal(quality.preloaded,true);assert.equal(quality.preview,false);
@@ -49,13 +49,28 @@ try{
     assert.equal(quality.sourceHeight,expectedWidth*9/16);
     if(process.env.SOFACET_EXPECT_ENTRANCE_SEGMENTS==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.segmented),true,'The complete journey must keep using buffered sections');
     if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'The complete journey must keep using streamed decoding');
-    await page.evaluate(y=>scrollTo(0,y),scroll.travel);
-    await page.waitForFunction(()=>document.body.hasAttribute('data-game-loading')||window.entrancePreview.gameVisible,null,{timeout:15000});
+    const completion=await page.evaluate(y=>new Promise((resolve,reject)=>{
+      const start=performance.now(),initialFrame=window.entrancePreview.displayedFrame;
+      let lastVisibleFrame=initialFrame,maxFrameStep=0;
+      const timer=setTimeout(()=>reject(Error('Video completion timed out')),60000);
+      function sample(now){
+        const state=window.entrancePreview;
+        if(document.body.hasAttribute('data-game-loading')||state.gameVisible){
+          clearTimeout(timer);resolve({initialFrame,lastVisibleFrame,maxFrameStep,elapsedMs:now-start});return;
+        }
+        maxFrameStep=Math.max(maxFrameStep,Math.abs(state.displayedFrame-lastVisibleFrame));
+        lastVisibleFrame=state.displayedFrame;requestAnimationFrame(sample);
+      }
+      scrollTo(0,y);requestAnimationFrame(sample);
+    }),scroll.travel);
+    assert.equal(completion.lastVisibleFrame,2164,'The final decoded picture must appear before the cards');
+    assert.ok(completion.maxFrameStep<=2,'A fast scroll cannot skip intervening video at the 30 fps cap');
+    assert.ok(completion.elapsedMs>=(2164-completion.initialFrame)*1000/60-50,'Scroll momentum cannot fast-forward playback');
     // The original loader owns the reward story and actual game readiness.
     await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
     if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
     assert.deepEqual(errors,[]);
-    report.push({name,engine,option,quality,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
+    report.push({name,engine,option,quality,completion,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
   // The explicit live 3D alternative must not prefetch video media.

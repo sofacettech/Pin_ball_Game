@@ -2,11 +2,44 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {createVideoJourneyClock,VIDEO_FRAME_INTERVAL_MS} from '../entrance-source/journey-motion.mjs';
 
 // Run the production handoff with a fake clock and child document. Network
 // speed must not turn a still-loading iframe into a permanent error screen.
 const source=readFileSync(new URL('../entrance-source/entrance.mjs',import.meta.url),'utf8');
 const handoff=source.slice(source.indexOf('function gameVisibility('),source.indexOf("$('scroll-hint').addEventListener"));
+
+function videoEnding(){
+ const clock=createVideoJourneyClock(2162),handoffs=[];clock.advance(0,2164);
+ let wanted;
+ const context={raf:0,ready:true,gameRequested:false,phase:'idle',frame:2162,target:2164,lastFrame:2164,lastTime:0,
+  presentedFrame:2162,finalFramePresentedAt:Infinity,videoEntrance:true,videoPlayback:clock,VIDEO_FRAME_INTERVAL_MS,
+  document:{hidden:false},performance:{now:()=>0},
+  journey:{settled:true,profileFrames:[],renderAt(frame){if(wanted!==frame){wanted=frame;this.settled=false}}},
+  requestTick(){},enterGame:options=>handoffs.push(options),
+ };
+ vm.runInNewContext(source.slice(source.indexOf('function tick(now){'),source.indexOf('function presentJourneyFrame(')),context);
+ return {context,handoffs,decoded(now){context.journey.settled=true;context.presentedFrame=2164;context.finalFramePresentedAt=now}};
+}
+
+test('automatic cards wait for the final decoded frame and its screen presentation',()=>{
+ const view=videoEnding();
+ view.context.tick(40);view.context.tick(90);
+ assert.equal(view.context.frame,2164,'the requested playhead has reached the end');
+ assert.equal(view.handoffs.length,0,'an unfinished decode must not open the cards');
+ view.decoded(100);view.context.tick(110);
+ assert.equal(view.handoffs.length,0,'the last image needs a screen presentation interval');
+ view.context.tick(134);
+ assert.equal(view.handoffs.length,1);assert.equal(view.handoffs[0].fromChess,true);
+});
+
+test('scrolling back from the final frame cancels automatic entry into the cards',()=>{
+ const view=videoEnding();view.context.tick(40);view.decoded(50);
+ view.context.tick(72);view.context.target=2100;view.context.tick(86);
+ assert.equal(view.context.frame,2164,'the next video step is still waiting for its presentation interval');
+ assert.equal(view.handoffs.length,0,'a reversal must cancel entry even before the next picture changes');
+ view.context.tick(110);assert.ok(view.context.frame<2164);
+});
 
 function entrance(){
  const timers=new Map(),events=[],redirects=[];let now=0,id=0,observer;

@@ -3,7 +3,7 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
-import { advanceJourneyFrame } from './journey-motion.mjs';
+import { advanceJourneyFrame, createVideoJourneyClock, VIDEO_FRAME_INTERVAL_MS } from './journey-motion.mjs';
 import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-46696ddb76e8';
@@ -18,11 +18,13 @@ const performanceMode=!videoEntrance&&parameters.get('quality')!=='reference';
 const showFPS=parameters.has('debug')||parameters.has('debug/1')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const assembly=createAssemblyClock({reducedMotion:reduced.matches});
+const videoPlayback=createVideoJourneyClock(firstFrame);
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
 let phase='loading',gameLoader,gameReadyObserver;
 let gameRecovering=false;
 let startupFailed=false;
 let frame=firstFrame,presentedFrame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
+let finalFramePresentedAt=Infinity;
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';
 const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
@@ -151,12 +153,17 @@ function tick(now){
   }
   const tickStart=performance.now();
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
-  frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
+  frame=videoEntrance?videoPlayback.advance(now,target,{settled:journey.settled}):advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
   if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
   journey.renderAt(frame);
   if(journey.profileFrames.length)journey.profileFrames.at(-1).page=pageTime;
-  if(frame===lastFrame){if(videoEntrance&&!journey.settled){requestTick();return;}enterGame({fromChess:true});return;}
+  if(frame===lastFrame&&target===lastFrame){
+    // A completed scroll/seek is not enough: leave the decoded final picture
+    // on screen for a presentation interval before the opaque cards replace it.
+    if(videoEntrance&&(!journey.settled||presentedFrame!==lastFrame||now-finalFramePresentedAt<VIDEO_FRAME_INTERVAL_MS)){requestTick();return;}
+    enterGame({fromChess:true});return;
+  }
   if(frame!==target)requestTick();else lastTime=0;
 }
 function presentJourneyFrame(at){
@@ -182,12 +189,12 @@ const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.res
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
   gameVisibility(gameVisible&&!document.hidden);
-  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
+  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();videoPlayback.suspend();journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
 window.addEventListener('pagehide',event=>{
   if(ready&&!gameRequested)history.replaceState({...history.state,sofacetWorldScroll:scrollY},'');
-  assembly.suspend();
+  assembly.suspend();videoPlayback.suspend();
   if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}
 });
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
@@ -212,7 +219,7 @@ try{
       onStatus:message=>{if(message)setStartupStatus(message);},
       onRender:({frame:drawnFrame})=>{
         if(videoEntrance){
-          presentedFrame=drawnFrame;placeStage();
+          presentedFrame=drawnFrame;finalFramePresentedAt=drawnFrame===lastFrame?performance.now():Infinity;placeStage();
           if(ready&&phase!=='assembly')presentJourneyFrame(drawnFrame);
         }
         frameRate?.record();
