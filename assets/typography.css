@@ -9,7 +9,7 @@
 @font-face{font-family:'Fancy Cut Pro';src:url('/assets/score-coins/fancy-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Helvetica Neue';src:url('/assets/loader-cards/HelveticaNeueRoman.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
 
-:root{--font-body:'Josefin Sans',sans-serif;--font-heading:'Josefin Sans',sans-serif;--font-lead:'Yeseva One',serif;--font-action:'Sofacet Actions',sans-serif;--font-brand:SOFacetWordmark,sans-serif}
+:root{--font-body:'Josefin Sans',sans-serif;--font-heading:'Josefin Sans',sans-serif;--font-lead:'Yeseva One',serif;--font-action:'Brilliant Cut Pro',sans-serif;--font-brand:SOFacetWordmark,sans-serif}
 html,body{font-family:var(--font-body);font-synthesis:none}
 *,*::before,*::after{font-synthesis:none}
 button,input,select,textarea{font-family:inherit}
@@ -38,9 +38,34 @@ button:not(:where(.menu-toggle,#nav-toggle,[role=tab],.tile,.text-button,#how-to
 :is(.menu-panel .menu-item:not(.menu-join),.site-nav .play-now,.site-nav .skip-game,.site-navigation a:not(.menu-join),.topic-nav button,[role=tab]){
   font-family:var(--font-body)!important;font-weight:600!important;text-transform:uppercase;letter-spacing:.05em;
 }
-:is(.menu-panel,#nav-panel) > .menu-item:not(.menu-join){font-size:calc(var(--site-menu-size) - 7px)}
+@layer site-interface {
+  :is(button, input[type="button"], input[type="submit"], a.action, a.action-button,
+      a.primary, a.secondary, a.btn, a.cta, a.play-now, a.skip-game, a.pinball,
+      a.play-link, a.menu-join, a.site-join-button, .collective-invite a):not(.menu-item:not(.menu-join)) {
+    font-family:var(--font-action)!important;
+    font-weight:500!important;
+  }
+  :is(.menu-panel,#nav-panel) > .menu-item:not(.menu-join) {
+    font-family:var(--font-body)!important;
+    font-weight:600!important;
+    font-size:max(13px,calc(var(--site-menu-size) - 9px))!important;
+  }
+  :is(.menu-panel,#nav-panel) :is(.menu-item,.menu-small-links a) {text-transform:none!important}
+}
+:root:not([data-signed-out]) [data-join-for-guests],
+:root[data-hide-join-footer] .site-join-footer{display:none!important}
+.site-join-footer{position:relative;z-index:2;display:grid;justify-items:center;padding:32px 20px max(32px,env(safe-area-inset-bottom));color:#f2efe9;background:#050505}
+a.site-join-button{display:inline-flex;align-items:center;justify-content:center;gap:.6em;min-height:44px;max-width:100%;padding:8px 14px;border:1px solid currentColor;color:inherit;font-size:13px;line-height:1.3;letter-spacing:.035em;text-align:center;text-decoration:none;pointer-events:auto}
+a.site-join-button:hover,a.site-join-button:focus-visible{background:#f2efe9;color:#050505}
+#story-copy .site-join-button,#table-intro ~ .site-join-button{margin-top:12px}
+#table-intro[hidden] ~ .site-join-button{display:none}
+.leaderboard-join{text-align:center}
+#post-game-rewards .reward>.site-join-button{display:flex;width:max-content;margin:12px auto 0}
+:is(a,button){text-decoration-skip-ink:none}
+:is(a,button) :is(.coin-word,.coin-copy,.brand-word,.wordmark,.inline-coins){display:inline;text-decoration:inherit;text-decoration-skip-ink:none}
+#story-copy .story-finale h2{text-transform:none}
 .menu-small-links a{font-family:var(--font-body);font-weight:400}
-.menu-panel .menu-join{font-family:'Brilliant Cut Pro',sans-serif!important;font-weight:600!important;letter-spacing:.08em}
+.menu-panel .menu-join{font-size:15px;letter-spacing:.08em}
 .text-button:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-launch *,.account-access *)){
   font-family:var(--font-body);font-weight:600;letter-spacing:0;
 }
@@ -70,6 +95,7 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
 
 /* The small green journey lines are supporting labels, not display headings. */
 #story-copy .story-line :is(h1,h2){font-family:var(--font-heading);font-weight:600;font-style:normal;text-transform:uppercase;letter-spacing:.035em}
+#story-copy .story-finale h2{text-transform:none}
 #story-copy .story-line p{font-family:var(--font-body);font-weight:400}
 .launch-copy h1 em{font-family:inherit;font-weight:600;font-style:normal}
 

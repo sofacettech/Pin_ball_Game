@@ -18,10 +18,14 @@ test('account sign-in reads the Medusa profile and sign-out invalidates the serv
  await withRewardsSite(async({request,state,events,readStore})=>{
   state.profile.name='Central Member'; state.profile.email='central@example.invalid';
   assert.equal((await request('/api/account')).status,401);
+  assert.deepEqual((await request('/api/account/session',undefined,member)).data,{signedIn:false,expiresIn:null},'a saved member profile does not establish a session');
   const sent=await request('/api/account/otp/request',{phoneNumber:registration.phoneNumber},other);
   assert.equal(sent.status,200); assert.equal(sent.data.deliveryChannel,'whatsapp');
   const verified=await request('/api/account/otp/verify',{phoneNumber:registration.phoneNumber,challengeId:sent.data.challengeId,otp:'012345'},other);
   assert.deepEqual(verified.data,{verified:true});
+  const session=(await request('/api/account/session',undefined,other)).data;
+  assert.equal(session.signedIn,true);
+  assert.ok(session.expiresIn>0);
   const account=(await request('/api/account',undefined,other)).data;
   assert.equal(account.name,'Central Member');assert.equal(account.email,'central@example.invalid');assert.equal(account.savedPoints,0);
   assert.deepEqual((await readStore()).players[other].profile,{customerId:'cus_fixture',phone:registration.phoneNumber});
@@ -29,6 +33,7 @@ test('account sign-in reads the Medusa profile and sign-out invalidates the serv
   const signedOut=await request('/api/account/signout',{},other);
   assert.equal(signedOut.status,200);assert.match(signedOut.headers.get('set-cookie'),/Max-Age=0/);
   assert.equal((await request('/api/account',undefined,other)).status,401,'even a stale cookie cannot reuse the signed-out JWT');
+  assert.deepEqual((await request('/api/account/session',undefined,other)).data,{signedIn:false,expiresIn:null});
   assert.equal((await request('/api/account/signout',{},other,{Origin:'https://example.invalid'})).status,403);
   assert.equal(events.filter(e=>e.path==='/rewards/points').length,0);
  },{returningMember:true});

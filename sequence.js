@@ -1,6 +1,6 @@
 import { siteSound, CHESS_HIT_FRAME } from './sounds/site-audio.js?v=frames-46696ddb76e8';
 import { finishLoading } from './assets/loading/intro.js?v=return-24daee91';
-import { createLandingCopy } from './assets/kinetic-copy.js?v=frames-19096bede8da';
+import { createLandingCopy } from './assets/kinetic-copy.js?v=welcome-scroll-3';
 import { createFrameSource } from './assets/frame-source.js?v=frames-23eb123206c8';
 import { createFrameCache } from './assets/frame-cache.js?v=frames-c452ffd64863';
 import { createFramePacer } from './assets/frame-pacing.js?v=frames-fcf79e1ee64b';
@@ -266,7 +266,7 @@ export async function createSequence(setInteractive, requestFrame, media) {
   }, {signal: events.signal});
   window.addEventListener('scroll', () => {
     if (['opening','buffering','settling'].includes(phase)) return;
-    updateCopy.setScrolled(window.scrollY > 0);
+    updateCopy.setScrolled(window.scrollY);
     scrollDirty = true;
     if (usesNativeScheduler()) nativeScheduler.request();
     requestFrame();

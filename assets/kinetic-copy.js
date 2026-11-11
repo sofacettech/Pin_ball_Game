@@ -5,6 +5,7 @@ const FPS = 60;
 const ENTER = .62;
 const EXIT = .48;
 const STAGGER = .16;
+const WELCOME_SCROLL_DISTANCE = 300;
 
 export async function createLandingCopy({welcome:showWelcome=true}={}) {
   // WebKit can hold fonts.ready until a stalled video finishes the document load.
@@ -24,7 +25,7 @@ export async function createLandingCopy({welcome:showWelcome=true}={}) {
   function paint() {
     const welcomeVisible = showWelcome&&(!scrollStarted || Number(gsap.getProperty(welcome, 'opacity')) > 0);
     for (const { element, from, until } of headlines) {
-      const active = frame >= from && (element === welcome ? welcomeVisible : frame < until);
+      const active = frame >= from && (element === welcome ? welcomeVisible : !welcomeVisible && frame < until);
       if (visibility.get(element) !== active) {
         element.setAttribute('aria-hidden', String(!active));
         element.style.visibility = active ? 'visible' : 'hidden';
@@ -99,7 +100,8 @@ export async function createLandingCopy({welcome:showWelcome=true}={}) {
   }, root);
 
   const update = nextFrame => { frame = nextFrame; paint(); };
-  update.setScrolled = scrolled => {
+  update.setScrolled = distance => {
+    const scrolled = distance >= WELCOME_SCROLL_DISTANCE;
     if (scrollStarted === scrolled) return;
     scrollStarted = scrolled;
     if(!showWelcome){paint();return;}
@@ -107,7 +109,7 @@ export async function createLandingCopy({welcome:showWelcome=true}={}) {
     if (reduced) gsap.set(welcome, { opacity: scrolled ? 0 : 1, y: 0 });
     else welcomeTween = gsap.to(welcome, {
       opacity: scrolled ? 0 : 1, y: scrolled ? -12 : 0,
-      duration: 1, ease: 'power3.inOut', onComplete: paint,
+      duration: .6, ease: 'power3.inOut', onComplete: paint,
     });
     paint();
   };

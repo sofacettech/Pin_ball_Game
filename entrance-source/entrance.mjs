@@ -1,5 +1,5 @@
 import {presentationReady, modelDownload, videoEntrance, setStartupStatus, finishStartupStatus, completePreparation, cancelStartup} from './startup.mjs';
-import { createLandingCopy } from '/assets/kinetic-copy.js?v=spawn-copy-1';
+import { createLandingCopy } from '/assets/kinetic-copy.js?v=welcome-scroll-3';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
@@ -161,7 +161,7 @@ function tick(now){
 }
 function presentJourneyFrame(at){
   const scrolledFrame=videoEntrance?at:target;
-  updateCopy.setScrolled(scrolledFrame>firstFrame);updateCopy(storyFrameAt(at));
+  updateCopy.setScrolled(journeyScroll.scrollAtFrame(scrolledFrame));updateCopy(storyFrameAt(at));
   document.body.toggleAttribute('data-scrolled',scrolledFrame>firstFrame+8);
   $('progress').style.transform=`scaleX(${(at-firstFrame)/(lastFrame-firstFrame)})`;
   siteSound.frame(at);

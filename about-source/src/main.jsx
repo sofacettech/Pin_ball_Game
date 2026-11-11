@@ -1,5 +1,7 @@
 import React,{useLayoutEffect,useRef} from 'react';
 import {createRoot} from 'react-dom/client';
+import {accountNavigationHref} from '../../shared/account-session.js';
+import content from './content.json';
 import {initializeAbout} from './motion.js';
 import './style.css';
 
@@ -14,7 +16,7 @@ export function AboutPage(){
 <div className="reading-progress" aria-hidden="true"><span></span></div>
 <main id="main">
   <section className="intro scene" aria-labelledby="intro-title">
-    <p className="intro-label" data-reveal>About <span className="wordmark inline-wordmark">SO/ FACET</span></p>
+    <p className="intro-label" data-reveal>ABOUT <span className="wordmark inline-wordmark">SO/ FACET</span></p>
     <h1 id="intro-title" data-reveal style={{"--order": "1"}}><span>Diamonds,</span><span><span data-mesh-start>m</span>ade for who you are.</span></h1>
     <p className="intro-copy" data-reveal style={{"--order": "2"}}><span className="wordmark inline-wordmark">SO/ FACET</span> is a lab-grown diamond jewellery house from India. Real diamonds, grown.</p>
   </section>
@@ -43,7 +45,7 @@ export function AboutPage(){
     <div className="gallery">
       <div className="gallery-pair scene">
         <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="0" aria-label="Enlarge collection image 1"><span className="image-window"><img data-image="collection1" data-caption="Diamonds, made for who you are." src="/assets/about/campaign/campaign-1.webp" width="1800" height="2234" alt="Campaign portrait with a diamond ring and reflective glove." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">Diamonds, made for who you are.</span></button></figure>
-        <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="1" aria-label="Enlarge collection image 2"><span className="image-window"><img data-image="collection2" data-caption="For every side of you." src="/assets/about/campaign/campaign-3.webp" width="1800" height="2234" alt="Campaign portrait with a star-shaped ring and reflective cuff." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">For every side of you.</span></button></figure>
+        <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="1" aria-label="Enlarge collection image 2"><span className="image-window"><img data-image="collection2" data-caption={content.images.collection2.caption} src="/assets/about/campaign/campaign-3.webp" width="1800" height="2234" alt="Campaign portrait with a star-shaped ring and reflective cuff." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">{content.images.collection2.caption}</span></button></figure>
       </div>
       <div className="gallery-pair scene">
         <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="2" aria-label="Enlarge collection image 3"><span className="image-window"><img data-image="collection3" data-caption="A small detail. A personal signature." src="/assets/about/campaign/campaign-2.webp" width="1800" height="2234" alt="Campaign portrait with a diamond bracelet." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">A small detail. A personal signature.</span></button></figure>
@@ -58,11 +60,18 @@ export function AboutPage(){
 
   <section className="closing scene" aria-labelledby="closing-title">
     <p className="closing-intro" data-reveal><span>Until then, this world is our first hello.</span><span>Explore it, play a round, and keep what you score.</span></p>
-    <p className="launch-date" data-reveal><span>The doors open</span> <span>in December.</span></p>
-    <h2 id="closing-title" data-reveal style={{"--order": "1"}}><span className="wordmark">SO/ FACET</span><span className="closing-question">What’s yours?</span></h2>
+    <p className="launch-date" data-reveal><span>The doors open</span> <span>soon.</span></p>
+    <h2 id="closing-title" data-reveal style={{"--order": "1"}}>
+      <span className="closing-logo">
+        <img className="closing-mark" src="/assets/sofacet-icon.svg" width="700" height="574" alt=""/>
+        <img src="/assets/sofacet-wordmark.svg" width="2048" height="278" alt="SO/ FACET"/>
+      </span>
+      <span className="closing-question">What’s yours?</span>
+    </h2>
     <div className="closing-actions" data-reveal style={{"--order": "2"}}>
       <button className="action-button" data-destination="world">Back to the world</button>
       <button className="action-button action-primary" data-destination="game">Play the game <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+      <a className="action-button" href={accountNavigationHref('/join')} data-join-for-guests>JOIN THE SO/ COLLECTIVE <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
     </div>
     <a className="text-link" href="#top" data-reveal style={{"--order": "3"}}>Back to the top <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></a>
   </section>
@@ -75,7 +84,7 @@ export function AboutPage(){
 </dialog>
 <dialog className="coming-soon" id="coming-soon" aria-labelledby="soon-title" aria-describedby="soon-copy">
   <button className="icon-button soon-close" data-close-soon aria-label="Close coming-soon message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-  <h2 id="soon-title">The doors<br/>open in December.</h2>
+  <h2 id="soon-title">The doors<br/>open soon.</h2>
   <p id="soon-copy">Until then, this world is our first hello.</p>
   <button className="action-button action-primary" data-close-soon>Back to About Us</button>
 </dialog>

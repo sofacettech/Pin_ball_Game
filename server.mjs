@@ -22,8 +22,9 @@ function fail(status,message){throw new ServiceError(status,message)}
 function json(response,status,data){response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});response.end(JSON.stringify(data))}
 async function body(request,limit=8192){let data='';for await(const chunk of request){data+=chunk;if(Buffer.byteLength(data)>limit)fail(413,'The request is too large.')}try{return JSON.parse(data||'{}')}catch{fail(400,'Please send valid JSON.')}}
 const publicPlayer=p=>({display_name:p.name,member:!!p.profile,best_score:p.bestVerified?p.best:null});
+const playerId=request=>/(?:^|;\s*)sofacet_pinball_player=([a-f0-9]{64})(?:;|$)/.exec(request.headers.cookie||'')?.[1];
 function player(request,response){
- const id=/(?:^|;\s*)sofacet_pinball_player=([a-f0-9]{64})(?:;|$)/.exec(request.headers.cookie||'')?.[1];
+ const id=playerId(request);
  if(id&&store.players[id])return [id,store.players[id]];
  const fresh=randomBytes(32).toString('hex');
  commit(()=>{store.players[fresh]={name:'Player '+fresh.slice(0,4).toUpperCase()}});
@@ -67,6 +68,7 @@ async function api(request,response,path){
   console.warn(JSON.stringify({event:'game-load-failure',phase:data.phase,code:data.code,embedded:data.embedded}));
   return json(response,202,{received:true});
  }
+ if(path==='/api/account/session'&&request.method==='GET')return json(response,200,await membershipApi(path,{},playerId(request)));
  const [id,p]=player(request,response);
  if(path==='/api/player'&&request.method==='GET')return json(response,200,publicPlayer(p));
  if(path==='/api/account'&&request.method==='GET'){

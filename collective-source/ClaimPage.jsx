@@ -99,7 +99,7 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
             <label><span className="sr-only">Email address</span><input autoComplete="email" className="field" name="email" placeholder="Email address" type="email" required maxLength={254} defaultValue={email} disabled={sending}/></label>
             <div className="claim-consents">
               <label className="consent"><input name="terms" type="checkbox" required disabled={sending}/><span>I'm 18 or older and I agree to the <a href={termsUrl||'/terms'} target="_blank" rel="noopener">Terms and Conditions</a> and <a href={privacyUrl||'/privacy'} target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
-              <label className="consent"><input name="updates" type="checkbox" disabled={sending}/><span>Send me <span className="brand-word">SO/ FACET</span> news and launch updates.</span></label>
+              <label className="consent"><input name="updates" type="checkbox" disabled={sending}/><span>Keep me posted on new collections, drops and what's next.</span></label>
             </div>
             <div className="buttons"><button className="btn" type="submit" disabled={sending}><span>{sending?'PLEASE WAIT…':'SAVE MY SO/ COINS'}</span><Arrow /></button></div>
             <p className="feedback" role="status">{status || message}</p>

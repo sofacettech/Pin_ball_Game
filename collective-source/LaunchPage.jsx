@@ -30,7 +30,7 @@ function JoinDialog({open, onClose, onJoin}) {
       <label className="field-label" htmlFor="join-phone">Mobile number</label><input autoComplete="tel" id="join-phone" name="phoneNumber" type="tel" inputMode="tel" maxLength={30} required disabled={busy}/>
       <label className="field-label" htmlFor="email">Email</label><input autoComplete="email" id="email" name="email" required type="email" maxLength={254} disabled={busy}/>
       <label className="join-consent"><input id="join-privacy" name="adultPrivacyAccepted" type="checkbox" required disabled={busy}/><span>I'm 18 or older and I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span></label>
-      <label className="join-consent"><input id="join-updates" name="marketingConsent" type="checkbox" required disabled={busy}/><span>Send me <span className="brand-word">SO/ FACET</span> updates and early access.</span></label>
+      <label className="join-consent"><input id="join-updates" name="marketingConsent" type="checkbox" required disabled={busy}/><span>Keep me posted on new collections, drops and what's next.</span></label>
       <button className="dialog-action" type="submit" disabled={busy}>{busy?'Please wait…':'JOIN THE SO/ COLLECTIVE'}</button><p aria-live="polite" className="status" id="join-status" role="status">{message}</p>
     </form>
   </dialog>;

@@ -14,6 +14,7 @@ import {readScreenData,writeScreenData,setScreenRoute,registrationScreenRoute} f
 
 const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
+export const joinPageTitle='SO/ FACET — Join the SO/ COLLECTIVE';
 export function SavedConfirmation({saved,status='',onReplay}) {
   const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
   const [shareStatus,setShareStatus]=useState('');
@@ -33,7 +34,7 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
     {saved?.pointsSaved&&<p>You joined THE SO/ COLLECTIVE.</p>}
     <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You joined THE SO/ COLLECTIVE. Play a round to earn SO/ COINS.'}</p>
-    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch in December. They expire 6 months after it. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
+    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch. They expire 6 months after it. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
       <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
@@ -70,7 +71,10 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   useEffect(()=>{
     if(memberCheck!=='guest')return;
     const route=registrationScreenRoute({step,tab,challenge:claimFirst&&step==='claim'?null:challenge,exit,fromAccount:fromAccount.current});
-    if(route)setScreenRoute(route);
+    if(route){
+      setScreenRoute(route);
+      window.dispatchEvent(new Event('sofacet:registration-route'));
+    }
   },[memberCheck,step,tab,challenge,exit,claimFirst]);
   const exitHeading=useRef(null);
   useEffect(()=>{if(exit)exitHeading.current?.focus({preventScroll:true});},[exit]);
@@ -86,9 +90,9 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   useEffect(()=>{
     const abort=new AbortController();mounted.current=true;
     request('/api/membership/config',undefined,abort.signal).then(setConfig).catch(error=>{if(!abort.signal.aborted)setStatus(error.message);});
-    if(checkMembership&&!restoredSaved.current?.pointsSaved)request('/api/player',undefined,abort.signal).then(player=>{
-      if(typeof player.member!=='boolean')throw Error('Your account could not be checked.');
-      if(player.member&&!forceVerification){
+    if(checkMembership&&!restoredSaved.current?.pointsSaved)request('/api/account/session',undefined,abort.signal).then(session=>{
+      if(typeof session.signedIn!=='boolean')throw Error('Your account could not be checked.');
+      if(session.signedIn&&!forceVerification){
         setMemberCheck('member');
         if(embedded)post({type:'sofacet:membership-existing'});
         else location.replace(accountNavigationHref(location.pathname==='/join'?'/notify':'/my-coins'));
@@ -143,7 +147,9 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     else if(!claimFirst||!value.pointsSaved)location.replace(accountNavigationHref(firstCut&&challenge?.kind==='signup'?'/confirmation':'/my-coins'));
   }
   const createAccount=values=>perform(async signal=>{
-    const profile=registrationDetails(values);setDefaults(values);setDetails(profile);
+    const profile=registrationDetails(values);
+    if(!pendingRef.current&&!profile.marketingConsent)throw Error("Please opt in to updates to join the SO/ COLLECTIVE.");
+    setDefaults(values);setDetails(profile);
     if(challenge?.kind==='signup'&&challenge.expiresAt>Date.now()&&details?.name===profile.name&&challenge.phoneNumber===profile.phoneNumber){setStep('claim');setStatus('Enter the code already sent to your mobile number.');return;}
     await sendCode('signup',profile.phoneNumber,{name:profile.name,consent:profile.termsAccepted},signal);setStep('claim');
   });
@@ -197,7 +203,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
         <div className="auth-flow-actions reward-notice-actions">
           {confirming?<><button onClick={()=>setExit(null)}>Save my SO/ COINS</button><button onClick={()=>{pendingRef.current=null;setPending(null);savedRef.current=true;post({type:'sofacet:reward-discarded'});setExit('left');}}>Leave anyway</button></>:<><button onClick={replay}>Play again</button><button onClick={()=>leave(destination.current)}>Back to the world</button></>}
         </div>
-        {!confirming&&<><a className="auth-flow-updates" href={accountNavigationHref('/join')} target="_top">Just want updates? JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}
+        {!confirming&&<><a className="auth-flow-updates" href={accountNavigationHref('/join')} target="_top" data-join-for-guests>JOIN THE SO/ COLLECTIVE →</a><p className="auth-flow-signoff"><span className="brand-word">SO/ FACET</span>. So/ what’s yours?</p></>}
       </React.Fragment>
     </section>);
   }
@@ -210,6 +216,6 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     {close&&step!=='claim'&&<button type="button" className="auth-flow-close" aria-label="Close account form" onClick={close}>×</button>}
     {embedded&&claimFirst&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={goBack}>← Back</button>}
     {!embedded&&onBack&&step==='identity'&&<button type="button" className="auth-flow-back" onClick={()=>leave('/')}>← Back</button>}
-    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} challengeId={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} twoStep={claimFirst} email={defaults.email} onStart={startClaim} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onClose={close} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={pageTitle} pointsContext={pointsContext} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
+    {step==='claim'||inlineSaved?<ClaimPage confirmation={inlineSaved?confirmation:null} pageTitle={pageTitle} result={inlineSaved?{points:saved.score}:pending} challengeId={challenge?.id} name={details?.name||defaults.name} phone={phoneParts(challenge?.phoneNumber||'').nationalNumber||defaults.phone||''} dialCode={defaults.country||'+91'} challengePhone={challenge?.phoneNumber} twoStep={claimFirst} email={defaults.email} onStart={startClaim} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy} onClaim={confirm} onResend={resend} onBack={goBack} onClose={close} onSignIn={()=>{setStep('identity');switchTab('registered');}} status={status} resendSeconds={seconds} working={busy}/>:<AccountPage pageTitle={step==='identity'&&tab==='create'?joinPageTitle:pageTitle} pointsContext={pointsContext} updatesRequired={!pending} initialTab={initialTab} activeTab={tab} onTabChange={switchTab} defaults={defaults} onLogin={signIn} onRequestOtp={requestSignIn} onCreateAccount={createAccount} status={status} working={busy} resendSeconds={seconds} termsUrl={config?.policies?.terms} privacyUrl={config?.policies?.privacy}/>}
   </>;
 }

@@ -8,7 +8,7 @@ export const sections = [
       {
         "question": "What is SO/ FACET?",
         "answer": [
-          "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open in December."
+          "A lab-grown diamond jewellery house from India. Six collections are on their way, and the doors open soon."
         ]
       },
       {
@@ -26,7 +26,7 @@ export const sections = [
       {
         "question": "When do you launch?",
         "answer": [
-          "In December. Save your SO/ COINS or join SO/ COLLECTIVE, and you'll be among the first to know."
+          "Soon. Save your SO/ COINS or join the SO/ COLLECTIVE, and you'll be among the first to know."
         ]
       },
       {
@@ -88,7 +88,7 @@ export const sections = [
       {
         "question": "How do I use my SO/ COINS?",
         "answer": [
-          "From our launch in December. Sign in at checkout with your mobile number and switch on SO/ COINS."
+          "From our launch. Sign in at checkout with your mobile number and switch on SO/ COINS."
         ]
       },
       {

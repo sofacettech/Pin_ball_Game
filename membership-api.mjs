@@ -109,6 +109,11 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
   }
   return async (path, data, id) => {
     cleanup();
+    if (path === '/api/account/session') {
+      const current = sessions.get(id), saved = getStore().players[id]?.profile;
+      const signedIn = Boolean(current && saved?.customerId === current.customer_id && saved.phone === current.phone);
+      return { signedIn, expiresIn: signedIn ? Math.max(0, current.expiresAt - now()) : null };
+    }
     if (path === '/api/account') return readAccount(id);
     if (path === '/api/account/signout') {
       sessions.delete(id);
@@ -223,6 +228,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         details.birthDate = data.dateOfBirth;
       }
       if (data.termsAccepted !== true || typeof data.marketingConsent !== 'boolean') fail(400, 'Please accept the terms and check your contact preferences.');
+      if (data.gameId === undefined && !data.marketingConsent) fail(400, 'Please opt in to updates to join the SO/ COLLECTIVE.');
       const policy = policies(); if (!policy.terms || !policy.privacy) fail(503, 'Membership terms are not available yet. Please try again later.');
       if (data.gameId !== undefined) {
         if (typeof data.gameId !== 'string' || !uuid.test(data.gameId)) fail(400, 'This game session is invalid.');

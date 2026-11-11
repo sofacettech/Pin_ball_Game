@@ -168,10 +168,11 @@ function menuLink(label, href, className = 'menu-item') {
 const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/game');
 if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
 if (inGameInfo) play.setAttribute('data-game-return','');
-const accountLink = menuLink('MY SO/ COINS', '/my-coins');accountLink.setAttribute('data-account-link', '');
+const accountLink = menuLink('My SO/ COINS', '/my-coins');accountLink.setAttribute('data-account-link', '');
 const about = menuLink('About ', '/about');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
-const join = menuLink('JOIN THE SO/ COLLECTIVE', '/join', 'menu-item menu-join');
+const join = menuLink('Join the SO/ COLLECTIVE', '/join', 'menu-item menu-join');
+join.setAttribute('data-join-for-guests', '');
 const small = document.createElement('div');small.className = 'menu-small-links';
 small.append(menuLink('Terms','/terms',''),menuLink('Privacy','/privacy',''),menuLink('Contact','/contact',''));
 const cookieLink=menuLink('Cookie settings','/privacy#privacy-9-cookies-pixels-and-similar-technologies','');cookieLink.setAttribute('data-cookie-settings','');small.append(cookieLink);
@@ -189,11 +190,11 @@ for (const [label, icon, href] of [
   item.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(item);
 }
 small.append(socials);
-panel.replaceChildren(play, accountLink, menuLink('HOW SO/ COINS WORK', '/how-coins-work'), about, join, small);
+panel.replaceChildren(play, accountLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, join, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {
-  if(item.classList.contains('menu-join'))return;
+  if(item.classList.contains('menu-join')||item.hasAttribute('data-cookie-settings'))return;
   const target = new URL(item.href, location.href);
   const targetPath = target.pathname === '/' ? '/index.html' : target.pathname;
   if (target.origin !== location.origin || targetPath !== currentPath) return;

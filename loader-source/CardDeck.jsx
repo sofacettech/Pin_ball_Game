@@ -23,7 +23,7 @@ export default function CardDeck({active=false,onComplete}) {
             {card.copy}
           </div><div className="face reverse-face" aria-hidden="true">
             <img className="sofacet-card__background" src={artwork+'card-back.svg?v=faceted-platinum-20261107'} alt="" width={806} height={1330} loading="eager" decoding="async"/>
-            <p className="back-name"><span className="brand-word">SO/ FACET</span></p>
+            <p className="back-name"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width={2048} height={278}/></p>
           </div></div>
         </article>)}
       </div>

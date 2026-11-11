@@ -8,7 +8,6 @@ body[data-loading]{overflow:hidden}
 #story-copy{--opening-story-top:25%}
 #story-copy .story-opening{--opening-left:8.5%;--opening-top:var(--opening-story-top);--opening-label-size:clamp(18px,1.5vw,26px);--opening-wordmark-width:clamp(220px,22vw,340px)}
 #story-copy .story-outside,#story-copy .story-approach{left:8.5%;right:auto;top:var(--opening-story-top);bottom:auto;width:min(31vw,480px)}
-body[data-scrolled] #story-copy .story-opening{visibility:hidden!important}
 body:not([data-scrolled]) #story-copy .story-line:not(.story-opening){visibility:hidden!important}
 @media(max-width:1024px),(any-pointer:coarse){
  #story-copy .story-opening{--opening-left:7%;--opening-top:calc(14% + env(safe-area-inset-top,0px));--opening-label-size:22px;--opening-wordmark-width:min(66vw,280px);--opening-line-gap:8px}

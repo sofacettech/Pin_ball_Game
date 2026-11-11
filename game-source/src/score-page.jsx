@@ -27,6 +27,7 @@ export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
     <button className="btn" id="rewards-retry" type="button" onClick={onReplay}>PLAY AGAIN <Replay/></button>
    </div>
    <button className="leaderboard" id="rewards-leaderboard" type="button" onClick={onLeaderboard}>See full leaderboard →</button>
+   <a className="site-join-button" href="/join?nav=game" data-game-info data-join-for-guests>JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a>
   </section></main>
  </PageShell>;
 }

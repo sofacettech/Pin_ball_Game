@@ -316,3 +316,23 @@ A verified rewards session can read `GET /api/account`: `{name, leaderboardName,
 The separate `/api/account/preferences` placeholder is retained; the current account form saves `marketingConsent` through the implemented details request. Please keep those writes consistent if both routes are implemented.
 
 The frontend refreshes account data after changes and does not report unconfirmed server writes as saved. OTP codes and verification tokens are not persisted in browser storage. Score sharing uses the account’s confirmed best score. Play again and Share my score remain available from My SO/ COINS.
+
+## SO/ FACET typography reference
+
+| Role | Typeface and weight | File |
+| --- | --- | --- |
+| Buttons and button-style links | Brilliant Cut Pro Medium (500) | assets/loader-cards/BrilliantCutPro-Medium.woff2 |
+| Menu labels | Josefin Sans Semibold (600), sentence case | assets/fonts/sofacet-score-josefin-semibold.ttf |
+| Default headings, including cookie notice and settings | Josefin Sans Semibold (600) | assets/fonts/sofacet-score-josefin-semibold.ttf |
+| Default body, policy copy and smaller menu links | Josefin Sans Regular (400) | assets/fonts/sofacet-score-josefin-regular.ttf |
+| Game HUD light text | Josefin Sans Light (300) | assets/fonts/sofacet-score-josefin-light.ttf |
+| About headings and editorial text | Fancy Cut Pro Regular (400) | assets/about/campaign/fancy.woff2 |
+| About body and small labels | Brilliant Cut Pro Regular (400) | assets/about/campaign/brilliantregular.woff2 |
+| Editorial text on the reward, claim, launch and account artwork | Fancy Cut Pro Regular (400) and Brilliant Cut Pro Regular or Medium | assets/score-coins/fancy-400.woff2 and assets/loader-cards/BrilliantCutPro-Regular.woff2 |
+| Selected expressive leads | Yeseva One Regular (400) | assets/fonts/sofacet-score-yeseva.ttf |
+| Cookie body and emphasized copy | Existing cookie body Regular (400) and Semibold (600) | assets/cookie-popup-fonts/body-400.woff2 and body-600.woff2 |
+| Inline SO/ FACET wordmark | SOFacetWordmark (400) | assets/fonts/policy-wordmark.otf |
+| Large SO/ FACET branding | Official vector wordmark, plus the mark above it on the About closing section | assets/sofacet-wordmark.svg and assets/sofacet-icon.svg |
+| Loading card rupee glyph | Helvetica Neue Roman (400) | assets/loader-cards/HelveticaNeueRoman.otf |
+
+Use the shared font variables in assets/typography.css. Keep SO/ COINS, SO/ COLLECTIVE and SO/ FACET uppercase within sentence-case labels. Underlined labels should run continuously through the brand text.

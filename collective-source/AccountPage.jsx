@@ -8,7 +8,7 @@ import {Arrow} from './icons.jsx';
 import {validPhone, validateAccount} from './validation.js';
 import {formValues, showValidation, useSubmission} from './form-actions.js';
 
-export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',pointsContext=false,initialTab = 'registered', activeTab, onTabChange, onLogin, onRequestOtp, onCreateAccount, termsUrl, privacyUrl, defaults = {}, status = '', resendSeconds = 0, working = false}) {
+export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',pointsContext=false,updatesRequired=true,initialTab = 'registered', activeTab, onTabChange, onLogin, onRequestOtp, onCreateAccount, termsUrl, privacyUrl, defaults = {}, status = '', resendSeconds = 0, working = false}) {
   const [selectedTab, setTab] = useState(initialTab);
   const tab = activeTab ?? selectedTab;
   const login = useSubmission(), create = useSubmission();
@@ -66,7 +66,7 @@ export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',poin
           <div className="field-group"><label className="field-title" htmlFor="new-name">Full name</label><input autoComplete="name" className="text-line" id="new-name" name="name" defaultValue={defaults.name || ''} required /></div>
           <div className="field-group"><label className="field-title" htmlFor="new-phone">Mobile number</label><div className="phone-line"><select aria-label="Country code" className="select country-select" name="country" defaultValue={defaults.country || '+91'}>{countries.map(country => <option key={country.code} value={country.dial}>{country.name} ({country.dial})</option>)}</select><input autoComplete="tel-national" className="text-line" id="new-phone" inputMode="tel" name="phone" pattern="[0-9]{7,15}" placeholder="Phone" defaultValue={defaults.phone || ''} required type="tel" /></div></div>
           <div className="field-group"><label className="field-title" htmlFor="new-email">Email address</label><input autoComplete="email" className="text-line" id="new-email" name="email" defaultValue={defaults.email || ''} required type="email" /></div>
-          <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" required type="checkbox" defaultChecked={!!defaults.updates} /><span>Send me <span className="wm">SO/ FACET</span> updates and early access by email, SMS and WhatsApp.</span></label></div>
+          <div className="checkboxes"><label className="checkbox-row"><input name="terms" required type="checkbox" defaultChecked={!!defaults.terms} /><span>I'm 18 or older and I agree to the {policyLink('Terms and Conditions',termsUrl)} and {policyLink('Privacy Policy',privacyUrl)}.</span></label><label className="checkbox-row"><input name="updates" required={updatesRequired} type="checkbox" defaultChecked={!!defaults.updates} /><span>Keep me posted on new collections, drops and what's next.</span></label></div>
           <button className="cta" type="submit" disabled={create.busy || working}>{create.busy || working ? 'PLEASE WAIT…' : 'JOIN THE SO/ COLLECTIVE'} <Arrow /></button><p aria-live="polite" className="feedback" id="create-feedback" role="status">{status || create.message}</p>
         </form>
       </section>

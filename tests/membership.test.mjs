@@ -68,7 +68,8 @@ test('a lost upstream response retries the persisted idempotency key without dou
  const result=await f.api('/api/membership',payload,'one');assert.equal(result.savedPoints,3200);assert.equal(f.calls[0].eventId,f.calls[1].eventId);assert.equal(f.credited.size,1);assert.equal(f.store.rewardAccounts.cus_test.pending,undefined);
 });
 test('membership without a completed game never invents reward credits',async()=>{
- const f=setup(),verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;
+ const f=setup(),verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;payload.marketingConsent=true;
+ await assert.rejects(f.api('/api/membership',{...payload,marketingConsent:false},'one'),status(400));
  const result=await f.api('/api/membership',payload,'one');assert.equal(result.pointsSaved,false);assert.equal(result.player.member,true);assert.equal(f.calls.length,0);
 });
 
@@ -86,7 +87,7 @@ test('single-screen sign-up accepts only the collected details and preserves con
 });
 
 test('registered sessions save verified later games without registering or requesting OTP again',async()=>{
- const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');
+ const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;payload.marketingConsent=true;await f.api('/api/membership',payload,'one');
  const first=await f.api('/api/membership/rewards',{gameId},'one');assert.equal(first.pointsSaved,true);assert.equal(first.savedPoints,3200);assert.equal(f.calls.length,1);
  await f.api('/api/membership/rewards',{gameId},'one');assert.equal(f.calls.length,1);
  await Promise.all([f.api('/api/membership/rewards',{gameId:otherGame},'one'),f.api('/api/membership/rewards',{gameId:otherGame},'one')]);assert.equal(f.calls.length,2);assert.equal(f.calls[1].points,90);
@@ -95,14 +96,14 @@ test('registered sessions save verified later games without registering or reque
 test('registered reward requests require the session member and its own verified game',async()=>{
  const f=setup();
  await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(401));
- const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');
+ const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;payload.marketingConsent=true;await f.api('/api/membership',payload,'one');
  for(const data of [{},{gameId:'bad'},{gameId,score:99999},{gameId,customerId:'other'}])await assert.rejects(f.api('/api/membership/rewards',data,'one'),status(400));
  f.store.games[gameId].player='two';await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));
  f.store.games[gameId].player='one';f.store.games[gameId].verified=false;await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));
  f.store.games[gameId].verified=true;f.store.games[gameId].rewardCustomer='other';await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(409));assert.equal(f.calls.length,0);
 });
 test('a returning member can retry saving points after a lost response without duplicate credit',async()=>{
- const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;await f.api('/api/membership',payload,'one');f.failNext();
+ const f=setup();const verificationToken=await verified(f),payload={...valid,verificationToken};delete payload.gameId;payload.marketingConsent=true;await f.api('/api/membership',payload,'one');f.failNext();
  await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(503));const result=await f.api('/api/membership/rewards',{gameId},'one');assert.equal(result.savedPoints,3200);assert.equal(f.calls[0].eventId,f.calls[1].eventId);assert.equal(f.credited.size,1);
 });
 
