@@ -2,6 +2,7 @@ import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import {AccountArtwork, butterflyTexture} from './AccountArtwork.jsx';
+import {artworkAssetURL} from '../../shared/artwork-assets.js';
 
 export function RewardNoticeArtwork() {
   const [status,setStatus]=useState('loading');
@@ -12,7 +13,8 @@ export function RewardNoticeArtwork() {
     let timedOut=false;
     const timeout=setTimeout(()=>{timedOut=true;setStatus('fallback');},1600);
     const image=new Image();
-    image.src=butterflyTexture;
+    image.crossOrigin='anonymous';
+    image.src=artworkAssetURL(butterflyTexture);
     image.decode().then(()=>{
       if(active)setStatus(timedOut?'fallback':'ready');
     },()=>{

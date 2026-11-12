@@ -1,3 +1,4 @@
+import {decodeArtworkImages} from '../../shared/artwork-assets.js';
 export default function initialize(scope) {
 const {document,window,requestAnimationFrame,cancelAnimationFrame,setTimeout,clearTimeout,addEventListener,matchMedia,ResizeObserver,IntersectionObserver,MutationObserver} = scope;
 if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("wave-intro-pending");setTimeout(()=>document.documentElement.classList.remove("wave-intro-pending"),6000);}
@@ -58,7 +59,7 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
   document.addEventListener('visibilitychange',sync);
   reduced.addEventListener('change',sync);
   sync();
-  Promise.all([...art.querySelectorAll('img')].map(img=>img.decode())).then(()=>{
+  decodeArtworkImages(art).then(()=>{
     art.classList.add('motion-ready');
     art.dataset.motionReady='true';
     setTimeout(()=>{art.classList.add('ambient-active');sync();},Math.max(0,1500-performance.now()));
@@ -76,7 +77,9 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
  const constrained=(navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);
  if(constrained){art.dataset.petalQuality='static-detail';return;}
  const mobile=matchMedia('(pointer:coarse)');
+ let activeImages=[];
  const rigs=new Map();let raf=0,last=0,elapsed=0,inspectionPaused=false,slowFrames=0,lightweight=false;
+ scope.onDispose(()=>{for(const r of rigs.values())r.release();rigs.clear();});
  const vertex=`#version 300 es
  in vec2 uv; out vec2 vUV;
  uniform vec2 center; uniform float bottom; uniform float leftEdge; uniform float time; uniform float aspect; uniform float phase; uniform float gain;
@@ -103,29 +106,39 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
   const config=settings[img.parentElement.dataset.flower];
   const uniforms={};for(const name of ['center','bottom','leftEdge','time','aspect','phase','gain'])uniforms[name]=gl.getUniformLocation(program,name);
   gl.uniform2fv(uniforms.center,config.center);gl.uniform1f(uniforms.bottom,config.bottom);gl.uniform1f(uniforms.leftEdge,config.left);gl.uniform1f(uniforms.phase,config.phase);
-  const rig={img,canvas,gl,program,uniforms,config,count:coords.length/2};
-  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();img.classList.remove('petal-rendered');canvas.remove();rigs.delete(img);});
+  const rig={img,canvas,gl,program,uniforms,config,count:coords.length/2,aspect:1};
+  const sizeObserver=new ResizeObserver(()=>{size(rig);draw(rig,elapsed);});
+  sizeObserver.observe(img);size(rig);
+  rig.release=()=>{sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();gl.getExtension('WEBGL_lose_context')?.loseContext();};
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();rigs.delete(img);});
   return rig;
  }
- function draw(r,t){
-  const {canvas,img,gl,config,uniforms}=r;const w=img.offsetWidth,h=img.offsetHeight,dpr=Math.min(devicePixelRatio||1,mobile.matches?2:2.5);
+ // Layout is stable between resizes; do not read it after each flower draw.
+ function size(r){
+  const {canvas,img,gl}=r,w=img.offsetWidth,h=img.offsetHeight;
+  const dpr=Math.min(devicePixelRatio||1,mobile.matches?2:2.5);
   const rw=Math.max(1,Math.round(w*dpr)),rh=Math.max(1,Math.round(h*dpr));
   if(canvas.width!==rw||canvas.height!==rh){canvas.width=rw;canvas.height=rh;gl.viewport(0,0,rw,rh);}
-  const start=Math.min(1,t/2);gl.uniform1f(uniforms.gain,start*start*(3-2*start));gl.uniform1f(uniforms.aspect,w/h);gl.uniform1f(uniforms.time,t*2*Math.PI/config.period);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,r.count);img.classList.add('petal-rendered');
+  r.aspect=h?w/h:1;
+ }
+ function draw(r,t){
+  const {img,gl,config,uniforms}=r;
+  const start=Math.min(1,t/2);gl.uniform1f(uniforms.gain,start*start*(3-2*start));gl.uniform1f(uniforms.aspect,r.aspect);gl.uniform1f(uniforms.time,t*2*Math.PI/config.period);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,r.count);
+  if(!img.classList.contains('petal-rendered'))img.classList.add('petal-rendered');
  }
  function visibleImages(){return [...art.querySelectorAll((innerWidth<=850?'.scene-mobile':'.scene-desktop')+' .flower-image')];}
  function allowed(){return !lightweight&&!inspectionPaused&&!document.hidden&&!reduce.matches&&art.classList.contains('ambient-active')&&!art.classList.contains('plant-paused')&&!art.classList.contains('ambient-paused');}
- function frame(now){raf=0;if(!allowed()){last=0;return;}if(last&&now-last>75)slowFrames++;else slowFrames=Math.max(0,slowFrames-1);if(slowFrames>=3){lightweight=true;art.dataset.petalQuality='static-detail';for(const r of rigs.values()){r.img.classList.remove('petal-rendered');r.canvas.remove();r.gl.getExtension('WEBGL_lose_context')?.loseContext();}rigs.clear();return;}if(mobile.matches&&last&&now-last<32){raf=requestAnimationFrame(frame);return;}if(last)elapsed+=Math.min(.1,(now-last)/1000);last=now;
-  for(const img of visibleImages()){let r=rigs.get(img);if(!r){try{r=create(img);if(r)rigs.set(img,r);}catch(error){console.warn('Petal motion retained static artwork:',error);}}if(r)draw(r,elapsed);}
+ function frame(now){raf=0;if(!allowed()){last=0;return;}if(last&&now-last>75)slowFrames++;else slowFrames=Math.max(0,slowFrames-1);if(slowFrames>=3){lightweight=true;art.dataset.petalQuality='static-detail';for(const r of rigs.values())r.release();rigs.clear();return;}if(mobile.matches&&last&&now-last<32){raf=requestAnimationFrame(frame);return;}if(last)elapsed+=Math.min(.1,(now-last)/1000);last=now;
+  for(const img of activeImages){if(!img.complete||!img.naturalWidth)continue;let r=rigs.get(img);if(!r){try{r=create(img);if(r)rigs.set(img,r);}catch(error){console.warn('Petal motion retained static artwork:',error);}}if(r)draw(r,elapsed);}
   raf=requestAnimationFrame(frame);
  }
  function sync(){
-  const active=visibleImages();for(const [img,r]of rigs){if(!active.includes(img)){img.classList.remove('petal-rendered');r.canvas.remove();rigs.delete(img);r.gl.getExtension('WEBGL_lose_context')?.loseContext();}}
+  activeImages=visibleImages();for(const [img,r]of rigs){if(!activeImages.includes(img)){rigs.delete(img);r.release();}else size(r);}
   if(reduce.matches){for(const r of rigs.values()){r.img.classList.remove('petal-rendered');r.canvas.style.visibility='hidden';}}
   else for(const r of rigs.values())r.canvas.style.visibility='visible';
   if(allowed()&&!raf)raf=requestAnimationFrame(frame);else if(!allowed()){cancelAnimationFrame(raf);raf=0;last=0;}
  }
- Promise.all([...art.querySelectorAll('.flower-image')].map(i=>i.decode())).then(()=>{new MutationObserver(sync).observe(art,{attributes:true,attributeFilter:['class']});reduce.addEventListener('change',sync);document.addEventListener('visibilitychange',sync);addEventListener('resize',sync);sync();});
+ decodeArtworkImages(art,'.flower-image').then(()=>{new MutationObserver(sync).observe(art,{attributes:true,attributeFilter:['class']});reduce.addEventListener('change',sync);document.addEventListener('visibilitychange',sync);addEventListener('resize',sync);sync();});
  window.__petalFlex={get elapsed(){return elapsed;},get surfaces(){return rigs.size;},seek(seconds){inspectionPaused=true;cancelAnimationFrame(raf);raf=0;last=0;elapsed=seconds;for(const r of rigs.values())draw(r,seconds);},resume(){inspectionPaused=false;last=0;sync();}};
 })();
 
@@ -145,7 +158,7 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
  });
  async function openingWave(){
   if(opened)return;opened=true;
-  await Promise.all([document.fonts.ready,...[...document.querySelectorAll('.flower-image')].map(i=>i.decode())]);
+  await Promise.all([document.fonts.ready,decodeArtworkImages(document,'.flower-image')]);
   for(let tries=0;tries<120;tries++){
    await new Promise(requestAnimationFrame);
    const start=frame.contentWindow?.__startMeshWave;if(!start)continue;

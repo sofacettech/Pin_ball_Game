@@ -25,6 +25,9 @@ let gameRecovering=false;
 let startupFailed=false;
 let frame=firstFrame,presentedFrame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 let finalFramePresentedAt=Infinity;
+// The viewport is fixed throughout scrolling. Measure on resize rather than
+// forcing layout after each video's crop/copy style update.
+let viewportSize=viewport.getBoundingClientRect();
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';
 const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
@@ -54,13 +57,16 @@ function placementAt(at,rect){
 }
 function placeStage(){
   if(!framing)return;
-  const rect=viewport.getBoundingClientRect();
+  const rect=viewportSize;
   // A decoded video frame and its responsive crop must move together. The
   // requested scroll frame can be several frames ahead while a seek completes.
   placement=placementAt(videoEntrance?presentedFrame:frame,rect);
   renderView={fullWidth:placement.width,fullHeight:placement.height,x:-placement.x,y:-placement.y,width:rect.width,height:rect.height};
-  stage.style.width=(performanceMode?rect.width:placement.width)+'px';stage.style.height=(performanceMode?rect.height:placement.height)+'px';
-  stage.style.transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
+  const width=(performanceMode?rect.width:placement.width)+'px',height=(performanceMode?rect.height:placement.height)+'px';
+  if(stage.style.width!==width)stage.style.width=width;
+  if(stage.style.height!==height)stage.style.height=height;
+  const transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
+  if(stage.style.transform!==transform)stage.style.transform=transform;
 }
 function startScene(){
   if(gameRequested||startupFailed)return;
@@ -156,7 +162,7 @@ function tick(now){
   frame=videoEntrance?videoPlayback.advance(now,target,{settled:journey.settled}):advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
   if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
-  journey.renderAt(frame);
+  journey.renderAt(frame,target);
   if(journey.profileFrames.length)journey.profileFrames.at(-1).page=pageTime;
   if(frame===lastFrame&&target===lastFrame){
     // A completed scroll/seek is not enough: leave the decoded final picture
@@ -185,7 +191,10 @@ window.addEventListener('popstate',event=>{
   if(gameRequested&&!event.state?.sofacetGame)location.reload();
   else if(ready&&event.state?.sofacetGame)enterGame();
 });
-const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.resize();requestTick();}});
+const resizeObserver=new ResizeObserver(()=>{
+  viewportSize=viewport.getBoundingClientRect();
+  placeStage();if(ready){journey?.resize();requestTick();}
+});
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
   gameVisibility(gameVisible&&!document.hidden);

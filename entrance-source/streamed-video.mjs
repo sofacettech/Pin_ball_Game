@@ -9,17 +9,32 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   // Keep the same decoded-pixel budget at 4K as twelve 1080p pictures.
   // Prediction frames before the requested window are closed immediately.
   const maxFrames=Math.max(1,Math.min(interval,Math.floor(1920*1080*12/(width*height))));
-  let keepFirst=0,keepLast=Infinity;
+  let keepFirst=0,keepLast=Infinity,decodeCursor=null,decodeWaiter=null,flushRequired=false;
   const entries=new Map(),frames=new Map();let disposed=false,failure,activePart=0,lastIndex=0,direction=1,prefetchKey='',cacheWrites=Promise.resolve();
   const storage=cacheStorage?cacheStorage.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   const decoder=new Decoder({output:frame=>{
     if(disposed||failure){frame.close();return}
-    if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');return}
+    if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');finishDecode(failure);return}
     const index=Math.round(frame.timestamp*60/1e6);
     if(index<keepFirst||index>=keepLast){frame.close();return}
     frames.set(index,frame);
-  },error:error=>{failure=error}});
+    finishDecode();
+  },error:error=>{failure=error;finishDecode(error)}});
   try{decoder.configure(config)}catch{decoder.close();return null}
+  function finishDecode(error){
+    const waiter=decodeWaiter;
+    if(!waiter||(!error&&(waiter.flushing||!frames.has(waiter.index))))return;
+    decodeWaiter=null;clearTimeout(waiter.timer);clearTimeout(waiter.flushTimer);
+    error?waiter.reject(error):waiter.resolve();
+  }
+  function flushDecode(compatibility=false){
+    const waiter=decodeWaiter;if(!waiter)return;
+    // A few implementations still buffer low-delay H.264 until flush. Probe
+    // once, then retain the original flush path for that decoder's lifetime.
+    if(compatibility)flushRequired=true;
+    decodeCursor=null;waiter.flushing=true;
+    decoder.flush().then(()=>{waiter.flushing=false;finishDecode(failure||(!frames.has(waiter.index)?Error('The requested video frame was not decoded'):null))},finishDecode);
+  }
   function save(segment,bytes){
     cacheWrites=cacheWrites.then(async()=>{
       const cache=await storage;if(!cache||disposed)return;
@@ -134,20 +149,39 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
       });
     }
     if(frames.has(index))return frames.get(index);
+    const continuing=direction>0&&decodeCursor?.part===part&&decodeCursor.first===first&&index>=keepFirst;
+    const from=continuing?decodeCursor.next:first;
     for(const frame of frames.values())frame.close();frames.clear();
     keepFirst=segment.firstFrame-334+retainFirst;keepLast=segment.firstFrame-334+retainLast;
-    for(let i=first;i<retainLast;i++){
-      const [start,length,sync]=segment.frames[i],sourceIndex=segment.firstFrame-334+i;
-      decoder.decode(new Chunk({type:sync?'key':'delta',timestamp:Math.round(sourceIndex*1e6/60),duration:Math.round(1e6/60),data:entry.bytes.subarray(start,start+length)}));
-    }
-    let timer;
-    try{await Promise.race([decoder.flush(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Video decoding timed out')),5000)})])}finally{clearTimeout(timer)}
+    // Forward windows share the decoder's prediction state. Flushing every
+    // three 4K pictures forces the same keyframe and delta prefix to be decoded
+    // repeatedly. A reverse miss or jump starts at its independent keyframe.
+    // Hardware decoders can retain two pictures internally even for a low-delay
+    // stream. Wait for the requested picture, leaving later submitted pictures
+    // queued for the next forward window. Drain at the end of a prediction group
+    // or on a reverse miss, where there is no forward input to release its tail.
+    const mustFlush=flushRequired||direction<0||retainLast===last;
+    const decoded=new Promise((resolve,reject)=>{
+      decodeWaiter={index,resolve,reject,flushing:mustFlush,
+        timer:setTimeout(()=>finishDecode(Error('Video decoding timed out')),5000)};
+      if(!mustFlush)decodeWaiter.flushTimer=setTimeout(()=>flushDecode(true),50);
+    });
+    decodeCursor={part,first,next:retainLast};
+    try{
+      for(let i=from;i<retainLast;i++){
+        const [start,length,sync]=segment.frames[i],sourceIndex=segment.firstFrame-334+i;
+        decoder.decode(new Chunk({type:sync?'key':'delta',timestamp:Math.round(sourceIndex*1e6/60),duration:Math.round(1e6/60),data:entry.bytes.subarray(start,start+length)}));
+      }
+      if(mustFlush)flushDecode();
+    }catch(error){failure=error;decodeCursor=null;finishDecode(error)}
+    await decoded;
     if(failure)throw failure;
     if(!frames.has(index))throw Error('The requested video frame was not decoded');
     return frames.get(index);
   }
   return {engine:'webcodecs',frameAt,dispose(){
     if(disposed)return;disposed=true;
+    finishDecode(new DOMException('Video decoder disposed','AbortError'));
     for(const entry of entries.values())release(entry);entries.clear();
     if(decoder.state!=='closed')decoder.close();for(const frame of frames.values())frame.close();frames.clear();
   }};

@@ -60,6 +60,17 @@ Three concurrent downloads fill a bounded 256 MiB compressed-media store before 
 
 Where WebCodecs is available, indexed prediction groups decode from this preloaded store. Unsupported or failed explicit decoding uses native video with buffered section blobs. Completed sharp frames are painted while newer scroll targets are queued; obsolete frames outside the path toward the latest target are discarded on reversal. The responsive crop and copy follow the painted frame, and game handoff still waits for the exact final frame.
 
+The renderer prepares the next two-frame clock step during the current picture's presentation interval. It holds one reference to the decoder's existing bounded cache, paints only when that step is selected, and discards stale lookahead after a reversal. Compatible decoders reuse forward prediction state; implementations that buffer output retain the flush fallback. Viewport measurements are cached until resize, keeping repeated layout reads out of the video paint path. Full 4K detail and the three-picture retention limit are preserved.
+
+On 12 November 2026, one macOS runner at a 393 × 852 CSS viewport and DPR 1 measured these p95 painted-frame update gaps against `50778b3`, using the same preloaded 4K media:
+
+| Browser | Forward, before → after | Reverse, before → after |
+| --- | --- | --- |
+| Chromium | 75.5 → 57.6 ms | 74.7 → 55.5 ms |
+| WebKit | 84 → 55 ms | 82 → 56 ms |
+
+All slow/fast forward and reverse passes kept 3840 × 2160 source detail, matched the painted frame to its responsive crop, and had no wrong-direction frames or browser errors. Average update rates remained about 21–24 FPS; the improvement is reduced stutter, not a 60 FPS result. These desktop browser measurements do not certify physical-phone performance.
+
 The video renderer uses external manifests when configured and falls back to the bundled clips if CDN configuration or playback fails. `/api/media-config` exposes only public media URLs; Cloudflare credentials stay outside the app. `MEDIA_CDN_BASE_URL` still configures the separate legacy `/video` path. Clearing both `ENTRANCE_VIDEO_4K_MANIFEST_URL` and `ENTRANCE_VIDEO_MANIFEST_URL` restores bundled 1080p delivery. Option 1 remains available through `/?entrance=1`. Larger media still costs visitors bandwidth, and keyframe spacing still affects seek latency; CDN hosting does not guarantee smoothness on physical phones.
 
 The responsive video crop, story copy, progress and sound follow the frame actually painted to the canvas. Run `scripts/browser-entrance-motion.mjs` with `SOFACET_CHECK_MOTION=1` to check crop alignment and monotonic presentation. `SOFACET_MOTION_CHESS=1` covers the entire chess room; `SOFACET_MOTION_FAST_FIRST=1` runs the fast passes before warming the cache. Chromium additionally accepts `SOFACET_NETWORK_MBPS=20` and `SOFACET_CPU_RATE=4`. Set `SOFACET_DEVICE='Desktop Chrome'` or an installed Playwright phone descriptor. Reports in `work/entrance-motion/` include update gaps, request timing and minimum painted source width; moving and stopped frames must retain full resolution. `SOFACET_OFFLINE_SCROLL=1` disconnects the browser after preload to verify the entire tested scroll path needs no additional media downloads. Use `SOFACET_MAX_VIDEO_STALL_MS` only for controlled performance comparisons; hosted-runner or emulated-device timing does not certify physical-phone performance.
@@ -247,6 +258,23 @@ I've kept the video download tied to an exact revision of our public `sofacettec
 The on-demand video-performance workflow also fetches its fixed comparison baseline from `sofacettech/Pin_ball_Game`, independently of the checkout's `origin`. Keep that baseline available in the public mirror when moving the application to another repository. Hosting credentials belong in the service environment; neither download path needs a password in source control.
 
 Keep the service at **one replica** with persistent `DATA_DIR` storage. The current atomic file store is designed for one process. Move player, score and reward state to shared transactional storage before running multiple replicas.
+
+### R2 artwork delivery
+
+Flower and butterfly artwork uses content-hashed WebP files. The rewards artwork's 25.85 MB of original PNGs is now 8.48 MB of lossless WebP, with identical dimensions and decoded RGBA pixels. The account butterfly is 1.04 MB instead of 1.42 MB. Only the active desktop/mobile composition is eagerly decoded; the hidden composition uses lazy images. The bundled copies remain available when CDN delivery fails.
+
+Upload the referenced images to the existing public media bucket before enabling the CDN:
+
+```sh
+R2_BUCKET=sofacet-videos npm run upload:artwork -- --dry-run
+R2_BUCKET=sofacet-videos npm run upload:artwork
+```
+
+The uploader checks every content hash before uploading immutable `artwork/collective/<hash>.<extension>` objects with the correct image content type and a one-year cache lifetime. It uses the same Wrangler login as the video uploader; `WRANGLER_JS` can select an already installed CLI. The existing bucket CORS policy must allow public GET requests so flower textures remain usable by WebGL and Canvas.
+
+The 68 referenced artwork objects (17,644,484 bytes) are uploaded to `https://media.sofacet.com/artwork/collective/`. Every public object passed a full byte-length, SHA-256, image-type and CORS check. The current browser uploads are served with `Cache-Control: max-age=14400` (four hours); future CLI uploads set the one-year immutable policy described above.
+
+`ARTWORK_CDN_BASE_URL` defaults to `https://media.sofacet.com` when unset, so deploying this change enables the verified CDN without an extra service setting. This public URL is included in the HTML without a configuration request. Image errors retry their corresponding bundled files. Setting `ARTWORK_CDN_BASE_URL` to an explicit empty value restores local-only delivery. Cloudflare improves asset transfer and repeat caching; the animation work still runs on the visitor's device.
 
 ### R2 video delivery
 
