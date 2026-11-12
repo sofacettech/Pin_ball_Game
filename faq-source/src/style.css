@@ -103,10 +103,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
   .footer-column>summary::after{content:'';width:9px;height:9px;flex-shrink:0;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(45deg);margin-right:4px}
   .footer-column[open]>summary::after{transform:rotate(225deg)}
   .footer-column ul{gap:16px;padding:0 0 26px}
-  .footer-social{text-align:center;padding:44px 0 54px}
+  .footer-social{text-align:center;padding:44px 0 10px}
   .footer-social h2{margin-bottom:28px}
   .social-icons{justify-content:center}
-  .footer-bottom{align-items:center;flex-direction:column;gap:22px;padding:24px 0 max(24px,env(safe-area-inset-bottom,0px));background:#101010;text-align:center}
+  .footer-bottom{align-items:center;flex-direction:column;gap:22px;padding:24px 0 calc(68px + env(safe-area-inset-bottom,0px));background:#101010;text-align:center}
+  body:has(.footer-bottom){position:relative}
+  body:has(.footer-bottom)>.site-sound{position:absolute;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   .footer-contact{flex-direction:column;gap:8px}
   .footer-contact>span{font-size:14px}
   .pinball{gap:18px}

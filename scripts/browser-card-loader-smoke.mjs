@@ -55,6 +55,7 @@ try{await withRewardsSite(async({origin})=>{
    await capture(page,width+'-diamond');
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Pinball');await capture(page,width+'-pinball');
+    await page.locator('.game-loader-cards .deck').evaluate(deck=>deck.addEventListener('click',event=>event.stopImmediatePropagation(),{capture:true,once:true}));
     const {x,y}=await point(page);await page.touchscreen.tap(x,y);
     await checkTravel(page,false);await settled(page,'Jewellery');
     assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false,'A mobile tap does not flip the card');

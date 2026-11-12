@@ -148,6 +148,7 @@ export function connectCardMotion(root, onComplete) {
     pointerStart = null;
     swiped = Math.hypot(dx, dy) > 12;
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) exchange(dx > 0);
+    else if (!swiped && event.pointerType === 'touch') {swiped = true; exchange();}
     deck.blur();
     schedule();
   });

@@ -22,7 +22,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .otp-input{font-family:'Josefin Sans',sans-serif;font-size:26px!important;letter-spacing:.45em;text-align:center;padding-left:26px!important}
 .under-form{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;font-size:11px;color:var(--muted)}.under-form .text-button{font-size:11px}
 .preview-label{font-size:12px;color:var(--muted);margin-top:16px;max-width:65ch}.form-status{overflow-wrap:anywhere}.phone-prefix{white-space:nowrap}
-.mobile-code-fields{margin-top:15px}.game-link{display:flex;margin-top:16px;text-decoration:none}
+.mobile-code-fields{margin-top:15px}
 .account-toolbar .eyebrow{line-height:1.5;letter-spacing:.14em}.auth-screen .intro>a{display:inline-flex;align-items:center;margin-top:18px}
 input{caret-color:var(--lime)}::selection{background:#cbb1e5;color:#100b18}
 @media(max-width:900px){.shell{padding-top:var(--post-game-content-top)}}
@@ -61,8 +61,13 @@ body[data-coins-dashboard] #account-root{position:relative;isolation:isolate}
 #account-screen .dashboard-action span{grid-column:2}
 #account-screen .dashboard-action svg{grid-column:3;width:24px;height:24px}
 #account-screen .dashboard-action:hover:not(:disabled),#account-screen .dashboard-action:focus-visible:not(:disabled),#account-screen .dashboard-action:active:not(:disabled){background:#fff;color:#000;border-color:#fff}
+#account-screen .account-exit-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:32px}
+#account-screen .account-exit-actions .dashboard-action{text-decoration:none}
+#account-screen .account-exit-primary{background:var(--lime);border-color:var(--lime);color:#000}
+#account-screen .account-exit-primary:hover,#account-screen .account-exit-primary:focus-visible{background:#fff;border-color:#fff}
 @media(max-width:800px){#account-screen .save-row{grid-template-columns:1fr}}
 @media(max-width:680px){
   #account-screen .account-grid{reading-flow:grid-rows}
   #account-screen .score-panel{order:-1;box-shadow:6px 6px 0 #050505}
+  #account-screen .account-exit-actions{grid-template-columns:1fr}
 }

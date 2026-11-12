@@ -183,7 +183,10 @@ test('mobile taps and swipes each advance one card',()=>{
  const front=()=>cards.findIndex(card=>card.dataset.slot===0);
  advance(45000);assert.equal(front(),0,'No timer while the deck is hidden');
  context.motion.setActive(true);
- deck.dispatchEvent(new Event('click'));assert.equal(front(),1,'A mobile tap advances the card');assert.match(deck['aria-label'],/Front view/);
+ deck.dispatchEvent(Object.assign(new Event('pointerdown'),{isPrimary:true,button:0,pointerId:1,pointerType:'touch',clientX:100,clientY:100}));
+ deck.dispatchEvent(Object.assign(new Event('pointerup'),{pointerId:1,pointerType:'touch',clientX:100,clientY:100}));
+ assert.equal(front(),1,'A mobile tap advances without a synthetic click');assert.match(deck['aria-label'],/Front view/);
+ deck.dispatchEvent(new Event('click'));assert.equal(front(),1,'A synthetic click after a tap cannot skip another card');
  advance(3000);assert.equal(front(),1);
  deck.dispatchEvent(Object.assign(new Event('pointerdown'),{isPrimary:true,button:0,pointerId:1,clientX:100,clientY:100}));
  deck.dispatchEvent(Object.assign(new Event('pointerup'),{pointerId:1,clientX:10,clientY:100}));

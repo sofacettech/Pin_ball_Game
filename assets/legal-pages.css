@@ -25,5 +25,6 @@ body.policy-page>.site-sound{position:static;display:flex;justify-content:flex-s
 .sf-legal>:nth-child(2){animation-delay:.12s}
 .sf-legal>:nth-child(3){animation-delay:.22s}
 @keyframes policy-enter{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
-@media(max-width:600px){.policy-main,body.policy-page>.site-sound{width:calc(100% - 40px)}.policy-main{padding-top:calc(var(--site-header-clearance,78px) + 32px);padding-bottom:64px}.sf-legal h2{margin-top:32px}.sf-legal th,.sf-legal td{padding:8px 10px}}
+@media(min-width:601px){body.policy-page>.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:auto;margin:0;padding:0 8px}}
+@media(max-width:600px){.policy-main,body.policy-page>.site-sound{width:calc(100% - 40px)}.policy-main{padding-top:calc(var(--site-header-clearance,78px) + 32px);padding-bottom:20px}body.policy-page>.site-sound{margin-bottom:0}.sf-legal h2{margin-top:32px}.sf-legal th,.sf-legal td{padding:8px 10px}}
 @media(prefers-reduced-motion:reduce){.sf-legal>:nth-child(-n+3){animation:none}.sf-legal a{transition:none}}
