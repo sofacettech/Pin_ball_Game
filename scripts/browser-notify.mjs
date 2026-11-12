@@ -21,16 +21,18 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
   try{
    await page.goto(origin+'/launch');
    await page.waitForURL('**/notify');
-   await page.getByRole('button',{name:'Notify me',exact:true}).waitFor();
-   await page.getByText('LAUNCHING SOON',{exact:true}).waitFor();
+   await page.getByRole('heading',{name:'LAUNCHING SOON',exact:true}).waitFor();
+   await page.getByText("You're in. Stay tuned for early access, before anyone else.",{exact:true}).waitFor();
+   const about=page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true});await about.waitFor();
    assert.equal(await page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).isVisible(),false);
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#notify-root img')].map(img=>img.decode()))});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);
-   const styles=await page.locator('#notify-root h1,.lead,.notify-button,#email').evaluateAll(nodes=>nodes.map(e=>({selector:e.id||e.className,family:getComputedStyle(e).fontFamily,weight:getComputedStyle(e).fontWeight,size:getComputedStyle(e).fontSize})));
-   assert.match(styles[0].family,/Josefin Sans/);assert.equal(styles[0].weight,'600');assert.match(styles[1].family,/Yeseva One/);assert.match(styles[3].family,/Brilliant Cut Pro/);
-   assert.equal(await page.getByText('Preview only. No email is sent.',{exact:true}).count(),0);
-   if(width===1440)assert.ok(await page.locator('.form-row').evaluate(form=>form.getBoundingClientRect().bottom<=innerHeight),'Desktop email field and button fit in the initial viewport');
+   const styles=await page.locator('#page-title,.notification p,.notify-button').evaluateAll(nodes=>nodes.map(e=>({selector:e.id||e.className,family:getComputedStyle(e).fontFamily,weight:getComputedStyle(e).fontWeight,size:getComputedStyle(e).fontSize})));
+   assert.equal(await page.title(),'SO/ FACET — Launching soon');
+   assert.equal(await page.locator('#notify-form,#email,#confirmation,.site-join-footer').count(),0);
+   assert.equal(await about.getAttribute('href'),'/about');
+   if(width===1440)assert.ok(await about.evaluate(link=>link.getBoundingClientRect().bottom<=innerHeight),'Desktop About button fits in the initial viewport');
    await capture(page,width+'-notify');
    assert.equal(await page.locator('#scene').getAttribute('data-intro-turns'),'1');
    await page.getByRole('button',{name:'Previous photograph',exact:true}).click();await settled(page);assert.equal(await page.locator('#orbit').getAttribute('data-target'),'-1.000');
@@ -44,16 +46,10 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
    await page.locator('#mesh-background').focus();await page.keyboard.press('Enter');
    await page.waitForFunction(()=>document.querySelector('#mesh-background').dataset.animating==='true');
    await page.waitForFunction(()=>document.querySelector('#mesh-background').dataset.animating==='false');
-   const selected=await page.locator('#orbit').getAttribute('data-target');
-   await page.getByRole('button',{name:'Notify me',exact:true}).click();assert.equal(await page.locator('#form-message').textContent(),'Enter your email address.');
-   assert.equal(await page.locator('#orbit').getAttribute('data-target'),selected);
-   await page.locator('#email').fill('notify@example.invalid');await page.getByRole('button',{name:'Notify me',exact:true}).click();
-   await page.locator('#confirmation').waitFor({state:'visible'});assert.match(await page.locator('#confirmation').textContent(),/Preview complete\. No signup has been sent\./);
-   assert.equal(posts.length,0,'Preview does not submit notification requests');
-   await page.getByRole('button',{name:'Try again',exact:true}).click();assert.equal(await page.locator('#email').inputValue(),'');
+   assert.equal(posts.length,0,'Launching page does not submit notification requests');
    await page.locator('[data-menu-toggle]').click();await page.locator('[data-menu-panel][data-open]').waitFor();await page.keyboard.press('Escape');
    assert.deepEqual(errors,[]);
-   report.push({width,height,memberCTA:true,noOverflow:true,approvedFonts:styles,carouselOpening:true,loopDragKeyboard:true,mesh:true,previewOnly:true,errors});
+   report.push({width,height,memberCTA:true,noOverflow:true,fonts:styles,carouselOpening:true,loopDragKeyboard:true,mesh:true,errors});
   }finally{await context.close()}
  }
  const guest=await browser.newContext({viewport:{width:390,height:844}});await guest.addCookies([{name:'sofacet_pinball_player',value:other,url:origin}]);
@@ -62,7 +58,8 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
   await page.goto(origin+'/notify');
   const join=page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true});
   await join.waitFor();
-  assert.equal(await page.getByRole('button',{name:'Notify me',exact:true}).isVisible(),false);
+  await page.getByText('Early access and updates, before anyone else.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true}).isVisible(),false);
   await join.click();await page.waitForURL('**/join');report.push({guestJoin:true});
  }finally{await guest.close()}
  assert.equal((await readStore()).firstCuts,undefined);

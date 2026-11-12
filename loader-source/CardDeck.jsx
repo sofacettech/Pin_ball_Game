@@ -29,7 +29,7 @@ export default function CardDeck({active=false,onComplete}) {
       </div>
     </div></div>
     </div>
-    <p className="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p>
+    <p className="sr-only" id="loader-card-instructions">On mobile, swipe to advance. On desktop, click or press an arrow key to advance. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p>
     <p className="sr-only" data-card-status aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p>
   </div>;
 }

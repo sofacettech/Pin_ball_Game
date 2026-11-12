@@ -124,8 +124,8 @@ export function initializeCarousel(scope){
   }
 
   function measure() {
-    orbitHeight = orbit.clientHeight;
-    radius = orbit.clientWidth < 700 ? orbit.clientWidth * .46 : Math.min(orbit.clientWidth * .18, 240);
+    orbitHeight = orbit.clientHeight * .95;
+    radius = (orbit.clientWidth < 700 ? orbit.clientWidth * .46 : Math.min(orbit.clientWidth * .18, 240)) * .95;
     dragDistance = Math.max(130, pieces[0].offsetWidth * .72);
     requestRender();
   }

@@ -139,14 +139,10 @@ const config = content;
 
 
   const progress = document.querySelector('.reading-progress span');
-  const launch = document.querySelector('[data-open-gallery]');
-  const collections = document.querySelector('#collections');
-  const closing = document.querySelector('.closing');
   let scheduled = false;
   const updateReading = () => {
     const available = root.scrollHeight - innerHeight;
     progress.style.transform = `scaleY(${available > 0 ? scrollY / available : 0})`;
-    launch.hidden = collections.getBoundingClientRect().top > innerHeight * 0.8 || closing.getBoundingClientRect().top < innerHeight * 0.5;
     scheduled = false;
   };
   addEventListener('scroll', () => {
@@ -189,7 +185,6 @@ const config = content;
     dialog.showModal();
     dialog.querySelector('[data-close-gallery]').focus();
   };
-  launch.addEventListener('click', () => openGallery(0, launch));
   document.querySelectorAll('[data-gallery-index]').forEach(button => {
     button.addEventListener('click', () => openGallery(Number(button.dataset.galleryIndex), button));
   });

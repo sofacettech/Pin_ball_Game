@@ -104,7 +104,7 @@ function showLeaderboard(){
  if(!leaderboard.dialog.open){resumeAfterLeaderboard=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';if(resumeAfterLeaderboard)setGamePaused(true);leaderboard.show()}
 }
 function showResult(){
- void leaderboard.ready.then(()=>{if(!loaded||starting||physics.state!=='finished'||registration.open||leaderboard.dialog.open)return;if(membership?.isMember()===false)rewards.show(physics.score,leaderboard.gameId);else showLeaderboard()});
+ void leaderboard.ready.then(()=>{if(!loaded||starting||physics.state!=='finished'||registration.open||leaderboard.dialog.open)return;if(mobileView()||membership?.isMember()===false)rewards.show(physics.score,leaderboard.gameId);else showLeaderboard()});
 }
 const launchButton=$<HTMLButtonElement>('touch-launch');
 const releasedPaddles={left:false,right:false},previousTouch={left:false,right:false},paddleSoundHeld={left:false,right:false};
