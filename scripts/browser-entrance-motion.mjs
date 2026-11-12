@@ -46,7 +46,7 @@ try{for(const option of options){
   assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preview),false);
  }
  if(process.env.SOFACET_OFFLINE_SCROLL==='1'){
-  assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preloaded),true,'Offline scrolling requires the complete source cached; progressive startup alone is insufficient');
+  assert.equal(await page.evaluate(()=>window.entrancePreview.quality.preloaded),true,'Offline scrolling requires all selected compressed media cached');
   await context.setOffline(true);
  }
  const runs=[];

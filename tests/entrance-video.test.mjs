@@ -5,12 +5,10 @@ import vm from 'node:vm';
 import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
 import {visibleVideoCrop} from '../entrance-source/video-crop.mjs';
 import {framePlacement} from '../frame-placement.js';
-import {createProgressiveVideo} from '../entrance-source/progressive-video.mjs';
-import {createStreamedVideoSource} from '../entrance-source/streamed-video.mjs';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
 async function fixture({cdn=false,segmentSource,streamSource,previewSource,width=1920,height=1080,preloadFailure=false,renderView=()=>null,onRender=()=>{},diagnostics=false,
-  media:providedMedia,progressiveFactory=createProgressiveVideo,preloadedFactory,streamFactory,load=true}={}){
+  media:providedMedia,preloadedFactory,load=true}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
     readyState=2;videoWidth=width;videoHeight=height;time=0;seeking=false;seeks=[];
@@ -24,9 +22,9 @@ async function fixture({cdn=false,segmentSource,streamSource,previewSource,width
   const canvas={style:{},getContext:()=>({drawImage:(video,...args)=>draws.push({video,index:Math.floor(video.time*60),args,width:canvas.width,height:canvas.height})}),remove(){removed=true}};
   const manifest={version:1,width,height,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
   const media=providedMedia??{manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))};
-  const context={JOURNEY_START_FRAME:334,visibleVideoCrop,createProgressiveVideo:progressiveFactory,
+  const context={JOURNEY_START_FRAME:334,visibleVideoCrop,
     createPreloadedVideo:preloadedFactory??(()=>({load:async()=>{if(preloadFailure){preloadFailure=false;throw Error('CDN unavailable')}},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:100})),
-    createStreamedVideoSource:streamFactory??(async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null),createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>media,document:{createElement:type=>type==='canvas'?canvas:new Video()},
+    createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>media,document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console,performance};
   vm.runInNewContext(source.replace(/^import .*;\r?\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},renderView,onRender,diagnostics,onError:error=>errors.push(error)});
@@ -48,17 +46,6 @@ async function segmentedMedia(){
   remote.clips.journey.segments=segments;remote.clips.journey.decoder={codec:'avc1.64002a',description:'0164002affe10000',keyframeInterval:12};
   return loadEntranceMedia(async url=>({ok:true,json:async()=>url==='/api/media-config'?{entrance4kManifestURL:'https://media.example/native4k/manifest.json'}:
     url==='/assets/entrance-video/manifest.json'?local:remote}),{option:'3'});
-}
-
-function immediateCodec(){
-  return {Decoder:class{
-    static async isConfigSupported(){return {supported:true}}
-    constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured'}
-    configure(config){this.config=config;this.state='configured'}
-    decode(chunk){this.callbacks.output({timestamp:chunk.timestamp,time:chunk.timestamp/1e6,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,close(){}})}
-    async flush(){}
-    close(){this.state='closed'}
-  },Chunk:class{constructor(value){Object.assign(this,value)}}};
 }
 
 test('video preserves source timing and coalesces rapid scroll/reversal into one outstanding seek',async()=>{
@@ -382,81 +369,32 @@ test('lookahead stops at the final authored picture and reports it settled only 
  }finally{f.renderer.dispose()}
 });
 
-test('segmented 4K startup warms the inclusive opening/GOP window without waiting for distant media or disk writes',async()=>{
- const media=await segmentedMedia(),first=media.clips.journey.segments[0],requests=[];let buffer,construction,writes=0;
- const fetcher=async(url,options={})=>{
-  const file=url===media.clips.opening.url?media.clips.opening:media.clips.journey.segments.find(part=>part.url===url);
-  const match=/^bytes=(\d+)-(\d+)$/.exec(new Headers(options.headers).get('Range')||'');
-  const start=match?Number(match[1]):0,end=match?Number(match[2]):file.bytes-1;
-  requests.push({url,start,end,signal:options.signal});
-  const healthy=url===media.clips.opening.url||url===first.url&&start===0&&end===39;
-  const body=healthy?new Uint8Array(end-start+1):new ReadableStream({start(controller){options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true})}});
-  return new Response(body,{status:match?206:200,headers:match?{'Content-Range':`bytes ${start}-${end}/${file.bytes}`}:{}});
- };
- const f=await fixture({media,width:3840,height:2160,load:false,
-  progressiveFactory:(files,options)=>{construction={files:Array.from(files),warm:Array.from(options.warm,item=>({...item}))};
-    return buffer=createProgressiveVideo(files,{...options,fetcher,cacheStorage:{
-      open:async()=>({match:async()=>null,put:()=>{writes++;return new Promise(()=>{})}}),
-    }});
-  },preloadedFactory:()=>{throw Error('A healthy segmented startup must not create a full-variant preloader')},
-  streamFactory:(parts,metadata,size)=>createStreamedVideoSource(parts,metadata,{...size,...immediateCodec()}),
- });
+test('segmented 4K readiness waits for the complete preloaded variant before any pose is prepared',async()=>{
+ const media=await segmentedMedia(),catalog=[],prepared=[];let finish,loaded=false;
+ const high={engine:'webcodecs',frameAt:async index=>{assert.equal(loaded,true);prepared.push(index);return {time:index/60,displayWidth:3840,displayHeight:2160}},dispose(){}};
+ const f=await fixture({media,width:3840,height:2160,streamSource:high,load:false,preloadedFactory:files=>{
+  catalog.push(...Array.from(files,file=>({url:file.url,bytes:file.bytes})));
+  return {load:()=>new Promise(resolve=>{finish=()=>{loaded=true;resolve()}}),fetch:async()=>{},
+   url:url=>{assert.equal(loaded,true);return url},dispose(){},get ready(){return loaded},bytes:4238};
+ }});
  try{
-  await f.renderer.loadVariant();
-  assert.deepEqual(construction.warm,[{url:media.clips.opening.url,start:0,end:79},{url:first.url,start:0,end:39}],
-    'include the first twelve samples and their container prefix, with an inclusive final byte');
-  assert.equal(construction.files.length,32);assert.equal(writes,1);
-  assert.equal(f.renderer.policy.startupReady,true);assert.equal(f.renderer.policy.preloaded,false);
-  assert.equal(f.renderer.policy.progressive,true);assert.equal(f.renderer.policy.streaming,true);
-  assert.equal(f.renderer.policy.startupBytes,120);assert.equal(buffer.startupBytes,120);
-  assert.ok(f.renderer.policy.preloadedBytes>f.renderer.policy.startupBytes);
-  f.renderer.renderAt(334);await f.renderer.whenSettled();
-  f.renderer.renderAt(338);await f.renderer.whenSettled();
-  assert.equal(f.renderer.displayedFrame,338);assert.equal(f.renderer.policy.sourceWidth,3840);
-  assert.equal(f.renderer.policy.sourceHeight,2160);assert.equal(f.renderer.policy.streaming,true);
-  assert.equal(f.renderer.policy.preloaded,false,'background incompleteness must not lower the selected quality');
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.ok(requests.some(request=>request.url!==media.clips.opening.url&&request.start>0),'the remaining first-section bytes continue separately');
+  const readiness=f.renderer.loadVariant();await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(catalog,[media.clips.opening,...media.clips.journey.segments].map(file=>({url:file.url,bytes:file.bytes})));
+  assert.equal(catalog.length,32);assert.equal(f.renderer.policy.preloaded,false);
+  assert.deepEqual(prepared,[]);assert.equal(f.videos.length,0,'keep the loader opaque until all sections are available');
+  finish();await readiness;
+  assert.equal(f.renderer.policy.preloaded,true);assert.equal(f.renderer.policy.preloadedBytes,4238);
+  assert.deepEqual(prepared,[0]);assert.equal(f.renderer.policy.streaming,true);assert.equal(f.videos.length,1);
+  f.renderer.renderAt(2164);await f.renderer.whenSettled();
+  assert.equal(f.renderer.displayedFrame,2164);assert.equal(f.renderer.policy.sourceWidth,3840);
   assert.deepEqual(f.errors,[]);
- }finally{f.renderer.dispose()}
-});
-
-test('renderer promotes visible section priority only when its selected section changes',async()=>{
- const media=await segmentedMedia(),promotions=[],source={engine:'webcodecs',frameAt:async index=>({time:index/60,displayWidth:3840,displayHeight:2160}),dispose(){}};
- const f=await fixture({media,width:3840,height:2160,streamSource:source,progressiveFactory:()=>({
-  load:async()=>{},fetch:async()=>{},url:url=>url,dispose(){},prioritize:url=>promotions.push(url),ready:true,complete:false,bytes:4238,startupBytes:120,residentBytes:120,budgetBytes:4096,
- })});
- try{
-  for(const frame of [334,338,390,394,400,334]){f.renderer.renderAt(frame);await f.renderer.whenSettled();}
-  assert.deepEqual(promotions,[media.clips.journey.segments[1].url,media.clips.journey.segments[0].url]);
-  assert.equal(f.renderer.policy.startupReady,true);assert.equal(f.renderer.policy.preloaded,false);assert.equal(f.renderer.policy.sourceWidth,3840);
- }finally{f.renderer.dispose()}
-});
-
-test('remaining sections buffer serially during the opening without gating readiness or duplicating verified sections',async()=>{
- const media=await segmentedMedia(),parts=media.clips.journey.segments,calls=[];
- const source={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}};
- const f=await fixture({media,width:3840,height:2160,streamSource:source,progressiveFactory:()=>({
-  load:async()=>{},fetch:async()=>{},url:url=>url,dispose(){},ready:true,complete:false,bytes:4238,
-  isBuffered:url=>url===parts[4].url,
-  prefetch:(url,{signal})=>new Promise((resolve,reject)=>{calls.push({url,resolve});signal.addEventListener('abort',()=>reject(signal.reason),{once:true})}),
- })});
- try{
-  assert.equal(f.renderer.policy.startupReady,true);assert.equal(calls.length,1);
-  assert.equal(calls[0].url,parts[3].url,'the source already warms sections zero through two');
-  f.renderer.renderAssemblyAt(1);f.videos[0].complete();
-  calls[0].resolve();await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(calls.length,2);assert.equal(calls[1].url,parts[5].url,'skip already verified coverage');
-  assert.equal(f.renderer.policy.preloaded,false);
  }finally{f.renderer.dispose()}
 });
 
 test('obsolete network seeks cancel on section jumps while active forward decoding stays serialized',async()=>{
  const media=await segmentedMedia(),pending=[];let cancellations=0,disposals=0,network=true;
  const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){disposals++}};
- const f=await fixture({media,width:3840,height:2160,streamSource:high,progressiveFactory:()=>({
-  load:async()=>{},fetch:async()=>{},url:url=>url,dispose(){},ready:true,complete:false,bytes:4238,prioritize(){},
- })});
+ const f=await fixture({media,width:3840,height:2160,streamSource:high});
  high.frameAt=index=>new Promise((resolve,reject)=>pending.push({index,resolve,reject}));
  high.cancelPending=()=>{if(!network)return false;cancellations++;pending.at(-1).reject(new DOMException('Superseded','AbortError'));return true};
  const complete=async position=>{pending[position].resolve({time:pending[position].index/60,displayWidth:3840,displayHeight:2160});await new Promise(resolve=>setImmediate(resolve))};
@@ -474,68 +412,22 @@ test('obsolete network seeks cancel on section jumps while active forward decodi
  }finally{f.renderer.dispose()}
 });
 
-test('one failed background section does not prevent the rest from warming and retries only once',async()=>{
- const media=await segmentedMedia(),parts=media.clips.journey.segments,calls=[];let failed=false;
- const source={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}};
- const f=await fixture({media,streamSource:source,width:3840,height:2160,diagnostics:true,progressiveFactory:()=>({
-  load:async()=>{},fetch:async()=>{},url:url=>url,dispose(){},ready:true,complete:false,bytes:4238,
-  prefetch:async url=>{calls.push(url);if(url===parts[3].url&&!failed){failed=true;throw Error('Temporary network interruption')}},
- })});
- try{
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(calls.length,32);assert.equal(calls.at(-1),parts[3].url);
-  assert.equal(f.renderer.policy.background.completed,31);assert.equal(f.renderer.policy.background.retries,1);
-  assert.equal(f.renderer.policy.background.failures,0);assert.equal(f.renderer.policy.background.active,null);
-  assert.equal(f.renderer.policy.preloaded,false,'finishing a best-effort pass cannot substitute for verified cache coverage');
-  assert.deepEqual(f.errors,[]);
- }finally{f.renderer.dispose()}
-});
-
-test('a genuine segmented startup failure releases progressive state and preserves native local 1080p fallback',async()=>{
+test('a failed segmented 4K preload releases its decoder and retries the complete local 1080p variant',async()=>{
  const media=await segmentedMedia(),preloads=[];let bufferDisposals=0,decoderDisposals=0;
  const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){decoderDisposals++}};
- const f=await fixture({media,width:3840,height:2160,streamSource:high,
-  progressiveFactory:()=>({load:async()=>{throw Error('CDN startup unavailable')},fetch:async()=>{},url:url=>url,dispose(){bufferDisposals++},ready:false,complete:false,bytes:4238}),
-  preloadedFactory:files=>{preloads.push(Array.from(files,file=>({url:file.url,bytes:file.bytes})));return {load:async()=>{},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:208};},
- });
+ const f=await fixture({media,width:3840,height:2160,streamSource:high,preloadedFactory:files=>{
+  preloads.push(Array.from(files,file=>({url:file.url,bytes:file.bytes})));const failed=preloads.length===1;
+  return {load:async()=>{if(failed)throw Error('CDN preload unavailable')},fetch:async()=>{},url:url=>url,
+   dispose(){if(failed)bufferDisposals++},ready:!failed,bytes:failed?4238:208};
+ }});
  try{
-  assert.equal(bufferDisposals,1);assert.equal(decoderDisposals,1);assert.equal(preloads.length,1);
-  assert.deepEqual(preloads[0],[{url:media.clips.opening.local,bytes:80},{url:media.clips.journey.local,bytes:128}]);
-  assert.equal(f.renderer.policy.progressive,false);assert.equal(f.renderer.policy.streaming,false);
-  assert.equal(f.renderer.policy.startupReady,true);assert.equal(f.renderer.policy.preloaded,true);
+  assert.equal(bufferDisposals,1);assert.equal(decoderDisposals,1);assert.equal(preloads.length,2);
+  assert.equal(preloads[0].length,32);
+  assert.deepEqual(preloads[1],[{url:media.clips.opening.local,bytes:80},{url:media.clips.journey.local,bytes:128}]);
+  assert.equal(f.renderer.policy.streaming,false);assert.equal(f.renderer.policy.segmented,false);assert.equal(f.renderer.policy.preloaded,true);
   assert.match(f.videos[0].src,/^\/assets\/entrance-video\/opening\.mp4/);assert.match(f.videos[1].src,/^\/assets\/entrance-video\/journey\.mp4/);
   f.renderer.renderAt(1840);f.videos[1].complete();await f.renderer.whenSettled();
   assert.equal(f.renderer.displayedFrame,1840);assert.equal(f.renderer.policy.sourceWidth,1920);assert.equal(f.renderer.policy.sourceHeight,1080);
-  assert.deepEqual(f.errors,[]);
- }finally{f.renderer.dispose()}
-});
-
-test('entering a previously cancelled speculative section retries it without downgrading the 4K decoder',async()=>{
- const media=await segmentedMedia(),parts=media.clips.journey.segments,requests=[];let releaseFuture=false;
- const fetcher=async(url,options={})=>{
-  const file=url===media.clips.opening.url?media.clips.opening:parts.find(part=>part.url===url);
-  const match=/^bytes=(\d+)-(\d+)$/.exec(new Headers(options.headers).get('Range')||'');
-  const start=match?Number(match[1]):0,end=match?Number(match[2]):file.bytes-1;
-  requests.push({url,start,end,signal:options.signal});
-  const available=releaseFuture||url===media.clips.opening.url||url===parts[0].url&&start===0&&end===39;
-  const body=available?new Uint8Array(end-start+1):new ReadableStream({start(controller){
-    options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});
-  }});
-  return new Response(body,{status:match?206:200,headers:match?{'Content-Range':`bytes ${start}-${end}/${file.bytes}`}:{}});
- };
- const f=await fixture({media,width:3840,height:2160,
-  progressiveFactory:(files,options)=>createProgressiveVideo(files,{...options,fetcher,cacheStorage:null}),
-  streamFactory:(parts,metadata,size)=>createStreamedVideoSource(parts,metadata,{...size,...immediateCodec()}),
- });
- try{
-  await new Promise(resolve=>setImmediate(resolve));
-  f.renderer.renderAt(334);await f.renderer.whenSettled();await new Promise(resolve=>setImmediate(resolve));
-  f.renderer.renderAt(454);await new Promise(resolve=>setImmediate(resolve));
-  assert.ok(requests.some(request=>request.url===parts[1].url&&request.signal.aborted),'the test must cancel an actual low-priority speculative range');
-  releaseFuture=true;f.renderer.renderAt(394);await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(f.renderer.policy.streaming,true,'expected background cancellation must not poison the section or trigger compatibility fallback');
-  await f.renderer.whenSettled();assert.equal(f.renderer.displayedFrame,394);
-  assert.equal(f.renderer.policy.sourceWidth,3840);assert.equal(f.videos.length,1,'healthy progressive seeking needs no native journey replacement');
   assert.deepEqual(f.errors,[]);
  }finally{f.renderer.dispose()}
 });

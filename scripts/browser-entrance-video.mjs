@@ -32,6 +32,8 @@ try{
     await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:180000});
     const startup=await page.evaluate(()=>({quality:window.entrancePreview.quality,scripts:Array.from(document.scripts,s=>s.src).filter(src=>src.includes('/assets/entrance-3d/entry-')),atMs:performance.now()}));
     assertVideoStartupPolicy(startup.quality);
+    assert.equal(startup.quality.sourceWidth,expectedWidth,'The first ready picture must preserve the selected source width');
+    assert.equal(startup.quality.sourceHeight,expectedWidth*9/16,'The first ready picture must preserve the selected source height');
     assert.equal(await page.locator('body').getAttribute('data-error'),null);
     assert.equal(await page.evaluate(()=>window.entrancePreview.batching),'video');
     if(reducedMotion==='no-preference'){

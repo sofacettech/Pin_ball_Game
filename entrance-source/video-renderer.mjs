@@ -1,6 +1,5 @@
 import {JOURNEY_START_FRAME} from './journey-scroll.mjs';
 import {createPreloadedVideo} from './preloaded-video.mjs';
-import {createProgressiveVideo} from './progressive-video.mjs';
 import {loadEntranceMedia} from './video-delivery.mjs';
 import {createSegmentedVideoSource} from './segmented-video.mjs';
 import {createStreamedVideoSource} from './streamed-video.mjs';
@@ -17,23 +16,12 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
   stage.prepend(canvas);
   const events=new AbortController(),videos={};
   const loadingTimers=new Set();
-  let progressive=!!clips.journey.segments?.length;
   const files=[clips.opening,...(clips.journey.segments||[clips.journey])];
-  const first=clips.journey.segments?.[0],interval=clips.journey.decoder?.keyframeInterval??4;
-  const sample=first?.frames?.[Math.min(first.frameCount,interval)-1];
-  const warm=progressive?[
-    {url:clips.opening.url,start:0,end:clips.opening.bytes-1},
-    {url:first.url,start:0,end:sample?sample[0]+sample[1]-1:first.bytes-1},
-  ]:[];
-  // Keep this short variant in compressed memory once fetched. Evicting its
-  // early sections during a sweep makes reversals wait on disk/network again.
-  // Decoded pictures retain their separate, much smaller pixel budget.
-  let buffer=progressive?createProgressiveVideo(files,{warm,onProgress,maxBytes:256*1024*1024}):createPreloadedVideo(files,{onProgress});
+  let buffer=createPreloadedVideo(files,{onProgress});
   const size={width:manifest.width,height:manifest.height,fetcher:(...args)=>buffer.fetch(...args),cacheStorage:null,diagnostics};
   let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder,size)||createSegmentedVideoSource(clips.journey.segments,size)):null;
   let disposed=false,suspended=false,wanted=null,painted=null,pending=null,prepared=null,targetIndex=null,timeout=null,failure=null;
-  let displayed=null,priorityURL=first?.url,backgroundStarted=false,backgroundState=null;
-  const backgroundEvents=new AbortController();
+  let displayed=null;
   let sourceWidth=manifest.width,sourceHeight=manifest.height;
   let crop=null;
   const paintTimes=diagnostics?[]:null;
@@ -138,7 +126,6 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       // Drop an obsolete network wait on a jump or reversal. Let an active
       // decode finish, and never cancel the normal forward presentation step.
       if(pending?.kind==='journey'&&(sectionAt(pending.index)!==url||pending.index<Math.min(shown,index)||pending.index>Math.max(shown,index))&&segmented?.cancelPending?.())pending.cancelled=true;
-      if(url&&url!==priorityURL){priorityURL=url;buffer.prioritize?.(url);}
     }
     wanted={kind,index};pump();
   }
@@ -202,41 +189,15 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       return segmented?prepareJourney():loadNative('journey',true);
     }
   }
-  function fillBackground(){
-    if(!progressive||backgroundStarted||!buffer.prefetch)return;
-    backgroundStarted=true;
-    // The source already warms the current and next two sections. Continue
-    // the rest during the opening/idle time, without delaying first readiness.
-    // Compressed data spills to the bounded disk cache; pictures stay bounded.
-    const parts=clips.journey.segments,queue=[...parts.slice(3),...parts.slice(0,3)].map(part=>({part,retry:false}));
-    backgroundState={active:null,completed:0,retries:0,failures:0,lastError:null};
-    void (async()=>{
-      for(const {part,retry} of queue){
-        if(disposed||backgroundEvents.signal.aborted)return;
-        if(buffer.isBuffered?.(part.url))continue;
-        backgroundState.active=part.firstFrame;
-        try{await buffer.prefetch(part.url,{signal:backgroundEvents.signal});backgroundState.completed++;}
-        catch(error){
-          if(disposed||backgroundEvents.signal.aborted)return;
-          backgroundState.lastError=String(error?.message??error);
-          if(!retry){backgroundState.retries++;queue.push({part,retry:true});}
-          else backgroundState.failures++;
-        }
-      }
-      backgroundState.active=null;
-    })();
-  }
   async function loadVariant(){
     try{await buffer.load()}catch(error){
       if(disposed)throw error;
       buffer.dispose();segmented?.dispose();segmented=null;
-      progressive=false;
       for(const clip of Object.values(clips)){clip.url=clip.local;clip.bytes=clip.localBytes;}
       buffer=createPreloadedVideo([clips.opening,clips.journey],{onProgress});
       await buffer.load();
     }
     await Promise.all([loadNative('opening'),prepareJourney()]);
-    fillBackground();
   }
   return {
     loadVariant,
@@ -263,14 +224,14 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
     },
     suspend(value=true){suspended=value;if(value){clearTimeout(timeout);if(!segmented)pending=null;videos.opening?.pause();}else{if(openingPlaying)playOpening();else{pump();}}},
     dispose(){
-      if(disposed)return;stopOpening();disposed=true;clearTimeout(timeout);events.abort();backgroundEvents.abort();
+      if(disposed)return;stopOpening();disposed=true;clearTimeout(timeout);events.abort();
       segmented?.dispose();segmented=null;prepared=null;
       buffer.dispose();
       for(const timer of loadingTimers)clearTimeout(timer);loadingTimers.clear();
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}
       for(const waiter of waiters)waiter.reject(new DOMException('Entrance disposed','AbortError'));waiters.clear();canvas.remove();
     },
-    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',progressive,startupReady:buffer.ready,preloaded:buffer.complete??buffer.ready,preloadedBytes:buffer.bytes,startupBytes:buffer.startupBytes??buffer.bytes,residentBytes:buffer.residentBytes??buffer.bytes,bufferBudgetBytes:buffer.budgetBytes??buffer.bytes,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null,bufferCoverage:buffer.coverage??null,background:backgroundState?{...backgroundState}:null}:{})}},batchingMode:'video',
+    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preloaded:buffer.ready,preloadedBytes:buffer.bytes,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null}:{})}},batchingMode:'video',
     renderer:{domElement:canvas,getPixelRatio:()=>1,info:{render:{calls:0,triangles:0}}},
   };
 }

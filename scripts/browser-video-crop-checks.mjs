@@ -40,10 +40,11 @@ export function assertVideoCropGeometry(g,expectedWidth,label='Video crop'){
 }
 
 export function assertVideoStartupPolicy(q){
-  assert.equal(q.startupReady,true,'The declared startup window must be ready');
-  assert.equal(typeof q.preloaded,'boolean','preloaded describes complete source caching');
-  if(q.progressive){
-    assert.ok(q.startupBytes>0&&q.startupBytes<q.preloadedBytes,'Progressive readiness must require fewer bytes than the complete source');
-    assert.ok(q.residentBytes>=0&&q.residentBytes<=q.bufferBudgetBytes,'Compressed resident bytes stay inside the declared budget');
-  }else assert.equal(q.preloaded,true,'The full-preload fallback must be complete before readiness');
+  assert.equal(q.preloaded,true,'Complete selected media must be buffered before scrolling becomes ready');
+  assert.ok(Number.isSafeInteger(q.preloadedBytes)&&q.preloadedBytes>0,'Report the complete selected compressed-media size');
+  // If retained by a renderer, these fields must describe the same complete
+  // buffer, not an earlier warm window or partially downloaded variant.
+  if('startupReady' in q)assert.equal(q.startupReady,true);
+  if('startupBytes' in q)assert.equal(q.startupBytes,q.preloadedBytes,'Readiness must include every selected media byte');
+  if('progressive' in q)assert.equal(q.progressive,false,'Early progressive readiness is outside the release contract');
 }
