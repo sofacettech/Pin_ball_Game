@@ -1,7 +1,7 @@
 import type {Player} from './leaderboard';
 import type {CompletedGameResult} from './post-game-rewards';
 
-type Options={beforeOpen:()=>void;afterClose:(completed:boolean,returnToScore:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void};
+type Options={beforeOpen:()=>void;afterClose:(completed:boolean,returnToScore:boolean)=>void;refreshPlayer:()=>Promise<void>;onReplay:()=>void;onLeaderboard:()=>void;onDiscard:()=>void;pendingResult:()=>CompletedGameResult|null};
 
 export function connectMembership(options:Options){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
@@ -19,8 +19,8 @@ export function connectMembership(options:Options){
   if(dialog.open)return;
   if(checking||!player){checking=true;paint();await options.refreshPlayer();if(dialog.open||!player)return}
   if(player.member&&!verify){options.onLeaderboard();return}
-  opener=source;pendingReward=pending;completed=false;options.beforeOpen();
-  const route=verify?'/sign-in':'/join';
+  opener=source;pendingReward=pending??options.pendingResult();completed=false;options.beforeOpen();
+  const route=verify?'/sign-in':pendingReward?'/claim':'/join';
   timeline.pushState({...timeline.state,sofacetJoin:true},'',route);joinHistory=true;
   frame.contentWindow!.location.replace(verify?'/join?nav=game&verify=1':route+'?nav=game');dialog.showModal();document.body.classList.add('membership-open');
  }
@@ -54,7 +54,7 @@ export function connectMembership(options:Options){
  });
  window.addEventListener('message',async event=>{
   if(!dialog.open||event.origin!==location.origin||event.source!==frame.contentWindow)return;
-  if(event.data?.type==='sofacet:screen-route'&&['/join','/sign-in','/verify','/coins-saved'].includes(event.data.href)){
+  if(event.data?.type==='sofacet:screen-route'&&['/claim','/join','/sign-in','/verify','/coins-saved'].includes(event.data.href)){
    timeline.replaceState({...timeline.state},'',event.data.href);return;
   }
   if(event.data?.type==='sofacet:membership-ready'&&pendingReward){frame.contentWindow?.postMessage({type:'sofacet:pending-reward',result:pendingReward},location.origin);return}

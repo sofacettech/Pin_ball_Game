@@ -4,7 +4,7 @@ import type {InputRun} from './simulation';
 import type {Input} from './physics';
 import {formatPoints,resultHeadline,leaderboardName} from './player-copy';
 import type {CompletedGameResult} from './post-game-rewards';
-import {setScreenRoute,writeScreenData} from '../../site-routes.js';
+import {setScreenRoute} from '../../site-routes.js';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
 export type Player={display_name:string;member:boolean;best_score:number|null};
@@ -24,7 +24,7 @@ export function visibleEntries(entries:Entry[],me:Entry|null):Entry[]{
  return rows;
 }
 
-export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void,onPlayer:(player:Player|null)=>void=()=>{},onVerify:(pending:CompletedGameResult)=>void=()=>{}){
+export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified:(score:number,best:number)=>void,onBest:(best:number|null)=>void,onPlayer:(player:Player|null)=>void=()=>{},onJoin:(verify?:boolean,pending?:CompletedGameResult)=>void=()=>{}){
  const dialog=document.getElementById('leaderboard-dialog') as HTMLDialogElement;
  const rows=document.getElementById('leaderboard-rows')!,status=document.getElementById('leaderboard-status')!,summary=document.getElementById('leaderboard-summary')!;
  const retry=document.getElementById('leaderboard-retry') as HTMLButtonElement;
@@ -82,7 +82,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
     try{const result=await request<{pointsSaved:boolean}>('/api/membership/rewards',{gameId:target.id});if(result.pointsSaved!==true)throw Error('SO/ COINS have not been saved yet.');target.rewardSaved=true}
     catch(error){
      if(error instanceof Error&&'code' in error&&['invalid_token','rewards_verification_required'].includes(String(error.code))){
-      if(current===revision){close();onVerify({points:target.score!,rewardValue:target.score!/10,completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
+      if(current===revision){close();onJoin(true,{points:target.score!,rewardValue:target.score!/10,completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
      }
      rewardError=error instanceof Error?error.message:'SO/ COINS have not been saved yet.';
     }
@@ -91,7 +91,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   }catch(error){if(current===revision){status.textContent=error instanceof Error?error.message:'Unable to load the leaderboard.';retry.hidden=false}}
   finally{if(current===revision)rows.removeAttribute('aria-busy')}
  }
- document.getElementById('leaderboard-save')!.onclick=()=>{writeScreenData('reward',null);window.top!.location.assign('/notify')};
+ document.getElementById('leaderboard-save')!.onclick=()=>{const pending=run.ended&&run.score!==undefined?{points:run.score,rewardValue:run.score/10,completedAt:Date.now(),status:'completed' as const,gameId:run.id}:undefined;close();onJoin(false,pending)};
  retry.onclick=()=>void refreshPlayer().then(refresh);
  return {
   dialog,ready,

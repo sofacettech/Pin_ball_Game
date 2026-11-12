@@ -11,7 +11,7 @@ test('public URLs serve the existing documents, including direct refresh and HEA
    assert.equal(response.headers.get('location'),null,route);
    if(method==='GET')assert.match(await response.text(),/<html/i,document);
   }
-  for(const [old,current] of [['/play.html','/game'],['/account.html?view=signin','/sign-in'],['/membership.html?from=score','/notify'],['/claim','/notify'],['/exit','/notify'],['/membership.html?from=collective','/join'],['/faq.html','/how-coins-work'],['/terms/','/terms']]){
+  for(const [old,current] of [['/play.html','/game'],['/account.html?view=signin','/sign-in'],['/membership.html?from=score','/claim'],['/exit','/notify'],['/membership.html?from=collective','/join'],['/faq.html','/how-coins-work'],['/terms/','/terms']]){
    const response=await fetch(origin+old,{redirect:'manual'});assert.equal(response.status,308,old);assert.equal(response.headers.get('location'),current);
   }
   for(const [old,current] of [['/my-coins','/join'],['/my-coins?nav=game','/join?nav=game'],['/account.html','/join']]){

@@ -21,7 +21,7 @@ test('account signup retains its origin through URL updates and a verification r
 test('signup, verification and saved rewards retain their addresses',()=>{
  assert.equal(registrationScreenRoute({step:'identity',tab:'create'}),'/join');
  assert.equal(registrationScreenRoute({step:'claim',challenge:{kind:'signup'}}),'/verify');
- assert.equal(registrationScreenRoute({step:'claim'}),'/verify');
+ assert.equal(registrationScreenRoute({step:'claim'}),'/claim');
  assert.equal(registrationScreenRoute({step:'success',fromAccount:true}),'/coins-saved');
  assert.equal(registrationScreenRoute({exit:'confirm',fromAccount:true}),null);
  assert.equal(registrationScreenRoute({step:'identity',tab:'registered',fromAccount:true}),'/sign-in?from=account');

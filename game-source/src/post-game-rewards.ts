@@ -32,7 +32,11 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
   dialog.scrollTop=0;
   resize.observe(views[view]);placeFloor();heading.focus({preventScroll:true});
  }
- function register(){if(!result){dialog.close();return}const opener=$(current==='leave'?'rewards-keep':'rewards-register');dialog.close();onRegister(result,opener)}
+ function register(){
+  if(!result){dialog.close();return;}
+  const opener=$(current==='leave'?'rewards-keep':'rewards-register');
+  dialog.close();onRegister(result,opener);
+ }
  function notify(){discard();window.top!.location.assign('/notify')}
  function discard(){discarded=true;result=null;writeScreenData('reward',null)}
  function replay(){discarded=true;dialog.close();onRetry()}
@@ -43,7 +47,7 @@ export function connectPostGameRewards(onRegister:(result:CompletedGameResult,op
   const copy=leaveCopy(result?.points??0);$('rewards-leave-title').textContent=copy.title;$('rewards-leave-copy').textContent=copy.support;setView('leave');
  }
  dialog.addEventListener('close',()=>{if(dialog.open)return;resize.disconnect();scorePage.clear?.();showNoticeArtwork(null);if(toggle.getAttribute('aria-expanded')==='true')toggle.click();document.body.prepend(header)});
- $('rewards-keep').onclick=()=>setView('result');
+ $('rewards-keep').onclick=register;
  $('rewards-leave-anyway').onclick=notify;
  dialog.addEventListener('sofacet:page-ready',()=>{if(dialog.open&&current==='result'&&toggle.getAttribute('aria-expanded')!=='true')views.result.querySelector<HTMLElement>('h1')!.focus({preventScroll:true})});
  dialog.oncancel=event=>{event.preventDefault();if(current==='leave'){if(result)setView('result');else dialog.close()}else if(current==='result')leave()};

@@ -1,14 +1,14 @@
 // Public addresses share the existing documents and screen controllers.
 export const routeDocuments=Object.freeze({
  '/':'entrance-3d.html','/game':'play.html','/leaderboard':'play.html','/reward':'play.html',
- '/sign-in':'account.html','/join':'membership.html','/verify':'membership.html',
+ '/claim':'membership.html','/sign-in':'account.html','/join':'membership.html','/verify':'membership.html',
  '/coins-saved':'membership.html',
  '/launch':'launching-soon.html','/notify':'notify.html','/confirmation':'first-cuts-confirmation.html',
  '/about':'about.html','/how-coins-work':'faq.html','/contact':'faq.html',
  '/terms':'terms.html','/privacy':'privacy.html','/404':'404.html',
 });
 const legacy={
- '/claim':'/notify','/exit':'/notify',
+ '/exit':'/notify',
  '/index.html':'/','/entrance-3d.html':'/','/entrance-3d':'/',
  '/play.html':'/game','/membership.html':'/join','/account.html':'/my-coins',
  '/launching-soon.html':'/launch','/notify.html':'/notify','/first-cuts-confirmation.html':'/confirmation',
@@ -23,18 +23,18 @@ export function canonicalHref(href){
  if(url.pathname==='/game'&&url.hash==='#profile'){url.pathname='/join';url.hash='';}
  if(url.pathname==='/how-coins-work'&&['#contact','#topic-contact','#faq-contact'].includes(url.hash)){url.pathname='/contact';url.hash='';}
  if(path==='/membership.html'){
-  if(url.searchParams.get('from')==='score')url.pathname='/notify';
+  if(url.searchParams.get('from')==='score')url.pathname='/claim';
   if(url.searchParams.get('verify')==='1')url.pathname='/sign-in';
  }
  if(path==='/account.html'&&url.searchParams.get('view')==='signin')url.pathname='/sign-in';
- if(['/join','/notify'].includes(url.pathname)&&['collective','first-cuts','score'].includes(url.searchParams.get('from')))url.searchParams.delete('from');
+ if(['/join','/claim'].includes(url.pathname)&&['collective','first-cuts','score'].includes(url.searchParams.get('from')))url.searchParams.delete('from');
  if(url.pathname==='/sign-in'){url.searchParams.delete('view');url.searchParams.delete('verify');}
  return url.pathname+url.search+url.hash;
 }
 
 export function registrationScreenRoute({step,tab,challenge,exit,fromAccount=false}){
  if(exit==='confirm')return null;
- const route=step==='success'?'/coins-saved':challenge||step==='claim'?'/verify':tab==='registered'?'/sign-in':'/join';
+ const route=step==='success'?'/coins-saved':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
  return fromAccount&&['/join','/verify','/sign-in'].includes(route)?route+'?from=account':route;
 }
 
