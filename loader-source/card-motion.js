@@ -156,7 +156,7 @@ export function connectCardMotion(root, onComplete) {
     if (swiped) {swiped = false; return;}
     if (disposed || busy) return;
     // WebKit can label a synthesized touch click as mouse; trust pointerdown.
-    if (pointerType !== 'mouse') {flip(); return;}
+    if (pointerType !== 'mouse' || innerWidth < 600) return;
     exchange();
   });
   listen(deck, 'keydown', event => {

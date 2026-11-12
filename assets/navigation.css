@@ -6,6 +6,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root .site-brand img{display:block;width:100%;height:auto}
 :root .site-brand:focus{outline:none}
 :root .site-nav{position:fixed;z-index:40;top:calc(var(--site-nav-top) + env(safe-area-inset-top,0px));right:calc(var(--site-nav-right) + env(safe-area-inset-right,0px));left:auto;display:flex;align-items:center;justify-content:flex-end;width:auto;height:44px;min-height:0;margin:0;padding:0;border:0;background:transparent;font-family:'Josefin Sans',sans-serif;font-style:normal;font-variation-settings:"slnt" 0}
+:root body:is(.policy-page,:has(#faq-root)) .site-nav::before{content:"";position:fixed;z-index:-1;inset:0 0 auto;height:var(--site-header-clearance);background:#090710;pointer-events:none}
+:root body:is(.policy-page,:has(#faq-root)) .site-brand{z-index:41}
+:root body.policy-page>header{z-index:41}
 @media(max-width:600px){:root{--site-brand-left:20px;--site-brand-top:21px;--site-brand-width:118px;--site-nav-top:7px;--site-nav-right:12px}}
 body[data-menu-open]{overflow:hidden}
 .menu-toggle{position:relative;z-index:3;display:grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}

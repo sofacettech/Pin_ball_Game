@@ -71,7 +71,7 @@ function App(){
    if(pendingEdits.current&&normalisePhone(pendingEdits.current.phoneNumber,pendingEdits.current.country)===challenge.phoneNumber){setDraft(pendingEdits.current);setNotice('Your phone is verified. Save your changes to update your profile.')}pendingEdits.current=null;
   });
  }
- function signOut(){void run(async signal=>{const result=await request('/api/account/signout',{},signal);if(result.success!==true)throw Error('Sign-out could not be confirmed.');location.replace(accountNavigationHref('/launch'))})}
+ function signOut(){void run(async signal=>{const result=await request('/api/account/signout',{},signal);if(result.success!==true)throw Error('Sign-out could not be confirmed.');location.replace(accountNavigationHref('/notify'))})}
  async function save(event){
   event.preventDefault();
   if(!validPlayerName(draft.name)){setError('Please enter your name.');document.getElementById('member-name').focus();return}

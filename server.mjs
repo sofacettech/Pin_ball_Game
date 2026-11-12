@@ -141,14 +141,6 @@ const server=createServer(async(request,response)=>{
   }
   const canonical=canonicalHref(path+requested.search);
   if(canonical!==path+requested.search){response.writeHead(308,{Location:canonical,'Cache-Control':'no-cache'});response.end();return;}
-  if(path==='/launch'){
-   const session=await membershipApi('/api/account/session',{},playerId(request));
-   if(session.signedIn){
-    const destination=requested.searchParams.get('nav')==='game'?'/notify?nav=game':'/notify';
-    response.writeHead(302,{Location:destination,'Cache-Control':'no-store'});
-    response.end();return;
-   }
-  }
   const relative=routeDocuments[path]||(/^\/video\/?$/.test(path)?'index.html':path.slice(1)),parts=relative.split('/');
   if(parts.some(p=>!p||p.startsWith('.')||p.includes('\\'))||!(publicFiles.has(relative)||publicDirectories.has(parts[0])&&parts.length>1))fail(404,'File not found.');
   const target=resolve(root,relative);
@@ -162,7 +154,7 @@ const server=createServer(async(request,response)=>{
   const compressed=extname(target)==='.glb'&&!request.headers.range&&acceptsBrotli?await stat(target+'.br').catch(()=>null):null;
   if(compressed?.isFile()&&compressed.mtimeMs>=info.mtimeMs&&compressed.size<info.size){delivery=target+'.br';deliverySize=compressed.size;}
   let start=0,end=deliverySize-1,status=relative==='404.html'?404:200;
-  const headers={'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes','Cache-Control':path==='/launch'?'no-store':publicDirectories.has(parts[0])&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'};
+  const headers={'Content-Type':types[extname(target)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes','Cache-Control':publicDirectories.has(parts[0])&&extname(target)!=='.json'?'public, max-age=3600':'no-cache'};
   if(extname(target)==='.glb')headers.Vary='Accept-Encoding';
   if(delivery!==target){headers['Content-Encoding']='br';headers['X-Uncompressed-Length']=info.size;}
   if(request.headers.range){

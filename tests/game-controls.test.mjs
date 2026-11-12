@@ -112,3 +112,16 @@ test('the score screen leaderboard action is available to guests without opening
  let shown=0,joined=0;const context={membership:{isMember:()=>false,open:()=>joined++},clearKeys(){},closeNavigation(){},closeSettings(){},rewards:{dialog:{close(){}}},leaderboard:{dialog:{open:false},show:()=>shown++},loaded:true,physics:{active:false,state:'finished'},resumeAfterLeaderboard:false,setGamePaused(){}};
  vm.runInNewContext(code+';showLeaderboard()',context);assert.equal(shown,1);assert.equal(joined,0);
 });
+
+test('completed mobile games open the score page before the leaderboard',async()=>{
+ const source=readFileSync(new URL('../game-source/src/main.ts',import.meta.url),'utf8');
+ const code=source.slice(source.indexOf('function showResult(){'),source.indexOf('const launchButton='));
+ for(const mobile of [true,false]){
+  let scorePage=0,board=0;
+  const context={leaderboard:{ready:Promise.resolve(),dialog:{open:false},gameId:'run-1'},loaded:true,starting:false,physics:{state:'finished',score:1700},registration:{open:false},membership:{isMember:()=>true},mobileView:()=>mobile,rewards:{show:()=>scorePage++},showLeaderboard:()=>board++};
+  vm.runInNewContext(code+';showResult()',context);
+  await Promise.resolve();
+  assert.equal(scorePage,mobile?1:0);
+  assert.equal(board,mobile?0:1);
+ }
+});

@@ -3,15 +3,16 @@ export const routeDocuments=Object.freeze({
  '/':'entrance-3d.html','/game':'play.html','/leaderboard':'play.html','/reward':'play.html',
  '/claim':'membership.html','/sign-in':'account.html','/join':'membership.html','/verify':'membership.html',
  '/coins-saved':'membership.html',
- '/launch':'launching-soon.html','/notify':'notify.html','/confirmation':'first-cuts-confirmation.html',
+ '/notify':'notify.html','/confirmation':'first-cuts-confirmation.html',
  '/about':'about.html','/how-coins-work':'faq.html','/contact':'faq.html',
  '/terms':'terms.html','/privacy':'privacy.html','/404':'404.html',
 });
 const legacy={
  '/exit':'/notify',
+ '/launch':'/notify',
  '/index.html':'/','/entrance-3d.html':'/','/entrance-3d':'/',
  '/play.html':'/game','/membership.html':'/join','/account.html':'/my-coins',
- '/launching-soon.html':'/launch','/notify.html':'/notify','/first-cuts-confirmation.html':'/confirmation',
+ '/launching-soon.html':'/notify','/notify.html':'/notify','/first-cuts-confirmation.html':'/confirmation',
  '/about.html':'/about','/faq.html':'/how-coins-work','/terms.html':'/terms','/privacy.html':'/privacy','/404.html':'/404',
 };
 export function canonicalHref(href){

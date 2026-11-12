@@ -177,6 +177,9 @@ dialog .share-copy { white-space: pre-wrap; overflow-wrap: anywhere; user-select
  .claim-art { width: min(48vw,450px); right: -4vw; opacity: .22; }
 }
 @media (max-width: 700px) {
+ body:has(#membership-root .design-claim) { position: relative; }
+ body:has(#membership-root .design-claim) > #site-sound { position: absolute; bottom: 12px; }
+ #membership-root .react-page-root.design-claim .page.text-layer { padding-bottom: max(80px, env(safe-area-inset-bottom, 0px)); }
  .membership-page, .membership-page.is-details { padding-inline: max(20px,7%,env(safe-area-inset-left)) max(20px,7%,env(safe-area-inset-right)); }
  .membership-layout, .membership-page.is-details .membership-layout { width: 100%; }
  .claim-content { --text-delay: 1s; }
