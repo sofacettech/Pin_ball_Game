@@ -42,7 +42,7 @@ try{await withRewardsSite(async({origin})=>{
    const response=await route.fetch();await gate;await route.fulfill({response});
   });
   try{
-   await page.goto(origin+'/play.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.sofacetGameLoader);await page.locator('#sf-cookie-notice [data-reject]').click();
+   await page.goto(origin+'/play.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.sofacetGameLoader);if(await page.locator('#sf-cookie-notice [data-reject]').isVisible())await page.locator('#sf-cookie-notice [data-reject]').click();
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#game-loader-cards-root img')].map(image=>image.decode()));});
    await settled(page,'Diamond');assert.equal(await page.locator('#game-loading-screen canvas,.loading-statement').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const box=await page.locator('.game-loader-cards .deck').boundingBox();assert.ok(box.y>0&&box.y+box.height<= (width===320?568:900));
@@ -56,9 +56,8 @@ try{await withRewardsSite(async({origin})=>{
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Pinball');await capture(page,width+'-pinball');
     const {x,y}=await point(page);await page.touchscreen.tap(x,y);
+    await checkTravel(page,false);await settled(page,'Jewellery');
     assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false,'A mobile tap does not flip the card');
-    assert.equal(await page.locator('.game-loader-cards .stage').getAttribute('aria-busy'),'false','A mobile tap does not advance the deck');
-    await swipe(page,-90);await checkTravel(page,false);await settled(page,'Jewellery');
    }else{
     const {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Pinball');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-pinball');
     await page.locator('.game-loader-cards .deck').press('ArrowLeft');await checkTravel(page,false);await settled(page,'Jewellery');
@@ -72,12 +71,12 @@ try{await withRewardsSite(async({origin})=>{
    if(engine==='chromium')release();else await page.evaluate(()=>window.sofacetGameLoader.ready());
    await page.waitForFunction(()=>document.querySelector('#stage').dataset.ready==='true'&&document.querySelector('#game-loading-screen').hidden&&!document.body.hasAttribute('data-game-loading'),null,{timeout:90000});
    if(engine==='chromium')await page.locator('#table-intro').waitFor();
-   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'Three-card progression, mobile swipe only, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
+   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'Three-card progression, mobile swipe and tap, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
   }finally{release();await context.close()}
  }
  const page=await browser.newPage({viewport:{width:375,height:844},reducedMotion:'reduce'});
  await page.route('**/assets/sofacet-game-*.js',r=>r.fulfill({body:'',contentType:'text/javascript'}));
- await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.sofacetGameLoader);await page.locator('#sf-cookie-notice [data-reject]').click();await page.evaluate(()=>window.sofacetGameLoader.fail(Error('WASM fixture failure'),'fixture'));
+ await page.goto(origin+'/play.html');await page.waitForFunction(()=>!!window.sofacetGameLoader);if(await page.locator('#sf-cookie-notice [data-reject]').isVisible())await page.locator('#sf-cookie-notice [data-reject]').click();await page.evaluate(()=>window.sofacetGameLoader.fail(Error('WASM fixture failure'),'fixture'));
  await page.getByRole('button',{name:'Try again',exact:true}).waitFor();await capture(page,'retry');await page.getByRole('button',{name:'Try again',exact:true}).click();await page.waitForFunction(()=>!!window.sofacetGameLoader&&document.querySelector('.game-loading-error').hidden);
  await page.locator('#game-loader-cards-root').waitFor();
  await page.locator('.game-loader-cards .deck').press('ArrowRight');await settled(page,'Pinball');

@@ -73,7 +73,8 @@ body:has(dialog[open]){overflow:hidden}
 #about-root .closing-logo .closing-mark{width:30%}
 #about-root .closing-question{font-family:Fancy,Georgia,serif !important;font-size:clamp(30px,3vw,42px);font-weight:400 !important;line-height:1.2;letter-spacing:-.02em !important}
 #about-root .text-link{position:relative;display:inline-flex;gap:14px;align-items:center;margin-top:48px;font:400 12px/1.4 BrilliantRegular,Arial,sans-serif !important;letter-spacing:.07em !important;text-transform:uppercase !important;min-height:44px;padding-bottom:4px}
-#about-root .text-link::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:currentColor;transform:scaleX(.3);transform-origin:right;transition:transform 400ms var(--ease)}
+#about-root .text-link::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform 400ms var(--ease)}
+#about-root .text-link:focus-visible::after{transform:scaleX(1)}
 #about-root .closing-actions{display:flex;justify-content:center;gap:16px;margin-top:40px;flex-wrap:wrap}
 #about-root .action-button{position:relative;display:inline-flex;justify-content:center;align-items:center;width:260px;max-width:100%;height:51px;min-height:51px;max-height:51px;padding:0 42px;border:1px solid var(--line);background:transparent;color:var(--ink);font:600 11px/1.4 BrilliantMedium,Arial,sans-serif !important;letter-spacing:.7px !important;text-transform:uppercase !important;transition:background-color 250ms,color 250ms,border-color 250ms}
 #about-root .action-button>svg{position:absolute;right:18px;top:50%;transform:translateY(-50%);transition:transform 250ms var(--ease)}
@@ -99,7 +100,7 @@ body:has(dialog[open]){overflow:hidden}
 #about-root .image-error{display:flex;align-items:center;justify-content:center;min-height:150px;padding:24px;font-size:14px;color:var(--muted);text-align:center}
 @media(hover:hover) and (pointer:fine){
   #about-root .image-button:hover img,#about-root .image-button:focus-visible img{transform:scale(1.025)}
-  #about-root .text-link:hover::after,#about-root .text-link:focus-visible::after{transform:scaleX(1);transform-origin:left}
+  #about-root .text-link:hover::after{transform:scaleX(1)}
   #about-root .text-link:hover,#about-root .masthead a:hover{color:var(--purple)}
   #about-root .icon-button:hover{background:#222025}
   #about-root .action-button:hover>svg{transform:translate(3px,-50%)}
