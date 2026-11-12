@@ -49,6 +49,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .story-text-line{display:block;white-space:nowrap}
 .story-approach p,.story-finale p{white-space:nowrap}
 .story-approach{right:5.5%;bottom:17%;width:min(32vw,530px)}
+.story-approach h2,.story-approach p{text-shadow:0 2px 3px #080315b8,0 0 12px #08031580}
 .story-butterflies{right:9.5%;top:33.5%;width:28%;text-align:right}
 .story-choice{left:13.7%;top:33.5%;width:25%}
 .story-choice p{margin-top:.7em;color:#c6df44;text-transform:uppercase;line-height:1.04;letter-spacing:0}
