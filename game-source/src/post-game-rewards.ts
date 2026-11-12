@@ -10,12 +10,12 @@ export function captureGameResult(finalScore:number,gameId?:string):CompletedGam
  const whole=Math.trunc(finalScore),points=Number.isSafeInteger(whole)?Math.max(0,whole):0;
  return Object.freeze({points,rewardValue:points/10,completedAt:Date.now(),status:'completed',gameId});
 }
-export function connectPostGameRewards(onRetry:()=>void,onLeaderboard:()=>void=()=>{}){
+export function connectPostGameRewards(onRegister:(result:CompletedGameResult,opener:HTMLElement)=>void,onRetry:()=>void,onLeaderboard:()=>void=()=>{}){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
  const dialog=$<HTMLDialogElement>('post-game-rewards'),header=document.querySelector<HTMLElement>('body > header')!,toggle=$('nav-toggle');
  const views={result:$('rewards-result'),leave:$('rewards-leave')};
  let result:CompletedGameResult|null=null,discarded=false,current:keyof typeof views='result',destination='/';
- const scorePage=mountScorePage($('score-page-root'),{onNotify:notify,onReplay:replay,onLeaderboard});
+ const scorePage=mountScorePage($('score-page-root'),{onSave:register,onReplay:replay,onLeaderboard});
  const showNoticeArtwork=mountRewardNoticeArtwork($('reward-notice-art'));
  const unsaved=()=>!!result&&result.points>=10&&!discarded;
  const placeFloor=()=>{if(current==='result')return;const actions=views[current].querySelector<HTMLElement>('.rewards-actions')!;if(dialog.open)dialog.style.setProperty('--rewards-floor-top',actions.offsetTop+actions.offsetHeight+12+'px')};
@@ -32,6 +32,7 @@ export function connectPostGameRewards(onRetry:()=>void,onLeaderboard:()=>void=(
   dialog.scrollTop=0;
   resize.observe(views[view]);placeFloor();heading.focus({preventScroll:true});
  }
+ function register(){if(!result){dialog.close();return}const opener=$(current==='leave'?'rewards-keep':'rewards-register');dialog.close();onRegister(result,opener)}
  function notify(){discard();window.top!.location.assign('/notify')}
  function discard(){discarded=true;result=null;writeScreenData('reward',null)}
  function replay(){discarded=true;dialog.close();onRetry()}

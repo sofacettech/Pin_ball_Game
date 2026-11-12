@@ -20,7 +20,7 @@ test('React score screen uses the game result and preserves exact rupee conversi
  const html=renderToStaticMarkup(React.createElement(ScorePage,{result:result(3205)}));
  assert.match(html,/id="rewards-points">3,205<\//);assert.match(html.replace(/<[^>]+>/g,''),/₹320\.5 off/);
  assert.match(html,/SO\/ COINS/);assert.doesNotMatch(html,/>pts</);
- assert.match(html,/id="rewards-register"/);assert.match(html,/id="rewards-leaderboard"/);
+ assert.match(html,/id="rewards-register"/);assert.match(html.replace(/<[^>]+>/g,''),/SAVE MY SO\/ COINS/);assert.match(html,/id="rewards-leaderboard"/);
  assert.doesNotMatch(html,/<nav|<header|4,800|₹480|href="#"/);
 });
 test('zero and low scores retain replay without offering to save unredeemable points',()=>{
@@ -31,10 +31,10 @@ test('zero and low scores retain replay without offering to save unredeemable po
  }
 });
 test('the three React actions invoke their existing callbacks once',()=>{
- const calls=[],props={result:result(4800),onNotify:()=>calls.push('notify'),onReplay:()=>calls.push('replay'),onLeaderboard:()=>calls.push('leaderboard')};
+ const calls=[],props={result:result(4800),onSave:()=>calls.push('save'),onReplay:()=>calls.push('replay'),onLeaderboard:()=>calls.push('leaderboard')};
  const nodes=elements(ScorePage(props));
  for(const id of ['rewards-register','rewards-retry','rewards-leaderboard'])nodes.find(node=>node.props.id===id).props.onClick();
- assert.deepEqual(calls,['notify','replay','leaderboard']);
+ assert.deepEqual(calls,['save','replay','leaderboard']);
 });
 
 async function controllerFixture(){
@@ -53,14 +53,14 @@ async function controllerFixture(){
   mountRewardNoticeArtwork:()=>()=>{},mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
  };
  vm.runInNewContext(compiled.code,context);
- const replays=[],boards=[];
- const controller=context.module.exports.connectPostGameRewards(()=>replays.push(true),()=>boards.push(true));
- return {controller,node,captured,replays,boards,events,element:context.Element};
+ const registrations=[],replays=[],boards=[];
+ const controller=context.module.exports.connectPostGameRewards((value,opener)=>registrations.push({value,opener}),()=>replays.push(true),()=>boards.push(true));
+ return {controller,node,captured,registrations,replays,boards,events,element:context.Element};
 }
-test('score controller opens Notify and clears the unsaved result',async()=>{
+test('score controller opens registration with the completed result',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(3205,'real-game-id');
  assert.equal(fixture.captured.result.points,3205);assert.equal(fixture.captured.result.rewardValue,320.5);assert.equal(Object.isFrozen(fixture.captured.result),true);
- fixture.captured.actions.onNotify();assert.equal(fixture.captured.destination,'/notify');assert.equal(fixture.captured.rewardStorage,null);assert.equal(fixture.controller.result,null);
+ fixture.captured.actions.onSave();assert.equal(fixture.registrations.length,1);assert.equal(fixture.registrations[0].value.gameId,'real-game-id');assert.equal(fixture.registrations[0].opener.id,'rewards-register');assert.equal(fixture.controller.result.points,3205);assert.equal(fixture.captured.destination,undefined);
 });
 test('the score heading receives focus after its styles finish loading without interrupting an open menu',async()=>{
  const f=await controllerFixture();f.controller.show(200);f.captured.focused=null;
