@@ -124,11 +124,12 @@ a.wordmark.site-brand{pointer-events:auto}
 #enter:focus-visible{outline:2px solid #e8fd00;outline-offset:5px}
 #progress{position:absolute;bottom:env(safe-area-inset-bottom,0px);left:0;height:2px;width:100%;background:#e8fd00;transform:scaleX(0);transform-origin:left;pointer-events:none}
 #game-page{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;z-index:11;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .22s ease-out}
-main>#story-copy,main>.wordmark,main>.site-navigation,main>#progress{transition:opacity .12s ease-out}
+main>#story-copy,main>.wordmark,.site-navigation,main>#progress{transition:opacity .12s ease-out}
 body[data-game="visible"]{overflow:hidden}
 body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events:auto}
-body[data-game="visible"] :is(#story-copy,main>.wordmark,main>.site-navigation,#progress){opacity:0}
-@media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,main>.site-navigation,main>#progress{transition:none}}
+body[data-game="visible"] :is(#story-copy,main>.wordmark,.site-navigation,#progress){opacity:0}
+body[data-game="visible"] .site-navigation{visibility:hidden;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,.site-navigation,main>#progress{transition:none}}
 #scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
 @media(any-pointer:coarse){#scroll-space{height:calc(100vh + var(--travel));height:calc(100lvh + var(--travel))}}
 noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}

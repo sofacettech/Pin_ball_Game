@@ -4,6 +4,8 @@ if (standalone) standalone.hidden = false;
 const toggle = document.querySelector('[data-menu-toggle]');
 const panel = document.querySelector('[data-menu-panel]');
 const gamePage = !!document.querySelector('#game-header');
+// Keep the landing menu above the card loader's stacking layer.
+if (!gamePage && toggle.closest('main')) document.body.append(toggle.closest('.site-navigation'));
 const gameAccount = new URLSearchParams(location.search).get('nav') === 'game';
 const gameInfoFrame = 'sofacet-game-info';
 const inGameInfo = window.parent !== window && window.name === gameInfoFrame;
