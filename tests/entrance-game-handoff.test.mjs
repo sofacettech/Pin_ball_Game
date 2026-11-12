@@ -2,31 +2,59 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {createVideoJourneyClock,VIDEO_FRAME_INTERVAL_MS} from '../entrance-source/journey-motion.mjs';
+import {advanceJourneyFrame,FINAL_FRAME_HOLD_MS} from '../entrance-source/journey-motion.mjs';
 
 // Run the production handoff with a fake clock and child document. Network
 // speed must not turn a still-loading iframe into a permanent error screen.
 const source=readFileSync(new URL('../entrance-source/entrance.mjs',import.meta.url),'utf8');
 const handoff=source.slice(source.indexOf('function gameVisibility('),source.indexOf("$('scroll-hint').addEventListener"));
 
-function videoEnding(){
- const clock=createVideoJourneyClock(2162),handoffs=[];clock.advance(0,2164);
+function videoView({initial=2162,target=2164,coarse=true,reducedMotion=false}={}){
+ const handoffs=[],requests=[];
  let wanted;
- const context={raf:0,ready:true,gameRequested:false,phase:'idle',frame:2162,target:2164,lastFrame:2164,lastTime:0,
-  presentedFrame:2162,finalFramePresentedAt:Infinity,videoEntrance:true,videoPlayback:clock,VIDEO_FRAME_INTERVAL_MS,
+ const context={raf:0,ready:true,gameRequested:false,phase:'idle',frame:initial,target,lastFrame:2164,lastTime:0,
+  presentedFrame:initial,finalFramePresentedAt:Infinity,videoEntrance:true,advanceJourneyFrame,FINAL_FRAME_HOLD_MS,
+  coarse:{matches:coarse},reduced:{matches:reducedMotion},
   document:{hidden:false},performance:{now:()=>0},
-  journey:{settled:true,profileFrames:[],renderAt(frame){if(wanted!==frame){wanted=frame;this.settled=false}}},
+  journey:{settled:true,profileFrames:[],renderAt(frame){requests.push(frame);if(wanted!==frame){wanted=frame;this.settled=false}}},
   requestTick(){},enterGame:options=>handoffs.push(options),
  };
  vm.runInNewContext(source.slice(source.indexOf('function tick(now){'),source.indexOf('function presentJourneyFrame(')),context);
- return {context,handoffs,decoded(now){context.journey.settled=true;context.presentedFrame=2164;context.finalFramePresentedAt=now}};
+ return {context,handoffs,requests,decoded(now){context.journey.settled=true;context.presentedFrame=context.frame;context.finalFramePresentedAt=now}};
 }
 
+test('touch scrolling immediately requests the latest opening pose while an older decode is pending',()=>{
+ const view=videoView({initial:334,target:1100});view.context.journey.settled=false;
+ view.context.tick(16.67);
+ assert.equal(view.context.frame,1100,'the start must follow the scroll instead of advancing two video frames');
+ assert.equal(view.requests.at(-1),1100);
+ view.context.target=500;view.context.tick(33.34);
+ assert.equal(view.requests.at(-1),500,'reverse input replaces the pending destination immediately');
+ assert.equal(view.handoffs.length,0);
+});
+
+test('desktop opening scrolling follows the existing easing without a normal-playback speed limit',()=>{
+ const view=videoView({initial:334,target:1100,coarse:false});view.context.journey.settled=false;
+ view.context.tick(16.67);
+ assert.ok(view.context.frame>400&&view.context.frame<1100,'retain easing, without the two-frame step');
+ for(let now=33.34;now<1000;now+=16.67)view.context.tick(now);
+ assert.equal(view.context.frame,1100,'a large opening scroll settles in less than a second');
+ assert.equal(view.handoffs.length,0);
+});
+
+test('reduced-motion video scrolling directly selects its destination',()=>{
+ const view=videoView({initial:334,target:1840,coarse:false,reducedMotion:true});
+ view.context.tick(16.67);assert.equal(view.requests.at(-1),1840);
+ assert.equal(view.handoffs.length,0);
+});
+
 test('automatic cards wait for the final decoded frame and its screen presentation',()=>{
- const view=videoEnding();
+ const view=videoView();
  view.context.tick(40);view.context.tick(90);
  assert.equal(view.context.frame,2164,'the requested playhead has reached the end');
  assert.equal(view.handoffs.length,0,'an unfinished decode must not open the cards');
+ view.context.journey.settled=true;view.context.tick(95);
+ assert.equal(view.handoffs.length,0,'the final source picture must actually be presented');
  view.decoded(100);view.context.tick(110);
  assert.equal(view.handoffs.length,0,'the last image needs a screen presentation interval');
  view.context.tick(134);
@@ -34,10 +62,10 @@ test('automatic cards wait for the final decoded frame and its screen presentati
 });
 
 test('scrolling back from the final frame cancels automatic entry into the cards',()=>{
- const view=videoEnding();view.context.tick(40);view.decoded(50);
+ const view=videoView();view.context.tick(40);view.decoded(50);
  view.context.tick(72);view.context.target=2100;view.context.tick(86);
- assert.equal(view.context.frame,2164,'the next video step is still waiting for its presentation interval');
- assert.equal(view.handoffs.length,0,'a reversal must cancel entry even before the next picture changes');
+ assert.equal(view.context.frame,2100,'reverse input must leave the final frame immediately');
+ assert.equal(view.handoffs.length,0,'a reversal must cancel entry before the final-frame hold ends');
  view.context.tick(110);assert.ok(view.context.frame<2164);
 });
 

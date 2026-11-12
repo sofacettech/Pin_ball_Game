@@ -60,16 +60,9 @@ Three concurrent downloads fill a bounded 256 MiB compressed-media store before 
 
 Where WebCodecs is available, indexed prediction groups decode from this preloaded store. Unsupported or failed explicit decoding uses native video with buffered section blobs. Completed sharp frames are painted while newer scroll targets are queued; obsolete frames outside the path toward the latest target are discarded on reversal. The responsive crop and copy follow the painted frame, and game handoff still waits for the exact final frame.
 
-The renderer prepares the next two-frame clock step during the current picture's presentation interval. It holds one reference to the decoder's existing bounded cache, paints only when that step is selected, and discards stale lookahead after a reversal. Compatible decoders reuse forward prediction state; implementations that buffer output retain the flush fallback. Viewport measurements are cached until resize, keeping repeated layout reads out of the video paint path. Full 4K detail and the three-picture retention limit are preserved.
+Video scrolling follows the current scroll destination: touch input directly selects its pose, and desktop input uses the existing short easing and doorway pacing. It has no whole-journey playback-speed cap and does not wait for an old decode before accepting a new scroll destination. The renderer coalesces outstanding seeks and keeps the crop and copy aligned with the picture actually painted.
 
-On 12 November 2026, one macOS runner at a 393 × 852 CSS viewport and DPR 1 measured these p95 painted-frame update gaps against `50778b3`, using the same preloaded 4K media:
-
-| Browser | Forward, before → after | Reverse, before → after |
-| --- | --- | --- |
-| Chromium | 75.5 → 57.6 ms | 74.7 → 55.5 ms |
-| WebKit | 84 → 55 ms | 82 → 56 ms |
-
-All slow/fast forward and reverse passes kept 3840 × 2160 source detail, matched the painted frame to its responsive crop, and had no wrong-direction frames or browser errors. Average update rates remained about 21–24 FPS; the improvement is reduced stutter, not a 60 FPS result. These desktop browser measurements do not certify physical-phone performance.
+Only the final handoff waits: the requested and displayed frames must both reach the last authored picture, decoding must be settled, and that final picture must remain visible for 33 ms before the cards appear. Reversing away from the end cancels the handoff immediately. Compatible decoders reuse forward prediction state; implementations that buffer output retain the flush fallback. Cached viewport measurements, full 4K detail and the three-picture retention limit are preserved.
 
 The video renderer uses external manifests when configured and falls back to the bundled clips if CDN configuration or playback fails. `/api/media-config` exposes only public media URLs; Cloudflare credentials stay outside the app. `MEDIA_CDN_BASE_URL` still configures the separate legacy `/video` path. Clearing both `ENTRANCE_VIDEO_4K_MANIFEST_URL` and `ENTRANCE_VIDEO_MANIFEST_URL` restores bundled 1080p delivery. Option 1 remains available through `/?entrance=1`. Larger media still costs visitors bandwidth, and keyframe spacing still affects seek latency; CDN hosting does not guarantee smoothness on physical phones.
 
