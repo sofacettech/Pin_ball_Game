@@ -161,10 +161,10 @@ test('the deck waits for artwork while the table prepares in parallel',async()=>
  }
 });
 
-test('mobile taps do nothing, while visible cards auto-advance and arrow keys reset the timer',()=>{
+test('mobile taps and swipes each advance one card',()=>{
  const cardMotion=readFileSync(new URL('../loader-source/card-motion.js',import.meta.url),'utf8').replace('export function','function');
  const node=()=>Object.assign(new EventTarget(),{dataset:{},style:{},classList:{toggle(){}},setAttribute(name,value){this[name]=value}});
- const deck=node(),stage=node(),status=node(),document=Object.assign(new EventTarget(),{hidden:false});
+ const deck=Object.assign(node(),{setPointerCapture(){},blur(){}}),stage=node(),status=node(),document=Object.assign(new EventTarget(),{hidden:false});
  const cards=Array.from({length:3},()=>Object.assign(node(),{querySelector:()=>node()}));
  const root=Object.assign(node(),{
   querySelectorAll:()=>cards,
@@ -183,12 +183,12 @@ test('mobile taps do nothing, while visible cards auto-advance and arrow keys re
  const front=()=>cards.findIndex(card=>card.dataset.slot===0);
  advance(45000);assert.equal(front(),0,'No timer while the deck is hidden');
  context.motion.setActive(true);
- deck.dispatchEvent(new Event('click'));assert.equal(front(),0,'A mobile tap does not advance the card');assert.match(deck['aria-label'],/Front view/);
- advance(7999);assert.equal(front(),0);
- advance(1);assert.equal(front(),1);
+ deck.dispatchEvent(new Event('click'));assert.equal(front(),1,'A mobile tap advances the card');assert.match(deck['aria-label'],/Front view/);
  advance(3000);assert.equal(front(),1);
- const swipe=new Event('keydown');Object.assign(swipe,{key:'ArrowLeft'});deck.dispatchEvent(swipe);
- assert.equal(front(),2);
+ deck.dispatchEvent(Object.assign(new Event('pointerdown'),{isPrimary:true,button:0,pointerId:1,clientX:100,clientY:100}));
+ deck.dispatchEvent(Object.assign(new Event('pointerup'),{pointerId:1,clientX:10,clientY:100}));
+ assert.equal(front(),2,'A swipe advances the card');
+ deck.dispatchEvent(new Event('click'));assert.equal(front(),2,'The click after a swipe cannot skip another card');
  advance(7000);assert.equal(completed,0);
  context.motion.setActive(false);
  advance(30000);assert.equal(completed,0,'A hidden tab does not consume the remaining second');

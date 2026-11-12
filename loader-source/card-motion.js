@@ -11,7 +11,7 @@ export function connectCardMotion(root, onComplete) {
   const DURATION = 1600, INTERVAL = 8000;
   const backStates = cards.map(() => false);
   let current = 0, busy = false, paused = false, timer, startedAt, remaining = INTERVAL;
-  let pointerStart, swiped = false, pointerType = 'mouse';
+  let pointerStart, swiped = false;
   const rank = (index, front = current) => (index - front + cards.length) % cards.length;
 
   function stopTimer() {
@@ -137,7 +137,6 @@ export function connectCardMotion(root, onComplete) {
   listen(deck, 'pointerdown', event => {
     if (!event.isPrimary || event.button !== 0 || busy || completed) return;
     stopTimer();
-    pointerType = event.pointerType;
     pointerStart = {x: event.clientX, y: event.clientY, id: event.pointerId}; swiped = false;
     deck.setPointerCapture(event.pointerId);
   });
@@ -155,8 +154,6 @@ export function connectCardMotion(root, onComplete) {
   listen(deck, 'click', () => {
     if (swiped) {swiped = false; return;}
     if (disposed || busy) return;
-    // WebKit can label a synthesized touch click as mouse; trust pointerdown.
-    if (pointerType !== 'mouse' || innerWidth < 600) return;
     exchange();
   });
   listen(deck, 'keydown', event => {
