@@ -8,7 +8,7 @@ import initialize from '../../collective-source/scenes/rewards.js';
 import {Arrow,Replay} from '../../collective-source/icons.jsx';
 import './reward-integration.css';
 
-export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
+export function ScorePage({result,onNotify,onReplay,onLeaderboard}) {
  const low=result.points<10;
  return <PageShell scene="rewards" initialize={initialize} title="SO/ FACET — Pinball">
   <RewardMesh/><RewardArtwork/>
@@ -23,7 +23,7 @@ export function ScorePage({result,onSave,onReplay,onLeaderboard}) {
    <hr className="rule"/>
    {!low&&<p className="notice" id="rewards-expiry">Unsaved SO/ COINS disappear when you leave this page.</p>}
    <div className="buttons">
-    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onSave}><span>SAVE MY SO/ COINS</span><Arrow/></button>}
+    {!low&&<button className="btn" id="rewards-register" type="button" onClick={onNotify}><span>Notify me</span><Arrow/></button>}
     <button className="btn" id="rewards-retry" type="button" onClick={onReplay}>PLAY AGAIN <Replay/></button>
    </div>
    <button className="leaderboard" id="rewards-leaderboard" type="button" onClick={onLeaderboard}>See full leaderboard →</button>

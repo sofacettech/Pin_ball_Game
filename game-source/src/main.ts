@@ -75,8 +75,8 @@ howToPlay.onclick=()=>{const expanded=howToPlay.getAttribute('aria-expanded')!==
 const registration=$<HTMLDialogElement>('registration-dialog');
 let resumeAfterMembership=false,resumeAfterLeaderboard=false;
 let membership:ReturnType<typeof connectMembership>|undefined;
-const rewards=connectPostGameRewards((result,opener)=>membership?.open(opener,result),()=>$('start').click(),showLeaderboard);
-const leaderboard=connectLeaderboard(()=>{const resume=resumeAfterLeaderboard&&loaded&&physics.active&&physics.state!=='finished';resumeAfterLeaderboard=false;if(resume)setGamePaused(false);else if(loaded&&physics.state==='finished'&&membership?.isMember()===false)rewards.show();else $('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;scorecard.update(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),(verify,pending)=>membership?.open(undefined,pending,verify));
+const rewards=connectPostGameRewards(()=>$('start').click(),showLeaderboard);
+const leaderboard=connectLeaderboard(()=>{const resume=resumeAfterLeaderboard&&loaded&&physics.active&&physics.state!=='finished';resumeAfterLeaderboard=false;if(resume)setGamePaused(false);else if(loaded&&physics.state==='finished'&&membership?.isMember()===false)rewards.show();else $('start').focus()},()=>$('start').click(),(score,best)=>{if(loaded&&physics.state==='finished'){physics.score=score;highScore=best;sync()}},best=>{highScore=best;scorecard.update(loaded?physics.score:0,best);if(loaded)sync()},player=>membership?.updatePlayer(player),pending=>membership?.open(undefined,pending,true));
 membership=connectMembership({
  beforeOpen(){resumeAfterMembership=loaded&&physics.active&&!physics.paused&&physics.state!=='finished';clearKeys();if(resumeAfterMembership){holdCharge=physics.state==='charging';physics.setPaused(true);accumulator=0}rewards.dialog.close();closeSettings()},
  afterClose(completed,returnToScore){
@@ -92,7 +92,6 @@ membership=connectMembership({
  onReplay:()=>$('start').click(),
  onLeaderboard:showLeaderboard,
  onDiscard:()=>rewards.discard(),
- pendingResult:()=>rewards.result,
 });
 function showLeaderboard(){
  clearKeys();closeNavigation();closeSettings();rewards.dialog.close();
@@ -287,14 +286,13 @@ async function restoreScreenRoute(){
  await Promise.all([leaderboard.ready,gameReady]);
  if(!loaded||window.top!.history.state?.sofacetInfo||window.top!.history.state?.sofacetJoin)return;
  const route=window.top!.location.pathname;
- if(!['/game','/leaderboard','/reward','/exit'].includes(route))return;
+ if(!['/game','/leaderboard','/reward'].includes(route))return;
  if(route==='/leaderboard'){showLeaderboard();return;}
  if(leaderboard.dialog.open){leaderboard.dialog.close();if(resumeAfterLeaderboard&&physics.active&&physics.state!=='finished')setGamePaused(false);resumeAfterLeaderboard=false;}
  if(route==='/reward'){
   const result=rewards.result??pendingResult(readScreenData('reward'));
   if(result)rewards.show(result.points,result.gameId);else setScreenRoute('/game');
- }else if(route==='/exit')rewards.showExit();
- else rewards.dialog.close();
+ }else rewards.dialog.close();
 }
 window.top!.addEventListener('popstate',restoreScreenRoute);
 window.addEventListener('pagehide',event=>{if(!event.persisted)window.top!.removeEventListener('popstate',restoreScreenRoute)});

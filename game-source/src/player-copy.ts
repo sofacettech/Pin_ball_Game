@@ -6,8 +6,7 @@ export function resultHeadline(points:number,previousBest:number|null=null){
  if(previousBest!==null&&previousBest>=0)return points>previousBest?'New best. Your SO/ COINS just went up.':`Your best is still ${formatPoints(previousBest)} SO/ COINS (${rewardMoney(previousBest)}). Beat it to earn more.`;
  return points<10?'Not much to keep yet.':'Here’s what’s yours.';
 }
-export const leaveCopy=(points:number)=>({title:`Leaving ${rewardMoney(points)} on the table?`,support:`Your ${formatPoints(points)} SO/ COINS disappear when you leave. Saving takes 20 seconds.`});
-export const exitCopy={label:'LAUNCHING IN DECEMBER',title:"Your move, whenever you're ready.",support:"Your SO/ COINS weren't saved this time. Come back and play again before we launch in December.",signoff:"SO/ FACET. So/ what's yours?"};
+export const leaveCopy=(points:number)=>({title:`Leaving ${rewardMoney(points)} on the table?`,support:`Your ${formatPoints(points)} SO/ COINS disappear when you leave.`});
 export const capitaliseName=(value:string)=>value.replace(/^\s*\p{L}/u, first=>first.toLocaleUpperCase());
 export function splitPlayerName(value:string){
  const parts=value.trim().replace(/\s+/g,' ').split(' '),last=parts.length>1?parts.pop()!:'';

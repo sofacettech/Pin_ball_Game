@@ -8,7 +8,7 @@ const gameAccount = new URLSearchParams(location.search).get('nav') === 'game';
 const gameInfoFrame = 'sofacet-game-info';
 const inGameInfo = window.parent !== window && window.name === gameInfoFrame;
 const inGame = gamePage || gameAccount || inGameInfo;
-const infoPaths = new Set(['/my-coins','/sign-in','/join','/claim','/verify','/coins-saved','/about','/how-coins-work','/contact','/terms','/privacy','/launch','/confirmation','/notify']);
+const infoPaths = new Set(['/my-coins','/sign-in','/join','/verify','/coins-saved','/about','/how-coins-work','/contact','/terms','/privacy','/launch','/confirmation','/notify']);
 const publicHref = href => {const url=new URL(href,location.href);url.searchParams.delete('nav');url.searchParams.delete('loader');return url.pathname+url.search+url.hash;};
 const contextual = href => {
   if (!inGame || !href.startsWith('/')) return href;

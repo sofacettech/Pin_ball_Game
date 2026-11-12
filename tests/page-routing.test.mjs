@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {withRewardsSite} from './helpers/rewards-fixture.mjs';
+import {withRewardsSite,member,registration} from './helpers/rewards-fixture.mjs';
 import {routeDocuments,canonicalHref,setScreenRoute} from '../site-routes.js';
 
-test('all twenty public URLs serve the existing documents, including direct refresh and HEAD',async()=>{
+test('public URLs serve the existing documents, including direct refresh and HEAD',async()=>{
  await withRewardsSite(async({origin})=>{
   for(const [route,document] of Object.entries(routeDocuments))for(const method of ['GET','HEAD']){
    const response=await fetch(origin+route,{method,redirect:'manual'});
@@ -11,11 +11,32 @@ test('all twenty public URLs serve the existing documents, including direct refr
    assert.equal(response.headers.get('location'),null,route);
    if(method==='GET')assert.match(await response.text(),/<html/i,document);
   }
-  for(const [old,current] of [['/play.html','/game'],['/account.html?view=signin','/sign-in'],['/membership.html?from=score','/claim'],['/membership.html?from=collective','/join'],['/faq.html','/how-coins-work'],['/terms/','/terms']]){
+  for(const [old,current] of [['/play.html','/game'],['/account.html?view=signin','/sign-in'],['/membership.html?from=score','/notify'],['/claim','/notify'],['/exit','/notify'],['/membership.html?from=collective','/join'],['/faq.html','/how-coins-work'],['/terms/','/terms']]){
    const response=await fetch(origin+old,{redirect:'manual'});assert.equal(response.status,308,old);assert.equal(response.headers.get('location'),current);
   }
   assert.equal((await fetch(origin+'/site-routes.js')).status,200);
  });
+});
+test('Launching opens Notify only for an active sign-in and keeps game navigation context',async()=>{
+ await withRewardsSite(async({origin,request})=>{
+  const launch=(path,method='GET')=>fetch(origin+path,{method,headers:{Cookie:'sofacet_pinball_player='+member},redirect:'manual'});
+  const guest=await launch('/launch');
+  assert.equal(guest.status,200);
+  assert.equal(guest.headers.get('cache-control'),'no-store');
+  assert.match(await guest.text(),/id="launch-root"/);
+  const sent=await request('/api/account/otp/request',{phoneNumber:registration.phoneNumber});
+  assert.equal(sent.status,200);
+  const verified=await request('/api/account/otp/verify',{phoneNumber:registration.phoneNumber,challengeId:sent.data.challengeId,otp:'012345'});
+  assert.equal(verified.status,200);
+  for(const [path,destination] of [['/launch','/notify'],['/launch?nav=game','/notify?nav=game']])for(const method of ['GET','HEAD']){
+   const response=await launch(path,method);
+   assert.equal(response.status,302);
+   assert.equal(response.headers.get('location'),destination);
+   assert.equal(response.headers.get('cache-control'),'no-store');
+  }
+  assert.equal((await request('/api/account/signout',{})).status,200);
+  assert.equal((await launch('/launch')).status,200);
+ },{returningMember:true});
 });
 test('legacy fragments map to distinct screens and game history updates the outer address',t=>{
  assert.equal(canonicalHref('/play.html#leaderboard'),'/leaderboard');

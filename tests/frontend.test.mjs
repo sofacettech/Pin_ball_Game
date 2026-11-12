@@ -11,7 +11,7 @@ test('result and leave copy preserves exact scores without rounding money upward
  assert.equal(resultHeadline(0),'Not much to keep yet.');assert.equal(resultHeadline(9),'Not much to keep yet.');assert.equal(resultHeadline(10),'Here’s what’s yours.');
  assert.equal(resultHeadline(5000,4500),'New best. Your SO/ COINS just went up.');assert.equal(resultHeadline(1,0),'New best. Your SO/ COINS just went up.');
  assert.equal(resultHeadline(3000,4500),'Your best is still 4,500 SO/ COINS (₹450). Beat it to earn more.');assert.equal(resultHeadline(4500,4500),resultHeadline(3000,4500));
- assert.deepEqual(leaveCopy(3200),{title:'Leaving ₹320 on the table?',support:'Your 3,200 SO/ COINS disappear when you leave. Saving takes 20 seconds.'});
+ assert.deepEqual(leaveCopy(3200),{title:'Leaving ₹320 on the table?',support:'Your 3,200 SO/ COINS disappear when you leave.'});
 });
 test('international phone fields normalize real numbering plans and reject invalid input',()=>{
  for(const [value,country,expected] of [['98765 43210','IN','+919876543210'],['020 7946 0018','GB','+442079460018'],['(202) 555-0123','US','+12025550123'],['+61 412 345 678','IN','+61412345678'],['+33 6 12 34 56 78','','+33612345678']])assert.equal(normalisePhone(value,country),expected);

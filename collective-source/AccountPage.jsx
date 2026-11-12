@@ -44,7 +44,11 @@ export default function AccountPage({pageTitle='SO/ FACET — My SO/ COINS',poin
   const policyLink = (label,url) => <a href={url || (label==='Privacy Policy'?'/privacy':'/terms')} target="_blank" rel="noopener">{label}</a>;
   return <PageShell scene="account" initialize={initialize} title={pageTitle}>
     <AccountMesh />
-    <main className="shell"><div className="container">
+    <main className={pointsContext ? 'shell points-shell' : 'shell'}>
+      {pointsContext&&<a className="points-exit" href={accountNavigationHref('/notify')} aria-label="Exit to Notify">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="m5 5 14 14M19 5 5 19" /></svg>
+      </a>}
+      <div className="container">
       {pointsContext&&<p className="points-label">MY SO/ COINS</p>}
       <h1 className="welcome-heading">WELCOME</h1>
       <nav aria-label="Account access" className="tabs" role="tablist">

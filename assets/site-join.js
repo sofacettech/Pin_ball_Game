@@ -26,11 +26,15 @@
       const session = await response.json();
       if (controller.signal.aborted) return;
       root.toggleAttribute('data-signed-out', session.signedIn === false);
+      root.toggleAttribute('data-signed-in', session.signedIn === true);
       if (session.signedIn && Number.isFinite(session.expiresIn)) {
         expires = setTimeout(updateJoinVisibility, session.expiresIn);
       }
     } catch {
-      if (!controller.signal.aborted) root.removeAttribute('data-signed-out');
+      if (!controller.signal.aborted) {
+        root.removeAttribute('data-signed-out');
+        root.removeAttribute('data-signed-in');
+      }
     }
   }
 

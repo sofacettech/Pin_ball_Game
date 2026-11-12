@@ -91,6 +91,15 @@ body[data-menu-open] .claim-navigation .auth-flow-close{visibility:hidden}
 }
 
 :is(#account-root,#membership-root) .design-account .points-label{font-size:12px;line-height:1.5;letter-spacing:.14em;margin:0 0 12px}
+:is(#account-root,#membership-root) .design-account .points-shell{display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+:is(#account-root,#membership-root) .design-account .points-shell>.container,
+:is(#account-root,#membership-root) .design-account .points-exit{grid-area:1/1}
+:is(#account-root,#membership-root) .design-account .points-exit{
+  position:relative;z-index:3;align-self:start;justify-self:end;
+  display:grid;place-items:center;width:44px;height:44px;
+  margin:-13px clamp(0px,calc((100vw - 900px) * .12),80px) 0 0;color:#f3f0eb
+}
+:is(#account-root,#membership-root) .design-account .points-exit:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 :is(#account-root,#membership-root) .design-account .points-play{display:inline-flex;align-items:center;min-height:44px;margin:0 0 12px;color:#eee6f4;font-size:14px;line-height:1.5;text-underline-offset:4px}
 :is(#account-root,#membership-root) .design-account .points-notes{margin-top:20px;color:#d0c5d7;font-size:13px;line-height:1.5}
 :is(#account-root,#membership-root) .design-account .points-notes p{margin:0 0 6px;font-size:13px}

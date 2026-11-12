@@ -2,29 +2,33 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {withRewardsSite,member,other} from '../tests/helpers/rewards-fixture.mjs';
+import {withRewardsSite,member,other,registration} from '../tests/helpers/rewards-fixture.mjs';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const browser=await chromium.launch({channel:'chrome',args:['--enable-unsafe-swiftshader']});
 const output=process.env.SOFACET_SCREENSHOT_DIR,report=[];
 if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){await page.evaluate(()=>document.fonts.ready);if(output)await page.screenshot({path:resolve(output,name+'.png'),fullPage:true})}
 async function settled(page){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.waitForFunction(()=>Math.abs(Number(document.querySelector('#orbit').dataset.position)-Number(document.querySelector('#orbit').dataset.target))<.01)}
-try{await withRewardsSite(async({origin,readStore})=>{
+try{await withRewardsSite(async({origin,readStore,request})=>{
+ const challenge=await request('/api/account/otp/request',{phoneNumber:registration.phoneNumber});
+ assert.equal(challenge.status,200);
+ const session=await request('/api/account/otp/verify',{phoneNumber:registration.phoneNumber,challengeId:challenge.data.challengeId,otp:'012345'});
+ assert.equal(session.status,200);
  for(const [width,height] of [[1440,801],[390,844],[320,568],[844,390]]){
   const context=await browser.newContext({viewport:{width,height},hasTouch:width<900,isMobile:width<900}),page=await context.newPage(),errors=[],posts=[];
   await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin}]);
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>{if(request.method()==='POST')posts.push(request.url())});
   try{
    await page.goto(origin+'/launch');
+   await page.waitForURL('**/notify');
    await page.getByRole('button',{name:'Notify me',exact:true}).waitFor();
-   await page.waitForFunction(()=>document.querySelector('.design-launch')?.dataset.sceneReady==='true');
-   if(width===1440||width===390){await page.waitForTimeout(6200);await capture(page,width+'-member-launch')}
-   await page.getByRole('button',{name:'Notify me',exact:true}).click();await page.waitForURL('**/notify');
+   await page.getByText('LAUNCHING SOON',{exact:true}).waitFor();
+   assert.equal(await page.getByRole('link',{name:'JOIN SO/ COLLECTIVE',exact:true}).isVisible(),false);
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#notify-root img')].map(img=>img.decode()))});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);
    const styles=await page.locator('#notify-root h1,.lead,.notify-button,#email').evaluateAll(nodes=>nodes.map(e=>({selector:e.id||e.className,family:getComputedStyle(e).fontFamily,weight:getComputedStyle(e).fontWeight,size:getComputedStyle(e).fontSize})));
-   assert.match(styles[0].family,/Josefin Sans/);assert.equal(styles[0].weight,'600');assert.match(styles[1].family,/Yeseva One/);assert.match(styles[3].family,/Sofacet Actions/);
+   assert.match(styles[0].family,/Josefin Sans/);assert.equal(styles[0].weight,'600');assert.match(styles[1].family,/Yeseva One/);assert.match(styles[3].family,/Brilliant Cut Pro/);
    assert.equal(await page.getByText('Preview only. No email is sent.',{exact:true}).count(),0);
    if(width===1440)assert.ok(await page.locator('.form-row').evaluate(form=>form.getBoundingClientRect().bottom<=innerHeight),'Desktop email field and button fit in the initial viewport');
    await capture(page,width+'-notify');
@@ -53,7 +57,14 @@ try{await withRewardsSite(async({origin,readStore})=>{
   }finally{await context.close()}
  }
  const guest=await browser.newContext({viewport:{width:390,height:844}});await guest.addCookies([{name:'sofacet_pinball_player',value:other,url:origin}]);
- try{const page=await guest.newPage();await page.goto(origin+'/launch');const notify=page.getByRole('button',{name:'Notify me',exact:true});await notify.waitFor();assert.equal(await notify.isEnabled(),true);await notify.click();await page.waitForURL('**/notify');report.push({guestNotify:true})}finally{await guest.close()}
+ try{
+  const page=await guest.newPage();
+  await page.goto(origin+'/notify');
+  const join=page.getByRole('link',{name:'JOIN SO/ COLLECTIVE',exact:true});
+  await join.waitFor();
+  assert.equal(await page.getByRole('button',{name:'Notify me',exact:true}).isVisible(),false);
+  await join.click();await page.waitForURL('**/join');report.push({guestJoin:true});
+ }finally{await guest.close()}
  assert.equal((await readStore()).firstCuts,undefined);
 }, {returningMember:true});}finally{await browser.close()}
 if(output)await writeFile(resolve(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));

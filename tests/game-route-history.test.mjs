@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {connectMembership} from '../game-source/src/membership.ts';
 
-test('Claim pushes its public URL, Back closes its frame, without a browser leave prompt',async t=>{
+test('Member re-verification pushes its sign-in URL, Back closes its frame, without a browser leave prompt',async t=>{
  const originals=new Map(['window','document','location'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
  t.after(()=>{for(const [key,descriptor] of originals){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key]}});
  const listeners=new Map(),nodes=new Map(),visits=[],closed=[];
@@ -17,10 +17,10 @@ test('Claim pushes its public URL, Back closes its frame, without a browser leav
  Object.defineProperty(globalThis,'window',{configurable:true,value:host});
  Object.defineProperty(globalThis,'document',{configurable:true,value:{getElementById:get,body:{classList:{add(){},remove(){}}}}});
  Object.defineProperty(globalThis,'location',{configurable:true,value:{origin:'http://fixture.local'}});
- const membership=connectMembership({beforeOpen(){},afterClose:(...args)=>closed.push(args),refreshPlayer:async()=>{},onReplay(){},onLeaderboard(){},onDiscard(){},pendingResult:()=>null});
+ const membership=connectMembership({beforeOpen(){},afterClose:(...args)=>closed.push(args),refreshPlayer:async()=>{},onReplay(){},onLeaderboard(){},onDiscard(){}});
  membership.updatePlayer({member:false,display_name:'Guest',best_score:null});
- await membership.open(undefined,{points:3205,rewardValue:320.5,completedAt:1,status:'completed'});
- assert.deepEqual(visits,['/claim','/claim?nav=game']);
+ await membership.open(undefined,{points:3205,rewardValue:320.5,completedAt:1,status:'completed'},true);
+ assert.deepEqual(visits,['/sign-in','/join?nav=game&verify=1']);
  assert.equal(listeners.has('beforeunload'),false);
  membership.close(true);
  assert.equal(get('registration-dialog').open,false);assert.deepEqual(visits.slice(-2),['frame removed','fresh frame attached']);assert.deepEqual(closed,[[false,true]]);

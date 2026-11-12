@@ -51,7 +51,7 @@ body[data-loading] #story-copy{visibility:hidden}
 .story-approach{right:5.5%;bottom:17%;width:min(32vw,530px)}
 .story-butterflies{right:9.5%;top:33.5%;width:28%;text-align:right}
 .story-choice{left:13.7%;top:33.5%;width:25%}
-.story-choice p{margin-top:.7em;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.04;letter-spacing:0}
+.story-choice p{margin-top:.7em;color:#c6df44;text-transform:uppercase;line-height:1.04;letter-spacing:0}
 .story-rules,.story-finale{left:6.5%;top:33%;width:min(33vw,550px)}
 .story-finale{left:auto;right:5.5%;top:43%;width:min(19vw,370px)}
 @media(max-width:1024px),(any-pointer:coarse){
@@ -60,15 +60,16 @@ body[data-loading] #story-copy{visibility:hidden}
   .story-line p{margin-top:14px;font-size:clamp(16px,2.2vw,21px);max-width:420px}
   .story-butterflies{left:auto;right:8.5%;width:75%;top:18%}
   .story-choice{left:13.7%;top:33.5%;width:75%}
-  .story-choice p{font-size:clamp(11px,1.4vw,15px);margin-top:.7em;line-height:1.04}
+  .story-choice p{margin-top:.7em;line-height:1.04}
 }
 @media(max-width:600px) and (orientation:portrait){
   .story-line{left:7%;width:86%;top:calc(14% + env(safe-area-inset-top,0px))}
   .story-line h1,.story-line h2{font-size:clamp(21px,5.2vw,29px);line-height:1.06}
   .story-line p{margin-top:12px;font-size:16px;line-height:1.35}
+  .story-opening p,.story-choice p{font-size:15px}
   .story-butterflies{left:auto;right:8.5%;top:18%;width:83%}
   .story-butterflies h2{font-size:clamp(19px,4.8vw,27px)}
-  .story-choice p{font-size:11px;margin-top:.7em;line-height:1.04}
+  .story-choice p{margin-top:.7em;line-height:1.04}
 }
 @media(max-height:500px) and (orientation:landscape){
   .story-line{left:6%;top:25%;width:35%}
@@ -84,15 +85,13 @@ body[data-loading] #story-copy{visibility:hidden}
 .opening-welcome,.opening-brand{position:absolute;display:block;left:var(--opening-left);right:auto;white-space:nowrap;line-height:1.08}
 .opening-welcome{top:var(--opening-top);width:var(--opening-wordmark-width);font-size:var(--opening-label-size)}
 .opening-brand{top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap));width:var(--opening-wordmark-width)}
-.story-opening p{position:absolute;left:var(--opening-left);right:auto;top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap)*2 + var(--opening-wordmark-width)*278/2048);width:var(--opening-wordmark-width);max-width:none;margin:0;color:#c6df44;text-transform:uppercase;font-size:clamp(11px,.92vw,20px);line-height:1.05;letter-spacing:0}
+.story-opening p{position:absolute;left:var(--opening-left);right:auto;top:calc(var(--opening-top) + var(--opening-label-size)*1.08 + var(--opening-line-gap)*2 + var(--opening-wordmark-width)*278/2048);width:var(--opening-wordmark-width);max-width:none;margin:0;color:#c6df44;text-transform:uppercase;line-height:1.05;letter-spacing:0}
 @media(min-width:1025px){.story-opening p .story-text-line{display:inline}}
 @media(max-width:1024px),(any-pointer:coarse){
   .story-opening{--opening-left:9%;--opening-top:19%;--opening-label-size:clamp(20px,3vw,28px);--opening-wordmark-width:clamp(200px,35vw,300px);--opening-line-gap:7px}
-  .story-opening p{font-size:clamp(11px,1.4vw,15px)}
 }
 @media(max-height:500px) and (orientation:landscape){
   .story-opening{--opening-left:14.15%;--opening-top:24%;--opening-label-size:clamp(16px,1.35vw,22px);--opening-wordmark-width:20.5vw;--opening-line-gap:4px}
-  .story-opening p{font-size:clamp(10px,.92vw,14px)}
 }
 @media(prefers-reduced-motion:reduce){#scroll-cue,.story-line,.story-line h1,.story-line h2,.story-line p{transition:none}}
 [hidden],#scene-frame [hidden]{display:none!important}
@@ -155,8 +154,7 @@ noscript{position:fixed;top:45%;left:10%;right:10%;text-align:center}
 #story-copy .opening-wordmark img{position:static;inset:auto;display:block;width:100%;height:auto}
 
 @media(max-width:600px){
- .story-opening p{font-size:14px;letter-spacing:.05em}
- .story-choice p{font-size:14px;letter-spacing:.05em}
+ .story-opening p,.story-choice p{letter-spacing:.05em}
  .info-page .back-link,#enter{font-size:14px}
  #status{font-size:13px}
 }

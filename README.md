@@ -30,7 +30,7 @@ npm start
 
 Open `http://127.0.0.1:8766/` for the default version 3 video entrance. `/entrance-3d` is an alias, `/game` opens the game, and `/video` opens the retained video comparison. Both entrance paths reuse the approved story copy, fonts, navigation and game loader. Production pages do not display developer inspection panels.
 
-Each screen now has its own public URL, defined in `site-routes.js`. This includes `/game`, `/leaderboard`, `/reward`, `/claim`, `/join`, `/sign-in`, `/verify`, `/coins-saved`, `/my-coins`, `/exit`, `/launch`, `/notify`, `/confirmation`, `/about`, `/how-coins-work`, `/contact`, `/terms`, `/privacy` and `/404`. Existing HTML addresses redirect to their public URLs. In-game pages keep the game in memory while updating the outer address and browser history. Reward and saved-confirmation refreshes reuse tab-only presentation context; OTP verification still requires a live challenge and all rewards remain server-verified.
+Each screen now has its own public URL, defined in `site-routes.js`. This includes `/game`, `/leaderboard`, `/reward`, `/join`, `/sign-in`, `/verify`, `/coins-saved`, `/my-coins`, `/launch`, `/notify`, `/confirmation`, `/about`, `/how-coins-work`, `/contact`, `/terms`, `/privacy` and `/404`. Existing HTML addresses redirect to their public URLs. The old `/claim` and `/exit` paths redirect to `/notify`. In-game pages keep the game in memory while updating the outer address and browser history. Reward and saved-confirmation refreshes reuse tab-only presentation context; OTP verification still requires a live challenge and all rewards remain server-verified.
 
 ### Entrance variants
 
