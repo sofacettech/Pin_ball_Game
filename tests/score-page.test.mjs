@@ -31,10 +31,10 @@ test('zero and low scores retain replay without offering to save unredeemable po
  }
 });
 test('the three React actions invoke their existing callbacks once',()=>{
- const calls=[],props={result:result(4800),onNotify:()=>calls.push('notify'),onReplay:()=>calls.push('replay'),onLeaderboard:()=>calls.push('leaderboard')};
+ const calls=[],props={result:result(4800),onSave:()=>calls.push('save'),onReplay:()=>calls.push('replay'),onLeaderboard:()=>calls.push('leaderboard')};
  const nodes=elements(ScorePage(props));
  for(const id of ['rewards-register','rewards-retry','rewards-leaderboard'])nodes.find(node=>node.props.id===id).props.onClick();
- assert.deepEqual(calls,['notify','replay','leaderboard']);
+ assert.deepEqual(calls,['save','replay','leaderboard']);
 });
 
 async function controllerFixture(){
@@ -53,14 +53,14 @@ async function controllerFixture(){
   mountRewardNoticeArtwork:()=>()=>{},mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
  };
  vm.runInNewContext(compiled.code,context);
- const replays=[],boards=[];
- const controller=context.module.exports.connectPostGameRewards(()=>replays.push(true),()=>boards.push(true));
- return {controller,node,captured,replays,boards,events,element:context.Element};
+ const registered=[],openers=[],replays=[],boards=[];
+ const controller=context.module.exports.connectPostGameRewards((value,opener)=>{registered.push(value);openers.push(opener.id)},()=>replays.push(true),()=>boards.push(true));
+ return {controller,node,captured,registered,openers,replays,boards,events,element:context.Element};
 }
-test('score controller opens Notify and clears the unsaved result',async()=>{
+test('score controller passes the immutable completed result and game ID into registration',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(3205,'real-game-id');
  assert.equal(fixture.captured.result.points,3205);assert.equal(fixture.captured.result.rewardValue,320.5);assert.equal(Object.isFrozen(fixture.captured.result),true);
- fixture.captured.actions.onNotify();assert.equal(fixture.captured.destination,'/notify');assert.equal(fixture.captured.rewardStorage,null);assert.equal(fixture.controller.result,null);
+ fixture.captured.actions.onSave();assert.equal(fixture.registered[0],fixture.captured.result);assert.equal(fixture.registered[0].gameId,'real-game-id');assert.equal(fixture.openers[0],'rewards-register');
 });
 test('the score heading receives focus after its styles finish loading without interrupting an open menu',async()=>{
  const f=await controllerFixture();f.controller.show(200);f.captured.focused=null;
@@ -68,13 +68,13 @@ test('the score heading receives focus after its styles finish loading without i
  f.node('nav-toggle').setAttribute('aria-expanded','true');f.captured.focused=null;
  f.controller.dialog['sofacet:page-readyListener']();assert.equal(f.captured.focused,null);
 });
-test('the leave warning returns to the reward or opens Notify',async()=>{
+test('the leave warning opens Claim or discards the reward and opens Notify',async()=>{
  const fixture=await controllerFixture();fixture.controller.show(4800,'game');
  const escape=()=>fixture.controller.dialog.oncancel({preventDefault(){}});
  fixture.captured.actions.onLeaderboard();assert.equal(fixture.boards.length,1);
  escape();assert.equal(fixture.controller.dialog.dataset.view,'leave');assert.equal(fixture.captured.scoreVisible,false);
  escape();assert.equal(fixture.controller.dialog.dataset.view,'result');assert.equal(fixture.captured.scoreVisible,true);
- escape();fixture.node('rewards-keep').click();assert.equal(fixture.controller.dialog.dataset.view,'result');
+ escape();fixture.node('rewards-keep').click();assert.equal(fixture.registered[0].points,4800);assert.equal(fixture.openers[0],'rewards-keep');
  fixture.controller.show();escape();fixture.node('rewards-leave-anyway').click();assert.equal(fixture.captured.destination,'/notify');assert.equal(fixture.captured.rewardStorage,null);
  fixture.controller.clear();fixture.controller.show(9);escape();assert.equal(fixture.captured.destination,'/');
 });
