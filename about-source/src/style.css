@@ -184,7 +184,7 @@ body:has(dialog[open]){overflow:hidden}
 
 /* Isolate the attachment typography from site-wide heading and button rules. */
 #about-root{font:400 18px/1.5 BrilliantRegular,Arial,sans-serif}
-#about-root h1,#about-root button{text-transform:none!important}
+#about-root h1{text-transform:none!important}
 #about-root .section-label{font-family:BrilliantRegular,Arial,sans-serif!important}
 @media(max-width:600px){#about-root .gallery-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
 .site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 'Josefin Sans',sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}

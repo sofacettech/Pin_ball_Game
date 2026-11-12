@@ -50,8 +50,9 @@ button:not(:where(.menu-toggle,#nav-toggle,[role=tab],.tile,.text-button,#how-to
     font-weight:600!important;
     font-size:max(13px,calc(var(--site-menu-size) - 9px))!important;
   }
-  :is(.menu-panel,#nav-panel) :is(.menu-item,.menu-small-links a) {text-transform:none!important}
+  :is(.menu-panel,#nav-panel) .menu-small-links a {text-transform:none!important}
 }
+:is(button,input[type="button"],input[type="submit"],a.play-now,a.skip-game,a.site-join-button,a.action,a.primary,a.secondary,a.btn,a.cta,a.action-button,a.join-button,.menu-item){text-transform:uppercase!important}
 :root:not([data-signed-out]) [data-join-for-guests],
 :root[data-hide-join-footer] .site-join-footer{display:none!important}
 .site-join-footer{position:relative;z-index:2;display:grid;justify-items:center;padding:32px 20px max(32px,env(safe-area-inset-bottom));color:#f2efe9;background:#050505}

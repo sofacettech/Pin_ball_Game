@@ -75,7 +75,6 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
 }
 :root body :is(.site-nav,.site-navigation) .play-now,
 :root body #game-header .skip-game{position:relative}
-:root body #game-header .skip-game{text-transform:none}
 :root body :is(.site-nav,.site-navigation) .play-now::before,
 :root body #game-header .skip-game::before,
 :root #journey-resume::before{
