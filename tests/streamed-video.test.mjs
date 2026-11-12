@@ -2,14 +2,14 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {createStreamedVideoSource} from '../entrance-source/streamed-video.mjs';
 const metadata={codec:'avc1.64002a',description:'0164002affe10000'};
 const segment={url:'https://media.example/movie.mp4',bytes:8,firstFrame:334,lastFrame:341,frameCount:8,frames:Array.from({length:8},(_,i)=>[i,1,i%4===0?1:0])};
-function codec({buffered=false,asyncOutput=false,dropOutput=false,bufferedFrames=0}={}){
- const images=[],chunks=[],pending=[];let flushes=0;
+function codec({buffered=false,coldBuffered=false,asyncOutput=false,dropOutput=false,bufferedFrames=0}={}){
+ const images=[],chunks=[],pending=[];let flushes=0,bufferOutput=buffered||coldBuffered;
  class Decoder{
   static async isConfigSupported(){return {supported:true}}
   constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured';this.needsKey=true}
   configure(config){this.config=config;this.state='configured'}
-  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);if(dropOutput){frame.close();return}if(buffered)pending.push(frame);else if(bufferedFrames){pending.push(frame);if(pending.length>bufferedFrames)this.callbacks.output(pending.shift())}else if(asyncOutput)queueMicrotask(()=>this.callbacks.output(frame));else this.callbacks.output(frame)}
-  async flush(){flushes++;this.needsKey=true;for(const frame of pending.splice(0))this.callbacks.output(frame)}
+  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);if(dropOutput){frame.close();return}if(bufferOutput)pending.push(frame);else if(bufferedFrames){pending.push(frame);if(pending.length>bufferedFrames)this.callbacks.output(pending.shift())}else if(asyncOutput)queueMicrotask(()=>this.callbacks.output(frame));else this.callbacks.output(frame)}
+  async flush(){flushes++;this.needsKey=true;for(const frame of pending.splice(0))this.callbacks.output(frame);if(coldBuffered)bufferOutput=false;}
   close(){this.state='closed'}
  }
  return {Decoder,Chunk:class{constructor(value){Object.assign(this,value)}},images,chunks,get flushes(){return flushes}};
@@ -170,10 +170,201 @@ test('decoders that buffer output switch to flush-based requests after one probe
  }finally{source.dispose()}
 });
 
+test('one cold buffered group recovers low-delay decoding at the next independent GOP with the same three-picture budget',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const part={...segment,bytes:60,lastFrame:393,frameCount:60,frames:Array.from({length:60},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({coldBuffered:true,asyncOutput:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
+ try{
+  const cold=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(fake.flushes,0);t.mock.timers.tick(100);assert.equal(Math.round((await cold).timestamp*60/1e6),0);
+  assert.equal(source.metrics.compatibilityFlushes,1);assert.equal(source.metrics.flushRequired,true);
+  for(let index=1;index<60;index++){
+   assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3,'recovery must not enlarge the hardware-picture cache');
+   if(index===11){assert.equal(source.metrics.lowDelayReprobes,0);assert.equal(source.metrics.flushRequired,true);}
+   if(index===12){assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.flushRequired,false);}
+  }
+  assert.equal(source.metrics.compatibilityFlushes,1,'a successful recovery never waits for another compatibility timer');
+  assert.equal(fake.chunks.length,78,'only the cold group repeats its prefix; subsequent GOP pictures decode once');
+  assert.equal(fake.flushes,8,'one cold group plus normal prediction-tail drains');
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('a truly buffered decoder retries only once, skipping mandatory tail and reverse drains',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const part={...segment,bytes:60,lastFrame:393,frameCount:60,frames:Array.from({length:60},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({buffered:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
+ try{
+  const first=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));t.mock.timers.tick(100);await first;
+  for(const index of [3,23,12])assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+  assert.equal(source.metrics.lowDelayReprobes,0,'reverse and group-tail requests cannot test immediate output');
+  let settled=false;const retry=source.frameAt(24).then(frame=>{settled=true;return frame});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.compatibilityFlushes,1);
+  t.mock.timers.tick(99);await Promise.resolve();assert.equal(settled,false);
+  t.mock.timers.tick(1);assert.equal(Math.round((await retry).timestamp*60/1e6),24);
+  for(const index of [27,36,39,48,51,59]){
+   assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+  }
+  assert.equal(source.metrics.compatibilityFlushes,2,'a genuinely buffered backend pays exactly one additional 100 ms 4K probe');
+  assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.flushRequired,true);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('low-delay recovery recognizes a new section even when both sections start at local GOP zero',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const first={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])};
+ const second={...first,url:first.url+'?second',firstFrame:346,lastFrame:357},fake=codec({coldBuffered:true,asyncOutput:true});
+ const source=await createStreamedVideoSource([first,second],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(12))});
+ try{
+  const cold=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));t.mock.timers.tick(100);await cold;
+  assert.equal(Math.round((await source.frameAt(12)).timestamp*60/1e6),12);
+  assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.flushRequired,false);assert.equal(source.metrics.compatibilityFlushes,1);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
 test('disposing rejects a frame already submitted to a silent decoder without waiting for its timeout',async()=>{
  const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({dropOutput:true});
  const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
  const pending=assert.rejects(source.frameAt(0),{name:'AbortError'});
  await new Promise(resolve=>setImmediate(resolve));assert.ok(fake.chunks.length>0);
  source.dispose();await pending;assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('opt-in decoder metrics separate cache hits, chunk submission and compatibility drains',async()=>{
+ const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({buffered:true});
+ let time=0;
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,clock:()=>++time,fetcher:async()=>new Response(new Uint8Array(12))});
+ try{
+  await source.frameAt(0);await source.frameAt(0);await source.frameAt(4);
+  const stats=source.metrics;
+  assert.equal(stats.requests,3);assert.equal(stats.cacheHits,1);
+  assert.equal(stats.flushes,2);assert.equal(stats.compatibilityFlushes,1);assert.equal(stats.flushRequired,true);
+  assert.equal(stats.compatibilityProbeDelayMs,100);
+  assert.equal(stats.chunks,fake.chunks.length);assert.equal(stats.decodeWait.samples,2);
+  assert.ok(stats.decodeWait.p95Ms>=0);assert.ok(stats.retainedFrames<=3);
+ }finally{source.dispose()}
+ const quiet=await createStreamedVideoSource([segment],metadata,{...codec(),fetcher:async()=>new Response(new Uint8Array(8))});
+ try{await quiet.frameAt(0);assert.equal(quiet.metrics,null)}finally{quiet.dispose()}
+});
+
+test('preempted background sections retain received bytes and can become visible without decoder downgrade',async()=>{
+ const next={...segment,url:segment.url+'?next',firstFrame:342,lastFrame:349},requests=[];
+ let rejected=false,rejectPrefetch;
+ const fetcher=async(url,options)=>{
+  requests.push({url,priority:options.priority,range:options.headers?.Range});
+  if(url===next.url&&options.priority==='low'&&!rejected){
+   rejected=true;return await new Promise((_resolve,reject)=>{rejectPrefetch=reject});
+  }
+  const range=options.headers?.Range;
+  if(!range)return new Response(new Uint8Array(8));
+  const [,from,to]=/bytes=(\d+)-(\d+)/.exec(range);
+  return new Response(new Uint8Array(Number(to)-Number(from)+1),{status:206,headers:{'Content-Range':`bytes ${from}-${to}/8`}});
+ };
+ const source=await createStreamedVideoSource([segment,next],metadata,{...codec(),fetcher});
+ try{
+  await source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(rejected,true);
+  const entering=source.frameAt(8);
+  rejectPrefetch(new DOMException('Video prefetch superseded','AbortError'));
+  const result=await entering;
+  assert.equal(Math.round(result.timestamp*60/1e6),8);
+  assert.ok(requests.some(request=>request.url===next.url&&request.priority==='high'));
+ }finally{source.dispose()}
+});
+
+test('cancelling a missing-byte seek preserves its prefix for retry and complete-section caching',{timeout:1500},async()=>{
+ const fake=codec(),requests=[],stored=new Map();let firstSignal;
+ const cache={match:async url=>stored.get(url)?.clone(),put:async(url,response)=>stored.set(url,response.clone()),
+  keys:async()=>[...stored.keys()].map(url=>({url})),delete:async key=>stored.delete(key.url??key)};
+ const fetcher=async(url,options)=>{
+  requests.push(options.headers?.Range);
+  if(requests.length===1){
+   firstSignal=options.signal;
+   return new Response(new ReadableStream({start(controller){
+    controller.enqueue(Uint8Array.of(11,12));
+    options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});
+   }}));
+  }
+  assert.equal(options.headers.Range,'bytes=2-7','reuse bytes received before the cancelled seek');
+  return new Response(Uint8Array.of(13,14,15,16,17,18),{status:206,headers:{'Content-Range':'bytes 2-7/8'}});
+ };
+ const source=await createStreamedVideoSource([segment],metadata,{...fake,fetcher,cacheStorage:{open:async()=>cache},diagnostics:true});
+ try{
+  const obsolete=assert.rejects(source.frameAt(0),{name:'AbortError'});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(fake.chunks.length,0);
+  assert.equal(source.cancelPending(),true);assert.equal(source.cancelPending(),false);
+  const retry=source.frameAt(0);await obsolete;
+  assert.equal(Math.round((await retry).timestamp*60/1e6),0);assert.equal(firstSignal.aborted,true);
+  assert.deepEqual(fake.chunks.slice(0,4).map(chunk=>chunk.data[0]),[11,12,13,14]);
+  await source.frameAt(7);await source.frameAt(0);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(requests,[undefined,'bytes=2-7']);
+  assert.deepEqual([...new Uint8Array(await stored.get(segment.url).arrayBuffer())],[11,12,13,14,15,16,17,18]);
+  assert.equal(source.metrics.networkWait.samples,2,'cancelled and successful waits retain their diagnostic samples');
+  assert.equal(source.cancelPending(),false);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('a replacement network wait survives the cancelled seek finally and can itself be superseded',{timeout:1500},async()=>{
+ const next={...segment,url:segment.url+'?next',firstFrame:342,lastFrame:349},fake=codec(),requests=[],signals=[];
+ const fetcher=async(url,options)=>{
+  requests.push({url,range:options.headers?.Range});signals.push(options.signal);
+  if(requests.length<=2)return new Response(new ReadableStream({start(controller){
+   controller.enqueue(Uint8Array.of(1,2));
+   options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});
+  }}));
+  assert.equal(url,next.url);assert.equal(options.headers.Range,'bytes=2-7');
+  return new Response(new Uint8Array(6),{status:206,headers:{'Content-Range':'bytes 2-7/8'}});
+ };
+ const source=await createStreamedVideoSource([segment,next],metadata,{...fake,fetcher});
+ try{
+  const old=assert.rejects(source.frameAt(0),{name:'AbortError'});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(source.cancelPending(),true);
+  const replacement=assert.rejects(source.frameAt(8),{name:'AbortError'});
+  await old;await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(source.cancelPending(),true,'old finally must not clear the newer network waiter');
+  const newest=source.frameAt(8);await replacement;
+  assert.equal(Math.round((await newest).timestamp*60/1e6),8);
+  assert.ok(signals.slice(0,2).every(signal=>signal.aborted));
+  assert.deepEqual(requests,[{url:segment.url,range:undefined},{url:next.url,range:undefined},{url:next.url,range:'bytes=2-7'}]);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('network cancellation is a no-op during an in-flight decoder flush and on decoded cache hits',{timeout:1500},async()=>{
+ const fake=codec(),flush=fake.Decoder.prototype.flush;let finishFlush;
+ fake.Decoder.prototype.flush=function(){return new Promise(resolve=>{finishFlush=()=>flush.call(this).then(resolve)})};
+ const source=await createStreamedVideoSource([segment],metadata,{...fake,fetcher:async()=>new Response(new Uint8Array(8))});
+ try{
+  const pending=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(fake.chunks.length,4);assert.equal(source.cancelPending(),false);
+  assert.ok(fake.images.every(frame=>!frame.closed),'network-only cancellation keeps the pending decoder output');
+  finishFlush();assert.equal(Math.round((await pending).timestamp*60/1e6),0);
+  assert.equal(source.cancelPending(),false);
+  assert.equal(Math.round((await source.frameAt(2)).timestamp*60/1e6),2);
+  assert.equal(fake.chunks.length,4);assert.equal(fake.flushes,1);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('disposing a cancelled-and-retried network wait aborts the replacement and leaves no cancellable waiter',{timeout:1500},async()=>{
+ const signals=[],fake=codec();let closes=0;const close=fake.Decoder.prototype.close;
+ fake.Decoder.prototype.close=function(){closes++;close.call(this)};
+ const fetcher=async(_url,{signal})=>{signals.push(signal);return new Response(new ReadableStream({start(controller){
+  signal.addEventListener('abort',()=>controller.error(signal.reason),{once:true});
+ }}))};
+ const source=await createStreamedVideoSource([segment],metadata,{...fake,fetcher});
+ const old=assert.rejects(source.frameAt(0),{name:'AbortError'});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(source.cancelPending(),true);
+ const retry=assert.rejects(source.frameAt(0),{name:'AbortError'});await old;
+ await new Promise(resolve=>setImmediate(resolve));source.dispose();
+ assert.equal(source.cancelPending(),false);await retry;source.dispose();
+ assert.equal(source.cancelPending(),false);assert.equal(closes,1);assert.equal(signals.length,2);
+ assert.ok(signals.every(signal=>signal.aborted));assert.equal(fake.chunks.length,0);
 });

@@ -6,15 +6,17 @@ import vm from 'node:vm';
 const source = await readFile(new URL('../sounds/site-audio.js', import.meta.url), 'utf8');
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
-function audioHarness({ muted = false } = {}) {
+function audioHarness({ muted = false, policy = false, faq = false } = {}) {
   let now = 0, timerId = 0;
-  const timers = new Map(), scheduled = [], cleared = [], contexts = [], gains = [], starts = [];
+  const timers = new Map(), scheduled = [], cleared = [], contexts = [], gains = [], starts = [], placements = [];
   const element = () => ({ dataset: {}, setAttribute() {}, addEventListener() {}, querySelectorAll: () => [] });
   const button = element();
+  const navigation = { prepend(node) { placements.push({ parent: 'navigation', node }); } };
   const document = {
-    hidden: false, body: { hasAttribute: () => true }, addEventListener() {},
+    hidden: false, body: { hasAttribute: () => true, classList: { contains: name => policy && name === 'policy-page' },
+      append(node) { placements.push({ parent: 'body', node }); } }, addEventListener() {},
     createElement: () => button,
-    querySelector: selector => selector === '#site-sound' ? button : { prepend() {} },
+    querySelector: selector => selector === '#site-sound' ? button : selector === '.site-navigation' ? navigation : selector === '#faq-root' && faq ? {} : null,
   };
   class Audio {
     addEventListener() {}
@@ -53,7 +55,7 @@ function audioHarness({ muted = false } = {}) {
   // Execute the shipped module, including its startup and event wiring, in an isolated browser fixture.
   vm.runInNewContext(source.replace(/^export /gm, '') + '\nglobalThis.sound = siteSound;', sandbox);
   return {
-    sound: sandbox.sound, document, contexts, gains, scheduled, cleared,
+    sound: sandbox.sound, document, contexts, gains, scheduled, cleared, placements,
     get impacts() { return starts.filter(item => !item.source.loop).length; },
     rollingTimers: () => [...timers.values()].filter(timer => timer.delay === 130).length,
     async activate() { sandbox.sound.setActive(true); await flush(); },
@@ -68,6 +70,15 @@ function audioHarness({ muted = false } = {}) {
     },
   };
 }
+
+test('the sound control mounts in navigation or directly on policy and FAQ pages', () => {
+  for (const [options, parent] of [[{}, 'navigation'], [{ policy: true }, 'body'], [{ faq: true }, 'body']]) {
+    const h = audioHarness(options);
+    assert.equal(h.placements.length, 1);
+    assert.equal(h.placements[0].parent, parent);
+    assert.equal(h.placements[0].node.id, 'site-sound');
+  }
+});
 
 test('silent scrolling does not create or cancel timers before audio activation', () => {
   const h = audioHarness();
