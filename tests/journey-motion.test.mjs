@@ -1,6 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advanceJourneyFrame} from '../entrance-source/journey-motion.mjs';
+import {advanceJourneyFrame,createVideoJourneyClock,VIDEO_FRAME_INTERVAL_MS} from '../entrance-source/journey-motion.mjs';
+
+test('a swipe to the end plays the whole video at its capped speed across refresh rates',()=>{
+ for(const hz of [30,60,120]){
+  const clock=createVideoJourneyClock(334);let frame=334,time=0,changes=0;
+  while(frame!==2164&&time<65000){
+   const next=clock.advance(time,2164);
+   assert.ok(next-frame>=0&&next-frame<=2,'no jump over a room, even on a fast swipe');
+   if(next!==frame)changes++;
+   frame=next;time+=1000/hz;
+  }
+  assert.equal(frame,2164);assert.equal(changes,915);
+  assert.ok(time>=30500&&time<31000,'the 60 Hz source keeps normal playback speed at 30 fps');
+ }
+});
+
+test('a slow decode or background pause cannot accumulate a skip over unfinished video',()=>{
+ const clock=createVideoJourneyClock(334);
+ clock.advance(0,2164);
+ assert.equal(clock.advance(40,2164),336);
+ assert.equal(clock.advance(5000,2164,{settled:false}),336);
+ assert.equal(clock.advance(10000,2164,{settled:false}),336);
+ assert.equal(clock.advance(10001,2164),338,'resume with only the next presentation step');
+ clock.suspend();
+ assert.equal(clock.advance(60000,2164),338);
+ assert.equal(clock.advance(60000+VIDEO_FRAME_INTERVAL_MS,2164),340);
+});
+
+test('video reversals follow the latest scroll destination without playing an old queue',()=>{
+ const clock=createVideoJourneyClock(1000);
+ clock.advance(0,2164);
+ assert.equal(clock.advance(40,2164),1002);
+ assert.equal(clock.advance(80,334),1000);
+ assert.equal(clock.advance(120,999.5),999.5,'stop at a nearby destination without overshooting');
+ assert.equal(clock.advance(10000,999.5),999.5);
+ assert.equal(clock.advance(10040,2164),1001.5);
+});
 
 test('large forward and reverse scrolls show intermediate doorway poses on touch and desktop',()=>{
  for(const coarse of [false,true])for(const [start,target] of [[1400,1700],[1700,1400],[1000,2000],[2000,1000]]){
