@@ -59,7 +59,7 @@ export default function NotifyPage(){
      <p className="sr-only" id="photo-status" role="status" aria-live="polite" aria-atomic="true">Photograph 1 of 6: yellow pear-shaped ring.</p>
     </section>
     <section className="notification" id="notify" aria-label="Collection launch notification">
-     <div className="notify-join" data-join-for-guests><a ref={join} className="notify-button" href={accountNavigationHref('/join')}>JOIN SO/ COLLECTIVE</a></div>
+     <div className="notify-join" data-join-for-guests><a ref={join} className="notify-button" href={accountNavigationHref('/join')}>JOIN THE SO/ COLLECTIVE</a></div>
      <form id="notify-form" data-notify-for-members noValidate onSubmit={submit} hidden={confirmed}>
       <div className="form-row"><div className="email-field">
        <label htmlFor="email">Email address</label><input ref={email} id="email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" required maxLength={254} aria-describedby="form-message" aria-invalid={error?true:undefined} onInput={()=>setError('')}/>

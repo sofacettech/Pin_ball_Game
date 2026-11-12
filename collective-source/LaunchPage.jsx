@@ -50,7 +50,7 @@ export default function LaunchPage({onJoin, onPlay}) {
         <button className="join-button" type="button" onClick={() => {
           const href=accountNavigationHref('/join');
           if(window.sofacetGameInfo)window.sofacetGameInfo.visit(href);else window.top.location.assign(href);
-        }}><span>JOIN SO/ COLLECTIVE</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
+        }}><span>JOIN THE SO/ COLLECTIVE</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M3 14h21m-8-8 8 8-8 8" /></svg></button>
         <button className="pinball-link" type="button" disabled={!onPlay} title={onPlay ? 'Play Pinball' : 'Pinball is unavailable'} onClick={onPlay}><span>Rather play first? Play Pinball</span><svg aria-hidden="true" viewBox="0 0 28 28"><path d="M2 14h23m-8-8 8 8-8 8" /></svg></button>
       </div>
     </div></section></main>

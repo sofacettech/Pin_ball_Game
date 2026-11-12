@@ -14,7 +14,7 @@ import {readScreenData,writeScreenData,setScreenRoute,registrationScreenRoute} f
 
 const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
-export const joinPageTitle='SO/ FACET — Join the SO/ COLLECTIVE';
+export const joinPageTitle='SO/ FACET — Join THE SO/ COLLECTIVE';
 export function SavedConfirmation({saved,status='',onReplay}) {
   const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
   const [shareStatus,setShareStatus]=useState('');
@@ -145,7 +145,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);
-    if(!pendingRef.current&&!profile.marketingConsent)throw Error("Please opt in to updates to join the SO/ COLLECTIVE.");
+    if(!pendingRef.current&&!profile.marketingConsent)throw Error("Please opt in to updates to join THE SO/ COLLECTIVE.");
     setDefaults(values);setDetails(profile);
     if(challenge?.kind==='signup'&&challenge.expiresAt>Date.now()&&details?.name===profile.name&&challenge.phoneNumber===profile.phoneNumber){setStep('claim');setStatus('Enter the code already sent to your mobile number.');return;}
     await sendCode('signup',profile.phoneNumber,{name:profile.name,consent:profile.termsAccepted},signal);setStep('claim');

@@ -170,7 +170,7 @@ function menuLink(label, href, className = 'menu-item') {
 const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/game');
 if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
 if (inGameInfo) play.setAttribute('data-game-return','');
-const collectiveLink = menuLink('SO/ COLLECTIVE', '/join');
+const collectiveLink = menuLink('THE SO/ COLLECTIVE', '/join');
 const about = menuLink('About ', '/about');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
 const small = document.createElement('div');small.className = 'menu-small-links';

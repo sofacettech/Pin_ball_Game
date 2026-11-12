@@ -23,7 +23,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
    await page.waitForURL('**/notify');
    await page.getByRole('button',{name:'Notify me',exact:true}).waitFor();
    await page.getByText('LAUNCHING SOON',{exact:true}).waitFor();
-   assert.equal(await page.getByRole('link',{name:'JOIN SO/ COLLECTIVE',exact:true}).isVisible(),false);
+   assert.equal(await page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).isVisible(),false);
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
    await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#notify-root img')].map(img=>img.decode()))});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false);
@@ -60,7 +60,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
  try{
   const page=await guest.newPage();
   await page.goto(origin+'/notify');
-  const join=page.getByRole('link',{name:'JOIN SO/ COLLECTIVE',exact:true});
+  const join=page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true});
   await join.waitFor();
   assert.equal(await page.getByRole('button',{name:'Notify me',exact:true}).isVisible(),false);
   await join.click();await page.waitForURL('**/join');report.push({guestJoin:true});

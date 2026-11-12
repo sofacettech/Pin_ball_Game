@@ -26,11 +26,11 @@ export const sections = [
       {
         "question": "When do you launch?",
         "answer": [
-          "Soon. Save your SO/ COINS or join the SO/ COLLECTIVE, and you'll be among the first to know."
+          "Soon. Save your SO/ COINS or join THE SO/ COLLECTIVE, and you'll be among the first to know."
         ]
       },
       {
-        "question": "What is SO/ COLLECTIVE?",
+        "question": "What is THE SO/ COLLECTIVE?",
         "answer": [
           "Our early list: everyone who saves their SO/ COINS or joins before we launch."
         ]

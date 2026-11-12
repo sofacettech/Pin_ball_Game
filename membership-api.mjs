@@ -228,7 +228,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         details.birthDate = data.dateOfBirth;
       }
       if (data.termsAccepted !== true || typeof data.marketingConsent !== 'boolean') fail(400, 'Please accept the terms and check your contact preferences.');
-      if (data.gameId === undefined && !data.marketingConsent) fail(400, 'Please opt in to updates to join the SO/ COLLECTIVE.');
+      if (data.gameId === undefined && !data.marketingConsent) fail(400, 'Please opt in to updates to join THE SO/ COLLECTIVE.');
       const policy = policies(); if (!policy.terms || !policy.privacy) fail(503, 'Membership terms are not available yet. Please try again later.');
       if (data.gameId !== undefined) {
         if (typeof data.gameId !== 'string' || !uuid.test(data.gameId)) fail(400, 'This game session is invalid.');

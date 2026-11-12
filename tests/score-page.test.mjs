@@ -21,6 +21,7 @@ test('React score screen uses the game result and preserves exact rupee conversi
  assert.match(html,/id="rewards-points">3,205<\//);assert.match(html.replace(/<[^>]+>/g,''),/₹320\.5 off/);
  assert.match(html,/SO\/ COINS/);assert.doesNotMatch(html,/>pts</);
  assert.match(html,/id="rewards-register"/);assert.match(html.replace(/<[^>]+>/g,''),/SAVE MY SO\/ COINS/);assert.match(html,/id="rewards-leaderboard"/);
+ assert.doesNotMatch(html,/site-join-button|JOIN THE SO\/ COLLECTIVE/);
  assert.doesNotMatch(html,/<nav|<header|4,800|₹480|href="#"/);
 });
 test('zero and low scores retain replay without offering to save unredeemable points',()=>{

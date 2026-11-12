@@ -42,7 +42,7 @@ function Footer({mobile, onTopic}) {
   }
   return <footer className="site-footer">
     <div className="footer-inner">
-      <section className="collective-invite" aria-label="Join the SO/ COLLECTIVE" data-join-for-guests>
+      <section className="collective-invite" aria-label="Join THE SO/ COLLECTIVE" data-join-for-guests>
         <a href="/join" target="_top">JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a>
       </section>
       <div className="footer-menu">
