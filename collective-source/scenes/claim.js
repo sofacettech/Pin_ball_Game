@@ -1,4 +1,5 @@
 import resolutionVariants from "./claim-resolutions.json";
+import {artworkAssetURL} from '../../shared/artwork-assets.js';
 export default function initialize(scope) {
 const {document,window,requestAnimationFrame,cancelAnimationFrame,setTimeout,clearTimeout,addEventListener,matchMedia,ResizeObserver,IntersectionObserver,MutationObserver} = scope;
 const mobileOpening=matchMedia('(max-width:900px)').matches;
@@ -375,12 +376,19 @@ function preparePage2Flights(art,reduced){
    for(const image of art.querySelectorAll('[data-resolution-id]')){
     const variants=assets[+image.dataset.resolutionId],required=Math.ceil(image.clientWidth*(devicePixelRatio||1)*1.25);
     const selected=variants.find(v=>v.width>=required)||variants.at(-1);
-    if(image.dataset.resolution!==String(selected.width)){image.src=selected.uri;image.dataset.resolution=String(selected.width);}
+    if(image.dataset.resolution!==String(selected.width)){
+      image.crossOrigin='anonymous';image.dataset.artworkLocalSrc=selected.uri;
+      image.src=image.dataset.artworkFallback?selected.uri:artworkAssetURL(selected.uri);
+      image.dataset.resolution=String(selected.width);
+    }
    }
   }
   chooseResolution();new ResizeObserver(chooseResolution).observe(art);addEventListener('resize',chooseResolution,{passive:true});
   const source=art.querySelector('.original-art-fallback'),matte=art.querySelector('.glass-face-matte');
-  const decode=image=>image.decode().catch(error=>{if(!image.complete||!image.naturalWidth)throw error;});
+  const decode=image=>image.decode().catch(error=>{
+   if(image.dataset.artworkFallback)return image.decode();
+   if(!image.complete||!image.naturalWidth)throw error;
+  });
   await Promise.all([decode(source),decode(matte),Promise.allSettled([...art.querySelectorAll('[data-resolution-id]')].map(decode))]);
   const hit=document.createElement('canvas');hit.width=1568;hit.height=1003;
   const hitContext=hit.getContext('2d',{willReadFrequently:true});hitContext.drawImage(matte,0,0);

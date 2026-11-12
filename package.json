@@ -16,6 +16,7 @@
     "build:faq": "node scripts/build-faq.mjs",
     "build:frames": "node scripts/build-frame-index.mjs",
     "upload:videos": "node scripts/upload-r2-videos.mjs",
+    "upload:artwork": "node scripts/upload-r2-artwork.mjs",
     "test:frames": "node --test tests/frame-cache.test.mjs",
     "build:about": "node scripts/build-about.mjs",
     "smoke": "node scripts/smoke-test.mjs",

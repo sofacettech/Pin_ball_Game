@@ -77,7 +77,12 @@ export function createAnimationScope(root) {
     ResizeObserver: observer(ResizeObserver),
     IntersectionObserver: observer(IntersectionObserver),
     MutationObserver: observer(MutationObserver),
+    onDispose(callback) {
+      if (disposed) callback();
+      else cleanup.push(callback);
+    },
     dispose() {
+      if (disposed) return;
       disposed = true;
       frames.forEach(id => window.cancelAnimationFrame(id));
       timers.forEach(id => window.clearTimeout(id));

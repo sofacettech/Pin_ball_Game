@@ -63,6 +63,9 @@ try{
  await page.waitForTimeout(400);
  assert.equal(await page.evaluate(()=>window.nativePlaybackTest.denied),blocked.test.denied,'A blocked journey must wait for input instead of retrying play in a loop');
  assert.equal(await page.locator('#game-page').getAttribute('src'),null,'Blocked confirmation must not load the game');
+ // Consent must not cover the real recovery gesture on a first visit.
+ const notice=page.locator('#sf-cookie-notice');
+ if(await notice.isVisible()){await notice.locator('[data-reject]').tap();await notice.waitFor({state:'hidden'})}
  await page.locator('#journey-resume').tap();
  await page.waitForFunction(()=>window.sofacetPreview.sequence.stats.nativePlaybackActivated,{},{timeout:10000});
  await page.locator('#journey-resume').waitFor({state:'hidden'});

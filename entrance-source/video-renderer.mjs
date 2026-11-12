@@ -17,7 +17,7 @@ export async function createJourneyRenderer({stage,onProgress=()=>{},onRender=()
   let buffer=createPreloadedVideo([clips.opening,...(clips.journey.segments||[clips.journey])],{onProgress});
   const size={width:manifest.width,height:manifest.height,fetcher:buffer.fetch,cacheStorage:null};
   let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder,size)||createSegmentedVideoSource(clips.journey.segments,size)):null;
-  let disposed=false,suspended=false,wanted=null,painted=null,pending=null,timeout=null,failure=null;
+  let disposed=false,suspended=false,wanted=null,painted=null,pending=null,prepared=null,targetIndex=null,timeout=null,failure=null;
   let displayed=null;
   let sourceWidth=manifest.width,sourceHeight=manifest.height;
   let openingPlaying=false,openingCallback=null,autoplayBlocked=false;
@@ -39,15 +39,30 @@ export async function createJourneyRenderer({stage,onProgress=()=>{},onRender=()
     onRender({frame:request.kind==='opening'?JOURNEY_START_FRAME:JOURNEY_START_FRAME+request.index,width:canvas.width,height:canvas.height});
     if(settled()){for(const waiter of waiters)waiter.resolve();waiters.clear();}
   }
+  function nextRequest(){
+    if(wanted?.kind!=='journey'||!segmented||targetIndex===null||targetIndex===wanted.index)return null;
+    return {kind:'journey',index:wanted.index+Math.sign(targetIndex-wanted.index)*Math.min(2,Math.abs(targetIndex-wanted.index))};
+  }
   function pump(){
-    if(disposed||suspended||failure||pending||!wanted||settled())return;
+    if(disposed||suspended||failure||pending||!wanted)return;
     if(wanted.kind==='opening'&&openingPlaying)return;
-    const request={...wanted};
+    if(!settled()&&prepared){
+      const ready=prepared;prepared=null;
+      if(equal(ready.request,wanted)){paint(wanted,ready.video);pump();return;}
+    }
+    // Decode one clock step during its presentation interval. The source owns
+    // this picture in its existing bounded cache; paint only after selection.
+    const speculative=settled(),request=speculative?nextRequest():{...wanted};
+    if(!request||(speculative&&equal(prepared?.request,request)))return;
+    prepared=null;
     if(request.kind==='journey'&&segmented){
       pending=request;
       segmented.frameAt(request.index).then(video=>{
         if(disposed||pending!==request)return;
-        pending=null;paint(request,video);pump();
+        pending=null;
+        if(!speculative||equal(request,wanted))paint(request,video);
+        else if(settled()&&equal(request,nextRequest()))prepared={request,video};
+        pump();
       }).catch(async()=>{
         if(disposed||pending!==request)return;
         if(segmented?.engine==='webcodecs'){
@@ -139,7 +154,10 @@ export async function createJourneyRenderer({stage,onProgress=()=>{},onRender=()
   }
   return {
     loadVariant,
-    renderAt(frame){stopOpening();select('journey',Math.max(0,Math.min(1830,Math.round(frame-JOURNEY_START_FRAME))));},
+    renderAt(frame,target){
+      stopOpening();targetIndex=Number.isFinite(target)?Math.max(0,Math.min(1830,Math.round(target-JOURNEY_START_FRAME))):null;
+      select('journey',Math.max(0,Math.min(1830,Math.round(frame-JOURNEY_START_FRAME))));
+    },
     renderAssemblyAt(frame){
       const index=Math.max(0,Math.min(239,Math.round(frame)-1)),video=videos.opening;
       // Frame 1 stays paused under the loader. Once the assembly clock starts,
@@ -154,7 +172,7 @@ export async function createJourneyRenderer({stage,onProgress=()=>{},onRender=()
     suspend(value=true){suspended=value;if(value){clearTimeout(timeout);if(!segmented)pending=null;videos.opening?.pause();}else{if(openingPlaying)playOpening();else{pump();}}},
     dispose(){
       if(disposed)return;stopOpening();disposed=true;clearTimeout(timeout);events.abort();
-      segmented?.dispose();segmented=null;
+      segmented?.dispose();segmented=null;prepared=null;
       buffer.dispose();
       for(const timer of loadingTimers)clearTimeout(timer);loadingTimers.clear();
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}

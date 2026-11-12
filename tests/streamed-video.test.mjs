@@ -2,14 +2,14 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {createStreamedVideoSource} from '../entrance-source/streamed-video.mjs';
 const metadata={codec:'avc1.64002a',description:'0164002affe10000'};
 const segment={url:'https://media.example/movie.mp4',bytes:8,firstFrame:334,lastFrame:341,frameCount:8,frames:Array.from({length:8},(_,i)=>[i,1,i%4===0?1:0])};
-function codec(){
- const images=[],chunks=[];let flushes=0;
+function codec({buffered=false,asyncOutput=false,dropOutput=false,bufferedFrames=0}={}){
+ const images=[],chunks=[],pending=[];let flushes=0;
  class Decoder{
   static async isConfigSupported(){return {supported:true}}
   constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured';this.needsKey=true}
   configure(config){this.config=config;this.state='configured'}
-  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);this.callbacks.output(frame)}
-  async flush(){flushes++;this.needsKey=true}
+  decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);if(dropOutput){frame.close();return}if(buffered)pending.push(frame);else if(bufferedFrames){pending.push(frame);if(pending.length>bufferedFrames)this.callbacks.output(pending.shift())}else if(asyncOutput)queueMicrotask(()=>this.callbacks.output(frame));else this.callbacks.output(frame)}
+  async flush(){flushes++;this.needsKey=true;for(const frame of pending.splice(0))this.callbacks.output(frame)}
   close(){this.state='closed'}
  }
  return {Decoder,Chunk:class{constructor(value){Object.assign(this,value)}},images,chunks,get flushes(){return flushes}};
@@ -125,4 +125,55 @@ test('4K decoding bounds retained pictures while preserving exact forward and re
   }
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('4K forward windows decode each prediction picture once and reverse misses restart from a keyframe',async()=>{
+ const part={...segment,bytes:24,lastFrame:357,frameCount:24,frames:Array.from({length:24},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({asyncOutput:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(24))});
+ try{
+  for(let index=0;index<12;index++){
+   assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+  }
+  assert.equal(fake.chunks.length,12,'appending forward windows must not decode the prediction prefix again');
+  assert.equal(fake.flushes,1,'only the end of the prediction group drains the decoder');
+  await source.frameAt(8);assert.equal(fake.chunks.at(-9).type,'key');assert.equal(fake.chunks.length,21);
+  await source.frameAt(7);await source.frameAt(6);assert.equal(fake.chunks.length,21,'reuse the reverse lookbehind window');
+  await source.frameAt(10);assert.equal(fake.chunks.length,33,'a forward reversal after draining starts from an independent keyframe');
+  await source.frameAt(12);assert.equal(fake.chunks.at(-3).type,'key');assert.equal(fake.chunks.length,36);
+  assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('two-picture hardware buffering retains incremental decoding and drains only the prediction tail',async()=>{
+ const part={...segment,bytes:24,lastFrame:357,frameCount:24,frames:Array.from({length:24},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({bufferedFrames:2});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(24))});
+ try{
+  for(let index=0;index<24;index++){
+   assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=5,'retain at most three output pictures plus two internal decoder pictures');
+  }
+  assert.equal(fake.chunks.length,24,'buffered output must not force repeated prediction-prefix decoding');
+  assert.equal(fake.flushes,2,'flush once per group rather than permanently selecting the compatibility path');
+  for(const index of [21,19,15,10,3,0])assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+test('decoders that buffer output switch to flush-based requests after one probe',async()=>{
+ const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({buffered:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
+ try{
+  for(const index of [0,4,11,2])assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
+  assert.equal(fake.flushes,4);assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+ }finally{source.dispose()}
+});
+
+test('disposing rejects a frame already submitted to a silent decoder without waiting for its timeout',async()=>{
+ const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({dropOutput:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
+ const pending=assert.rejects(source.frameAt(0),{name:'AbortError'});
+ await new Promise(resolve=>setImmediate(resolve));assert.ok(fake.chunks.length>0);
+ source.dispose();await pending;assert.ok(fake.images.every(frame=>frame.closed));
 });

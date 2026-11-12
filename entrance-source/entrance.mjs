@@ -3,7 +3,7 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=welcome-scroll-3';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
-import { advanceJourneyFrame, createVideoJourneyClock, VIDEO_FRAME_INTERVAL_MS } from './journey-motion.mjs';
+import { advanceJourneyFrame, FINAL_FRAME_HOLD_MS } from './journey-motion.mjs';
 import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-e407c7a78895';
@@ -18,13 +18,15 @@ const performanceMode=!videoEntrance&&parameters.get('quality')!=='reference';
 const showFPS=parameters.has('debug')||parameters.has('debug/1')||parameters.has('perf');
 const game=$('game-page'),main=$('entrance'),stage=$('scene-frame'),viewport=$('scene-viewport');
 const assembly=createAssemblyClock({reducedMotion:reduced.matches});
-const videoPlayback=createVideoJourneyClock(firstFrame);
 let journey,updateCopy,framing,ready=false,gameLoaded=false,gameRequested=false,gameVisible=false;
 let phase='loading',gameLoader,gameReadyObserver;
 let gameRecovering=false;
 let startupFailed=false;
 let frame=firstFrame,presentedFrame=firstFrame,target=firstFrame,raf=0,lastTime=0,placement,renderView;
 let finalFramePresentedAt=Infinity;
+// The viewport is fixed throughout scrolling. Measure on resize rather than
+// forcing layout after each video's crop/copy style update.
+let viewportSize=viewport.getBoundingClientRect();
 document.documentElement.style.setProperty('--travel',travel+'px');
 history.scrollRestoration='manual';
 const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered video':'Live 3D model',travel,firstFrame,
@@ -54,13 +56,16 @@ function placementAt(at,rect){
 }
 function placeStage(){
   if(!framing)return;
-  const rect=viewport.getBoundingClientRect();
+  const rect=viewportSize;
   // A decoded video frame and its responsive crop must move together. The
   // requested scroll frame can be several frames ahead while a seek completes.
   placement=placementAt(videoEntrance?presentedFrame:frame,rect);
   renderView={fullWidth:placement.width,fullHeight:placement.height,x:-placement.x,y:-placement.y,width:rect.width,height:rect.height};
-  stage.style.width=(performanceMode?rect.width:placement.width)+'px';stage.style.height=(performanceMode?rect.height:placement.height)+'px';
-  stage.style.transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
+  const width=(performanceMode?rect.width:placement.width)+'px',height=(performanceMode?rect.height:placement.height)+'px';
+  if(stage.style.width!==width)stage.style.width=width;
+  if(stage.style.height!==height)stage.style.height=height;
+  const transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
+  if(stage.style.transform!==transform)stage.style.transform=transform;
 }
 function startScene(){
   if(gameRequested||startupFailed)return;
@@ -153,7 +158,9 @@ function tick(now){
   }
   const tickStart=performance.now();
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
-  frame=videoEntrance?videoPlayback.advance(now,target,{settled:journey.settled}):advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
+  // Scroll chooses the destination while decoding catches up asynchronously.
+  // Only the final handoff below waits for a settled, visible picture.
+  frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
   if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
   journey.renderAt(frame);
@@ -161,7 +168,7 @@ function tick(now){
   if(frame===lastFrame&&target===lastFrame){
     // A completed scroll/seek is not enough: leave the decoded final picture
     // on screen for a presentation interval before the opaque cards replace it.
-    if(videoEntrance&&(!journey.settled||presentedFrame!==lastFrame||now-finalFramePresentedAt<VIDEO_FRAME_INTERVAL_MS)){requestTick();return;}
+    if(videoEntrance&&(!journey.settled||presentedFrame!==lastFrame||now-finalFramePresentedAt<FINAL_FRAME_HOLD_MS)){requestTick();return;}
     enterGame({fromChess:true});return;
   }
   if(frame!==target)requestTick();else lastTime=0;
@@ -185,16 +192,19 @@ window.addEventListener('popstate',event=>{
   if(gameRequested&&!event.state?.sofacetGame)location.reload();
   else if(ready&&event.state?.sofacetGame)enterGame();
 });
-const resizeObserver=new ResizeObserver(()=>{placeStage();if(ready){journey?.resize();requestTick();}});
+const resizeObserver=new ResizeObserver(()=>{
+  viewportSize=viewport.getBoundingClientRect();
+  placeStage();if(ready){journey?.resize();requestTick();}
+});
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
   gameVisibility(gameVisible&&!document.hidden);
-  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();videoPlayback.suspend();journey?.suspend();}
+  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
   else if(!gameRequested){journey?.suspend(false);requestTick();}
 });
 window.addEventListener('pagehide',event=>{
   if(ready&&!gameRequested)history.replaceState({...history.state,sofacetWorldScroll:scrollY},'');
-  assembly.suspend();videoPlayback.suspend();
+  assembly.suspend();
   if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}
 });
 window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});

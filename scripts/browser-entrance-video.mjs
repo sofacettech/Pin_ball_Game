@@ -35,9 +35,18 @@ try{
       for(const kind of ['opening','journey'])assert.ok(requests.some(url=>new URL(url).origin===origin&&new URL(url).pathname.includes(`entrance-${kind}-`)),`Expected ${kind} from the configured CDN`);
       assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'A healthy CDN must not fall back to local video');
     }
+    let openingResponse;
     for(const frame of [850,1100,1840,1000,334]){
-      await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(frame));
+      const started=await page.evaluate(y=>{
+        const start={at:performance.now(),from:window.entrancePreview.displayedFrame};
+        scrollTo(0,y);return start;
+      },scroll.scrollAtFrame(frame));
       await page.waitForFunction(frame=>Math.abs(window.entrancePreview.frame-frame)<.2&&window.entrancePreview.settled&&Math.abs(window.entrancePreview.displayedFrame-frame)<1,frame,{timeout:60000});
+      if(frame===850){
+        openingResponse=await page.evaluate(start=>({from:start.from,to:850,elapsedMs:performance.now()-start.at}),started);
+        assert.equal(openingResponse.from,334,'Measure the first scroll from the opening journey picture');
+        assert.ok(openingResponse.elapsedMs<3000,`The opening scroll must respond within 3 seconds, without a full-video playback cap (took ${Math.round(openingResponse.elapsedMs)} ms)`);
+      }
     }
     await page.setViewportSize({width:viewport.height,height:viewport.width});
     await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(1840));
@@ -64,13 +73,11 @@ try{
       scrollTo(0,y);requestAnimationFrame(sample);
     }),scroll.travel);
     assert.equal(completion.lastVisibleFrame,2164,'The final decoded picture must appear before the cards');
-    assert.ok(completion.maxFrameStep<=2,'A fast scroll cannot skip intervening video at the 30 fps cap');
-    assert.ok(completion.elapsedMs>=(2164-completion.initialFrame)*1000/60-50,'Scroll momentum cannot fast-forward playback');
     // The original loader owns the reward story and actual game readiness.
     await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
     if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
     assert.deepEqual(errors,[]);
-    report.push({name,engine,option,quality,completion,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
+    report.push({name,engine,option,quality,openingResponse,completion,noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:true,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
   // The explicit live 3D alternative must not prefetch video media.

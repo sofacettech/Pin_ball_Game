@@ -225,3 +225,58 @@ test('failed CDN preloading retries the complete bundled journey before it becom
   assert.equal(f.renderer.policy.sourceWidth,1920);assert.deepEqual(f.errors,[]);
  }finally{f.renderer.dispose()}
 });
+
+test('the next clock step decodes ahead without painting early or retaining an extra picture',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}};
+ const f=await fixture({streamSource:high,width:3840,height:2160}),pending=[];
+ high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
+ const complete=async position=>{pending[position].resolve({time:pending[position].index/60,displayWidth:3840,displayHeight:2160});await new Promise(resolve=>setImmediate(resolve))};
+ try{
+  f.renderer.renderAt(334,350);assert.equal(pending.length,1);
+  await complete(0);assert.equal(f.renderer.settled,true);assert.equal(f.renderer.displayedFrame,334);
+  assert.equal(pending.length,2);assert.equal(pending[1].index,2,'use the idle presentation interval for the next two-frame clock step');
+  await complete(1);assert.equal(f.draws.length,1,'decoded lookahead must remain invisible until its clock step');
+  assert.equal(pending.length,2,'hold one prepared source picture rather than decoding farther ahead');
+  f.renderer.renderAt(336,350);
+  assert.equal(f.renderer.displayedFrame,336,'the next step paints synchronously from its prepared source picture');
+  assert.equal(pending.length,3);assert.equal(pending[2].index,4);
+  assert.equal(f.renderer.policy.sourceWidth,3840);
+ }finally{f.renderer.dispose()}
+});
+
+test('lookahead remains serialized through reversal, visibility changes and disposal',async()=>{
+ let disposed=0;
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){disposed++}};
+ const f=await fixture({streamSource:high}),pending=[];
+ high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
+ const complete=async position=>{pending[position].resolve({time:pending[position].index/60});await new Promise(resolve=>setImmediate(resolve))};
+ try{
+  f.renderer.renderAt(334,400);await complete(0);assert.equal(pending.length,2);
+  f.renderer.renderAt(334,334);await complete(1);
+  assert.equal(f.draws.length,1,'a reversed scroll hint must not paint its stale speculative frame');
+  assert.equal(pending.length,2);
+  f.renderer.renderAt(334,400);assert.equal(pending.length,3);
+  f.renderer.suspend();f.renderer.renderAt(336,400);f.renderer.suspend(false);
+  assert.equal(pending.length,3,'resume must not start a second seek while lookahead is outstanding');
+  f.renderer.suspend();await complete(2);assert.equal(f.draws.length,1,'hidden scenes must not paint completed lookahead');
+  f.renderer.suspend(false);assert.equal(pending.length,4);
+  await complete(3);assert.equal(f.renderer.displayedFrame,336);assert.equal(pending.length,5);
+  const draws=f.draws.length;f.renderer.dispose();await complete(4);
+  assert.equal(f.draws.length,draws);assert.equal(disposed,1);
+ }finally{f.renderer.dispose()}
+});
+
+test('lookahead stops at the final authored picture and reports it settled only after selection',async()=>{
+ const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){}};
+ const f=await fixture({streamSource:high}),pending=[];
+ high.frameAt=index=>new Promise(resolve=>pending.push({index,resolve}));
+ const complete=async position=>{pending[position].resolve({time:pending[position].index/60});await new Promise(resolve=>setImmediate(resolve))};
+ try{
+  f.renderer.renderAt(2162,2164);await complete(0);assert.equal(f.renderer.displayedFrame,2162);
+  assert.equal(pending[1].index,1830);await complete(1);
+  assert.equal(f.renderer.displayedFrame,2162,'decoding the final pose must not advance its crop or handoff');
+  f.renderer.renderAt(2164,2164);await f.renderer.whenSettled();
+  assert.equal(f.renderer.displayedFrame,2164);assert.equal(f.renderer.settled,true);
+  assert.equal(pending.length,2,'no decoding may pass the last authored picture');
+ }finally{f.renderer.dispose()}
+});
