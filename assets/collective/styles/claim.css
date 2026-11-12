@@ -460,24 +460,16 @@
 /* A single entrance per element (no parent + child double animations). */
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand,
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-score,
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > * {
   animation-name:soFacetEntrance !important;
   animation-duration:.85s !important;
   animation-timing-function:cubic-bezier(.2,.75,.2,1) !important;
   animation-fill-mode:both !important;
   animation-iteration-count:1 !important;
+  animation-delay:0s !important;
 }
 :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content, :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form {animation:none !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand {animation-delay:.05s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation {animation-delay:.25s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(1){animation-delay:.36s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(2){animation-delay:.46s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(3){animation-delay:.53s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(4){animation-delay:.61s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(5){animation-delay:.66s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(6){animation-delay:.70s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(7){animation-delay:.70s !important;}
-:is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > :nth-child(n+8){animation-delay:.80s !important;}
 /* Page 1 CTA: 250ms white background/black type, with all 1px sides even. */
 :is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn {
   border:1px solid #aaa !important;
@@ -503,6 +495,7 @@
 @media (prefers-reduced-motion:reduce){
   :is(#account-root,#membership-root,#launch-root) .design-claim .page > .brand,
   :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-invitation,
+  :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-score,
   :is(#account-root,#membership-root,#launch-root) .design-claim .page > .content > .claim-form > *{animation:none !important;}
   :is(#account-root,#membership-root,#launch-root) .design-claim .page .buttons .btn,:is(#account-root,#membership-root,#launch-root) .design-claim .page .field,:is(#account-root,#membership-root,#launch-root) .design-claim .page .signin a{transition:none !important;}
 }
@@ -609,6 +602,7 @@
 @keyframes p2-small-left{0%,85.714286%,100%{transform:rotate3d(var(--ax),var(--ay),0,var(--open))}42.857143%{transform:rotate3d(var(--ax),var(--ay),0,var(--left-fold))}}
 @keyframes p2-small-right{0%,85.714286%,100%{transform:rotate3d(var(--ax),var(--ay),0,0deg)}42.857143%{transform:rotate3d(var(--ax),var(--ay),0,var(--right-fold))}}
 :is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .page>.brand,:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .page>.content>.claim-invitation,:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .claim-form>*{animation-play-state:paused!important;}
+:is(#account-root,#membership-root,#launch-root) .design-claim.wave-intro-pending .page>.content>.claim-score{animation-play-state:paused!important;}
 @media(max-width:767px){:is(#account-root,#membership-root,#launch-root) .design-claim .crystal-float{--crystal-drift:3px;}:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position{--left-fold:16deg;--right-fold:-18deg;}:is(#account-root,#membership-root,#launch-root) .design-claim .butterfly-position.small{--left-fold:23deg;--right-fold:-27.6deg;}}
 @media(prefers-reduced-motion:reduce){:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .art-entrance,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .crystal-float,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .butterfly-hover,:is(#account-root,#membership-root,#launch-root) .design-claim .art-layer .butterfly-rig img{animation:none!important;}:is(#account-root,#membership-root,#launch-root) .design-claim .wave-intro-pending .page *{animation:none!important;}}
 

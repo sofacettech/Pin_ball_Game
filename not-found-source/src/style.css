@@ -81,7 +81,7 @@
 
     .action {
       pointer-events: auto;
-      font-family:'Sofacet Actions', 'Josefin Sans', sans-serif;
+      font-family:'Fancy Cut Pro', serif;
       --line: var(--muted);
       position: relative;
       display: inline-flex;

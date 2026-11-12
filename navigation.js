@@ -170,12 +170,12 @@ function menuLink(label, href, className = 'menu-item') {
 const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/game');
 if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
 if (inGameInfo) play.setAttribute('data-game-return','');
-const collectiveLink = menuLink('THE SO/ COLLECTIVE', '/join');
+const coinsLink = menuLink('MY SO/ COINS', '/sign-in');
 const about = menuLink('About ', '/about');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
 const small = document.createElement('div');small.className = 'menu-small-links';
-small.append(menuLink('Terms','/terms',''),menuLink('Privacy','/privacy',''),menuLink('Contact','/contact',''));
-const cookieLink=menuLink('Cookie settings','/privacy#privacy-9-cookies-pixels-and-similar-technologies','');cookieLink.setAttribute('data-cookie-settings','');small.append(cookieLink);
+small.append(menuLink('TERMS','/terms',''),menuLink('PRIVACY','/privacy',''),menuLink('CONTACT','/contact',''));
+const cookieLink=menuLink('COOKIE SETTINGS','/privacy#privacy-9-cookies-pixels-and-similar-technologies','');cookieLink.setAttribute('data-cookie-settings','');small.append(cookieLink);
 const socials = document.createElement('div');socials.className = 'menu-social-links';socials.setAttribute('role', 'group');socials.setAttribute('aria-label', 'Social media');
 for (const [label, icon, href] of [
   ['Instagram', '<rect x="2" y="2" width="20" height="20" rx="6"/><rect x="4.5" y="4.5" width="15" height="15" rx="3.5" fill="#0b0e18"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2.6" fill="#0b0e18"/><circle cx="17.5" cy="6.6" r="1.3"/>', 'https://www.instagram.com/so.facet'],
@@ -190,7 +190,7 @@ for (const [label, icon, href] of [
   item.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(item);
 }
 small.append(socials);
-panel.replaceChildren(play, collectiveLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
+panel.replaceChildren(play, coinsLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {

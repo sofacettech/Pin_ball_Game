@@ -333,6 +333,6 @@ The frontend refreshes account data after changes and does not report unconfirme
 | Cookie body and emphasized copy | Existing cookie body Regular (400) and Semibold (600) | assets/cookie-popup-fonts/body-400.woff2 and body-600.woff2 |
 | Inline SO/ FACET wordmark | SOFacetWordmark (400) | assets/fonts/policy-wordmark.otf |
 | Large SO/ FACET branding | Official vector wordmark, plus the mark above it on the About closing section | assets/sofacet-wordmark.svg and assets/sofacet-icon.svg |
-| Loading card rupee glyph | Helvetica Neue Roman (400) | assets/loader-cards/HelveticaNeueRoman.otf |
+| Loading card rupee glyph | Fancy Cut Pro Regular (400) | assets/score-coins/fancy-400.woff2 |
 
 Use the shared font variables in assets/typography.css. Keep SO/ COINS, SO/ COLLECTIVE and SO/ FACET uppercase within sentence-case labels. Underlined labels should run continuously through the brand text.

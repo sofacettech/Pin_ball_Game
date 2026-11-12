@@ -16,5 +16,5 @@ await writeFile(new URL('assets/game-loader.css',root),await readFile(new URL('l
 const {withGameLoader}=await import('./game-loader-shell.mjs');
 for(const name of ['game','membership','account','launch','faq','about']){
  const file=new URL(name+'-source/index.html',root);
- await writeFile(file,withGameLoader(await readFile(file,'utf8')));
+ await writeFile(file,withGameLoader(await readFile(file,'utf8'),{siteSound:false}));
 }

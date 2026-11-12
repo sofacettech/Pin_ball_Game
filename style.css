@@ -129,6 +129,7 @@ body[data-game="visible"]{overflow:hidden}
 body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events:auto}
 body[data-game="visible"] :is(#story-copy,main>.wordmark,.site-navigation,#progress){opacity:0}
 body[data-game="visible"] .site-navigation{visibility:hidden;pointer-events:none}
+body[data-game="visible"]:has(#game-loading-screen:not([hidden])) .site-navigation{visibility:visible;opacity:1;pointer-events:auto}
 @media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,.site-navigation,main>#progress{transition:none}}
 #scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
 @media(any-pointer:coarse){#scroll-space{height:calc(100vh + var(--travel));height:calc(100lvh + var(--travel))}}

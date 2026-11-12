@@ -61,11 +61,11 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 .board-close{position:absolute;left:79.35%;top:13.3%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:10px;border:0;border-radius:0;background:transparent;z-index:1}
 .board-close svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .board-close:hover,.board-close:focus-visible{background:transparent;color:#e5ff42;outline:none}
-.leaderboard-table{--row-height:2.7cqw;position:absolute;left:22.1%;top:26.47%;width:55.8%;height:auto;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
-.leaderboard-table th:first-child{width:21%}.leaderboard-table th:last-child{width:23%}
+.leaderboard-table{--row-height:2.7cqw;position:absolute;left:22.1%;top:26.9%;width:55.8%;height:auto;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
+.leaderboard-table th:first-child{width:20.5%}.leaderboard-table th:last-child{width:24.8%}
 .leaderboard-table thead,.leaderboard-table tr{height:var(--row-height)}.leaderboard-table tbody:empty{display:none}
 .leaderboard-table th,.leaderboard-table td{height:var(--row-height);text-align:center;vertical-align:middle;padding:0 2.3%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-@media(min-width:601px){.leaderboard-table :is(thead,thead tr,th){height:3.7cqw}}
+@media(min-width:601px){.leaderboard-table :is(thead,thead tr,th){height:3.4cqw}.leaderboard-table th{padding-bottom:.45cqw}}
 .leaderboard-table th{color:#e8ff70;font-size:.86em;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .leaderboard-table td{background:#100b21d9;border-bottom:1px solid #57267b70}
 .leaderboard-table td:first-child{color:#cdb7e5}
@@ -80,7 +80,7 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 
 
 
-#leaderboard-play{background:#d9ed37;border-color:#d9ed37;color:#17101e;font-weight:600;white-space:nowrap}
+#leaderboard-play{min-height:44px;background:#d9ed37;border-color:#d9ed37;color:#17101e;font-weight:600;white-space:nowrap}
 #leaderboard-play:hover{background:#eeff6a}
 @keyframes leaderboard-arrive{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes leaderboard-backdrop{from{background:#100b2100;-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}to{background:#100b21;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}}
@@ -130,6 +130,7 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 /* Touch input is an addition to the desktop keyboard controls. */
 #game{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .touch-controls,.touch-guide{display:none}
+#touch-launch{-webkit-text-stroke:.55px currentColor}
 @media(any-pointer:coarse){
  button,select{min-height:44px}
  .touch-guide{display:flex;flex-direction:column;gap:12px;padding-bottom:8px;line-height:1.5}
@@ -494,3 +495,4 @@ body:has(#table-intro:not([hidden])) #stage .side-panel #message{display:none}
  .leaderboard-table th:last-child{width:34%}
  .leaderboard-actions :is(#leaderboard-save,#leaderboard-play){flex:1;min-width:0;width:auto;padding:10px;font-size:13px;white-space:nowrap}
 }
+@media(max-width:450px){.leaderboard-actions{flex-direction:column;align-items:stretch}}

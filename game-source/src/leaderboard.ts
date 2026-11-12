@@ -68,7 +68,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   if(target.error||!target.id)throw new Error(target.error||'This game could not connect for verification. Please play again with a connection.');
   target.submission??=request<{score:number;best_score:number}>('/api/games/'+target.id+'/finish',{version:REPLAY_VERSION,inputs:target.inputs},75000).then(result=>{
    if(!Number.isSafeInteger(result.score)||result.score<0||!Number.isSafeInteger(result.best_score)||result.best_score<result.score)throw Error('Your score could not be verified. Please try again.');
-   target.submitted=true;target.score=result.score;onBest(result.best_score);if(target===run){if(player)player={...player,best_score:result.best_score};summary.textContent='This run: '+formatPoints(result.score);window.dispatchEvent(new Event('sofacet:leaderboard-updated'));onVerified(result.score,result.best_score)}
+   target.submitted=true;target.score=result.score;onBest(result.best_score);if(target===run){document.getElementById('leaderboard-save')!.hidden=result.score<10;if(player)player={...player,best_score:result.best_score};summary.textContent='This run: '+formatPoints(result.score);window.dispatchEvent(new Event('sofacet:leaderboard-updated'));onVerified(result.score,result.best_score)}
   }).catch(error=>{target.submission=undefined;throw error});
   await target.submission;
  }
@@ -99,7 +99,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   finish(){run.ended=true;return submit(run)},
   async start(){const next:Run={inputs:[],ticks:0,ended:false,submitted:false,previousBest:player?.member?player.best_score:null};run=next;try{const result=await request<{id:string;seed:number;version:number}>('/api/games/start',{},10000);if(result.version!==REPLAY_VERSION||!Number.isInteger(result.seed))throw new Error('Please refresh the game to start a verified run.');next.id=result.id;next.seed=result.seed}catch(error){next.error=error instanceof Error?error.message:'This run is offline and cannot enter the leaderboard.'}return next.seed??crypto.getRandomValues(new Uint32Array(1))[0]},
   record(input:Input){if(run.error||run.ended)return;const bits=packInput(input),last=run.inputs.at(-1);run.ticks++;if(last&&last[0]===bits)last[1]++;else run.inputs.push([bits,1]);if(run.ticks>MAX_GAME_TICKS||run.inputs.length>MAX_INPUT_RUNS){run.error='This game exceeded the verification limit. Please play a shorter game to enter the leaderboard.';run.inputs=[]}},
-  async show(){const current=++revision;await refreshPlayer();if(current!==revision)return;document.getElementById('leaderboard-save')!.hidden=player?.member===true;if(!run.ended)summary.textContent='';else if(!run.submitted)summary.textContent='This run: awaiting verification';rows.replaceChildren();if(!dialog.open)dialog.showModal();setScreenRoute('/leaderboard',{replace:false});void refresh()},
+  async show(){const current=++revision;await refreshPlayer();if(current!==revision)return;document.getElementById('leaderboard-save')!.hidden=!(run.ended&&run.score!==undefined&&run.score>=10);if(!run.ended)summary.textContent='';else if(!run.submitted)summary.textContent='This run: awaiting verification';rows.replaceChildren();if(!dialog.open)dialog.showModal();setScreenRoute('/leaderboard',{replace:false});void refresh()},
   async memberChanged(){await refreshPlayer();if(dialog.open)await refresh()},
  };
 }

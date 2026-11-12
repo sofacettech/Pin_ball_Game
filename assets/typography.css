@@ -2,12 +2,10 @@
 @font-face{font-family:'Josefin Sans';src:url('/assets/fonts/sofacet-score-josefin-regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Josefin Sans';src:url('/assets/fonts/sofacet-score-josefin-semibold.ttf') format('truetype');font-weight:600;font-style:normal;font-display:swap}
 @font-face{font-family:'Yeseva One';src:url('/assets/fonts/sofacet-score-yeseva.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Sofacet Actions';src:url('/assets/fonts/sofacet-score-actions.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:SOFacetWordmark;src:url('/assets/fonts/policy-wordmark.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Brilliant Cut Pro';src:url('/assets/loader-cards/BrilliantCutPro-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Brilliant Cut Pro';src:url('/assets/loader-cards/BrilliantCutPro-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:'Fancy Cut Pro';src:url('/assets/score-coins/fancy-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Helvetica Neue';src:url('/assets/loader-cards/HelveticaNeueRoman.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
 
 :root{--font-body:'Josefin Sans',sans-serif;--font-heading:'Josefin Sans',sans-serif;--font-lead:'Yeseva One',serif;--font-action:'Brilliant Cut Pro',sans-serif;--font-brand:SOFacetWordmark,sans-serif}
 html,body{font-family:var(--font-body);font-synthesis:none}

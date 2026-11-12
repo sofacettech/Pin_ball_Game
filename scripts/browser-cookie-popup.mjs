@@ -19,7 +19,7 @@ try{await withRewardsSite(async({origin})=>{
    await page.waitForFunction(()=>!document.body.hasAttribute('data-loading'),null,{timeout:120000});
    await page.locator('#sf-cookie-notice').waitFor({state:'visible'});
    assert.equal(await page.locator('#sf-cookie-root').count(),1);
-   assert.equal(await page.locator('#sf-cookie-notice h2').textContent(),'Your cookie choices.');
+   assert.equal(await page.locator('#sf-cookie-notice h2').textContent(),'YOUR COOKIE CHOICES.');
    const notice=await fits(page,'#sf-cookie-notice');assert.equal(notice.noOverflow,true);
    if(width>650)assert.equal(notice.width,480);
    assert.match(await page.locator('#sf-cookie-notice h2').evaluate(e=>getComputedStyle(e).fontFamily),/SFCookieDisplay/);

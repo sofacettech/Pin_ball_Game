@@ -15,7 +15,7 @@ export default function CookiePopup({showNotice,settingsOpen,choice,persisted,op
  },[settingsOpen,choice]);
  return <>
   <section id="sf-cookie-notice" className="cookie-panel" aria-labelledby="sf-cookie-notice-title" hidden={!showNotice}>
-   <h2 id="sf-cookie-notice-title">Your cookie choices.</h2>
+   <h2 id="sf-cookie-notice-title">YOUR COOKIE CHOICES.</h2>
    <p className="intro">Essential cookies keep this site working. <strong>“Accept all”</strong> also allows optional cookies. <strong>“Reject optional”</strong> keeps essential cookies only. You can change your choice anytime in Cookie settings.</p>
    <a className="privacy-link" href={policy}>Privacy policy</a>
    <div className="actions">

@@ -76,7 +76,7 @@ function Footer({mobile, onTopic}) {
       </div>
       <div className="footer-bottom">
         <div className="footer-contact"><span>Still have a question?</span><a href="mailto:hello@sofacet.com">hello@sofacet.com</a></div>
-        <a className="pinball" href="/game" target="_top">Play Pinball <span aria-hidden="true">→</span></a>
+        <a className="pinball" href="/game" target="_top">PLAY PINBALL</a>
       </div>
     </div>
   </footer>;

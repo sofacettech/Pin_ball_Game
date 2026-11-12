@@ -159,6 +159,10 @@ dialog .share-copy { white-space: pre-wrap; overflow-wrap: anywhere; user-select
 @media (min-width: 701px) and (pointer: fine) {
  .claim-form .field input { min-height: 39px; }
 }
+@media (min-width: 901px) {
+ #membership-root .design-claim .claim-back { margin-inline-start: auto; }
+ #membership-root .design-claim .claim-navigation .auth-flow-close { margin-inline-start: 16px; }
+}
 @media (max-height: 750px) and (min-width: 901px) {
  .membership-page { padding-top: max(86px,calc(14svh + 18px)); }
  .membership-page.is-details { padding-top: max(86px,calc(14svh - 12px)); }

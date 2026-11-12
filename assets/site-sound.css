@@ -1,0 +1,15 @@
+.site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:inherit;font:400 13px/1.2 'Josefin Sans',sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sound-text{display:grid;overflow:hidden;padding:2px 0}
+.sound-state{grid-area:1/1;justify-self:end;white-space:nowrap}
+.sound-char{display:inline-block;white-space:pre;transform:translateY(110%);opacity:0}
+.site-sound:not([data-on="true"]) .sound-state[data-state="false"] .sound-char,.site-sound[data-on="true"] .sound-state[data-state="true"] .sound-char{transform:none;opacity:1}
+.sound-bars{display:flex;align-items:center;gap:4px;height:16px}
+.sound-bars span{display:block;width:1px;height:16px;background:currentColor;transform:scaleY(.2);transform-origin:center}
+.site-sound[data-on="true"] .sound-bars span{animation:sound-meter .86s ease-in-out infinite alternate}
+.site-sound[data-on="true"] .sound-bars span:nth-child(2){animation-delay:-.36s;animation-duration:.7s}
+.site-sound[data-on="true"] .sound-bars span:nth-child(3){animation-delay:-.64s;animation-duration:1.02s}
+@keyframes sound-meter{0%{transform:scaleY(.2)}30%{transform:scaleY(.7)}60%{transform:scaleY(.35)}100%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.site-sound[data-on="true"] .sound-bars span{animation:none;transform:scaleY(.7)}.site-sound[data-on="true"] .sound-bars span:nth-child(2){transform:scaleY(.4)}.site-sound[data-on="true"] .sound-bars span:nth-child(3){transform:scaleY(1)}}
+.site-sound:focus-visible{outline:2px solid #e8fd00;outline-offset:4px}
+.site-sound .sound-icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.site-sound[data-on="true"] .sound-off-icon,.site-sound:not([data-on="true"]) .sound-on-icon{display:none}

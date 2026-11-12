@@ -23,7 +23,7 @@
   <base href="/">
 
   <script>if(location.hash==='#experience')document.documentElement.setAttribute('data-skip-intro','')</script>
-  <style data-shared-style="./style.css?v=2f10e13d6342">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  <style data-shared-style="./style.css?v=8be28c088188">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 :root{--post-game-content-top:124px}
 /* Shared viewport anchors: page content and menu length cannot move the navbar. */
 :root{--site-brand-left:32px;--site-brand-top:25px;--site-brand-width:160px;--site-nav-top:14px;--site-nav-right:24px;--site-menu-size:calc(clamp(25px,2.4vw,34px) - 5px);--site-header-clearance:calc(var(--site-nav-top) + 64px + env(safe-area-inset-top,0px))}
@@ -295,6 +295,7 @@ body[data-game="visible"]{overflow:hidden}
 body[data-game="visible"] #game-page{visibility:visible;opacity:1;pointer-events:auto}
 body[data-game="visible"] :is(#story-copy,main>.wordmark,.site-navigation,#progress){opacity:0}
 body[data-game="visible"] .site-navigation{visibility:hidden;pointer-events:none}
+body[data-game="visible"]:has(#game-loading-screen:not([hidden])) .site-navigation{visibility:visible;opacity:1;pointer-events:auto}
 @media(prefers-reduced-motion:reduce){#game-page,main>#story-copy,main>.wordmark,.site-navigation,main>#progress{transition:none}}
 #scroll-space{height:calc(100vh + var(--travel));height:calc(100dvh + var(--travel))}
 @media(any-pointer:coarse){#scroll-space{height:calc(100vh + var(--travel));height:calc(100lvh + var(--travel))}}
@@ -549,7 +550,7 @@ body[data-game-loading] #sf-cookie-notice,body[data-game='visible'] #sf-cookie-n
   if(link&&!event.defaultPrevented&&event.button===0&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!event.shiftKey){event.preventDefault();open()}
  },true);
 })();
-</script><script src="/assets/cookie-popup.js?v=1b304b202ec8" defer></script><!-- /cookie-preferences --><!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{--game-loader-top:var(--game-loader-measured-top,96px);position:fixed;inset:var(--game-loader-top) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#000;opacity:1;transition:opacity .4s ease;touch-action:pan-y}
+</script><script src="/assets/cookie-popup.js?v=fd15e97e83b4" defer></script><!-- /cookie-preferences --><!-- game-loader-head --><style id="game-loader-critical">.game-loading-screen{--game-loader-top:var(--game-loader-measured-top,96px);position:fixed;inset:var(--game-loader-top) 0 0;z-index:20;overflow:hidden;isolation:isolate;background:#000;opacity:1;transition:opacity .4s ease;touch-action:pan-y}
 .game-loading-screen[hidden]{display:none!important}
 .game-loading-screen[data-state="leaving"]{opacity:0;pointer-events:none}
 #game-loader-cards-root{height:100%;--game-loader-css-ready:1}
@@ -559,7 +560,7 @@ body[data-game-loading] #sf-cookie-notice,body[data-game='visible'] #sf-cookie-n
 .game-loading-progress{position:absolute;left:50%;top:50%;width:min(280px,64vw);transform:translate(-50%,-50%)}
 .game-loading-progress[hidden]{display:none!important}
 .game-loading-statement{position:absolute;bottom:100%;left:0;width:100%;margin-bottom:12px;color:#e4e3de;text-align:center;font:400 14px/1.5 'Brilliant Cut Pro',sans-serif;overflow-wrap:break-word}
-.game-loading-statement .rupee{font-family:'Helvetica Neue',sans-serif}
+.game-loading-statement .rupee{font-family:'Fancy Cut Pro',serif}
 .game-loading-track{display:block;height:3px;background:#241833;overflow:hidden}
 .game-loading-fill{display:block;width:100%;height:100%;background:#d9ed37;transform:scaleX(0);transform-origin:left;transition:transform 180ms ease-out}
 @media(prefers-reduced-motion:reduce){.game-loading-fill{transition:none}}
@@ -605,7 +606,7 @@ body[data-game-loading] #sf-cookie-notice,body[data-game='visible'] #sf-cookie-n
 .game-loader-cards .diamond-copy h1 { margin-top: 2.2cqw; font-size: 8cqw; font-weight:500; line-height: 1.15; letter-spacing: .16em; padding-left: .16em; }
 .game-loader-cards .offer { font-size: 4.65cqw; font-weight:500; line-height: 1.4; letter-spacing: .025em; }
 .game-loader-cards .offer-detail { margin-top: 2.5cqw !important; font-size: 3.3cqw; line-height: 1.4; letter-spacing: .035em; }
-.game-loader-cards .rupee { font-family:'Helvetica Neue'; font-weight: 400; }
+.game-loader-cards .rupee { font-family:'Fancy Cut Pro',serif; font-weight: 400; }
 .game-loader-cards ::selection { background: #315161; color: #fff; }
 .game-loader-cards .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-motion: no-preference) {
@@ -639,7 +640,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
 @media(max-width:700px){body[data-game-loading]{--nav-height:calc(116px + env(safe-area-inset-top,0px))}}
 @media(max-width:600px){body[data-game-loading] .site-brand{left:calc(20px + env(safe-area-inset-left,0px));top:calc(21px + env(safe-area-inset-top,0px));width:118px}body[data-game-loading] .site-nav{top:calc(7px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px))}}
 @media(prefers-reduced-motion:reduce){.game-loading-screen{transition:none}}
-</style><link rel="preload" href="/assets/game-loader.js?v=6f5760e13998" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=6f5760e13998" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --><link rel="stylesheet" href="/assets/typography.css?v=0ce4bf9f53ff" data-brand-typography><link rel="stylesheet" href="/assets/brand-cursor.css?v=e232fbbbf989" data-brand-cursor></head>
+</style><link rel="preload" href="/assets/game-loader.js?v=6f5760e13998" as="script"><script id="game-loader-controller" src="/assets/game-loader.js?v=6f5760e13998" defer onerror="const fail=()=>{const root=document.getElementById('game-loading-screen');if(root){root.hidden=false;root.querySelector('.game-loading-error').hidden=false;root.querySelector('[data-game-retry]').onclick=()=>location.reload()}};document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fail,{once:true}):fail()"></script><!-- /game-loader-head --><link rel="stylesheet" href="/assets/typography.css?v=5b16118ddea0" data-brand-typography><link rel="stylesheet" href="/assets/brand-cursor.css?v=e232fbbbf989" data-brand-cursor></head>
 <body data-phase="buffering" data-loading>
   <div id="site-loader" role="region" aria-label="Loading SO/ FACET">
     <div id="loading-stage" tabindex="0" aria-label="SO/ FACET logo reveal" aria-describedby="loading-instructions">
@@ -759,9 +760,8 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
         <h2><span class="story-text-line">Your rules/</span> <span class="story-text-line">Your shape/</span> <span class="story-text-line">Your diamond/</span></h2>
       </section>
       <section class="story-line story-finale" data-from="2000" aria-hidden="true">
-        <h2><span class="story-text-line">SO/</span> <span class="story-text-line">what's yours?</span></h2>
+        <h2><span class="story-text-line">SO/</span> <span class="story-text-line">WHAT'S YOURS?</span></h2>
         <p>Find out in<br> a game of pinball.<br> 1,000 <span class="coin-word">SO/ COINS</span> =<br> ₹100 off <span class="brand-word">SO/ FACET</span> diamond jewellery.</p>
-        <!-- site-join-slot --><!-- site-join --><a class="site-join-button" href="/join" data-join-for-guests>JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a><!-- /site-join -->
       </section>
     </div>
     <a class="wordmark brand-logo site-brand" href="/" target="_top" aria-label="SO/ FACET home"><img src="./assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"></a>
@@ -795,7 +795,7 @@ body[data-game-loading] .menu-panel:not([data-open]){visibility:hidden;pointer-e
   <div id="scroll-space" aria-hidden="true"></div>
   <noscript><style>#site-loader,#entrance{display:none}</style><a class="play-now" href="/game">Play SOFACET</a></noscript>
   <script type="module" src="./assets/social-links.js?v=restored-20261106"></script>
-  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=4b9ae42c5c73"></script>
-  <script type="module" src="/assets/entrance-3d/entry-XKMS3IM3.js"></script>
+  <script id="entrance-navigation-controller" type="module" src="./navigation.js?v=58bc88760de0"></script>
+  <script type="module" src="/assets/entrance-3d/entry-C5ENQ2IM.js"></script>
 <!-- site-join --><script defer src="/assets/site-join.js?v=5919cf077020"></script><!-- /site-join --><!-- game-loader-body --><div id="game-loading-screen" data-managed class="game-loading-screen" hidden><div id="game-loader-cards-root" hidden><link rel="preload" as="image" href="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107"/><link rel="preload" as="image" href="/assets/sofacet-wordmark.svg"/><div class="game-loader-cards"><div class="gallery" aria-label="SO/ FACET silver card collection"><p class="card-hint card-hint-top"><span class="hint-click">Click to Explore</span><span class="hint-swipe">Swipe left to explore</span></p><div class="stage" aria-busy="false"><div class="floating"><div class="deck" tabindex="0" role="button" aria-label="Diamond card. Front view" aria-describedby="loader-card-instructions"><article class="sofacet-card" data-slot="0" aria-label="Diamond card" aria-hidden="false"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--diamond" src="/assets/loader-cards/diamond.png" alt="Faceted diamond" width="535" height="425" loading="lazy" decoding="async"/><div class="card-copy diamond-copy"><p>Up Next:</p><h1>Pinball</h1></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></p></div></div></article><article class="sofacet-card" data-slot="1" aria-label="Pinball card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--pinball" src="/assets/loader-cards/pinball.png" alt="SO/ FACET pinball table" width="740" height="595" loading="lazy" decoding="async"/><div class="card-copy table-copy"><p class="table-title">Score <span class="coin-word">SO/ COINS</span>.</p><p class="table-detail">Save them for<br/><span class="brand-word">SO/ FACET</span> diamond jewellery.</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></p></div></div></article><article class="sofacet-card" data-slot="2" aria-label="Jewellery card" aria-hidden="true"><div class="card-turn"><div class="face front-face" aria-hidden="false"><img class="sofacet-card__background" src="/assets/loader-cards/card.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="lazy" decoding="async"/><img class="sofacet-card__product product--earrings" src="/assets/loader-cards/earrings.png" alt="Pair of SO/ FACET black and white diamond star earrings" width="515" height="415" loading="lazy" decoding="async"/><div class="card-copy jewellery-copy"><p class="offer">1,000 <span class="coin-word">SO/ COINS</span> = <span class="rupee">₹</span>100 OFF</p><p class="offer-detail"><span class="brand-word">SO/ FACET</span> DIAMOND JEWELLERY</p></div></div><div class="face reverse-face" aria-hidden="true"><img class="sofacet-card__background" src="/assets/loader-cards/card-back.svg?v=faceted-platinum-20261107" alt="" width="806" height="1330" loading="eager" decoding="async"/><p class="back-name"><img src="/assets/sofacet-wordmark.svg" alt="SO/ FACET" width="2048" height="278"/></p></div></div></article></div></div></div></div><p class="sr-only" id="loader-card-instructions">Swipe, click, or press an arrow key to advance. On mobile, tap to flip a card. On a keyboard, use Enter to flip and Space to pause or resume. Each card advances automatically after 8 seconds.</p><p class="sr-only" data-card-status="true" aria-live="polite" aria-atomic="true">Diamond card, 1 of 3.</p></div></div><p class="loading-copy" role="status">Polishing your table… <span id="loading-detail"></span></p><div class="game-loading-progress" role="progressbar" aria-label="Loading game" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span class="game-loading-statement" role="status" aria-atomic="true">Up Next: Pinball</span><span class="game-loading-track"><span class="game-loading-fill"></span></span></div><div class="game-loading-error" role="alert" hidden><p>The game couldn’t load. Check your connection and try again.</p><button type="button" data-game-retry>Try again</button></div></div><!-- /game-loader-body --></body>
 </html>

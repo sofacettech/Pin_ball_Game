@@ -10,7 +10,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 // Refresh the shared loader's CSS and content hash on non-Vite pages too.
 for(const page of ['index.html','privacy.html','terms.html','launching-soon.html','first-cuts-confirmation.html']){
   const file=resolve(root,page);
-  await writeFile(file,withGameLoader(await readFile(file,'utf8')));
+  await writeFile(file,withGameLoader(await readFile(file,'utf8'),{siteSound:page!=='index.html'}));
 }
 const output=resolve(root,'assets/entrance-3d');
 await mkdir(output,{recursive:true});
@@ -39,7 +39,7 @@ for(const [,href] of source.matchAll(/<link rel="stylesheet" href="([^"]+)"[^>]*
   }
   sharedStyles+=`<style data-shared-style="${href}">${style}</style>\n`;
 }
-const html=withGameLoader(withEntrancePresentation(await readFile(resolve(root,'entrance-source/entrance.html'),'utf8'),source));
+const html=withGameLoader(withEntrancePresentation(await readFile(resolve(root,'entrance-source/entrance.html'),'utf8'),source),{siteSound:false});
 await writeFile(resolve(root,'entrance-3d.html'),html
   .replace('__ENTRANCE_JS__',`/assets/entrance-3d/${basename(entry)}`)
   .replace('__STARTUP_JS__',`/assets/entrance-3d/${basename(startup)}`)

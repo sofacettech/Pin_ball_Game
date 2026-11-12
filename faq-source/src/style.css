@@ -66,9 +66,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{o
 .footer-contact>span{color:var(--muted)}
 .footer-contact>a{text-decoration:none}
 .footer-contact>a:hover{text-decoration:underline}
-.pinball{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:1px solid var(--paper);background:var(--paper);color:#000;gap:22px;text-decoration:none;font-size:14px;white-space:nowrap}
-.pinball:hover{background:transparent;color:var(--paper)}
-.pinball>span{font-size:20px}
+.pinball{box-sizing:border-box;isolation:isolate;position:relative;display:inline-flex;align-items:center;justify-content:center;width:180px;height:40px;min-height:40px;padding:0 16px;border:0;background:#a18db7;color:#f3eef8;font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:600;line-height:1;letter-spacing:.07em;text-transform:uppercase;text-align:center;white-space:nowrap;text-decoration:none;cursor:pointer;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);transition:background .3s ease,color .3s ease}
+.pinball::before{content:'';position:absolute;z-index:-1;inset:1px;background:#110b19;clip-path:polygon(7.5px 0,100% 0,100% calc(100% - 7.5px),calc(100% - 7.5px) 100%,0 100%,0 7.5px);transition:background .3s ease}
+.pinball:is(:hover,:focus-visible){background:#d6b0f5;color:#f3eef8}
+.pinball:is(:hover,:focus-visible)::before{background:#271533}
+.pinball:focus-visible::before{inset:2px}
 
 @media(max-width:1000px){
   .footer-menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:42px 64px;padding:44px 32px}

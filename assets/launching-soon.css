@@ -20,7 +20,7 @@
   position:relative;display:flex;align-items:center;justify-content:center;
   width:100%;min-height:48px;padding:12px 36px;border:1px solid #88818a;
   background:transparent;color:#f7f4f2;text-align:center;text-decoration:none;
-  font:400 12px/1.4 'Sofacet Actions',sans-serif;letter-spacing:.7px;text-transform:uppercase;
+  font:400 12px/1.4 'Fancy Cut Pro',serif;letter-spacing:.7px;text-transform:uppercase;
   transition:background-color .25s,color .25s,border-color .25s;
  }
  .launch-actions a:is(:hover,:focus-visible,:active){background:#fff;color:#000;border-color:#fff}
