@@ -34,11 +34,12 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
     {saved?.pointsSaved&&<p>You joined THE SO/ COLLECTIVE.</p>}
     <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You joined THE SO/ COLLECTIVE. Play a round to earn SO/ COINS.'}</p>
-    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch. They expire 6 months after it. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
+    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
       <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
       {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
+      {saved?.pointsSaved&&<button type="button" onClick={()=>window.top.location.assign('/notify')}>NOTIFY ME</button>}
     </div>
     {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
       <h2 id={shareTitle}>Share my score</h2>
