@@ -13,7 +13,7 @@ if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){if(output){await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:resolve(output,name+'.png')});}}
 const titles={
   '/':"What's yours?",'/video':"What's yours?",'/play.html':'Pinball','/membership.html':'My SO/ COINS','/account.html':'My SO/ COINS',
-  '/faq.html':'How SO/ COINS work','/launching-soon.html':'Launching in December','/first-cuts-confirmation.html':"What's yours?",'/privacy.html':'Privacy','/terms.html':'Terms',
+  '/faq.html':'How SO/ COINS work','/launching-soon.html':'Launching Soon','/first-cuts-confirmation.html':"What's yours?",'/privacy.html':'Privacy','/terms.html':'Terms',
 };
 try{
  await withRewardsSite(async({origin})=>{

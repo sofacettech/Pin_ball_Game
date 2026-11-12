@@ -40,10 +40,10 @@ export default function LaunchPage({onJoin, onPlay}) {
   const [joinOpen, setJoinOpen] = useState(()=>location.hash==='#join');
   useEffect(()=>{const update=()=>setJoinOpen(location.hash==='#join');window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
   function closeJoin(){setJoinOpen(false);if(location.hash==='#join')history.replaceState(null,'',location.pathname+location.search);}
-  return <PageShell scene="launch" initialize={initialize} title="SO/ FACET — Launching in December">
+  return <PageShell scene="launch" initialize={initialize} title="SO/ FACET — Launching Soon">
     <LaunchMesh /><LaunchArtwork />
-    <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching in December"><div className="copy">
-      <p className="eyebrow brand"><span>LAUNCHING IN DECEMBER</span></p>
+    <main className="page text-layer launch-scope" id="home"><section className="reward" aria-label="Launching Soon"><div className="copy">
+      <p className="eyebrow brand"><span>LAUNCHING SOON</span></p>
       <h1><span>Your diamond</span><em>is being cut.</em></h1>
       <p className="description">Lab-grown diamond jewellery, in shapes that mean something.<br /> JOIN THE SO/ COLLECTIVE for updates and early access, before anyone else.</p>
       <div className="action-group">

@@ -6,7 +6,7 @@ I’ve kept the approved black, violet and lime theme, wordmark typeface and res
 
 ## Current copy and navigation
 
-I’ve applied the November copy updates across the landing journey, pinball, score and save flow, membership, My SO/ COINS, FAQ and About pages. The visible copy now uses SO/ COINS, SO/ COLLECTIVE, three lives and our December launch. The menu, browser titles, legal cross-links and social links follow the same wording.
+I’ve applied the November copy updates across the landing journey, pinball, score and save flow, membership, My SO/ COINS, FAQ and About pages. The visible copy now uses SO/ COINS, SO/ COLLECTIVE, three lives and “Launching Soon”. The menu, browser titles, legal cross-links and social links follow the same wording.
 
 I’ve kept the current artwork and responsive layouts and applied Harsh’s typography and desktop cursor. Home shows Instagram and LinkedIn as icons with their existing links. The extra “Click/Tap to reveal” captions and background hover tooltips have been removed; the background interactions still work. The score screen opens the save form, and the saved screen includes a route to My SO/ COINS.
 
