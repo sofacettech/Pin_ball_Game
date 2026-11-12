@@ -297,7 +297,7 @@ async function restoreScreenRoute(){
 window.top!.addEventListener('popstate',restoreScreenRoute);
 window.addEventListener('pagehide',event=>{if(!event.persisted)window.top!.removeEventListener('popstate',restoreScreenRoute)});
 void restoreScreenRoute();
-if(location.hash==='#profile')location.replace('/my-coins?nav=game');
+if(location.hash==='#profile')location.replace('/join?nav=game');
 if(location.hash==='#settings')void gameReady.then(()=>{
  if(!loaded)return;
  settings.click();

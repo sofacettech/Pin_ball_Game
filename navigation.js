@@ -108,7 +108,7 @@ if (gamePage) {
       if (event.data?.type === 'sofacet:visit-game-info') visit(infoHref(event.data.href));
       if (event.data?.type === 'sofacet:close-game-info') closeInfo();
     } else if (event.source === document.getElementById('registration-frame')?.contentWindow &&
-               event.data?.type === 'sofacet:visit-saved-account') visit('/my-coins?nav=game');
+               event.data?.type === 'sofacet:visit-saved-account') visit('/join?nav=game');
   });
   document.addEventListener('click', event => {
     const link = plainLink(event);
@@ -170,11 +170,9 @@ function menuLink(label, href, className = 'menu-item') {
 const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/game');
 if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
 if (inGameInfo) play.setAttribute('data-game-return','');
-const accountLink = menuLink('My SO/ COINS', '/my-coins');accountLink.setAttribute('data-account-link', '');
+const collectiveLink = menuLink('SO/ COLLECTIVE', '/join');
 const about = menuLink('About ', '/about');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
-const join = menuLink('Join the SO/ COLLECTIVE', '/join', 'menu-item menu-join');
-join.setAttribute('data-join-for-guests', '');
 const small = document.createElement('div');small.className = 'menu-small-links';
 small.append(menuLink('Terms','/terms',''),menuLink('Privacy','/privacy',''),menuLink('Contact','/contact',''));
 const cookieLink=menuLink('Cookie settings','/privacy#privacy-9-cookies-pixels-and-similar-technologies','');cookieLink.setAttribute('data-cookie-settings','');small.append(cookieLink);
@@ -192,7 +190,7 @@ for (const [label, icon, href] of [
   item.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(item);
 }
 small.append(socials);
-panel.replaceChildren(play, accountLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, join, small);
+panel.replaceChildren(play, collectiveLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {

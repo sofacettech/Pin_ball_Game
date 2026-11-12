@@ -14,6 +14,9 @@ test('public URLs serve the existing documents, including direct refresh and HEA
   for(const [old,current] of [['/play.html','/game'],['/account.html?view=signin','/sign-in'],['/membership.html?from=score','/notify'],['/claim','/notify'],['/exit','/notify'],['/membership.html?from=collective','/join'],['/faq.html','/how-coins-work'],['/terms/','/terms']]){
    const response=await fetch(origin+old,{redirect:'manual'});assert.equal(response.status,308,old);assert.equal(response.headers.get('location'),current);
   }
+  for(const [old,current] of [['/my-coins','/join'],['/my-coins?nav=game','/join?nav=game'],['/account.html','/join']]){
+   const response=await fetch(origin+old,{redirect:'manual'});assert.equal(response.status,302,old);assert.equal(response.headers.get('location'),current);
+  }
   assert.equal((await fetch(origin+'/site-routes.js')).status,200);
  });
 });
@@ -42,6 +45,7 @@ test('legacy fragments map to distinct screens and game history updates the oute
  assert.equal(canonicalHref('/play.html#leaderboard'),'/leaderboard');
  assert.equal(canonicalHref('/faq.html#contact'),'/contact');
  assert.equal(canonicalHref('/membership.html?from=account'),'/join?from=account');
+ assert.equal(canonicalHref('/game#profile'),'/join');
  assert.equal(canonicalHref('//other.example/path'),'//other.example/path');
  const descriptor=Object.getOwnPropertyDescriptor(globalThis,'window'),calls=[];
  const host={location:{pathname:'/game',search:'',hash:''},history:{state:{sofacetGame:true},pushState:(state,_,url)=>calls.push({state,url}),replaceState:(state,_,url)=>calls.push({state,url})}};

@@ -135,6 +135,10 @@ const server=createServer(async(request,response)=>{
   if(path.startsWith('/api/'))return await api(request,response,path);
   if(request.method!=='GET'&&request.method!=='HEAD')fail(405,'Method not allowed.');
   const requested=new URL(request.url,'http://localhost');
+  if(path==='/my-coins'||path==='/account.html'&&requested.searchParams.get('view')!=='signin'){
+   requested.pathname='/join';requested.searchParams.delete('view');
+   response.writeHead(302,{Location:requested.pathname+requested.search,'Cache-Control':'no-store'});response.end();return;
+  }
   const canonical=canonicalHref(path+requested.search);
   if(canonical!==path+requested.search){response.writeHead(308,{Location:canonical,'Cache-Control':'no-cache'});response.end();return;}
   if(path==='/launch'){

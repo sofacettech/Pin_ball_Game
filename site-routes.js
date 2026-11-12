@@ -2,7 +2,7 @@
 export const routeDocuments=Object.freeze({
  '/':'entrance-3d.html','/game':'play.html','/leaderboard':'play.html','/reward':'play.html',
  '/sign-in':'account.html','/join':'membership.html','/verify':'membership.html',
- '/coins-saved':'membership.html','/my-coins':'account.html',
+ '/coins-saved':'membership.html',
  '/launch':'launching-soon.html','/notify':'notify.html','/confirmation':'first-cuts-confirmation.html',
  '/about':'about.html','/how-coins-work':'faq.html','/contact':'faq.html',
  '/terms':'terms.html','/privacy':'privacy.html','/404':'404.html',
@@ -20,7 +20,7 @@ export function canonicalHref(href){
  const path=url.pathname.replace(/\/$/,'')||'/';
  url.pathname=legacy[path]||path;
  if(url.pathname==='/game'&&url.hash==='#leaderboard'){url.pathname='/leaderboard';url.hash='';}
- if(url.pathname==='/game'&&url.hash==='#profile'){url.pathname='/my-coins';url.hash='';}
+ if(url.pathname==='/game'&&url.hash==='#profile'){url.pathname='/join';url.hash='';}
  if(url.pathname==='/how-coins-work'&&['#contact','#topic-contact','#faq-contact'].includes(url.hash)){url.pathname='/contact';url.hash='';}
  if(path==='/membership.html'){
   if(url.searchParams.get('from')==='score')url.pathname='/notify';

@@ -39,7 +39,6 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     <div className="auth-flow-actions">
       <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
       {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
-      <a href={accountNavigationHref('/my-coins')} target="_top" onClick={event=>{if(embedded&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();post({type:'sofacet:visit-saved-account'});}}}>My SO/ COINS</a>
     </div>
     {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
       <h2 id={shareTitle}>Share my score</h2>
@@ -93,7 +92,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
       if(session.signedIn&&!forceVerification){
         setMemberCheck('member');
         if(embedded)post({type:'sofacet:membership-existing'});
-        else location.replace(accountNavigationHref(location.pathname==='/join'?'/notify':'/my-coins'));
+        else location.replace(accountNavigationHref('/notify'));
       }
       else {setMemberCheck('guest');if(forceVerification){setTab('registered');setStatus('Please verify your phone again to save your SO/ COINS.');}}
     }).catch(error=>{if(!abort.signal.aborted){setMemberCheck('error');setStatus(error.message);}});
@@ -142,7 +141,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     writeScreenData('reward',null);if(value.pointsSaved)writeScreenData('saved',{pointsSaved:true,savedPoints:value.savedPoints,score,player:{member:true,display_name:value.player.display_name}});
     if(embedded)post({type:'contest-registration:complete',player:value.player});
     else if(completeRef.current)await completeRef.current(value);
-    else if(!value.pointsSaved)location.replace(accountNavigationHref(firstCut&&challenge?.kind==='signup'?'/confirmation':'/my-coins'));
+    else if(!value.pointsSaved)location.replace(accountNavigationHref(firstCut&&challenge?.kind==='signup'?'/confirmation':'/notify'));
   }
   const createAccount=values=>perform(async signal=>{
     const profile=registrationDetails(values);
