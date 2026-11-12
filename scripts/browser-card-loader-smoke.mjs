@@ -55,8 +55,9 @@ try{await withRewardsSite(async({origin})=>{
    await capture(page,width+'-diamond');
    if(mobile){
     await swipe(page,90);await checkTravel(page,true);await settled(page,'Pinball');await capture(page,width+'-pinball');
-    const {x,y}=await point(page);await page.touchscreen.tap(x,y);await page.waitForFunction(()=>document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');await capture(page,width+'-back');
-    await page.touchscreen.tap(x,y);await page.waitForFunction(()=>!document.querySelector('.game-loader-cards .sofacet-card[data-slot="0"]').classList.contains('is-reversed')&&document.querySelector('.game-loader-cards .stage').getAttribute('aria-busy')==='false');
+    const {x,y}=await point(page);await page.touchscreen.tap(x,y);
+    assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false,'A mobile tap does not flip the card');
+    assert.equal(await page.locator('.game-loader-cards .stage').getAttribute('aria-busy'),'false','A mobile tap does not advance the deck');
     await swipe(page,-90);await checkTravel(page,false);await settled(page,'Jewellery');
    }else{
     const {x,y}=await point(page);await page.mouse.click(x,y);await checkTravel(page,false);await settled(page,'Pinball');assert.equal(await page.locator(activeCard).evaluate(e=>e.classList.contains('is-reversed')),false);await capture(page,width+'-pinball');
@@ -71,7 +72,7 @@ try{await withRewardsSite(async({origin})=>{
    if(engine==='chromium')release();else await page.evaluate(()=>window.sofacetGameLoader.ready());
    await page.waitForFunction(()=>document.querySelector('#stage').dataset.ready==='true'&&document.querySelector('#game-loading-screen').hidden&&!document.body.hasAttribute('data-game-loading'),null,{timeout:90000});
    if(engine==='chromium')await page.locator('#table-intro').waitFor();
-   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'Three-card progression, mobile flip, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
+   assert.deepEqual(errors,[]);report.push({width,mobile,flows:'Three-card progression, mobile swipe only, visibility pause, game-ready handoff',game:engine==='chromium'?'actual game initialization':'controller only; Windows WebKit has no AudioContext',swipes:mobile?(engine==='chromium'?'native':'PointerEvent simulation'):undefined});
   }finally{release();await context.close()}
  }
  const page=await browser.newPage({viewport:{width:375,height:844},reducedMotion:'reduce'});

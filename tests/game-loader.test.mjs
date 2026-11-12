@@ -96,8 +96,10 @@ test('all generated shells contain the approved React card artwork and replace t
  const shell=withGameLoader('<html><head></head><body></body></html>',{game:true,entry:'./assets/game.js'});
  assert.match(shell,/data-game-entry="\.\/assets\/game.js"/);assert.match(shell,/game-loader-cards-root/);assert.doesNotMatch(shell,/<canvas|id="loading-statement"/);assert.equal((shell.match(/class="sofacet-card"/g)||[]).length,3);
  assert.equal((withGameLoader(shell,{game:true,entry:'./assets/game.js'}).match(/id="game-loading-screen"/g)||[]).length,1);
- for(const file of ['index.html','play.html','about.html','account.html','faq.html','membership.html','privacy.html','terms.html','launching-soon.html','first-cuts-confirmation.html','entrance-3d.html']){
+ for(const file of ['index.html','play.html','about.html','account.html','faq.html','membership.html','privacy.html','terms.html','launching-soon.html','first-cuts-confirmation.html','entrance-3d.html','notify.html','404.html']){
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8'),markup=html.match(/<!-- game-loader-body -->([\s\S]*?)<!-- \/game-loader-body -->/)?.[1];assert.match(markup,/game-loader-cards-root/,file);assert.doesNotMatch(markup,/<canvas|id="loading-statement"/,file);
+  assert.equal((html.match(/id="page-loader-css"/g)||[]).length,1,`${file} has one initial CSS loader`);
+  assert.equal((html.match(/id="game-loader-critical"/g)||[]).length,1,`${file} has one game loader stylesheet`);
  }
 });
 test('handoff waits for both the table and the three cards, in either order',async()=>{
@@ -159,7 +161,7 @@ test('the deck waits for artwork while the table prepares in parallel',async()=>
  }
 });
 
-test('visible cards each get 8 seconds, and a manual advance resets the timer for the next card',()=>{
+test('mobile taps do nothing, while visible cards auto-advance and arrow keys reset the timer',()=>{
  const cardMotion=readFileSync(new URL('../loader-source/card-motion.js',import.meta.url),'utf8').replace('export function','function');
  const node=()=>Object.assign(new EventTarget(),{dataset:{},style:{},classList:{toggle(){}},setAttribute(name,value){this[name]=value}});
  const deck=node(),stage=node(),status=node(),document=Object.assign(new EventTarget(),{hidden:false});
@@ -169,7 +171,7 @@ test('visible cards each get 8 seconds, and a manual advance resets the timer fo
   querySelector:selector=>({'.stage':stage,'.deck':deck,'[data-card-status]':status}[selector])
  });
  let time=0,completed=0,id=0;
- const timers=new Map(),context={root,document,AbortController,matchMedia:()=>({matches:true}),performance:{now:()=>time},
+ const timers=new Map(),context={root,document,AbortController,innerWidth:375,matchMedia:()=>({matches:true}),performance:{now:()=>time},
   setTimeout(callback,delay){timers.set(++id,{callback,at:time+delay});return id},clearTimeout:key=>timers.delete(key),
   done:()=>completed++
  };
@@ -181,6 +183,7 @@ test('visible cards each get 8 seconds, and a manual advance resets the timer fo
  const front=()=>cards.findIndex(card=>card.dataset.slot===0);
  advance(45000);assert.equal(front(),0,'No timer while the deck is hidden');
  context.motion.setActive(true);
+ deck.dispatchEvent(new Event('click'));assert.equal(front(),0,'A mobile tap does not advance the card');assert.match(deck['aria-label'],/Front view/);
  advance(7999);assert.equal(front(),0);
  advance(1);assert.equal(front(),1);
  advance(3000);assert.equal(front(),1);

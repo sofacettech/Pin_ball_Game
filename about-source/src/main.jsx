@@ -76,7 +76,6 @@ export function AboutPage(){
     <a className="text-link" href="#top" data-reveal style={{"--order": "3"}}>Back to the top <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></a>
   </section>
 </main>
-<button className="gallery-launch" data-open-gallery hidden>All pictures <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></svg></button>
 <dialog className="gallery-dialog" aria-labelledby="gallery-title">
   <div className="gallery-toolbar"><h2 id="gallery-title">Our collections</h2><button className="icon-button" data-close-gallery aria-label="Close pictures"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
   <figure className="lightbox-figure"><img className="lightbox-image" alt=""/><figcaption aria-live="polite"></figcaption></figure>

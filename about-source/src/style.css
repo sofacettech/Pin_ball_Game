@@ -48,7 +48,7 @@ body:has(dialog[open]){overflow:hidden}
 #about-root .philosophy-image{width:min(1080px,84%);margin:96px auto 0}
 #about-root .philosophy-image .image-window{aspect-ratio:1122/286}
 #about-root .collection-intro{padding-top:160px;padding-bottom:96px}
-#about-root .collection-intro h2{font-family:Fancy,Georgia,serif !important;font-size:clamp(44px,4.5vw,66px);line-height:1.1;letter-spacing:-.02em !important;text-transform:none !important}
+#about-root :is(#philosophy-title,.collection-intro h2){font-family:Fancy,Georgia,serif !important;font-size:clamp(44px,4.5vw,66px);line-height:1.1;letter-spacing:-.02em !important;text-transform:none !important}
 #about-root .gallery{max-width:1120px;margin-inline:auto;padding:0 70px}
 #about-root .gallery-pair{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(80px,14vw,210px);align-items:start;margin-bottom:96px}
 #about-root .gallery-figure{width:100%;max-width:312px;justify-self:start;min-width:0}
@@ -60,7 +60,7 @@ body:has(dialog[open]){overflow:hidden}
 #about-root .image-button{display:block;width:100%;padding:0;border:0;background:none;text-align:left;position:relative}
 #about-root .gallery .image-window{aspect-ratio:175/278}
 #about-root .image-button img{transition:transform 700ms var(--ease)}
-#about-root .image-caption{display:block;font-family:Fancy,Georgia,serif !important;font-size:19px;line-height:1.4;font-weight:400 !important;letter-spacing:0 !important;color:var(--ink);padding-top:16px;text-wrap:pretty}
+#about-root .image-caption{display:block;font-family:Fancy,Georgia,serif !important;font-size:19px;line-height:1.4;font-weight:400 !important;letter-spacing:0 !important;text-transform:none !important;color:var(--ink);padding-top:16px;text-wrap:pretty}
 #about-root .closing{text-align:center;padding:160px 24px 144px}
 #about-root .closing>.closing-intro{font-family:Fancy,Georgia,serif !important;max-width:39ch;margin:0 auto 48px;font-size:clamp(21px,1.8vw,26px);line-height:1.5;color:var(--muted);text-wrap:pretty}
 #about-root .closing-intro span{display:block}
@@ -85,8 +85,6 @@ body:has(dialog[open]){overflow:hidden}
 #about-root .soon-close{position:absolute;top:10px;right:10px}
 #about-root .sr-only{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
 #about-root svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round}
-#about-root .gallery-launch{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9;display:flex;gap:22px;align-items:center;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:0;padding:13px 18px;font:400 11px/1.4 BrilliantRegular,Arial,sans-serif !important;letter-spacing:.06em !important;text-transform:uppercase !important;min-height:45px;transition:background-color 250ms,color 250ms}
-#about-root .gallery-launch svg{width:16px;height:16px;stroke-width:1}
 #about-root .gallery-dialog{width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:24px 40px;border:0;background:var(--paper);color:var(--ink)}
 #about-root .gallery-dialog[open]{display:flex;flex-direction:column}
 #about-root .gallery-dialog::backdrop{background:var(--paper)}
@@ -103,7 +101,6 @@ body:has(dialog[open]){overflow:hidden}
   #about-root .image-button:hover img,#about-root .image-button:focus-visible img{transform:scale(1.025)}
   #about-root .text-link:hover::after,#about-root .text-link:focus-visible::after{transform:scaleX(1);transform-origin:left}
   #about-root .text-link:hover,#about-root .masthead a:hover{color:var(--purple)}
-  #about-root .gallery-launch:hover{background:var(--ink);color:var(--paper)}
   #about-root .icon-button:hover{background:#222025}
   #about-root .action-button:hover>svg{transform:translate(3px,-50%)}
 }
@@ -158,7 +155,6 @@ body:has(dialog[open]){overflow:hidden}
   #about-root .closing-actions{gap:12px;flex-direction:column;align-items:center;margin-top:32px}
   #about-root .closing-actions .action-button{width:min(100%,340px)}
   #about-root .coming-soon{padding-inline:24px}#about-root .coming-soon h2{font-size:36px}
-  #about-root .gallery-launch{bottom:18px;padding:12px 14px;font-size:10px;gap:18px}
   #about-root .gallery-dialog{padding:14px 18px}#about-root .lightbox-figure{padding-inline:0;gap:16px}
   #about-root .lightbox-image{max-width:88vw;max-height:calc(100dvh - 250px)}
   #about-root .lightbox-figure figcaption{font-size:22px;max-width:28ch}
@@ -186,7 +182,6 @@ body:has(dialog[open]){overflow:hidden}
 #about-root{font:400 18px/1.5 BrilliantRegular,Arial,sans-serif}
 #about-root h1{text-transform:none!important}
 #about-root .section-label{font-family:BrilliantRegular,Arial,sans-serif!important}
-@media(max-width:600px){#about-root .gallery-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
 .site-sound{position:fixed;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#fff;font:400 13px/1.2 'Josefin Sans',sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sound-text{display:grid;overflow:hidden;padding:2px 0}
 .sound-state{grid-area:1/1;justify-self:end;white-space:nowrap}

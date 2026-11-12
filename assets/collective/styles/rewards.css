@@ -160,8 +160,8 @@
   #post-game-rewards .design-rewards .separator{margin-top:35px;}
   #post-game-rewards .design-rewards .actions{padding-top:30px;}
   #post-game-rewards .design-rewards .notice{font-size:14px;line-height:1.5;}
-  #post-game-rewards .design-rewards .buttons{flex-direction:row;gap:10px;}
-  #post-game-rewards .design-rewards .btn{width:50%;min-height:54px;font-size:12px;padding:0 10px;gap:8px;}
+  #post-game-rewards .design-rewards .buttons{flex-direction:column;gap:10px;}
+  #post-game-rewards .design-rewards .text-layer .btn{flex:0 0 auto;width:100%;min-height:54px;font-size:12px;padding:0 16px;gap:8px;}
   #post-game-rewards .design-rewards .leaderboard{margin-top:27px;}
 }
 
