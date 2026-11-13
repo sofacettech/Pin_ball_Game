@@ -28,7 +28,23 @@ try{
     const url=new URL(base);url.searchParams.delete('entrance');url.searchParams.delete('version');
     if(option!=='default')url.searchParams.set(process.env.SOFACET_ENTRANCE_PARAMETER||'entrance',option);
     url.hash='experience';
-    await page.goto(url.href);
+    // Returning visitors skip the reveal but still need the logo while the
+    // complete video buffers. Hold real media requests to observe that state.
+    let releaseMedia;
+    const mediaGate=new Promise(resolve=>{releaseMedia=resolve});
+    const mediaPattern=/(?:\/assets\/entrance-video\/(?:opening|journey)\.mp4|\/entrance-(?:opening|journey)-[a-f0-9]+\.mp4)/;
+    await page.route(mediaPattern,async route=>{await mediaGate;await route.continue()});
+    let loadingLogo;
+    try{
+      await page.goto(url.href);
+      await page.locator('#site-loader[data-preparing][data-waiting]').waitFor();
+      assert.equal(await page.locator('#site-loader #scene').isVisible(),true,'Skipped intro must retain its static logo during video preparation');
+      loadingLogo=await page.evaluate(()=>({visible:getComputedStyle(document.querySelector('#site-loader #scene')).visibility,
+        phase:document.querySelector('#loading-stage').dataset.phase??null,audioPaused:document.querySelector('#introAudio').paused}));
+      assert.equal(loadingLogo.phase,null,'Do not replay the intro on return');
+      assert.equal(loadingLogo.audioPaused,true,'Static loading must not start intro audio');
+      await page.screenshot({path:new URL(`${engine}-${name}-loading-logo.png`,output).pathname});
+    }finally{releaseMedia();}
     await page.waitForFunction(()=>window.entrancePreview?.ready,null,{timeout:180000});
     const startup=await page.evaluate(()=>({quality:window.entrancePreview.quality,scripts:Array.from(document.scripts,s=>s.src).filter(src=>src.includes('/assets/entrance-3d/entry-')),atMs:performance.now()}));
     assertVideoStartupPolicy(startup.quality);
@@ -126,7 +142,7 @@ try{
     if(!cropOnly)await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
     if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
     assert.deepEqual(errors,[]);
-    report.push({name,engine,option,startup,quality,openingResponse,coldJump,completion,geometry,...name==='desktop'||cropOnly?{pixelFidelity}:{},noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:!cropOnly,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
+    report.push({name,engine,option,loadingLogo,startup,quality,openingResponse,coldJump,completion,geometry,...name==='desktop'||cropOnly?{pixelFidelity}:{},noModelDownload:true,forwardReverseAndRotation:true,gameHandoff:!cropOnly,cdn:process.env.SOFACET_EXPECT_ENTRANCE_CDN||null,errors});
     await context.close();
   }
   // The explicit live 3D alternative must not prefetch video media.
