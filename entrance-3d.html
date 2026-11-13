@@ -355,9 +355,10 @@ body[data-loading] .social-links,body[data-game="visible"] .social-links{visibil
  .social-profiles a{width:44px;justify-content:center}
 }
 </style>
-<style data-shared-style="./assets/loading/intro.css?v=return-c0b7a332">body[data-loading]{overflow:hidden}
+<style data-shared-style="./assets/loading/intro.css?v=return-0c48d3779e03">body[data-loading]{overflow:hidden}
 [data-skip-intro] #site-loader{display:none}
 [data-skip-intro] #site-loader[data-preparing]{display:block}
+[data-skip-intro] #site-loader[data-preparing] #scene{visibility:visible}
 #site-loader[data-waiting] #scene{animation:preparation-pulse 1.8s ease-in-out infinite}
 @keyframes preparation-pulse{0%,100%{opacity:.65}50%{opacity:1}}
 #site-loader{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 52%,#020402,#000100 44%);color-scheme:dark;opacity:1;transition:opacity .45s ease}
