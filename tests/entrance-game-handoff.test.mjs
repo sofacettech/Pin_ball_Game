@@ -20,7 +20,7 @@ function videoView({initial=2162,target=2164,coarse=true,reducedMotion=false}={}
   requestTick(){},enterGame:options=>handoffs.push(options),
  };
  vm.runInNewContext(source.slice(source.indexOf('function tick(now){'),source.indexOf('function presentJourneyFrame(')),context);
- return {context,handoffs,requests,decoded(now){context.journey.settled=true;context.presentedFrame=context.frame;context.finalFramePresentedAt=now}};
+ return {context,handoffs,requests,decoded(){context.journey.settled=true;context.presentedFrame=context.frame;context.finalFramePresentedAt=Infinity}};
 }
 
 test('touch scrolling immediately requests the latest opening pose while an older decode is pending',()=>{
@@ -57,8 +57,17 @@ test('automatic cards wait for the final decoded frame and its screen presentati
  assert.equal(view.handoffs.length,0,'the final source picture must actually be presented');
  view.decoded(100);view.context.tick(110);
  assert.equal(view.handoffs.length,0,'the last image needs a screen presentation interval');
- view.context.tick(301);
+ view.context.tick(311);
  assert.equal(view.handoffs.length,1);assert.equal(view.handoffs[0].fromChess,true);
+});
+
+test('a long task after final decoding cannot expire the hold before its first rendering opportunity',()=>{
+ const view=videoView({initial:2164});view.context.tick(40);view.decoded(100);
+ view.context.tick(400);
+ assert.equal(view.handoffs.length,0,'the first RAF after a stalled decode must retain the final canvas');
+ assert.equal(view.context.finalFramePresentedAt,400);
+ view.context.tick(599);assert.equal(view.handoffs.length,0);
+ view.context.tick(601);assert.equal(view.handoffs.length,1);
 });
 
 test('scrolling back from the final frame cancels automatic entry into the cards',()=>{

@@ -175,7 +175,14 @@ function tick(now){
   if(frame===lastFrame&&target===lastFrame){
     // A completed scroll/seek is not enough: leave the decoded final picture
     // on screen for a presentation interval before the opaque cards replace it.
-    if(videoEntrance&&(!journey.settled||presentedFrame!==lastFrame||now-finalFramePresentedAt<FINAL_FRAME_HOLD_MS)){requestTick();return;}
+    if(videoEntrance){
+      if(!journey.settled||presentedFrame!==lastFrame){requestTick();return;}
+      // A decode callback can run before a long task. Start the hold on the
+      // next eligible RAF and leave this rendering opportunity intact, instead
+      // of expiring the hold before the final canvas could ever be painted.
+      if(finalFramePresentedAt===Infinity)finalFramePresentedAt=now;
+      if(now-finalFramePresentedAt<FINAL_FRAME_HOLD_MS){requestTick();return;}
+    }
     enterGame({fromChess:true});return;
   }
   if(frame!==target)requestTick();else lastTime=0;
@@ -236,7 +243,7 @@ try{
       onStatus:message=>{if(message)setStartupStatus(message);},
       onRender:({frame:drawnFrame})=>{
         if(videoEntrance){
-          presentedFrame=drawnFrame;finalFramePresentedAt=drawnFrame===lastFrame?performance.now():Infinity;placeStage();
+          presentedFrame=drawnFrame;finalFramePresentedAt=Infinity;placeStage();
           if(ready&&phase!=='assembly')presentJourneyFrame(drawnFrame);
         }
         frameRate?.record();
