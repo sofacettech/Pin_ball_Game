@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {advanceJourneyFrame,FINAL_FRAME_HOLD_MS} from '../entrance-source/journey-motion.mjs';
+import {advanceJourneyFrame,createJourneyCompletion,FINAL_FRAME_HOLD_MS} from '../entrance-source/journey-motion.mjs';
 
 // Run the production handoff with a fake clock and child document. Network
 // speed must not turn a still-loading iframe into a permanent error screen.
@@ -13,7 +13,7 @@ function videoView({initial=2162,target=2164,coarse=true,reducedMotion=false}={}
  const handoffs=[],requests=[];
  let wanted;
  const context={raf:0,ready:true,gameRequested:false,phase:'idle',frame:initial,target,lastFrame:2164,lastTime:0,
-  presentedFrame:initial,finalFramePresentedAt:Infinity,videoEntrance:true,advanceJourneyFrame,FINAL_FRAME_HOLD_MS,
+  presentedFrame:initial,finalFramePresentedAt:Infinity,videoEntrance:true,advanceJourneyFrame,FINAL_FRAME_HOLD_MS,completion:createJourneyCompletion(2164),
   coarse:{matches:coarse},reduced:{matches:reducedMotion},
   document:{hidden:false},performance:{now:()=>0},
   journey:{settled:true,profileFrames:[],renderAt(frame){requests.push(frame);if(wanted!==frame){wanted=frame;this.settled=false}}},
@@ -49,7 +49,7 @@ test('reduced-motion video scrolling directly selects its destination',()=>{
 });
 
 test('automatic cards wait for the final decoded frame and its screen presentation',()=>{
- const view=videoView();
+ const view=videoView({initial:2164});
  view.context.tick(40);view.context.tick(90);
  assert.equal(view.context.frame,2164,'the requested playhead has reached the end');
  assert.equal(view.handoffs.length,0,'an unfinished decode must not open the cards');
@@ -57,12 +57,12 @@ test('automatic cards wait for the final decoded frame and its screen presentati
  assert.equal(view.handoffs.length,0,'the final source picture must actually be presented');
  view.decoded(100);view.context.tick(110);
  assert.equal(view.handoffs.length,0,'the last image needs a screen presentation interval');
- view.context.tick(134);
+ view.context.tick(301);
  assert.equal(view.handoffs.length,1);assert.equal(view.handoffs[0].fromChess,true);
 });
 
 test('scrolling back from the final frame cancels automatic entry into the cards',()=>{
- const view=videoView();view.context.tick(40);view.decoded(50);
+ const view=videoView({initial:2164});view.context.tick(40);view.decoded(50);
  view.context.tick(72);view.context.target=2100;view.context.tick(86);
  assert.equal(view.context.frame,2100,'reverse input must leave the final frame immediately');
  assert.equal(view.handoffs.length,0,'a reversal must cancel entry before the final-frame hold ends');

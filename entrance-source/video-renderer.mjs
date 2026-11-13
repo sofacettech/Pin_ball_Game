@@ -33,7 +33,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       lastMs:paintTimes.at(-1)??0,sampleCount:sorted.length,canvasResizes,
       timing:'Canvas sizing, style updates and drawImage submission; excludes GPU completion and copy callback'};
   }
-  let openingPlaying=false,openingCallback=null,autoplayBlocked=false;
+  let openingPlaying=false,openingCallback=null,autoplayBlocked=false,openingReady=false,openingLoading=null;
   const waiters=new Set();
   const equal=(a,b)=>a&&b&&a.kind===b.kind&&a.index===b.index;
   const settled=()=>!!equal(wanted,painted)&&!!equal(wanted,displayed);
@@ -73,6 +73,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       if(paintTimes.length===180)paintTimes.shift();paintTimes.push(elapsed);
     }
     crop=view;displayed=request;painted=request;sourceWidth=width;sourceHeight=height;
+    if(request.kind==='journey')releaseOpening();
     onRender({frame:drawnFrame,width:canvas.width,height:canvas.height});
     if(settled()){for(const waiter of waiters)waiter.resolve();waiters.clear();}
   }
@@ -82,7 +83,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
   }
   function pump(){
     if(disposed||suspended||failure||pending||!wanted)return;
-    if(wanted.kind==='opening'&&openingPlaying)return;
+    if(wanted.kind==='opening'&&(!openingReady||openingPlaying))return;
     if(!settled()&&prepared){
       const ready=prepared;prepared=null;
       if(equal(ready.request,wanted)){paint(wanted,ready.video);pump();return;}
@@ -134,9 +135,20 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
     if(openingCallback!==null)videos.opening?.cancelVideoFrameCallback(openingCallback);
     openingCallback=null;
   }
+  function releaseOpening(){
+    const video=videos.opening;if(!video)return;
+    stopOpening();openingReady=false;delete videos.opening;
+    // The canvas now owns a journey picture. Unload the finished native
+    // decoder; retain compressed bytes so assembly replay/BFCache stays local.
+    video.removeAttribute('src');video.load();buffer.revokeURL?.(clips.opening.url);
+  }
+  function ensureOpening(){
+    if(videos.opening)return openingLoading??Promise.resolve();
+    return openingLoading=loadNative('opening').finally(()=>{openingLoading=null});
+  }
   function playOpening(){
     const video=videos.opening;
-    if(disposed||suspended||!openingPlaying)return;
+    if(disposed||suspended||!openingPlaying||!video)return;
     if(openingCallback===null)openingCallback=video.requestVideoFrameCallback((_now,metadata)=>{
       openingCallback=null;
       if(!openingPlaying||suspended||disposed)return;
@@ -154,6 +166,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       const clear=()=>{clearTimeout(timer);loadingTimers.delete(timer)};
       const arm=()=>{clear();timer=setTimeout(()=>retryOrFail(Error('Rendered entrance loading timed out')),30000);loadingTimers.add(timer)};
       const retryOrFail=error=>{
+        if(videos[kind]!==video||disposed)return;
         clear();
         if(!local&&!disposed){
           local=true;
@@ -166,13 +179,15 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       arm();
       events.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Entrance disposed','AbortError'));},{once:true});
       const loaded=()=>{
+        if(videos[kind]!==video||disposed)return;
         const width=local?(clips[kind].localWidth??1920):manifest.width,height=local?(clips[kind].localHeight??1080):manifest.height;
         if(video.videoWidth!==width||video.videoHeight!==height||Math.abs(video.duration-manifest.clips[kind].frameCount/60)>.02){retryOrFail(Error('Rendered entrance media does not match its manifest'));return}
-        clear();resolve();pump();
+        clear();if(kind==='opening')openingReady=true;resolve();pump();
       };
       video.addEventListener('loadeddata',loaded,{signal:events.signal});
       video.addEventListener('error',()=>retryOrFail(Error('Rendered entrance video failed')),{signal:events.signal});
       video.addEventListener('seeked',()=>{
+        if(videos[kind]!==video||disposed)return;
         if(!pending||pending.kind!==kind)return;
         const request=pending;pending=null;clearTimeout(timeout);
         paint(request);pump();
@@ -197,7 +212,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       buffer=createPreloadedVideo([clips.opening,clips.journey],{onProgress});
       await buffer.load();
     }
-    await Promise.all([loadNative('opening'),prepareJourney()]);
+    await Promise.all([ensureOpening(),prepareJourney()]);
   }
   return {
     loadVariant,
@@ -207,9 +222,10 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
     },
     renderAssemblyAt(frame){
       const index=Math.max(0,Math.min(239,Math.round(frame)-1)),video=videos.opening;
+      if(!video)void ensureOpening().catch(fail);
       // Frame 1 stays paused under the loader. Once the assembly clock starts,
       // native playback delivers consecutive frames without repeated seeks.
-      if(index>0&&painted?.kind==='opening'&&!pending&&!autoplayBlocked&&video.requestVideoFrameCallback){
+      if(index>0&&painted?.kind==='opening'&&!pending&&!autoplayBlocked&&video?.requestVideoFrameCallback){
         wanted={kind:'opening',index};openingPlaying=true;playOpening();
       }else select('opening',index);
     },
@@ -231,7 +247,7 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}
       for(const waiter of waiters)waiter.reject(new DOMException('Entrance disposed','AbortError'));waiters.clear();canvas.remove();
     },
-    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preloaded:buffer.ready,preloadedBytes:buffer.bytes,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null}:{})}},batchingMode:'video',
+    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preloaded:buffer.ready,preloadedBytes:buffer.bytes,openingResident:!!videos.opening,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null}:{})}},batchingMode:'video',
     renderer:{domElement:canvas,getPixelRatio:()=>1,info:{render:{calls:0,triangles:0}}},
   };
 }

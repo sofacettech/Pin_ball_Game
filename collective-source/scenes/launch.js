@@ -109,8 +109,18 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel']){
   const rig={img,canvas,gl,program,uniforms,config,count:coords.length/2,aspect:1};
   const sizeObserver=new ResizeObserver(()=>{size(rig);draw(rig,elapsed);});
   sizeObserver.observe(img);size(rig);
-  rig.release=()=>{sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();gl.getExtension('WEBGL_lose_context')?.loseContext();};
-  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();rigs.delete(img);});
+  // srcset can upgrade this same element after rotation, resize or DPR changes.
+  // Refresh the texture once the new candidate finishes instead of stretching
+  // the texture created at the old viewport's resolution.
+  const refreshTexture=()=>{
+   if(gl.isContextLost()||!img.complete||!img.naturalWidth)return;
+   gl.bindTexture(gl.TEXTURE_2D,texture);
+   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+   gl.generateMipmap(gl.TEXTURE_2D);size(rig);draw(rig,elapsed);
+  };
+  img.addEventListener('load',refreshTexture);
+  rig.release=()=>{img.removeEventListener('load',refreshTexture);sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();gl.getExtension('WEBGL_lose_context')?.loseContext();};
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();img.removeEventListener('load',refreshTexture);sizeObserver.disconnect();img.classList.remove('petal-rendered');canvas.remove();rigs.delete(img);});
   return rig;
  }
  // Layout is stable between resizes; do not read it after each flower draw.

@@ -97,19 +97,31 @@ try{
     if(process.env.SOFACET_EXPECT_ENTRANCE_STREAMING==='1')assert.equal(await page.evaluate(()=>window.entrancePreview.quality.streaming),true,'The complete journey must keep using streamed decoding');
     const completion=cropOnly?null:await page.evaluate(y=>new Promise((resolve,reject)=>{
       const start=performance.now(),initialFrame=window.entrancePreview.displayedFrame;
-      let lastVisibleFrame=initialFrame,maxFrameStep=0;
+      let lastVisibleFrame=initialFrame,maxFrameStep=0,approachPictures=0,maxApproachStep=0,impactAt=null;
       const timer=setTimeout(()=>reject(Error('Video completion timed out')),60000);
       function sample(now){
         const state=window.entrancePreview;
         if(document.body.hasAttribute('data-game-loading')||state.gameVisible){
-          clearTimeout(timer);resolve({initialFrame,lastVisibleFrame,maxFrameStep,elapsedMs:now-start});return;
+          clearTimeout(timer);resolve({initialFrame,lastVisibleFrame,maxFrameStep,approachPictures,maxApproachStep,impactHoldMs:impactAt===null?0:now-impactAt,elapsedMs:now-start});return;
         }
         maxFrameStep=Math.max(maxFrameStep,Math.abs(state.displayedFrame-lastVisibleFrame));
+        if(state.displayedFrame>=2000&&state.displayedFrame!==lastVisibleFrame){
+          approachPictures++;
+          if(lastVisibleFrame>=2000)maxApproachStep=Math.max(maxApproachStep,state.displayedFrame-lastVisibleFrame);
+        }
+        if(state.displayedFrame===2164&&impactAt===null)impactAt=now;
         lastVisibleFrame=state.displayedFrame;requestAnimationFrame(sample);
       }
       scrollTo(0,y);requestAnimationFrame(sample);
     }),scroll.travel);
-    if(completion)assert.equal(completion.lastVisibleFrame,2164,'The final decoded picture must appear before the cards');
+    if(completion){
+      assert.equal(completion.lastVisibleFrame,2164,'The final decoded picture must appear before the cards');
+      assert.ok(completion.impactHoldMs>=175,'The impact must remain visible before the opaque cards');
+      if(reducedMotion==='no-preference'){
+        assert.ok(completion.approachPictures>=40,'A fast final swipe must still show the ball approach, not one final still');
+        assert.ok(completion.maxApproachStep<=8,'The ending must not skip over decoded approach poses');
+      }
+    }
     // The original loader owns the reward story and actual game readiness.
     if(!cropOnly)await page.waitForFunction(()=>window.entrancePreview.gameVisible,null,{timeout:60000});
     if(process.env.SOFACET_EXPECT_ENTRANCE_CDN)assert.equal(requests.some(url=>/\/assets\/entrance-video\/(opening|journey)\.mp4/.test(url)),false,'The complete journey must stay on CDN media');
