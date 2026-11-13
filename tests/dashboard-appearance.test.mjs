@@ -2,20 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {createServer} from 'vite';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {fileURLToPath} from 'node:url';
 const main=readFileSync(new URL('../account-source/src/main.jsx',import.meta.url),'utf8');
 
-test('Share my score copies the personal best and reports clipboard success or failure',async()=>{
- const source=main.slice(main.indexOf(' const shareText='),main.indexOf(' const signingIn='));
- for(const rejected of [false,true]){
-  let copied,notice;
-  await vm.runInNewContext(source+';copy()',{
-   account:{bestPoints:3205},number:new Intl.NumberFormat('en-IN'),location:{origin:'https://example.test'},
-   navigator:{clipboard:{async writeText(text){if(rejected)throw Error('Clipboard blocked');copied=text}}},
-   setNotice:value=>{notice=value}
-  });
-  if(rejected){assert.equal(copied,undefined);assert.equal(notice,'Automatic copy is unavailable. Select and copy the score text below.')}
-  else{assert.equal(copied,'I scored 3,205 SO/ COINS on SO/ FACET pinball.\nWhat’s yours?\nhttps://example.test/');assert.equal(notice,'Your score was copied.')}
- }
+test('both share entry points use the score card with the saved score and destinations',async()=>{
+ const auth=readFileSync(new URL('../collective-source/AuthFlow.jsx',import.meta.url),'utf8');
+ assert.match(auth,/ShareScoreDialog score=\{saved\.score\}/);
+ assert.match(main,/ShareScoreDialog score=\{account\.bestPoints\}/);
+ const server=await createServer({root:fileURLToPath(new URL('../shared/',import.meta.url)),server:{middlewareMode:true,hmr:false},optimizeDeps:{noDiscovery:true},appType:'custom'});
+ try{
+  const {default:ShareScoreDialog}=await server.ssrLoadModule('/ShareScoreDialog.jsx');
+  const markup=renderToStaticMarkup(React.createElement(ShareScoreDialog,{score:3205,dialogRef:{current:null}}));
+  assert.match(markup,/Share your score/);
+  assert.match(markup,/3,205/);
+  assert.match(markup,/Copy score &amp; link/);
+  for(const name of ['whatsapp','telegram','x','gmail'])assert.match(markup,new RegExp('/assets/share-icons/'+name+'\\.svg'));
+ }finally{await server.close()}
 });
 
 test('the dashboard mesh supports a pure black surface while existing meshes retain their background',()=>{

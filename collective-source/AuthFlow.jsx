@@ -1,35 +1,23 @@
-import React,{useEffect,useId,useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import AccountPage from './AccountPage.jsx';
 import ClaimPage from './ClaimPage.jsx';
 import {RewardNoticeArtwork} from './artwork/RewardNoticeArtwork.jsx';
 import {request,pendingResult} from '../membership-source/src/api.js';
 import {phoneParts} from '../membership-source/src/phone.js';
 import {normaliseDesignPhone,registrationDetails,registrationPayload} from './auth-values.js';
-import {leaveCopy,rewardMoney,formatPoints,leaderboardName,validPlayerName} from '../game-source/src/player-copy.ts';
+import {leaveCopy,rewardMoney,formatPoints,validPlayerName} from '../game-source/src/player-copy.ts';
 import './flow.css';
 import './reward-notice.css';
 import {brandText} from '../shared/brand-react.jsx';
 import {accountNavigationHref} from '../shared/account-session.js';
+import ShareScoreDialog from '../shared/ShareScoreDialog.jsx';
 import {readScreenData,writeScreenData,setScreenRoute,registrationScreenRoute} from '../site-routes.js';
 
 const embedded=window.parent!==window&&window.name!=='sofacet-game-info';
 const post=data=>{if(embedded)window.parent.postMessage(data,location.origin);};
 export const joinPageTitle='SO/ FACET — Join THE SO/ COLLECTIVE';
 export function SavedConfirmation({saved,status='',onReplay}) {
-  const shareDialog=useRef(null),message=useRef(null),shareTitle=useId();
-  const [shareStatus,setShareStatus]=useState('');
-  const title='SO/ FACET — Pinball',url='https://shopsofacet.com/game';
-  const text=saved?.pointsSaved?`${leaderboardName(saved.player?.display_name)} scored ${formatPoints(saved.score)} SO/ COINS in SO/ FACET Pinball. So/ what’s yours?`:'';
-  const shareText=text+'\n'+url;
-  const encode=encodeURIComponent;
-  async function copyScore(){
-    try{await navigator.clipboard.writeText(shareText);setShareStatus('Your score was copied.');}
-    catch{message.current.focus();message.current.select();setShareStatus('Copy the selected message to share it.');}
-  }
-  async function shareToApps(){
-    try{await navigator.share({title,text,url});}
-    catch(error){if(error.name!=='AbortError')setShareStatus('Choose an app here or copy your score.');}
-  }
+  const shareDialog=useRef(null);
   return brandText(<section className="auth-flow-notice saved-confirmation">
     <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
     {saved?.pointsSaved&&<p>You joined THE SO/ COLLECTIVE.</p>}
@@ -38,23 +26,10 @@ export function SavedConfirmation({saved,status='',onReplay}) {
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
       <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
-      {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>{setShareStatus('');shareDialog.current.showModal();}}>Share my score</button>}
+      {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>shareDialog.current.showModal()}>Share my score</button>}
       {saved?.pointsSaved&&<button type="button" onClick={()=>window.top.location.assign('/notify')}>NOTIFY ME</button>}
     </div>
-    {saved?.pointsSaved&&<dialog className="share-score" ref={shareDialog} aria-labelledby={shareTitle} onKeyDown={event=>{if(event.key==='Escape')event.stopPropagation();}}>
-      <h2 id={shareTitle}>Share my score</h2>
-      <textarea ref={message} aria-label="Score message" rows={4} readOnly value={shareText}/>
-      <div className="share-score-actions">
-        <a href={'https://wa.me/?text='+encode(shareText)} target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        <a href={'https://t.me/share/url?url='+encode(url)+'&text='+encode(text)} target="_blank" rel="noopener noreferrer">Telegram</a>
-        <a href={'https://twitter.com/intent/tweet?text='+encode(text)+'&url='+encode(url)} target="_blank" rel="noopener noreferrer">X</a>
-        <a href={'mailto:?subject='+encode(title)+'&body='+encode(shareText)} target="_top">Email</a>
-        {typeof navigator.share==='function'&&<button type="button" onClick={shareToApps}>More apps</button>}
-        <button type="button" onClick={copyScore}>Copy my score</button>
-        <button type="button" onClick={()=>shareDialog.current.close()}>Done</button>
-      </div>
-      {shareStatus&&<p role="status">{shareStatus}</p>}
-    </dialog>}
+    {saved?.pointsSaved&&<ShareScoreDialog score={saved.score} dialogRef={shareDialog}/>}
   </section>);
 }
 export default function AuthFlow({pageTitle,pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
@@ -210,7 +185,8 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
       </div>
     </section>);
   }
-  if(memberCheck!=='guest')return brandText(<section className="auth-flow-notice" role="status"><p>{memberCheck==='error'?"We couldn't load your SO/ COINS. Please try again.":memberCheck==='member'?'Opening your account…':'Checking your SO/ COINS…'}</p>{status&&memberCheck!=='error'&&<p>{status}</p>}{memberCheck==='error'&&<button onClick={()=>location.reload()}>Try again</button>}</section>);
+  if(memberCheck==='checking'||memberCheck==='member')return null;
+  if(memberCheck==='error')return brandText(<section className="auth-flow-notice" role="alert"><p>We couldn't load your SO/ COINS. Please try again.</p><button type="button" onClick={()=>location.reload()}>Try again</button></section>);
   const inlineSaved=step==='success'&&saved?.pointsSaved;
   const confirmation=step==='success'?<SavedConfirmation saved={saved} status={status} onReplay={replay}/>:null;
   if(confirmation&&!inlineSaved)return confirmation;
