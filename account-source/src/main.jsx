@@ -11,6 +11,7 @@ import {Arrow,Replay} from '../../collective-source/icons.jsx';
 import './style.css';
 import AuthFlow from '../../collective-source/AuthFlow.jsx';
 import {setScreenRoute} from '../../site-routes.js';
+import ShareScoreDialog from '../../shared/ShareScoreDialog.jsx';
 
 const number=new Intl.NumberFormat('en-IN'),formatPhone=value=>phoneParts(value).formatted;
 const draftOf=a=>{const {country,nationalNumber}=phoneParts(a.phoneNumber);return{name:a.name,leaderboardName:a.leaderboardName||a.name,email:a.email||'',country,phoneNumber:nationalNumber,marketingConsent:a.marketingConsent}};
@@ -81,14 +82,11 @@ function App(){
   const values={name:draft.name.trim(),leaderboardName:draft.leaderboardName.trim(),email:draft.email.trim(),phoneNumber:newPhone,marketingConsent:draft.marketingConsent};
   await run(async signal=>{{const result=await request('/api/account/details',values,signal);if(result.success!==true)throw Error('Your changes have not been confirmed.');await load(signal)}setNotice('Your details are updated.')});
  }
- const shareText=account?'I scored '+number.format(account.bestPoints)+' SO/ COINS on SO/ FACET pinball.\nWhat’s yours?\n'+location.origin+'/':'';
- async function copy(){try{await navigator.clipboard.writeText(shareText);setNotice('Your score was copied.')}catch{setNotice('Automatic copy is unavailable. Select and copy the score text below.')}}
  const signingIn=stage==='signin'||stage==='code', codeSent=stage==='code';
  function changeNumber(){setStage('signin');setChallenge(null);setCode('');setResendAt(0);setError('');requestAnimationFrame(()=>document.getElementById('phone')?.focus())}
  const errors=<p className="error" id="account-error" role="alert">{error}</p>;
  if(stage==='signin'||stage==='code')return <AuthFlow pointsContext initialTab="registered" checkMembership={false} forceVerification onComplete={async()=>{const abort=new AbortController();controller.current=abort;try{await load(abort.signal);}catch(error){setError(error.message);setStage('error');}}}/>;
  return brandText(<>{stage==='account'&&<DashboardMesh/>}<a className="skip" href="#main">Skip to content</a><main className="shell" id="main" tabIndex={-1}>
-  {stage==='loading'?<section className="screen loading" aria-live="polite"><div className="loading-line" aria-hidden="true"/><p>Checking your SO/ COINS…</p></section>:null}
   {stage==='error'?<section className="screen removed"><h1 tabIndex={-1}>We couldn't load <em>your SO/ COINS.</em></h1><p className="supporting">Please try again.</p><button className="primary" onClick={()=>void run(load)}>Try again</button></section>:null}
   {signingIn&&<>
     <section className="screen access-screen" aria-labelledby="signin-title">
@@ -138,8 +136,6 @@ function App(){
    <aside className="score-panel" aria-labelledby="score-title"><div className="score-head"><h2 id="score-title">Personal best</h2></div><p className="score-number"><span>{number.format(account.bestPoints)}</span><small>SO/ COINS</small></p><p className="score-message">{account.bestPoints?'Only your best score counts.':'No SO/ COINS saved on this account yet.'}</p><dl className="score-facts"><div><dt>Reward value</dt><dd className="value">₹{number.format(Math.floor(account.savedPoints/10))}</dd></div><div><dt>Leaderboard position</dt><dd>{account.rank?'#'+account.rank:'Not ranked'}</dd></div><div><dt>Reward status</dt><dd>{account.savedPoints?'Saved for launch':'No saved SO/ COINS'}</dd></div></dl><button className="secondary" type="button" disabled={!account.bestPoints} onClick={()=>open('share')}>Share my score</button><details className="reward-details"><summary>Redemption details</summary><p>1,000 SO/ COINS = ₹100 off your SO/ FACET purchases. SO/ COINS become redeemable when we launch.</p><p>SO/ COINS can cover up to 10% of the diamond value and making charges. They don’t apply to metal value, GST or shipping.</p><p>SO/ COINS aren’t transferable and can’t be combined with other offers or sale prices. Unused SO/ COINS stay available until they expire.</p></details></aside></div>
    <div className="account-exit-actions"><a className="dashboard-action account-exit-primary" href={accountNavigationHref('/notify')}><span>Exit</span><Arrow/></a><a className="dashboard-action" href="/game"><span>Play again</span></a></div>
   </section>:null}
- </main>{modal?<dialog ref={dialog} aria-labelledby="dialog-title" onCancel={event=>{event.preventDefault();close()}}><button className="close" type="button" aria-label="Close dialog" onClick={close}><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg></button><h2 id="dialog-title">{modal==='share'?'Your score. Your move.':'HOW SO/ COINS WORK'}</h2>
-  {modal==='share'?<><p className="share-text">{shareText}</p><div className="dialog-actions"><button className="primary" onClick={()=>void copy()}>Copy my score</button><button className="text-button" onClick={close}>Done</button></div><p role="status">{notice}</p></>:<><p>1,000 SO/ COINS = ₹100 off SO/ FACET diamond jewellery. SO/ COINS can be used from our launch and expire 6 months after it. Terms apply.</p><button className="primary" onClick={close}>Got it</button></>}
- </dialog>:null}</>);
+ </main>{modal==='share'?<ShareScoreDialog score={account.bestPoints} dialogRef={dialog} onClose={close}/>:modal?<dialog ref={dialog} aria-labelledby="dialog-title" onCancel={event=>{event.preventDefault();close()}}><button className="close" type="button" aria-label="Close dialog" onClick={close}><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg></button><h2 id="dialog-title">HOW SO/ COINS WORK</h2><p>1,000 SO/ COINS = ₹100 off SO/ FACET diamond jewellery. SO/ COINS can be used from our launch and expire 6 months after it. Terms apply.</p><button className="primary" onClick={close}>Got it</button></dialog>:null}</>);
 }
 createRoot(document.getElementById('account-root')).render(<App/>);

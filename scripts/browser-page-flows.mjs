@@ -42,10 +42,10 @@ try{
     }
     await page.route('**/api/player',r=>r.fulfill({json:{member:true,display_name:'Test M.',best_score:3205}}));
     await page.route('**/api/account',r=>r.fulfill({json:{name:'Test Member',leaderboardName:'Test M.',email:'test@example.invalid',phoneNumber:'+919876543210',marketingConsent:false,savedPoints:3200,bestPoints:3205,rank:14}}));
-    await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('button',{name:'Share my score',exact:true}).click();await page.getByRole('heading',{name:'Your score. Your move.'}).waitFor();
+    await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('button',{name:'Share my score',exact:true}).click();await page.getByRole('heading',{name:'Share your score'}).waitFor();
     await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}}));
-    await page.getByRole('button',{name:'Copy my score',exact:true}).click();await page.getByRole('dialog').getByRole('status').filter({hasText:'Your score was copied.'}).waitFor();assert.match(await page.evaluate(()=>window.__copiedScore),/3,205 SO\/ COINS/);
-    await page.getByRole('button',{name:'Done',exact:true}).click();await page.getByRole('link',{name:'Play again',exact:true}).click();await page.waitForURL('**/play.html');
+    await page.getByRole('button',{name:'Copy score & link',exact:true}).click();await page.getByRole('dialog').getByRole('status').filter({hasText:'Your score and link are copied.'}).waitFor();assert.match(await page.evaluate(()=>window.__copiedScore),/3,205 SO\/ COINS/);
+    await page.getByRole('button',{name:'Close share panel'}).click();await page.getByRole('link',{name:'Play again',exact:true}).click();await page.waitForURL('**/play.html');
     report.push({width,flows:'FAQ play button, launch join/play, confirmation play/world, My SO/ COINS share/replay'});
    }finally{await context.close()}
   }

@@ -20,6 +20,8 @@ test('shared page guard is inserted before styles and remains single after rebui
  assert.equal((html.match(/id="page-ready"/g)||[]).length,1);
  assert(html.indexOf('id="page-ready"')<html.indexOf('href="page.css"'));
  assert.match(html,/<head><meta charset="utf-8"><!-- page-ready -->/);
+ assert.match(html,/<style id="page-loader-css">html\{color-scheme:dark;background-color:#08040d\}/);
+ assert.match(html,/html\[data-loaded="false"\]::before/,'the existing CSS loading indicator remains available');
  assert.doesNotMatch(html,/<html[^>]*data-loaded=/,'JavaScript-disabled pages remain visible');
 });
 test('a failed font load or unavailable font API still reveals the page',async()=>{

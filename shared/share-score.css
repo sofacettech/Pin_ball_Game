@@ -1,0 +1,36 @@
+.score-share-dialog{box-sizing:border-box;width:min(444px,calc(100% - 32px));max-width:none;max-height:calc(100dvh - 32px);margin:auto;padding:29px 30px 30px;border:1px solid #373634;border-radius:0;background:#080808;color:#f3f0eb;overflow:auto;scrollbar-width:thin;scrollbar-color:#555 #080808;font-family:'Brilliant Cut Pro',Arial,sans-serif;font-synthesis:none;-webkit-font-smoothing:antialiased}
+.score-share-dialog::backdrop{background:#030303}
+.score-share-dialog :is(button,textarea){box-sizing:border-box;color:inherit}
+.score-share-dialog button{background:none;cursor:pointer}
+.score-share-dialog :is(button,a,textarea):focus-visible{outline:2px solid #f3f0eb;outline-offset:3px}
+.score-share-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.score-share-dialog .score-share-header h2{margin:0;font:400 35px/1.1 'Fancy Cut Pro',Georgia,serif;letter-spacing:-.2px;color:#f3f0eb}
+.score-share-dialog .score-share-close{position:static;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;margin:-5px -12px -5px 0;padding:0;border:0;color:#f3f0eb}
+.score-share-close svg{width:18px;height:18px}
+.score-share-total{display:flex;align-items:baseline;gap:17px;margin:27px 0 25px}
+.score-share-total>span{font:400 60px/1 'Brilliant Cut Pro',Arial,sans-serif;letter-spacing:-1.5px;font-variant-numeric:lining-nums tabular-nums}
+.score-share-total small{font:400 10px/1.4 'Brilliant Cut Pro',Arial,sans-serif;letter-spacing:1.4px;white-space:nowrap;color:#b8b4ae}
+.score-share-preview{border-top:1px solid #343330;padding:20px 0 0}
+.score-share-dialog .score-share-preview>p{margin:0;color:#e3dfda;font:400 19px/1.45 'Fancy Cut Pro',Georgia,serif;overflow-wrap:anywhere}
+.score-share-wordmark{font:400 12px/1 SOFacetWordmark,Arial,sans-serif;white-space:nowrap;letter-spacing:normal;color:#f3f0eb}
+.score-share-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.score-share-meta>span:first-child{font:400 10px/1.5 'Brilliant Cut Pro',Arial,sans-serif;color:#aaa9a7}
+.score-share-meta>span:last-child{display:flex;gap:14px}
+.score-share-dialog .score-share-meta button{border:0;padding:0;min-height:44px;flex-shrink:0;font:400 10px/1.4 'Brilliant Cut Pro',Arial,sans-serif;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#898783}
+.score-share-dialog textarea{width:100%;resize:vertical;min-height:100px;max-height:240px;border:1px solid #787570;border-radius:0;background:#101010;padding:10px;font:400 18px/1.45 'Fancy Cut Pro',Georgia,serif;caret-color:#f3f0eb}
+.score-share-destinations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:13px 0 24px;padding-top:17px;border-top:1px solid #343330}
+.score-share-destinations a{display:flex;align-items:center;flex-direction:column;gap:6px;border:0;padding:0;min-width:0;min-height:70px;font:400 11px/1.3 'Brilliant Cut Pro',Arial,sans-serif;color:#c7c2bc;text-decoration:none}
+.score-share-destinations a>span{display:grid;place-items:center;width:48px;height:44px}
+.score-share-destinations img{display:block;width:28px;height:28px;object-fit:contain;transition:transform 220ms ease-out}
+.score-share-destinations a:nth-child(3) img{width:22px;height:23px}
+.score-share-destinations a:hover{color:#f3f0eb}.score-share-destinations a:hover img{transform:translateY(-2px)}
+.score-share-dialog .score-share-copy{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:51px;min-height:51px;border:1px solid #a8a4ac;border-radius:0;padding:0 40px;font:500 11px/1 'Brilliant Cut Pro',Arial,sans-serif;text-transform:uppercase;letter-spacing:.7px;transition:background-color 250ms,color 250ms,border-color 250ms}
+.score-share-copy svg{position:absolute;right:15px;top:16px;width:18px;height:18px}
+.score-share-dialog .score-share-copy:hover{background:#f3f0eb;color:#080808;border-color:#f3f0eb}
+.score-share-dialog .score-share-status{margin:12px 0 0;color:#c7c2bc;font:400 11px/1.5 'Brilliant Cut Pro',Arial,sans-serif}
+.score-share-dialog .score-share-status:empty{margin:0}
+.score-share-manual{margin-top:16px}.score-share-manual label{display:block;font-size:12px;margin-bottom:8px}
+.score-share-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:380px){.score-share-dialog{padding:25px 23px}.score-share-dialog .score-share-header h2{font-size:31px}.score-share-total>span{font-size:55px}.score-share-total{gap:14px}.score-share-total small{font-size:9px;letter-spacing:1px}.score-share-dialog .score-share-preview>p{font-size:18px}.score-share-destinations{gap:4px}.score-share-destinations a{font-size:10px}}
+@media(max-width:340px){.score-share-meta{flex-wrap:wrap;gap:0}.score-share-meta>span:first-child{flex:1 0 100%}.score-share-meta>span:last-child{margin-left:auto}.score-share-total{gap:10px}.score-share-total>span{font-size:50px}.score-share-dialog{padding-inline:19px}.score-share-dialog .score-share-header h2{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.score-share-dialog *{transition:none!important}}

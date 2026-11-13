@@ -130,22 +130,15 @@ body[data-menu-open] .claim-navigation .auth-flow-close{visibility:hidden}
  .design-claim .claim-confirmation .auth-flow-actions{gap:12px;margin-top:24px;flex-direction:column}
  .design-claim .claim-confirmation .auth-flow-actions>:is(button,a){width:100%}
  .design-claim .claim-confirmation .auth-flow-actions>a{font-size:inherit;line-height:inherit}
- .saved-confirmation :is(.auth-flow-actions,.share-score-actions)>:is(button,a){display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:transparent;color:inherit;border:1px solid #89818a;border-radius:0;padding:12px 18px;font:12px/18px 'Brilliant Cut Pro',sans-serif;letter-spacing:.7px;text-transform:uppercase;text-decoration:none;transition:background-color .25s,color .25s,border-color .25s}
- .saved-confirmation :is(.auth-flow-actions,.share-score-actions)>:is(button,a):is(:active,:focus-visible){background:#fff;color:#000;border-color:#fff}
- .saved-confirmation :is(.auth-flow-actions,.share-score-actions)>:is(button,a):focus-visible{outline:2px solid #d9ed37;outline-offset:4px}
+ .saved-confirmation .auth-flow-actions>:is(button,a){display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:transparent;color:inherit;border:1px solid #89818a;border-radius:0;padding:12px 18px;font:12px/18px 'Brilliant Cut Pro',sans-serif;letter-spacing:.7px;text-transform:uppercase;text-decoration:none;transition:background-color .25s,color .25s,border-color .25s}
+ .saved-confirmation .auth-flow-actions>:is(button,a):is(:active,:focus-visible){background:#fff;color:#000;border-color:#fff}
+ .saved-confirmation .auth-flow-actions>:is(button,a):focus-visible{outline:2px solid #d9ed37;outline-offset:4px}
 @media(hover:hover){
- .saved-confirmation :is(.auth-flow-actions,.share-score-actions)>:is(button,a):hover{background:#fff;color:#000;border-color:#fff}
+ .saved-confirmation .auth-flow-actions>:is(button,a):hover{background:#fff;color:#000;border-color:#fff}
 }
 @media(prefers-reduced-motion:reduce){
- .saved-confirmation :is(.auth-flow-actions,.share-score-actions)>:is(button,a){transition:none}
+ .saved-confirmation .auth-flow-actions>:is(button,a){transition:none}
 }
-.share-score{box-sizing:border-box;width:min(460px,calc(100% - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:24px;border:1px solid #89818a;background:#120a1a;color:#f3f0eb;font:16px/1.5 'Brilliant Cut Pro',sans-serif}
-.share-score::backdrop{background:#08040dcc}
-.share-score h2{margin:0 0 16px;font:inherit;font-size:24px}
-.share-score textarea{box-sizing:border-box;width:100%;resize:vertical;padding:10px;border:1px solid #89818a;border-radius:0;background:transparent;color:inherit;font:16px/1.4 'Fancy Cut Pro',serif,serif}
-.share-score-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.share-score .share-score-actions>:is(button,a){padding-inline:8px;text-align:center}
-.share-score p[role=status]{margin:12px 0 0;font-size:14px}
 @media(min-width:901px){
  .design-claim .claim-confirmation h1{font-size:clamp(40px,4vw,54px)}
  .design-claim .claim-confirmation p{font-size:18px}

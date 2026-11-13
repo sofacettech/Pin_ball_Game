@@ -190,7 +190,7 @@ for (const [label, icon, href] of [
   item.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(item);
 }
 small.append(socials);
-panel.replaceChildren(play, coinsLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
+panel.replaceChildren(play, coinsLink, menuLink('JOIN THE SO/ COLLECTIVE', '/join'), menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {

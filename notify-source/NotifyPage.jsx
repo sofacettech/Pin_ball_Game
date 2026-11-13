@@ -44,8 +44,8 @@ export default function NotifyPage(){
      <p className="sr-only" id="photo-status" role="status" aria-live="polite" aria-atomic="true">Photograph 1 of 6: yellow pear-shaped ring.</p>
     </section>
     <section className="notification" id="notify" aria-label="Collection launch notification">
-     <div className="notify-join" data-join-for-guests><p>Early access and updates, before anyone else.</p><a ref={join} className="notify-button" href={accountNavigationHref('/join')}>JOIN THE SO/ COLLECTIVE <span aria-hidden="true">→</span></a></div>
-     <div className="notify-member" data-notify-for-members><p>You're in. Stay tuned for early access, before anyone else.</p><a ref={about} className="notify-button" href="/about">ABOUT SO/ FACET <span aria-hidden="true">→</span></a></div>
+     <div className="notify-join" data-join-for-guests><p>Early access and updates,<br className="mobile-break"/> before anyone else.</p><a ref={join} className="notify-button" href={accountNavigationHref('/join')}>JOIN THE SO/ COLLECTIVE</a></div>
+     <div className="notify-member" data-notify-for-members><p>You're in. Stay tuned for early access, before anyone else.</p><a ref={about} className="notify-button" href="/about"><span>ABOUT <span className="brand-word">SO/ FACET</span></span><span aria-hidden="true">→</span></a></div>
     </section>
    </main>
   </div></div>
