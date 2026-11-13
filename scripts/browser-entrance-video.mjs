@@ -6,10 +6,10 @@ import {readVideoCropGeometry,assertVideoCropGeometry,assertVideoStartupPolicy} 
 import {verifyVideoCropPixels} from './browser-video-crop-fidelity.mjs';
 const require=createRequire(import.meta.url);
 const engine=process.env.SOFACET_BROWSER||'chromium';
-const {[engine]:browserType}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
+const {[engine]:browserType,devices}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
 const base=process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8766/';
 const option=process.env.SOFACET_ENTRANCE_OPTION||'default';
-const expectedWidth=Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH||1920);
+const defaultExpectedWidth=Number(process.env.SOFACET_EXPECT_ENTRANCE_WIDTH||1920);
 const cropOnly=process.env.SOFACET_VIDEO_CROP_ONLY==='1';
 const output=new URL(`../work/entrance-video${option==='3'?'-4k':''}/`,import.meta.url);
 await mkdir(output,{recursive:true});
@@ -18,9 +18,12 @@ const framing=JSON.parse(await readFile(new URL('../assets/ball-framing.json',im
 const browser=await browserType.launch({...engine==='chromium'&&process.platform==='darwin'?{args:['--enable-gpu']}:{}});
 try{
   const pixelFidelity=await verifyVideoCropPixels(browser);
-  const cases=cropOnly?[['phone',{width:393,height:852},'reduce']]:[['desktop',{width:1440,height:900},'no-preference'],['phone',{width:393,height:852},'reduce']];
+  const phoneMotion=process.env.SOFACET_VIDEO_PHONE_MOTION||'reduce';
+  const cases=cropOnly?[['phone',{width:393,height:852},phoneMotion]]:[['desktop',{width:1440,height:900},'no-preference'],['phone',{width:393,height:852},phoneMotion]];
   for(const [name,viewport,reducedMotion] of cases){
-    const context=await browser.newContext({viewport,reducedMotion,...name==='phone'?{isMobile:true,hasTouch:true}:{}});
+    const expectedWidth=name==='phone'?Number(process.env.SOFACET_EXPECT_ENTRANCE_PHONE_WIDTH||defaultExpectedWidth):defaultExpectedWidth;
+    const device=name==='phone'?devices[engine==='webkit'?'iPhone 13':'Pixel 7']:{};
+    const context=await browser.newContext({...device,viewport,reducedMotion});
     const page=await context.newPage(),requests=[],errors=[];
     await page.addInitScript({content:`window.__readVideoCropGeometry=${readVideoCropGeometry.toString()};`});
     page.on('request',request=>requests.push(request.url()));

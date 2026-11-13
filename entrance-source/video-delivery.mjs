@@ -1,4 +1,5 @@
 import {selectEntranceOption} from './entrance-option.mjs';
+import {selectEntranceVideoWidth} from './video-quality.mjs';
 
 export function validateEntranceManifest(manifest,{width=1920,height=1080}={}){
   if(manifest?.version!==1||manifest.width!==width||manifest.height!==height||manifest.fps!==60||manifest.firstFrame!==334||manifest.lastFrame!==2164||
@@ -8,7 +9,8 @@ export function validateEntranceManifest(manifest,{width=1920,height=1080}={}){
 
 // A separate switch prevents an existing legacy-video CDN setting from selecting
 // new objects before they have been uploaded and verified.
-export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOption(globalThis.location?.search||'')}={}){
+export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOption(globalThis.location?.search||''),navigator=globalThis.navigator}={}){
+  const width=selectEntranceVideoWidth({option,navigator});
   const localBase='/assets/entrance-video/';
   const [response,config]=await Promise.all([
     fetcher(localBase+'manifest.json'),
@@ -20,7 +22,7 @@ export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOpti
     const local=localBase+kind+'.mp4?v='+manifest.clips[kind].sha256;
     return [kind,{url:local,local,bytes:manifest.clips[kind].bytes,localBytes:manifest.clips[kind].bytes,localWidth:manifest.width,localHeight:manifest.height}];
   }));
-  const candidates=[...(option==='3'?[{url:config.entrance4kManifestURL,width:3840,height:2160}]:[]),{url:config.entranceManifestURL,width:1920,height:1080}];
+  const candidates=[...(width===3840?[{url:config.entrance4kManifestURL,width:3840,height:2160}]:[]),{url:config.entranceManifestURL,width:1920,height:1080}];
   for(const candidate of candidates.filter(item=>item.url))try{
     const url=new URL(candidate.url);
     if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Invalid entrance CDN URL');
