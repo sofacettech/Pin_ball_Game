@@ -1,0 +1,254 @@
+{
+  "/assets/collective/5524d041c1516421d04c.webp": {
+    "layout": "launch",
+    "variants": [
+      {
+        "src": "/assets/collective/8b327b3a503e1579c71e.webp",
+        "width": 320,
+        "height": 548,
+        "bytes": 121410
+      },
+      {
+        "src": "/assets/collective/f1fda060c2fa85f21dc3.webp",
+        "width": 480,
+        "height": 823,
+        "bytes": 235630
+      },
+      {
+        "src": "/assets/collective/099add443a9afe3c1c2b.webp",
+        "width": 640,
+        "height": 1097,
+        "bytes": 365192
+      },
+      {
+        "src": "/assets/collective/d84478450f9cbd5f7784.webp",
+        "width": 960,
+        "height": 1645,
+        "bytes": 680534
+      },
+      {
+        "src": "/assets/collective/5524d041c1516421d04c.webp",
+        "width": 1195,
+        "height": 2048,
+        "bytes": 839974
+      }
+    ]
+  },
+  "/assets/collective/2e6a9ce5c7392808ab66.webp": {
+    "layout": "launch",
+    "variants": [
+      {
+        "src": "/assets/collective/55c15e0db89207817563.webp",
+        "width": 320,
+        "height": 293,
+        "bytes": 63386
+      },
+      {
+        "src": "/assets/collective/277541eb3eff1025b5a3.webp",
+        "width": 480,
+        "height": 440,
+        "bytes": 125004
+      },
+      {
+        "src": "/assets/collective/6246e42e3958d67dabfb.webp",
+        "width": 640,
+        "height": 586,
+        "bytes": 198876
+      },
+      {
+        "src": "/assets/collective/6a822d85c8cbfb0c33ed.webp",
+        "width": 960,
+        "height": 880,
+        "bytes": 371636
+      },
+      {
+        "src": "/assets/collective/2e6a9ce5c7392808ab66.webp",
+        "width": 1280,
+        "height": 1173,
+        "bytes": 549346
+      }
+    ]
+  },
+  "/assets/collective/a8ee8d97a208cbbc8877.webp": {
+    "layout": "launch",
+    "variants": [
+      {
+        "src": "/assets/collective/b1be6c78b964296d574b.webp",
+        "width": 320,
+        "height": 410,
+        "bytes": 152074
+      },
+      {
+        "src": "/assets/collective/78321464e779b10e2580.webp",
+        "width": 480,
+        "height": 615,
+        "bytes": 296118
+      },
+      {
+        "src": "/assets/collective/689ff4254313cc2c4526.webp",
+        "width": 640,
+        "height": 820,
+        "bytes": 491198
+      },
+      {
+        "src": "/assets/collective/4ad6e552a9956bb0286c.webp",
+        "width": 960,
+        "height": 1229,
+        "bytes": 926596
+      },
+      {
+        "src": "/assets/collective/a8ee8d97a208cbbc8877.webp",
+        "width": 1280,
+        "height": 1639,
+        "bytes": 1321702
+      }
+    ]
+  },
+  "/assets/collective/0888e17491315612fc37.webp": {
+    "layout": "rewards",
+    "variants": [
+      {
+        "src": "/assets/collective/3a653f572f3bf72eccf1.webp",
+        "width": 320,
+        "height": 548,
+        "bytes": 122118
+      },
+      {
+        "src": "/assets/collective/db2d0b2c004d85707dd0.webp",
+        "width": 480,
+        "height": 822,
+        "bytes": 235918
+      },
+      {
+        "src": "/assets/collective/e9a2b38d2b2cded74443.webp",
+        "width": 640,
+        "height": 1097,
+        "bytes": 370612
+      },
+      {
+        "src": "/assets/collective/1a0420a7c9540862e4c8.webp",
+        "width": 960,
+        "height": 1645,
+        "bytes": 662398
+      },
+      {
+        "src": "/assets/collective/026f0b5cf9307fe7afcb.webp",
+        "width": 1280,
+        "height": 2193,
+        "bytes": 992724
+      },
+      {
+        "src": "/assets/collective/0888e17491315612fc37.webp",
+        "width": 1793,
+        "height": 3072,
+        "bytes": 1216646
+      }
+    ]
+  },
+  "/assets/collective/92ed03623561a36c7313.webp": {
+    "layout": "rewards",
+    "variants": [
+      {
+        "src": "/assets/collective/fb5e3f4dbb2556cc891a.webp",
+        "width": 320,
+        "height": 293,
+        "bytes": 63500
+      },
+      {
+        "src": "/assets/collective/55b9f1b87baf2a540b10.webp",
+        "width": 480,
+        "height": 440,
+        "bytes": 125536
+      },
+      {
+        "src": "/assets/collective/3082e0e0d8a889c3f64b.webp",
+        "width": 640,
+        "height": 587,
+        "bytes": 199096
+      },
+      {
+        "src": "/assets/collective/76a995824178b8e60a0a.webp",
+        "width": 960,
+        "height": 880,
+        "bytes": 363142
+      },
+      {
+        "src": "/assets/collective/e4353b6d9ae8ae1125dc.webp",
+        "width": 1280,
+        "height": 1173,
+        "bytes": 552590
+      },
+      {
+        "src": "/assets/collective/fbe14fe893c201cc09b8.webp",
+        "width": 1600,
+        "height": 1467,
+        "bytes": 759716
+      },
+      {
+        "src": "/assets/collective/faee4afa51e05b11dc9e.webp",
+        "width": 1920,
+        "height": 1760,
+        "bytes": 1013842
+      },
+      {
+        "src": "/assets/collective/6948a2e83c34b05e9f61.webp",
+        "width": 2560,
+        "height": 2347,
+        "bytes": 1556178
+      },
+      {
+        "src": "/assets/collective/92ed03623561a36c7313.webp",
+        "width": 3351,
+        "height": 3072,
+        "bytes": 1846906
+      }
+    ]
+  },
+  "/assets/collective/573615f1db8ad0c5bd97.webp": {
+    "layout": "rewards",
+    "variants": [
+      {
+        "src": "/assets/collective/eff5979ed527809704d4.webp",
+        "width": 320,
+        "height": 410,
+        "bytes": 152226
+      },
+      {
+        "src": "/assets/collective/3927c9807aa0bda15f6c.webp",
+        "width": 480,
+        "height": 615,
+        "bytes": 301008
+      },
+      {
+        "src": "/assets/collective/5de62a30c8e31703689b.webp",
+        "width": 640,
+        "height": 820,
+        "bytes": 488514
+      },
+      {
+        "src": "/assets/collective/39e3416311f6c63f1372.webp",
+        "width": 960,
+        "height": 1229,
+        "bytes": 899698
+      },
+      {
+        "src": "/assets/collective/9c300fa473f858d753b6.webp",
+        "width": 1280,
+        "height": 1639,
+        "bytes": 1337900
+      },
+      {
+        "src": "/assets/collective/69cbe86fa6775b10bb31.webp",
+        "width": 1600,
+        "height": 2049,
+        "bytes": 1849180
+      },
+      {
+        "src": "/assets/collective/573615f1db8ad0c5bd97.webp",
+        "width": 2399,
+        "height": 3072,
+        "bytes": 2175506
+      }
+    ]
+  }
+}

@@ -3,13 +3,14 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=welcome-scroll-3';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
-import { advanceJourneyFrame, FINAL_FRAME_HOLD_MS } from './journey-motion.mjs';
+import { advanceJourneyFrame, createJourneyCompletion, FINAL_FRAME_HOLD_MS } from './journey-motion.mjs';
 import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-e407c7a78895';
 
 const $=id=>document.getElementById(id);
 const firstFrame=JOURNEY_START_FRAME,lastFrame=CHESS_HIT_FRAME;
+const completion=createJourneyCompletion(lastFrame);
 const journeyScroll=createJourneyScrollMap(firstFrame,lastFrame),travel=journeyScroll.travel;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(any-pointer: coarse)');
@@ -166,6 +167,7 @@ function tick(now){
   // Scroll chooses the destination while decoding catches up asynchronously.
   // Only the final handoff below waits for a settled, visible picture.
   frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
+  if(videoEntrance)frame=completion.advance(frame,{target,presented:presentedFrame,now,reducedMotion:reduced.matches});
   if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
   journey.renderAt(frame);
@@ -173,7 +175,14 @@ function tick(now){
   if(frame===lastFrame&&target===lastFrame){
     // A completed scroll/seek is not enough: leave the decoded final picture
     // on screen for a presentation interval before the opaque cards replace it.
-    if(videoEntrance&&(!journey.settled||presentedFrame!==lastFrame||now-finalFramePresentedAt<FINAL_FRAME_HOLD_MS)){requestTick();return;}
+    if(videoEntrance){
+      if(!journey.settled||presentedFrame!==lastFrame){requestTick();return;}
+      // A decode callback can run before a long task. Start the hold on the
+      // next eligible RAF and leave this rendering opportunity intact, instead
+      // of expiring the hold before the final canvas could ever be painted.
+      if(finalFramePresentedAt===Infinity)finalFramePresentedAt=now;
+      if(now-finalFramePresentedAt<FINAL_FRAME_HOLD_MS){requestTick();return;}
+    }
     enterGame({fromChess:true});return;
   }
   if(frame!==target)requestTick();else lastTime=0;
@@ -204,15 +213,15 @@ const resizeObserver=new ResizeObserver(()=>{
 resizeObserver.observe(viewport);
 document.addEventListener('visibilitychange',()=>{
   gameVisibility(gameVisible&&!document.hidden);
-  if(document.hidden){cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
-  else if(!gameRequested){journey?.suspend(false);requestTick();}
+  if(document.hidden){completion.suspend(performance.now());cancelAnimationFrame(raf);raf=0;lastTime=0;assembly.suspend();journey?.suspend();}
+  else if(!gameRequested){finalFramePresentedAt+=completion.resume(performance.now());journey?.suspend(false);requestTick();}
 });
 window.addEventListener('pagehide',event=>{
   if(ready&&!gameRequested)history.replaceState({...history.state,sofacetWorldScroll:scrollY},'');
-  assembly.suspend();
+  completion.suspend(performance.now());assembly.suspend();
   if(!event.persisted){cancelAnimationFrame(raf);gameReadyObserver?.disconnect();resizeObserver.disconnect();updateCopy?.destroy();journey?.dispose();frameRate?.destroy();}
 });
-window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){journey?.suspend(false);requestTick();}}});
+window.addEventListener('pageshow',event=>{if(event.persisted){gameVisibility(gameVisible);if(!gameRequested){finalFramePresentedAt+=completion.resume(performance.now());journey?.suspend(false);requestTick();}}});
 // Read-only state for verifying scroll and handoff in the test entrance.
 window.entrancePreview={get ready(){return ready;},get phase(){return phase;},get frame(){return frame;},get displayedFrame(){return journey?.displayedFrame??frame;},get settled(){return journey?.settled??true;},get gameVisible(){return gameVisible;},get gameLoaded(){return gameLoaded;},get renderer(){return journey?.renderer;},get profile(){return journey?.profileFrames;},get quality(){return journey?.policy;},get resolution(){return journey?.resolution;},get batching(){return journey?.batchingMode;}};
 
@@ -234,7 +243,7 @@ try{
       onStatus:message=>{if(message)setStartupStatus(message);},
       onRender:({frame:drawnFrame})=>{
         if(videoEntrance){
-          presentedFrame=drawnFrame;finalFramePresentedAt=drawnFrame===lastFrame?performance.now():Infinity;placeStage();
+          presentedFrame=drawnFrame;finalFramePresentedAt=Infinity;placeStage();
           if(ready&&phase!=='assembly')presentJourneyFrame(drawnFrame);
         }
         frameRate?.record();

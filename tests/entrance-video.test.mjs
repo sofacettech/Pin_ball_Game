@@ -13,7 +13,7 @@ async function fixture({cdn=false,segmentSource,streamSource,previewSource,width
   class Video extends EventTarget{
     readyState=2;videoWidth=width;videoHeight=height;time=0;seeking=false;seeks=[];
     constructor(){super();this.duration=videos.length?1831/60:4;videos.push(this)}
-    setAttribute(){}removeAttribute(){}pause(){}load(){if(this.src?.startsWith('/local/')||this.src?.startsWith('/assets/entrance-video/')){this.videoWidth=1920;this.videoHeight=1080}queueMicrotask(()=>this.dispatchEvent(new Event('loadeddata')))}
+    setAttribute(){}removeAttribute(name){if(name==='src'){delete this.src;this.unloaded=true}}pause(){}load(){if(this.src){this.duration=this.src.includes('opening')?4:1831/60}if(this.src?.startsWith('/local/')||this.src?.startsWith('/assets/entrance-video/')){this.videoWidth=1920;this.videoHeight=1080}queueMicrotask(()=>this.dispatchEvent(new Event('loadeddata')))}
     set currentTime(value){this.time=value;this.seeking=true;this.seeks.push(value)}
     get currentTime(){return this.time}
     complete(){this.seeking=false;this.dispatchEvent(new Event('seeked'))}
@@ -225,6 +225,39 @@ test('opening uses consecutive decoded video frames after the loader, then cance
     f.renderer.suspend();assert.equal(video.paused,true);f.renderer.suspend(false);assert.equal(plays,2);
     f.renderer.renderAt(334);assert.equal(video.paused,true);assert.ok(cancels>0);
     f.videos[1].complete();assert.equal(f.renderer.settled,true);
+  }finally{f.renderer.dispose()}
+});
+
+test('the finished native opening unloads after a journey paint and assembly replay stays local across hide/show',async()=>{
+  const revoked=[],urls=[];
+  const high={engine:'webcodecs',frameAt:async index=>({time:index/60,displayWidth:3840,displayHeight:2160}),dispose(){}};
+  const f=await fixture({cdn:true,width:3840,height:2160,streamSource:high,preloadedFactory:()=>({
+    load:async()=>{},fetch:async()=>{},url:url=>{urls.push(url);return url},revokeURL:url=>revoked.push(url),dispose(){},ready:true,bytes:100,
+  })});
+  const opening=f.videos[0];let finish;
+  try{
+    f.renderer.renderAssemblyAt(240);opening.complete();assert.equal(f.draws.at(-1).index,239);
+    high.frameAt=index=>new Promise(resolve=>{finish=()=>resolve({time:index/60,displayWidth:3840,displayHeight:2160})});
+    f.renderer.renderAt(1000);
+    assert.equal(f.renderer.policy.openingResident,true,'keep the assembly available while the next picture is still decoding');
+    assert.equal(opening.unloaded,undefined);finish();await f.renderer.whenSettled();
+    assert.equal(f.renderer.policy.openingResident,false);assert.equal(opening.unloaded,true);
+    assert.deepEqual(revoked,['https://media.example/opening.mp4']);
+    opening.dispatchEvent(new Event('error'));opening.complete();await new Promise(resolve=>setImmediate(resolve));
+    assert.deepEqual(f.errors,[],'unloading must ignore stale native error, loadeddata and seeked events');
+    f.renderer.suspend();f.renderer.suspend(false);
+    assert.equal(f.renderer.policy.openingResident,false,'BFCache/visibility resume must not restart the completed opening');
+    high.frameAt=async index=>({time:index/60,displayWidth:3840,displayHeight:2160});
+    f.renderer.renderAt(334);await f.renderer.whenSettled();assert.equal(f.renderer.policy.preloaded,true);
+    f.renderer.renderAssemblyAt(120);f.renderer.renderAssemblyAt(240);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(f.videos.length,2,'coalesce replay requests into one native opening');
+    assert.equal(f.renderer.policy.openingResident,true);assert.equal(f.renderer.settled,false);
+    f.videos[1].complete();await f.renderer.whenSettled();
+    assert.equal(f.draws.at(-1).index,239);assert.deepEqual(urls,['https://media.example/opening.mp4','https://media.example/opening.mp4']);
+    f.renderer.renderAt(2164);await f.renderer.whenSettled();
+    assert.equal(f.renderer.displayedFrame,2164);assert.equal(f.renderer.policy.sourceWidth,3840);
+    assert.equal(f.renderer.policy.openingResident,false);assert.equal(revoked.length,2);assert.deepEqual(f.errors,[]);
   }finally{f.renderer.dispose()}
 });
 

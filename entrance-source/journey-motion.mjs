@@ -1,8 +1,35 @@
 import {integratedRamp} from './journey-scroll.mjs';
 
-// Only the last decoded picture needs a short visible hold before the cards.
-// This does not limit how fast scrolling can move through the journey.
-export const FINAL_FRAME_HOLD_MS=1000/30;
+// Leave the actual impact picture visible before the opaque cards replace it.
+export const FINAL_FRAME_HOLD_MS=200;
+
+// A swipe to the bottom must still show the final approach (frames 2000–2164).
+// applies only to automatic completion; ordinary scroll/reversal stays direct.
+// Bound each request by the last painted picture so a slow decoder cannot turn
+// the ending into another jump straight to its last frame.
+export function createJourneyCompletion(lastFrame,{frames=164,fps=60,maxStep=4}={}){
+  const startFrame=lastFrame-frames;
+  let active=false,origin,startedAt,requested,pausedAt=null;
+  return {
+    advance(next,{target,presented,now,reducedMotion=false}){
+      if(target!==lastFrame||reducedMotion||next<startFrame){active=false;pausedAt=null;return next;}
+      if(!active){
+        active=true;origin=Math.max(startFrame,Math.min(lastFrame,presented));
+        startedAt=null;requested=origin;
+      }
+      if(presented<requested)return requested;
+      if(startedAt===null)startedAt=now;
+      requested=Math.min(lastFrame,origin+Math.floor(Math.max(0,now-startedAt)*fps/1000),presented+maxStep);
+      return requested;
+    },
+    suspend(now){if(pausedAt===null)pausedAt=now;},
+    resume(now){
+      const elapsed=pausedAt===null?0:Math.max(0,now-pausedAt);
+      if(active&&startedAt!==null)startedAt+=elapsed;
+      pausedAt=null;return elapsed;
+    },
+  };
+}
 
 // Spend time crossing the doorway even when one swipe targets the far side.
 // The speed limit fades in/out over 80 source frames; outside it, retain the

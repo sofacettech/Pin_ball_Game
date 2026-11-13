@@ -1,6 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {advanceJourneyFrame} from '../entrance-source/journey-motion.mjs';
+import {advanceJourneyFrame,createJourneyCompletion} from '../entrance-source/journey-motion.mjs';
+
+test('a bottom swipe presents the last approach over time and waits for decoded pictures',()=>{
+ const end=createJourneyCompletion(2164);let shown=1800;
+ const step=now=>end.advance(2164,{target:2164,presented:shown,now});
+ assert.equal(step(0),2000,'enter the final approach instead of jumping to the impact');
+ assert.equal(step(500),2000,'a pending decode must not advance the completion clock');
+ shown=2000;assert.equal(step(1000),2000);
+ assert.equal(step(1017),2001);assert.equal(step(1900),2001,'keep one requested picture while decoding');
+ shown=2001;assert.equal(step(2000),2005,'even a long decoder stall cannot skip the ending');
+ for(let now=2017;shown<2164&&now<6000;now+=17){shown=step(now);}
+ assert.equal(shown,2164);
+});
+
+test('completion keeps initial movement direct, cancels on reversal and honors reduced motion',()=>{
+ const end=createJourneyCompletion(2164);
+ assert.equal(end.advance(1100,{target:1100,presented:334,now:0}),1100);
+ assert.equal(end.advance(2164,{target:2164,presented:1800,now:10}),2000);
+ assert.equal(end.advance(1900,{target:1900,presented:2000,now:20}),1900);
+ assert.equal(end.advance(2164,{target:2164,presented:2100,now:30}),2100,'resume from the visible pose, without rewinding');
+ assert.equal(end.advance(2164,{target:2164,presented:2100,now:40,reducedMotion:true}),2164);
+});
+
+test('background and BFCache time do not speed up the remaining approach or consume its final hold',()=>{
+ const end=createJourneyCompletion(2164);
+ assert.equal(end.advance(2164,{target:2164,presented:2000,now:100}),2000);
+ assert.equal(end.advance(2164,{target:2164,presented:2000,now:117}),2001);
+ end.suspend(120);end.suspend(121);
+ assert.equal(end.resume(5120),5000,'visibility and pagehide must not double count the pause');
+ assert.equal(end.resume(5121),0,'pageshow and visibility resume must be idempotent');
+ assert.equal(end.advance(2164,{target:2164,presented:2001,now:5134}),2002,'resume at the visible-time rate');
+ let finalPresentedAt=6000;
+ end.suspend(6020);finalPresentedAt+=end.resume(11020);
+ assert.equal(11020-finalPresentedAt,20,'the final hold excludes time spent offscreen');
+});
 
 test('large forward and reverse scrolls show intermediate doorway poses on touch and desktop',()=>{
  for(const coarse of [false,true])for(const [start,target] of [[1400,1700],[1700,1400],[1000,2000],[2000,1000]]){

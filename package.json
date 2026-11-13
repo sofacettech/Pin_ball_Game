@@ -27,6 +27,11 @@
     "render:entrance-video": "node scripts/render-entrance-video.mjs",
     "encode:entrance-video": "node scripts/encode-entrance-video.mjs",
     "prepare:entrance-cdn": "node scripts/prepare-entrance-cdn.mjs",
+    "benchmark:entrance-encoding": "node scripts/benchmark-entrance-encoding.mjs",
+    "benchmark:entrance-decoding": "node scripts/benchmark-entrance-decoding.mjs",
+    "prepare:entrance-candidate": "node scripts/prepare-entrance-encoding-candidate.mjs",
+    "prepare:flowers": "node scripts/generate-flower-variants.mjs",
+    "check:artwork": "node scripts/browser-artwork-responsive.mjs",
     "build:cookie": "node scripts/build-cookie-popup.mjs",
     "build:loader": "node scripts/build-loader.mjs"
   },
