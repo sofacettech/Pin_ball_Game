@@ -50,8 +50,8 @@ body[data-menu-open] .menu-backdrop{opacity:1;visibility:visible;pointer-events:
  :root .site-nav .play-now{font-size:13px}
 }
 .menu-panel .menu-item:is(button){display:block;margin:0;padding:14px 0;border:0;border-radius:0;background:transparent;color:#fff;font:400 var(--site-menu-size)/1.2 'Josefin Sans',sans-serif;letter-spacing:-.02em;text-align:left;cursor:pointer}
-.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;background:#d9ed37;color:#0b0e18;font-size:16px;font-weight:600;text-align:center}
-.menu-panel .menu-join:hover{color:#0b0e18;opacity:.8}
+.menu-panel .menu-join{margin-top:20px;padding:15px 20px;border:1px solid #d9ed37;background:transparent;color:#d9ed37;font-size:16px;font-weight:700;text-align:center}
+.menu-panel .menu-join:hover{color:#d9ed37;opacity:.8}
 .menu-small-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 20px;margin-top:22px}
 .menu-panel .menu-small-links a{display:inline-flex;align-items:center;min-height:44px;padding:0;font-size:11px;letter-spacing:0}
 .menu-small-links [aria-disabled=true]{opacity:.6}
