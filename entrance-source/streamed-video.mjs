@@ -1,6 +1,6 @@
 // Decode a short prediction group as soon as its bytes arrive. Native
 // video remains the compatibility path; this path never waits for a whole MP4.
-export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,cacheStorage=globalThis.caches,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk,width=1920,height=1080}={}){
+export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch,cacheStorage=globalThis.caches,Decoder=globalThis.VideoDecoder,Chunk=globalThis.EncodedVideoChunk,width=1920,height=1080,diagnostics=false,clock=()=>performance.now()}={}){
   if(!metadata||typeof Decoder!=='function'||typeof Chunk!=='function')return null;
   const config={codec:metadata.codec,description:Uint8Array.from(metadata.description.match(/../g),hex=>parseInt(hex,16)),codedWidth:width,codedHeight:height,
     colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false},optimizeForLatency:true};
@@ -9,14 +9,29 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   // Keep the same decoded-pixel budget at 4K as twelve 1080p pictures.
   // Prediction frames before the requested window are closed immediately.
   const maxFrames=Math.max(1,Math.min(interval,Math.floor(1920*1080*12/(width*height))));
+  // Full 4K prediction prefixes can legitimately take longer than 50 ms on a
+  // phone. Give active hardware decoding room before probing a forced drain.
+  const lowDelayDeadline=width*height>1920*1080?100:50;
   let keepFirst=0,keepLast=Infinity,decodeCursor=null,decodeWaiter=null,flushRequired=false;
-  const entries=new Map(),frames=new Map();let disposed=false,failure,activePart=0,lastIndex=0,direction=1,prefetchKey='',cacheWrites=Promise.resolve();
+  let compatibilityGroup=null,lowDelayReprobed=false;
+  const metrics=diagnostics?{requests:0,cacheHits:0,chunks:0,outputFrames:0,discardedFrames:0,flushes:0,compatibilityFlushes:0,lowDelayReprobes:0,networkWaitMs:[],decodeWaitMs:[]}:null;
+  function recordTiming(name,start){
+    if(!metrics)return;
+    const samples=metrics[name];samples.push(Math.max(0,clock()-start));if(samples.length>64)samples.shift();
+  }
+  function timingSummary(samples){
+    const sorted=[...samples].sort((a,b)=>a-b);
+    return {samples:sorted.length,meanMs:sorted.length?sorted.reduce((a,b)=>a+b,0)/sorted.length:null,
+      p95Ms:sorted.length?sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))]:null,maxMs:sorted.at(-1)??null};
+  }
+  const entries=new Map(),frames=new Map();let disposed=false,failure,activePart=0,lastIndex=0,direction=1,prefetchKey='',cacheWrites=Promise.resolve(),networkWaiter=null;
   const storage=cacheStorage?cacheStorage.open('sofacet-entrance-sections-v1').catch(()=>null):Promise.resolve(null);
   const decoder=new Decoder({output:frame=>{
+    if(metrics)metrics.outputFrames++;
     if(disposed||failure){frame.close();return}
     if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');finishDecode(failure);return}
     const index=Math.round(frame.timestamp*60/1e6);
-    if(index<keepFirst||index>=keepLast){frame.close();return}
+    if(index<keepFirst||index>=keepLast){if(metrics)metrics.discardedFrames++;frame.close();return}
     frames.set(index,frame);
     finishDecode();
   },error:error=>{failure=error;finishDecode(error)}});
@@ -24,14 +39,17 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
   function finishDecode(error){
     const waiter=decodeWaiter;
     if(!waiter||(!error&&(waiter.flushing||!frames.has(waiter.index))))return;
+    recordTiming('decodeWaitMs',waiter.startedAt);
     decodeWaiter=null;clearTimeout(waiter.timer);clearTimeout(waiter.flushTimer);
     error?waiter.reject(error):waiter.resolve();
   }
   function flushDecode(compatibility=false){
     const waiter=decodeWaiter;if(!waiter)return;
-    // A few implementations still buffer low-delay H.264 until flush. Probe
-    // once, then retain the original flush path for that decoder's lifetime.
-    if(compatibility)flushRequired=true;
+    // A cold decoder or a busy event loop can miss the first low-delay deadline.
+    // One independent forward group may retry; a second miss stays compatible
+    // for this decoder's lifetime, without recurring deadline probes.
+    if(compatibility){flushRequired=true;compatibilityGroup=waiter.group;}
+    if(metrics){metrics.flushes++;if(compatibility)metrics.compatibilityFlushes++;}
     decodeCursor=null;waiter.flushing=true;
     decoder.flush().then(()=>{waiter.flushing=false;finishDecode(failure||(!frames.has(waiter.index)?Error('The requested video frame was not decoded'):null))},finishDecode);
   }
@@ -67,8 +85,16 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     for(const job of entry.jobs){job.cancelled=true;job.controller.abort();clearTimeout(job.timer)}
     entry.jobs.clear();
   }
-  function download(entry,segment,start,end){
-    const job={start,end,controller:new AbortController()};entry.jobs.add(job);
+  function cancelPending(){
+    const waiter=networkWaiter;
+    if(!waiter||!waiter.entry.waiters.delete(waiter))return false;
+    // Superseding a seek only cancels its missing-byte wait. Retain received
+    // ranges and the decoder's pictures/state for a later reversal or retry.
+    pause(waiter.entry);waiter.reject(new DOMException('Video seek superseded','AbortError'));
+    return true;
+  }
+  function download(entry,segment,start,end,priority){
+    const job={start,end,priority,controller:new AbortController()};entry.jobs.add(job);
     // A progressing connection may need longer than 20 seconds. Only a stalled
     // read times out; speculative downloads must not disable the streamed path.
     const arm=()=>{clearTimeout(job.timer);job.timer=setTimeout(()=>job.controller.abort(new DOMException('Video download stalled','TimeoutError')),20000)};
@@ -77,7 +103,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
       const cache=await storage;
       if(disposed||job.controller.signal.aborted)throw new DOMException('Video download cancelled','AbortError');
       let response=await cache?.match(segment.url).catch(()=>null),cached=!!response;
-      if(!response)response=await fetcher(segment.url,{signal:job.controller.signal,...(start>0||end<segment.bytes?{headers:{Range:`bytes=${start}-${end-1}`}}:{})});
+      if(!response)response=await fetcher(segment.url,{signal:job.controller.signal,priority,...(start>0||end<segment.bytes?{headers:{Range:`bytes=${start}-${end-1}`}}:{})});
       if(!response.ok||!response.body)throw Error('Video section unavailable');
       let position=0,limit=segment.bytes;
       if(response.status===206){
@@ -95,28 +121,38 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
         if(position!==limit)throw Error('Incomplete video section');
         if(!cached&&!entry.saved&&available(entry,0,segment.bytes)){entry.saved=true;save(segment,entry.bytes)}
       }catch(error){await reader.cancel().catch(()=>{});throw error}finally{reader.releaseLock()}
-    })().catch(error=>{if(!job.cancelled)notify(entry,error)}).finally(()=>{clearTimeout(job.timer);entry.jobs.delete(job)});
+    })().catch(error=>{
+      if(job.cancelled)return;
+      // A visible jump may preempt another section's low-priority fetch. Keep
+      // received bytes reusable; cancellation is not a corrupt-media failure.
+      if(priority==='low'&&error?.name==='AbortError'&&!disposed){
+        job.cancelled=true;
+        for(const waiter of entry.waiters)ensure(entry.part,waiter.start,waiter.end,'high');
+      }else notify(entry,error);
+    }).finally(()=>{clearTimeout(job.timer);entry.jobs.delete(job)});
     return job.done;
   }
-  function ensure(part,start=0,limit=segments[part].bytes){
+  function ensure(part,start=0,limit=segments[part].bytes,priority='high'){
     const segment=segments[part];let entry=entries.get(part);
     if(!entry){
-      entry={bytes:new Uint8Array(segment.bytes),ranges:[],jobs:new Set(),waiters:new Set()};entries.set(part,entry);
+      entry={part,bytes:new Uint8Array(segment.bytes),ranges:[],jobs:new Set(),waiters:new Set()};entries.set(part,entry);
     }
     // A jump starts at its nearest keyframe. Do not fetch megabytes of skipped
     // pictures before the visible frame. The skipped prefix is fetched only if
     // the visitor reverses into it; a server ignoring Range still works.
-    const reserved=[...entry.ranges,...Array.from(entry.jobs,job=>[job.start,job.end])].sort((a,b)=>a[0]-b[0]);
+    const activeJobs=[...entry.jobs].filter(job=>!job.cancelled);
+    const reserved=[...entry.ranges,...activeJobs.map(job=>[job.start,job.end])].sort((a,b)=>a[0]-b[0]);
     for(const range of reserved)if(range[0]<=start&&range[1]>start)start=range[1];
-    if(start<limit&&!Array.from(entry.jobs).some(job=>job.start<=start&&job.end>=limit)){
+    if(start<limit&&!activeJobs.some(job=>job.start<=start&&job.end>=limit)){
       const tail=entry.ranges.find(range=>range[0]>start);
-      const running=Array.from(entry.jobs).find(job=>job.start>start);
+      const running=activeJobs.find(job=>job.start>start);
       const end=Math.min(limit,tail?.[0]??segment.bytes,running?.start??segment.bytes);
-      if(end>start&&!Array.from(entry.jobs).some(job=>job.start<=start&&job.end>=end))entry.done=download(entry,segment,start,end);
+      if(end>start&&!activeJobs.some(job=>job.start<=start&&job.end>=end))entry.done=download(entry,segment,start,end,priority);
     }
     return entry;
   }
   async function frameAt(index){
+    if(metrics)metrics.requests++;
     if(disposed)throw new DOMException('Video decoder disposed','AbortError');if(failure)throw failure;
     const frame=334+index,part=segments.findIndex(s=>frame>=s.firstFrame&&frame<=s.lastFrame);
     if(part<0)throw Error('Frame outside video sections');
@@ -130,7 +166,11 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     const start=segment.frames[first][0],entry=ensure(part,first===0?0:start);
     const [offset,size]=segment.frames[retainLast-1],end=offset+size;
     if(entry.error)throw entry.error;
-    if(!available(entry,start,end))await new Promise((resolve,reject)=>entry.waiters.add({start,end,resolve,reject}));
+    if(!available(entry,start,end)){
+      const startedAt=metrics?clock():0,waiter={entry,start,end};
+      try{await new Promise((resolve,reject)=>{Object.assign(waiter,{resolve,reject});networkWaiter=waiter;entry.waiters.add(waiter)});}
+      finally{if(networkWaiter===waiter)networkWaiter=null;recordTiming('networkWaitMs',startedAt);}
+    }
     if(disposed)throw new DOMException('Video decoder disposed','AbortError');
     const key=part+':'+direction;
     if(prefetchKey!==key){
@@ -140,15 +180,15 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
       if(segments[next]){
         const neighbour=segments[next],first=direction>0?0:Math.floor((neighbour.frameCount-1)/interval)*interval;
         const last=Math.min(neighbour.frameCount,first+interval),[offset,size]=neighbour.frames[last-1];
-        ensure(next,first===0?0:neighbour.frames[first][0],offset+size);
+        ensure(next,first===0?0:neighbour.frames[first][0],offset+size,'low');
       }
       void entry.done?.then(()=>{
         if(disposed||entry.error||prefetchKey!==key||activePart!==part)return;
-        const ahead=segments[next]?ensure(next):null;
-        void ahead?.done?.then(()=>{if(!disposed&&!ahead.error&&prefetchKey===key&&activePart===part&&segments[further])ensure(further)});
+        const ahead=segments[next]?ensure(next,0,segments[next].bytes,'low'):null;
+        void ahead?.done?.then(()=>{if(!disposed&&!ahead.error&&prefetchKey===key&&activePart===part&&segments[further])ensure(further,0,segments[further].bytes,'low')});
       });
     }
-    if(frames.has(index))return frames.get(index);
+    if(frames.has(index)){if(metrics)metrics.cacheHits++;return frames.get(index);}
     const continuing=direction>0&&decodeCursor?.part===part&&decodeCursor.first===first&&index>=keepFirst;
     const from=continuing?decodeCursor.next:first;
     for(const frame of frames.values())frame.close();frames.clear();
@@ -160,16 +200,21 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     // stream. Wait for the requested picture, leaving later submitted pictures
     // queued for the next forward window. Drain at the end of a prediction group
     // or on a reverse miss, where there is no forward input to release its tail.
+    const group=part+':'+first;
+    if(flushRequired&&!lowDelayReprobed&&group!==compatibilityGroup&&direction>0&&retainLast<last){
+      flushRequired=false;lowDelayReprobed=true;if(metrics)metrics.lowDelayReprobes++;
+    }
     const mustFlush=flushRequired||direction<0||retainLast===last;
     const decoded=new Promise((resolve,reject)=>{
-      decodeWaiter={index,resolve,reject,flushing:mustFlush,
+      decodeWaiter={index,group,resolve,reject,flushing:mustFlush,startedAt:metrics?clock():0,
         timer:setTimeout(()=>finishDecode(Error('Video decoding timed out')),5000)};
-      if(!mustFlush)decodeWaiter.flushTimer=setTimeout(()=>flushDecode(true),50);
+      if(!mustFlush)decodeWaiter.flushTimer=setTimeout(()=>flushDecode(true),lowDelayDeadline);
     });
     decodeCursor={part,first,next:retainLast};
     try{
       for(let i=from;i<retainLast;i++){
         const [start,length,sync]=segment.frames[i],sourceIndex=segment.firstFrame-334+i;
+        if(metrics)metrics.chunks++;
         decoder.decode(new Chunk({type:sync?'key':'delta',timestamp:Math.round(sourceIndex*1e6/60),duration:Math.round(1e6/60),data:entry.bytes.subarray(start,start+length)}));
       }
       if(mustFlush)flushDecode();
@@ -179,7 +224,11 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     if(!frames.has(index))throw Error('The requested video frame was not decoded');
     return frames.get(index);
   }
-  return {engine:'webcodecs',frameAt,dispose(){
+  return {engine:'webcodecs',frameAt,cancelPending,get metrics(){
+    if(!metrics)return null;
+    const {networkWaitMs,decodeWaitMs,...counts}=metrics;
+    return {...counts,compatibilityProbeDelayMs:lowDelayDeadline,flushRequired,retainedFrames:frames.size,networkWait:timingSummary(networkWaitMs),decodeWait:timingSummary(decodeWaitMs)};
+  },dispose(){
     if(disposed)return;disposed=true;
     finishDecode(new DOMException('Video decoder disposed','AbortError'));
     for(const entry of entries.values())release(entry);entries.clear();

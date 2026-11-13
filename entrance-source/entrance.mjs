@@ -34,7 +34,7 @@ const frameRate=showFPS?createFrameRatePanel({label:videoEntrance?'Rendered vide
   getState:()=>{const renderer=journey?.renderer,canvas=renderer?.domElement;return {
     ready,game:gameRequested,frame:phase==='assembly'?assembly.frame:frame,
     seeking:phase==='assembly'||Math.abs(target-frame)>.15,
-    details:canvas?(videoEntrance?`${canvas.width} × ${canvas.height} · video frames`:`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draw calls`):''
+    details:canvas?(videoEntrance?`${journey.sourceWidth} × ${journey.sourceHeight} · video source\n${canvas.width} × ${canvas.height} · visible pixels`:`${canvas.width} × ${canvas.height} · ${renderer.getPixelRatio().toFixed(2)}× pixels\n${renderer.info.render.calls} draw calls`):''
   };}
 }):null;
 
@@ -54,6 +54,10 @@ function placementAt(at,rect){
   const focus=framing.points[index].map((v,i)=>v+(framing.points[next][i]-v)*(at-index));
   return framePlacement(rect.width,rect.height,focus,true);
 }
+function videoViewAt(at){
+  const rect=viewportSize,current=placementAt(at,rect);
+  return {fullWidth:current.width,fullHeight:current.height,x:-current.x,y:-current.y,width:rect.width,height:rect.height};
+}
 function placeStage(){
   if(!framing)return;
   const rect=viewportSize;
@@ -61,10 +65,11 @@ function placeStage(){
   // requested scroll frame can be several frames ahead while a seek completes.
   placement=placementAt(videoEntrance?presentedFrame:frame,rect);
   renderView={fullWidth:placement.width,fullHeight:placement.height,x:-placement.x,y:-placement.y,width:rect.width,height:rect.height};
-  const width=(performanceMode?rect.width:placement.width)+'px',height=(performanceMode?rect.height:placement.height)+'px';
+  const visibleArea=videoEntrance||performanceMode;
+  const width=(visibleArea?rect.width:placement.width)+'px',height=(visibleArea?rect.height:placement.height)+'px';
   if(stage.style.width!==width)stage.style.width=width;
   if(stage.style.height!==height)stage.style.height=height;
-  const transform=performanceMode?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
+  const transform=visibleArea?'none':`translate3d(${placement.x}px,${placement.y}px,0)`;
   if(stage.style.transform!==transform)stage.style.transform=transform;
 }
 function startScene(){
@@ -223,7 +228,7 @@ try{
     await pointsReady;
     if(gameRequested||startupFailed)return;
     journey=await renderModule.createJourneyRenderer({stage,
-      profile:parameters.has('profile'),performanceMode,renderView:()=>renderView,
+      profile:parameters.has('profile'),diagnostics:showFPS,performanceMode,renderView:at=>videoEntrance?videoViewAt(at):renderView,
       pixelRatio:()=>Math.min(devicePixelRatio||1,1.5,1920/placement.width,1080/placement.height),
       onProgress:(loaded,total)=>setStartupStatus('Preparing your journey…',Math.floor(loaded/total*100)),
       onStatus:message=>{if(message)setStartupStatus(message);},
