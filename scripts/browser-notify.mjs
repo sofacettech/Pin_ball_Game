@@ -22,7 +22,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
    await page.goto(origin+'/launch');
    await page.waitForURL('**/notify');
    await page.getByRole('heading',{name:'LAUNCHING SOON',exact:true}).waitFor();
-   await page.getByText("You're in. Stay tuned for early access, before anyone else.",{exact:true}).waitFor();
+   await page.getByText('For early access and updates, before anyone else.',{exact:true}).waitFor();
    const about=page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true});await about.waitFor();
    assert.equal(await page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).isVisible(),false);
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
@@ -58,7 +58,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
   await page.goto(origin+'/notify');
   const join=page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true});
   await join.waitFor();
-  await page.getByText('Early access and updates, before anyone else.',{exact:true}).waitFor();
+  await page.getByText('For early access and updates, before anyone else.',{exact:true}).waitFor();
   assert.equal(await page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true}).isVisible(),false);
   await join.click();await page.waitForURL('**/join');report.push({guestJoin:true});
  }finally{await guest.close()}

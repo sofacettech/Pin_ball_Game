@@ -170,7 +170,9 @@ function menuLink(label, href, className = 'menu-item') {
 const play = gamePage ? document.createElement('button') : menuLink(inGame ? 'Back to game' : 'Play Pinball', '/game');
 if (gamePage) {play.type = 'button';play.className = 'menu-item';play.textContent = 'Back to game';play.setAttribute('data-menu-close', '');}
 if (inGameInfo) play.setAttribute('data-game-return','');
-const coinsLink = menuLink('MY SO/ COINS', '/sign-in');
+const joinLink = menuLink('JOIN THE SO/ COLLECTIVE', '/join', 'menu-item menu-join');
+const coinsLink = menuLink('MY SO/ COINS', '/sign-in', 'menu-item menu-join');
+let accountLink = joinLink;
 const about = menuLink('About ', '/about');
 const wordmark = document.createElement('span');wordmark.className = 'brand-word';wordmark.textContent = 'SO/ FACET';about.append(wordmark);
 const small = document.createElement('div');small.className = 'menu-small-links';
@@ -190,7 +192,13 @@ for (const [label, icon, href] of [
   item.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>';socials.append(item);
 }
 small.append(socials);
-panel.replaceChildren(play, coinsLink, menuLink('JOIN THE SO/ COLLECTIVE', '/join'), menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
+panel.replaceChildren(play, accountLink, menuLink('How SO/ COINS work', '/how-coins-work'), about, small);
+function syncAccountLink() {
+  const next = document.documentElement.hasAttribute('data-signed-in') ? coinsLink : joinLink;
+  if (next !== accountLink) { accountLink.replaceWith(next); accountLink = next; }
+}
+syncAccountLink();
+new MutationObserver(syncAccountLink).observe(document.documentElement, {attributes:true,attributeFilter:['data-signed-in']});
 panel.setAttribute('aria-label', inGame ? 'Game navigation' : 'Main navigation');
 const currentPath = location.pathname === '/' ? '/index.html' : location.pathname;
 panel.querySelectorAll('a[href]').forEach(item => {

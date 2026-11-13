@@ -211,9 +211,11 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         challenges.delete(data.challengeId);
         return { verified: true };
       }
+      const remote = await remoteProfile(id, sessions.get(id));
+      if (remote.profile_complete) cachedProfile(id, remote);
       challenges.delete(data.challengeId);
       proofs.set(token, { player: id, phone: normalized, customerId: result.customer_id, name: challenge.name, dob: challenge.dob, expiresAt: Math.min(result.expiresAt, now() + 15 * 60000) });
-      return { verified: true, verificationToken: token };
+      return { verified: true, verificationToken: token, existingMember: remote.profile_complete };
     }
     if (path === '/api/membership') {
       if (!data || typeof data !== 'object' || Object.keys(data).some(key => !['name','leaderboardName','email','dateOfBirth','city','termsAccepted','marketingConsent','phoneNumber','verificationToken','gameId'].includes(key))) fail(400, 'Please submit membership details and the game ID only.');

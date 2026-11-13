@@ -46,7 +46,7 @@ try{
         await capture(page,'02-account-create-desktop');await frame.getByRole('tab',{name:'SIGN IN'}).click();
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);await frame.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();
         await fillCreate(frame);await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();
-        await frame.locator('.claim-invitation').filter({hasText:'JOIN THE SO/ COLLECTIVE'}).waitFor();assert.match(await frame.locator('.claim-score').innerText(),/3,205 pts · ₹320\.5 off SO\/ FACET diamond jewellery/);assert.equal(await frame.locator('.design-claim .brand').innerText(),'GAME COMPLETE');assert.match(await frame.locator('[name=\"dialCode\"] option').first().innerText(),/India \(\+91\)/);assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
+        await frame.locator('.claim-invitation').filter({hasText:'JOIN THE SO/ COLLECTIVE'}).waitFor();assert.match(await frame.locator('.claim-score').innerText(),/3,205 SO\/ COINS · ₹320\.5 off SO\/ FACET diamond jewellery/);assert.equal(await frame.locator('.design-claim .brand').innerText(),'MEMBERSHIP');assert.match(await frame.locator('[name=\"dialCode\"] option').first().innerText(),/India \(\+91\)/);assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
         await capture(page,'04-claim-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'04-claim-mobile');await page.setViewportSize({width:1440,height:900});
         await frame.getByRole('button',{name:'← Back',exact:true}).click();assert.equal(await frame.locator('#new-name').inputValue(),'Test Member');assert.ok(await frame.locator('[name="terms"]').isChecked());
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
@@ -56,10 +56,10 @@ try{
         await frame.locator('#feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
         await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
       }
-      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();await frame.getByText('You joined THE SO/ COLLECTIVE.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.auth-flow-notice').innerText(),/3,200 points/);
+      await frame.getByRole('heading',{name:'WELCOME TO The SO/ COLLECTIVE'}).waitFor();await frame.getByText('We’re excited to have you here.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.saved-balance').innerText(),/3,200\s+SO\/ COINS/);await page.setViewportSize({width:390,height:844});await capture(page,'07-points-saved-mobile');await page.setViewportSize({width:1440,height:900});
       await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}});});
-      await frame.getByRole('button',{name:'Share my score',exact:true}).click();await frame.getByRole('heading',{name:'Share your score'}).waitFor();await frame.getByRole('button',{name:'Copy score & link',exact:true}).click();await frame.getByRole('status').filter({hasText:'Your score and link are copied.'}).waitFor();
-      assert.match(await frame.locator('body').evaluate(()=>window.__copiedScore),/I scored 3,205 SO\/ COINS in SO\/ FACET Pinball/);
+      await frame.getByRole('button',{name:'SHARE POINTS',exact:true}).click();await frame.getByRole('heading',{name:'Share your points'}).waitFor();await frame.getByRole('button',{name:'Copy points & link',exact:true}).click();await frame.getByRole('status').filter({hasText:'Your points and link are copied.'}).waitFor();
+      assert.match(await frame.locator('body').evaluate(()=>window.__copiedScore),/I have 3,200 SO\/ COINS with SO\/ FACET/);
       assert.equal(awards.size,1);assert.deepEqual([...awards.values()],[320]);assert.equal(events.filter(e=>e.path==='/rewards/auth').length,1);assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,2);
       const storage=await frame.locator('body').evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));for(const v of ['fixture-signature','fixture-partner-key','test@example.invalid','9876543210'])assert.ok(!storage.includes(v));
       await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('textbox',{name:'Name',exact:true}).fill('Updated Member');await page.getByRole('textbox',{name:'Leaderboard name',exact:true}).fill('Updated M.');await page.getByRole('textbox',{name:'Email',exact:true}).fill('updated@example.invalid');
@@ -141,11 +141,11 @@ try{
       await details.getByRole('textbox',{name:'Email address'}).fill('test@example.invalid');
       await details.locator('[name="terms"]').check();
       await details.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
-      await frame.getByRole('heading',{name:'It’s yours.'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
-      await frame.getByRole('button',{name:'Share my score',exact:true}).click();await frame.getByRole('heading',{name:'Share your score'}).waitFor();assert.match(await frame.getByRole('link',{name:'Share via WhatsApp'}).getAttribute('href'),/I%20scored%203%2C205%20SO%2F%20COINS/);
+      await frame.getByRole('heading',{name:'WELCOME TO The SO/ COLLECTIVE'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
+      await frame.getByRole('button',{name:'SHARE POINTS',exact:true}).click();await frame.getByRole('heading',{name:'Share your points'}).waitFor();assert.match(await frame.getByRole('link',{name:'Share via WhatsApp'}).getAttribute('href'),/I%20have%203%2C200%20SO%2F%20COINS/);
       await capture(page,'07-points-saved-game-desktop');await page.setViewportSize({width:375,height:844});await capture(page,'07-points-saved-game-mobile');
       await frame.getByRole('button',{name:'Play again',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open&&(!document.querySelector('#gameplay-controls').hidden||document.querySelector('#controls-tutorial')?.open));
-      assert.deepEqual(errors,[]);console.log(engine+': game result → save → persistent success, Share my score and replay passed');
+      assert.deepEqual(errors,[]);console.log(engine+': game result → save → persistent success, share points and replay passed');
     }finally{await context.close();}
   });
 }finally{await browser.close();}

@@ -19,17 +19,19 @@ export const joinPageTitle='SO/ FACET — Join THE SO/ COLLECTIVE';
 export function SavedConfirmation({saved,status='',onReplay}) {
   const shareDialog=useRef(null);
   return brandText(<section className="auth-flow-notice saved-confirmation">
-    <p>{saved?.pointsSaved?'SO/ SAVED':'SO/ COINS SAVED'}</p><h1>It’s yours.</h1>
-    {saved?.pointsSaved&&<p>You joined THE SO/ COLLECTIVE.</p>}
-    <p>{saved?.pointsSaved?formatPoints(saved.savedPoints)+' SO/ COINS ('+rewardMoney(saved.savedPoints)+' off) are saved for SO/ FACET diamond jewellery.':'You joined THE SO/ COLLECTIVE. Play a round to earn SO/ COINS.'}</p>
-    {saved?.pointsSaved&&<p>Use your SO/ COINS from our launch. <a href="/terms" target="_blank" rel="noopener">Terms apply.</a></p>}
+    <p>SO/ SAVED</p><h1><span>WELCOME TO</span>{' '}<span>The SO/ COLLECTIVE</span></h1>
+    <p className="saved-intro">We’re excited to have you here.</p>
+    {saved?.pointsSaved?<>
+      <div className="saved-balance" aria-label={`${formatPoints(saved.savedPoints)} SO/ COINS`}><strong>{formatPoints(saved.savedPoints)}</strong><span>SO/ COINS</span></div>
+      <p className="saved-reward">You have {formatPoints(saved.savedPoints)} SO/ COINS. That’s <strong>{rewardMoney(saved.savedPoints)} off</strong> your SO/ FACET jewellery.</p>
+    </>:<p>Play a round to earn SO/ COINS for your SO/ FACET jewellery.</p>}
     {status&&<p role="status">{status}</p>}
     <div className="auth-flow-actions">
-      <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>{saved?.pointsSaved?'Play again':'Play pinball'}</button>
-      {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>shareDialog.current.showModal()}>Share my score</button>}
-      {saved?.pointsSaved&&<button type="button" onClick={()=>window.top.location.assign('/notify')}>NOTIFY ME</button>}
+      {saved?.pointsSaved&&<button type="button" aria-haspopup="dialog" onClick={()=>shareDialog.current.showModal()}>SHARE POINTS</button>}
+      <button type="button" onClick={onReplay??(()=>window.top.location.assign('/game'))}>PLAY AGAIN</button>
+      <button type="button" onClick={()=>window.top.location.assign('/about')}>ABOUT&nbsp;SO/ FACET</button>
     </div>
-    {saved?.pointsSaved&&<ShareScoreDialog score={saved.score} dialogRef={shareDialog}/>}
+    {saved?.pointsSaved&&<ShareScoreDialog score={saved.savedPoints} dialogRef={shareDialog} sharePoints/>}
   </section>);
 }
 export default function AuthFlow({pageTitle,pointsContext=false,initialTab='create',initialEmail='',checkMembership=true,forceVerification=false,claimFirst=false,onComplete,onBack,firstCut=false}) {
@@ -39,7 +41,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
   const restoredSaved=useRef(location.pathname==='/coins-saved'?readScreenData('saved'):null);
   const [defaults,setDefaults]=useState({email:initialEmail}),[details,setDetails]=useState(null),[pending,setPending]=useState(restoredResult.current),[saved,setSaved]=useState(restoredSaved.current);
   const [challenge,setChallenge]=useState(null),[status,setStatus]=useState(''),[busy,setBusy]=useState(false),[config,setConfig]=useState(null),[resendAt,setResendAt]=useState(0),[seconds,setSeconds]=useState(0),[exit,setExit]=useState(null);
-  const pendingRef=useRef(restoredResult.current),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),mounted=useRef(true),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
+  const pendingRef=useRef(restoredResult.current),savedRef=useRef(false),lock=useRef(false),controller=useRef(null),proof=useRef(null),existingMember=useRef(false),mounted=useRef(true),completeRef=useRef(onComplete),backRef=useRef(onBack),exitRef=useRef(null);
   useEffect(()=>{
     if(restoredSaved.current?.pointsSaved===true){setStep('success');setMemberCheck('guest');savedRef.current=true;}
   },[]);
@@ -103,7 +105,7 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     if(!phoneNumber)throw Error('Please enter a valid mobile number.');
     if(seconds>0)throw Error('Please wait '+seconds+' seconds before requesting another code.');
     if(kind==='signup'&&(!config?.policies?.terms||!config?.policies?.privacy))throw Error('Account terms are not available yet. Please try again later.');
-    proof.current=null;
+    proof.current=null;existingMember.current=false;
     const sent=await request(kind==='signin'?'/api/account/otp/request':'/api/membership/otp/request',kind==='signin'?{phoneNumber}:{phoneNumber,name,consent},signal);
     if(sent.success!==true||typeof sent.challengeId!=='string'||!Number.isFinite(sent.expiresIn)||sent.expiresIn<=0)throw Error('Your code could not be sent. Please try again.');
     setChallenge({id:sent.challengeId,phoneNumber,kind,expiresAt:Date.now()+sent.expiresIn*1000,channel:sent.deliveryChannel});
@@ -155,15 +157,22 @@ export default function AuthFlow({pageTitle,pointsContext=false,initialTab='crea
     if(values.otp!==undefined&&!/^\d{6}$/.test(values.otp))throw Error('Enter the six-digit code.');
     if(pendingRef.current&&!pendingRef.current.gameId)throw Error('This game could not connect for verification. Play another round to save SO/ COINS.');
     let token=proof.current;
-    if(!token){if(!values.otp||Date.now()>=challenge.expiresAt)throw Error('This code expired. Please request another code.');const verified=await request('/api/membership/otp/verify',{phoneNumber,otp:values.otp,challengeId:challenge.id},signal);if(verified.verified!==true||typeof verified.verificationToken!=='string')throw Error('Your code could not be verified.');token=verified.verificationToken;proof.current=token;}
-    if(values.verifyOnly)return;
+    if(!token){if(!values.otp||Date.now()>=challenge.expiresAt)throw Error('This code expired. Please request another code.');const verified=await request('/api/membership/otp/verify',{phoneNumber,otp:values.otp,challengeId:challenge.id},signal);if(verified.verified!==true||typeof verified.verificationToken!=='string')throw Error('Your code could not be verified.');token=verified.verificationToken;proof.current=token;existingMember.current=verified.existingMember===true;}
+    if(values.verifyOnly){
+      if(existingMember.current){
+        const player=await request('/api/player',undefined,signal);
+        const reward=pendingRef.current?await request('/api/membership/rewards',{gameId:pendingRef.current.gameId},signal):{pointsSaved:false,savedPoints:0};
+        await complete({...reward,player});
+      }
+      return {existingMember:existingMember.current};
+    }
     const profile=claimFirst?registrationDetails({name:details.name,phone:values.mobile,country:values.dialCode,email:values.email,terms:values.terms,updates:values.updates}):details;
     const response=await request('/api/membership',registrationPayload({...profile,phoneNumber},token,pendingRef.current?.gameId),signal);
     if(response.success!==true||response.player?.member!==true||pendingRef.current&&response.pointsSaved!==true||!Number.isSafeInteger(response.savedPoints)||response.savedPoints<0)throw Error('Your account and SO/ COINS have not been confirmed as saved. Please try again.');
     await complete(response);
   });
   const resend=()=>perform(signal=>sendCode('signup',challenge.phoneNumber,{name:details.name,consent:claimFirst||details.termsAccepted},signal));
-  function switchTab(value){setTab(value);setStatus('');proof.current=null;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
+  function switchTab(value){setTab(value);setStatus('');proof.current=null;existingMember.current=false;setChallenge(null);if(claimFirst&&value==='create')setStep('claim');}
   const goBack=()=>{if(claimFirst&&embedded){post({type:'contest-registration:close',returnToScore:true});return;}if(step==='claim'){setStep('identity');setStatus('');return;}leave('/');};
   const replay=()=>{savedRef.current=true;pendingRef.current=null;if(embedded)post({type:'sofacet:membership-replay'});else window.top.location.assign('/game');};
   if(exit){
