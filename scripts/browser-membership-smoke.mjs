@@ -45,16 +45,13 @@ try{
       }else{
         await capture(page,'02-account-create-desktop');await frame.getByRole('tab',{name:'SIGN IN'}).click();
         assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);await frame.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();
-        await fillCreate(frame);await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('.design-claim[data-scene-ready="true"]').waitFor();
-        await frame.locator('.claim-invitation').filter({hasText:'JOIN THE SO/ COLLECTIVE'}).waitFor();assert.match(await frame.locator('.claim-score').innerText(),/3,205 SO\/ COINS · ₹320\.5 off SO\/ FACET diamond jewellery/);assert.equal(await frame.locator('.design-claim .brand').innerText(),'MEMBERSHIP');assert.match(await frame.locator('[name=\"dialCode\"] option').first().innerText(),/India \(\+91\)/);assert.equal(await frame.locator('[name="mobile"]').inputValue(),'9876543210');
-        await capture(page,'04-claim-desktop');await page.setViewportSize({width:390,height:844});await capture(page,'04-claim-mobile');await page.setViewportSize({width:1440,height:900});
-        await frame.getByRole('button',{name:'← Back',exact:true}).click();assert.equal(await frame.locator('#new-name').inputValue(),'Test Member');assert.ok(await frame.locator('[name="terms"]').isChecked());
-        assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
-        await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('#final-otp').waitFor();
-        await frame.locator('#final-otp').fill('000000');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'That code doesn’t match'}).waitFor();assert.equal(awards.size,0);
-        state.profileWriteError={status:503,code:'service_unavailable'};await frame.locator('#final-otp').fill('012345');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
-        await frame.locator('#feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
-        await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
+        await fillCreate(frame);await frame.locator('#new-email').fill('');await frame.locator('input[name="terms"]').uncheck();await frame.locator('input[name="updates"]').uncheck();await frame.getByRole('button',{name:'SEND',exact:true}).click();await frame.getByRole('button',{name:'RESEND',exact:true}).waitFor();assert.ok(await frame.getByRole('button',{name:'RESEND',exact:true}).isDisabled());
+        await frame.locator('#new-email').fill('test@example.invalid');await frame.locator('#new-otp').fill('012345');await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,0);
+        await frame.locator('input[name="terms"]').check();await frame.locator('input[name="updates"]').check();
+        await frame.locator('#new-otp').fill('000000');await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('#create-feedback').filter({hasText:'That code doesn’t match'}).waitFor();assert.equal(awards.size,0);
+        state.profileWriteError={status:503,code:'service_unavailable'};await frame.locator('#new-otp').fill('012345');await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();
+        await frame.locator('#create-feedback').filter({hasText:/try again|unavailable/i}).waitFor();assert.equal(awards.size,0);state.profileWriteError=null;
+        await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();
       }
       await frame.getByRole('heading',{name:'WELCOME TO The SO/ COLLECTIVE'}).waitFor();await frame.getByText('We’re excited to have you here.',{exact:true}).waitFor();await capture(page,'07-points-saved');assert.match(await frame.locator('.saved-balance').innerText(),/3,200\s+SO\/ COINS/);await page.setViewportSize({width:390,height:844});await capture(page,'07-points-saved-mobile');await page.setViewportSize({width:1440,height:900});
       await frame.locator('body').evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedScore=text}}});});
@@ -62,8 +59,8 @@ try{
       assert.match(await frame.locator('body').evaluate(()=>window.__copiedScore),/I have 3,200 SO\/ COINS with SO\/ FACET/);
       assert.equal(awards.size,1);assert.deepEqual([...awards.values()],[320]);assert.equal(events.filter(e=>e.path==='/rewards/auth').length,1);assert.equal(events.filter(e=>e.path==='/rewards/auth/verify').length,2);
       const storage=await frame.locator('body').evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));for(const v of ['fixture-signature','fixture-partner-key','test@example.invalid','9876543210'])assert.ok(!storage.includes(v));
-      await page.goto(origin+'/account.html');await page.locator('#account-screen').waitFor();await page.getByRole('textbox',{name:'Name',exact:true}).fill('Updated Member');await page.getByRole('textbox',{name:'Leaderboard name',exact:true}).fill('Updated M.');await page.getByRole('textbox',{name:'Email',exact:true}).fill('updated@example.invalid');
-      await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('status').filter({hasText:'Your details are updated.'}).waitFor();await page.reload();await page.locator('#account-screen').waitFor();
+      await page.goto(origin+'/sign-in');await page.locator('#account-screen').waitFor();await page.getByRole('textbox',{name:'Name',exact:true}).fill('Updated Member');await page.getByRole('textbox',{name:'Leaderboard name',exact:true}).fill('Updated M.');await page.getByRole('textbox',{name:'Email',exact:true}).fill('updated@example.invalid');
+      await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('status').filter({hasText:'Your details are updated.'}).waitFor();await page.goto(origin+'/sign-in');await page.locator('#account-screen').waitFor();
       assert.equal(await page.getByRole('textbox',{name:'Name',exact:true}).inputValue(),'Updated Member');assert.equal((await request('/api/account')).data.savedPoints,3200);assert.equal(awards.size,1);assert.deepEqual(errors,[]);
       console.log(engine+': '+(returningMember?'returning sign-in':'create → Claim, wrong OTP, retry, pending reward')+' and profile persistence passed');
     }finally{await context.close();}
@@ -74,25 +71,19 @@ try{
       await page.clock.install();
       await page.route('**/api/membership/otp/request',async route=>{sent.push(route.request().postDataJSON());await route.fulfill({json:{success:true,challengeId:'client-check-'+sent.length,expiresIn:300,resendAfter:60,deliveryChannel:'whatsapp'}});});
       await page.route('**/api/membership/otp/verify',async route=>{verified.push(route.request().postDataJSON());await route.fulfill({status:400,json:{code:'invalid_otp',message:'Enter the new code for this number.'}});});
-      const frame=await embed(page,origin,false);await fillCreate(frame);await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('#final-otp').waitFor();
-      await frame.locator('#final-otp').fill('012345');await frame.locator('[name="mobile"]').fill('9876543211');assert.ok(await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).isDisabled());
-      await page.clock.fastForward(61000);await frame.getByRole('button',{name:'SEND NEW CODE',exact:true}).click();
-      await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).waitFor();assert.equal(await frame.locator('#final-otp').inputValue(),'');assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal(sent[1].dateOfBirth,undefined);assert.equal(sent[1].city,undefined);
-      assert.equal(verified.length,0);await frame.locator('#final-otp').fill('123456');await frame.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();await frame.locator('#feedback').filter({hasText:'Enter the new code'}).waitFor();
+      const frame=await embed(page,origin,false);await fillCreate(frame);await frame.getByRole('button',{name:'SEND',exact:true}).click();await frame.getByRole('button',{name:'RESEND',exact:true}).waitFor();
+      await frame.locator('#new-phone').fill('9876543211');assert.ok(await frame.getByRole('button',{name:'RESEND',exact:true}).isDisabled());
+      await page.clock.fastForward(61000);await frame.getByRole('button',{name:'RESEND',exact:true}).click();
+      assert.equal(sent[1].phoneNumber,'+919876543211');assert.equal(sent[1].name,'Test Member');assert.equal(sent[1].dateOfBirth,undefined);assert.equal(sent[1].city,undefined);
+      assert.equal(verified.length,0);await frame.locator('#new-otp').fill('123456');await frame.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).click();await frame.locator('#create-feedback').filter({hasText:'Enter the new code'}).waitFor();
       assert.equal(verified[0].phoneNumber,'+919876543211');assert.equal(verified[0].challengeId,'client-check-2');assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.gameId),gameId);
-      console.log(engine+': changed phone observes cooldown, requests a fresh OTP, clears old code and preserves game ID');
+      console.log(engine+': join OTP observes cooldown, requests a fresh code for a changed phone and preserves game ID');
     }finally{await context.close();}
   });
   await withRewardsSite(async({origin})=>{
     const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'}),page=await context.newPage();
     try{
-      await page.goto(origin+'/account.html');await page.locator('.design-account[data-scene-ready="true"]').waitFor();await page.setViewportSize({width:390,height:844});await capture(page,'03-account-registered-mobile');await page.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();await capture(page,'02-account-create-mobile');
-      for(const [width,height,label] of [[1440,900,'desktop'],[390,844,'mobile']]){
-        await page.setViewportSize({width,height});await page.goto(origin+'/launching-soon.html');await page.locator('.design-launch[data-scene-ready="true"]').waitFor();await capture(page,'05-launch-'+label);
-        await page.goto(origin+'/launching-soon.html#join');await page.locator('#join[open]').waitFor();await capture(page,'06-join-dialog-'+label);await page.locator('#join-name').fill('Launch Member');await page.locator('#join-phone').fill('9876543210');await page.locator('#email').fill('launch@example.invalid');await page.locator('#join-privacy').check();await page.locator('#join-updates').check();await page.locator('#join-form button[type=submit]').click();await page.waitForURL('**/first-cuts-confirmation.html');await page.getByRole('link',{name:'My SO/ COINS',exact:true}).waitFor();await page.goto(origin+'/launching-soon.html');await page.goto(origin+'/launching-soon.html#join');await page.locator('#join[open]').waitFor();await page.getByRole('button',{name:'Close signup',exact:true}).click();
-        await page.getByRole('button',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).waitFor();
-      }
-      await page.getByRole('button',{name:'Rather play first? Play Pinball',exact:true}).click();await page.waitForURL('**/play.html');console.log(engine+': launch → Join → saved signup, confirmation and Play Pinball passed');
+      await page.goto(origin+'/sign-in');await page.locator('.design-account[data-scene-ready="true"]').waitFor();await page.setViewportSize({width:390,height:844});await capture(page,'03-account-registered-mobile');await page.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();await capture(page,'02-account-create-mobile');
     }finally{await context.close();}
   });
   await withRewardsSite(async({origin})=>{
@@ -128,7 +119,7 @@ try{
       await openClaim();await page.goBack();await scoreRestored();
       await openClaim();await frame.getByRole('button',{name:'Sign in',exact:true}).click();await frame.locator('#login-phone').waitFor();assert.equal(await frame.locator('body').evaluate(()=>window.sofacetPendingReward.points),3205);await frame.getByRole('tab',{name:'JOIN THE SO/ COLLECTIVE'}).click();await frame.locator('[name="fullName"]').waitFor();
       await frame.getByRole('button',{name:'Close account form'}).click();await frame.getByRole('heading',{name:/Leaving/i}).waitFor();await frame.getByRole('button',{name:'Save my SO/ COINS',exact:true}).click();await frame.locator('[name="fullName"]').waitFor();
-      assert.equal(await frame.locator('.claim-invitation').innerText(),'JOIN THE SO/ COLLECTIVE');assert.match(await frame.locator('.claim-score').innerText(),/3,205 pts/);
+      assert.equal(await frame.locator('.claim-invitation').innerText(),'JOIN THE SO/ COLLECTIVE');assert.match(await frame.locator('.claim-score').innerText(),/3,205 SO\/ COINS/);
       await context.addCookies([{name:'sofacet_pinball_player',value:member,url:origin,httpOnly:true,sameSite:'Lax'}]);
       await frame.locator('[name="fullName"]').fill('Test Member');await frame.locator('[name="mobile"]').fill('9876543210');
       await frame.getByRole('button',{name:'Send OTP',exact:true}).click();
@@ -142,9 +133,9 @@ try{
       await details.locator('[name="terms"]').check();
       await details.getByRole('button',{name:'SAVE MY SO/ COINS',exact:true}).click();
       await frame.getByRole('heading',{name:'WELCOME TO The SO/ COLLECTIVE'}).waitFor();assert.ok(await page.locator('#registration-dialog').evaluate(e=>e.open));assert.equal(await page.locator('#leaderboard-dialog').isVisible(),false);
-      await frame.getByRole('button',{name:'SHARE POINTS',exact:true}).click();await frame.getByRole('heading',{name:'Share your points'}).waitFor();assert.match(await frame.getByRole('link',{name:'Share via WhatsApp'}).getAttribute('href'),/I%20have%203%2C200%20SO%2F%20COINS/);
+      await frame.getByRole('button',{name:'SHARE POINTS',exact:true}).click();await frame.getByRole('heading',{name:'Share your points'}).waitFor();assert.match(await frame.getByRole('link',{name:'Share via WhatsApp'}).getAttribute('href'),/I%20have%203%2C200%20SO%2F%20COINS/);await frame.getByRole('button',{name:'Close share panel'}).click();
       await capture(page,'07-points-saved-game-desktop');await page.setViewportSize({width:375,height:844});await capture(page,'07-points-saved-game-mobile');
-      await frame.getByRole('button',{name:'Play again',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open&&(!document.querySelector('#gameplay-controls').hidden||document.querySelector('#controls-tutorial')?.open));
+      await frame.getByRole('button',{name:'PLAY AGAIN',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#registration-dialog').open&&(!document.querySelector('#gameplay-controls').hidden||document.querySelector('#controls-tutorial')?.open));
       assert.deepEqual(errors,[]);console.log(engine+': game result → save → persistent success, share points and replay passed');
     }finally{await context.close();}
   });

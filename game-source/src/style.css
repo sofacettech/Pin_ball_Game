@@ -58,15 +58,17 @@ header #member{color:#b5ff42;border:1px solid #68408b}
 .leaderboard-panel .source-image{width:1456px;height:1024px}
 .leaderboard-heading{position:absolute;left:25.4%;top:5.4%;width:49.1%;height:13.7%;margin:0;display:flex;align-items:center}
 .leaderboard-heading img{display:block;width:100%;height:auto;clip-path:inset(16% 3% 15%)}
-.board-close{position:absolute;left:79.35%;top:13.3%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:10px;border:0;border-radius:0;background:transparent;z-index:1}
+.board-close{position:absolute;left:79.35%;top:12.6%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:10px;border:0;border-radius:0;background:transparent;z-index:1}
 .board-close svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .board-close:hover,.board-close:focus-visible{background:transparent;color:#e5ff42;outline:none}
 .leaderboard-table{--row-height:2.7cqw;position:absolute;left:22.1%;top:26.9%;width:55.8%;height:auto;border-collapse:collapse;table-layout:fixed;font-size:clamp(13px,1.65cqw,20px);line-height:1.15;font-variant-numeric:tabular-nums}
 .leaderboard-table th:first-child{width:20.5%}.leaderboard-table th:last-child{width:24.8%}
 .leaderboard-table thead,.leaderboard-table tr{height:var(--row-height)}.leaderboard-table tbody:empty{display:none}
 .leaderboard-table th,.leaderboard-table td{height:var(--row-height);text-align:center;vertical-align:middle;padding:0 2.3%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-@media(min-width:601px){.leaderboard-table :is(thead,thead tr,th){height:3.4cqw}.leaderboard-table th{padding-bottom:.45cqw}}
-.leaderboard-table th{color:#e8ff70;font-size:.86em;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+@media(min-width:601px){.leaderboard-table :is(thead,thead tr,th){height:3.4cqw}}
+.leaderboard-table th{position:relative;padding-block:0;color:#e8ff70;font-size:.86em;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.leaderboard-table th span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;line-height:1}
+@supports (-webkit-hyphens:none){.leaderboard-table th span{transform:translateY(-.85cqw)}}
 .leaderboard-table td{background:#100b21d9;border-bottom:1px solid #57267b70}
 .leaderboard-table td:first-child{color:#cdb7e5}
 .leaderboard-table .current-player td{background:#31204edb;color:#eaff86;font-weight:600;border-block:1px solid #a4cf4080}
@@ -94,7 +96,7 @@ header #member{color:#b5ff42;border:1px solid #68408b}
  .leaderboard-panel .artwork--desktop{display:block;position:absolute;width:0;height:0;overflow:hidden;filter:none}
  .leaderboard-panel .artwork--mobile{display:block;height:103.022cqw}
  .leaderboard-heading{top:3.798cqw;height:9.635cqw}
- .board-close{left:79.3%;top:9.15cqw;width:44px;height:44px;padding:13px}
+ .board-close{left:79.3%;top:9cqw;width:44px;height:44px;padding:13px}
  .leaderboard-table{--row-height:5.22cqw;top:17.86cqw;font-size:clamp(12px,3.6cqw,14px);line-height:1.25}
  .leaderboard-table th{font-size:.8em}
  .leaderboard-table th:first-child{width:20%}.leaderboard-table th:last-child{width:32%}
@@ -491,8 +493,13 @@ body:has(#table-intro:not([hidden])) #stage .side-panel #message{display:none}
 @media(max-height:700px){#table-intro h1{font-size:20px;margin:6px 0}#table-intro .table-facts{margin-bottom:8px}}
 #leaderboard-save{min-height:44px;padding:10px 20px;border:1px solid #d9ed37;background:transparent;color:#e9f59e;font-size:14px}
 @media(max-width:600px){
- .leaderboard-table th:first-child{width:24%;font-size:11px;letter-spacing:0;text-overflow:clip}
+ .leaderboard-heading img{width:90%;margin-inline:auto}
+ .leaderboard-table{font-size:12px}
+ .leaderboard-table th{font-size:10px}
+ .leaderboard-table th:first-child{width:24%;font-size:10px;letter-spacing:0;text-overflow:clip}
  .leaderboard-table th:last-child{width:34%}
- .leaderboard-actions :is(#leaderboard-save,#leaderboard-play){flex:1;min-width:0;width:auto;padding:10px;font-size:13px;white-space:nowrap}
+ .leaderboard-note{font-size:12px}
+ .leaderboard-note button{font-size:12px}
+ .leaderboard-actions :is(#leaderboard-save,#leaderboard-play){flex:1;min-width:0;width:auto;padding:10px;font-size:12px;white-space:nowrap}
 }
 @media(max-width:450px){.leaderboard-actions{flex-direction:column;align-items:stretch}}

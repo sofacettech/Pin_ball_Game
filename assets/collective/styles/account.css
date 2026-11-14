@@ -356,6 +356,13 @@
   :is(#account-root,#membership-root,#launch-root) .design-account .shell #create-form .checkboxes {margin:12px 0 20px!important;gap:11px!important;}
 }
 
+:is(#account-root,#membership-root,#launch-root) .design-account .shell #create-form .text-line {height:34px!important;}
+:is(#account-root,#membership-root,#launch-root) .design-account .shell #create-form .phone-line .text-line {height:33px!important;}
+:is(#account-root,#membership-root,#launch-root) .design-account .shell #create-form .otp-grid .small-button {margin-top:-5px!important;}
+@media(max-width:900px){
+  :is(#account-root,#membership-root,#launch-root) .design-account .shell #create-form .text-line {height:40px!important;}
+}
+
 
 /* Keep the butterfly locked to identical screen coordinates across tabs.
    Its previous top:27% was relative to the body, whose height changes when
