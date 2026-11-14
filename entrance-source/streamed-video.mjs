@@ -32,26 +32,30 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');finishDecode(failure);return}
     const index=Math.round(frame.timestamp*60/1e6);
     if(index<keepFirst||index>=keepLast){if(metrics)metrics.discardedFrames++;frame.close();return}
-    frames.set(index,frame);
+    frames.get(index)?.close();frames.set(index,frame);
     finishDecode();
   },error:error=>{failure=error;finishDecode(error)}});
   try{decoder.configure(config)}catch{decoder.close();return null}
   function finishDecode(error){
     const waiter=decodeWaiter;
-    if(!waiter||(!error&&(waiter.flushing||!frames.has(waiter.index))))return;
+    // Return as soon as the requested picture exists. A group-end drain may
+    // still be running for the later pictures; waiting for it adds ~20 ms to
+    // every prediction group on phone hardware decoders.
+    if(!waiter||(!error&&!frames.has(waiter.index)))return;
     recordTiming('decodeWaitMs',waiter.startedAt);
     decodeWaiter=null;clearTimeout(waiter.timer);clearTimeout(waiter.flushTimer);
     error?waiter.reject(error):waiter.resolve();
   }
-  function flushDecode(compatibility=false){
-    const waiter=decodeWaiter;if(!waiter)return;
+  function flushDecode(compatibility=false,waiter=decodeWaiter){
+    if(!waiter)return;
     // A cold decoder or a busy event loop can miss the first low-delay deadline.
     // One independent forward group may retry; a second miss stays compatible
     // for this decoder's lifetime, without recurring deadline probes.
     if(compatibility){flushRequired=true;compatibilityGroup=waiter.group;}
     if(metrics){metrics.flushes++;if(compatibility)metrics.compatibilityFlushes++;}
     decodeCursor=null;waiter.flushing=true;
-    decoder.flush().then(()=>{waiter.flushing=false;finishDecode(failure||(!frames.has(waiter.index)?Error('The requested video frame was not decoded'):null))},finishDecode);
+    // A request that already resolved must not let its late drain settle a newer one.
+    decoder.flush().then(()=>{waiter.flushing=false;if(decodeWaiter===waiter)finishDecode(failure||(!frames.has(waiter.index)?Error('The requested video frame was not decoded'):null))},error=>{if(decodeWaiter===waiter)finishDecode(error)});
   }
   function save(segment,bytes){
     cacheWrites=cacheWrites.then(async()=>{
@@ -210,6 +214,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
         timer:setTimeout(()=>finishDecode(Error('Video decoding timed out')),5000)};
       if(!mustFlush)decodeWaiter.flushTimer=setTimeout(()=>flushDecode(true),lowDelayDeadline);
     });
+    const request=decodeWaiter;
     decodeCursor={part,first,next:retainLast};
     try{
       for(let i=from;i<retainLast;i++){
@@ -217,7 +222,7 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
         if(metrics)metrics.chunks++;
         decoder.decode(new Chunk({type:sync?'key':'delta',timestamp:Math.round(sourceIndex*1e6/60),duration:Math.round(1e6/60),data:entry.bytes.subarray(start,start+length)}));
       }
-      if(mustFlush)flushDecode();
+      if(mustFlush)flushDecode(false,request);
     }catch(error){failure=error;decodeCursor=null;finishDecode(error)}
     await decoded;
     if(failure)throw failure;

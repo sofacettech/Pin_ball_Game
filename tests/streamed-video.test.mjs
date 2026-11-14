@@ -368,3 +368,16 @@ test('disposing a cancelled-and-retried network wait aborts the replacement and 
  assert.equal(source.cancelPending(),false);assert.equal(closes,1);assert.equal(signals.length,2);
  assert.ok(signals.every(signal=>signal.aborted));assert.equal(fake.chunks.length,0);
 });
+
+test('a picture is returned once decoded; a slow group drain neither delays it nor settles a later request',{timeout:1500},async()=>{
+ const part={...segment,bytes:16,lastFrame:349,frameCount:16,frames:Array.from({length:16},(_,i)=>[i,1,Number(i%4===0)])},fake=codec({asyncOutput:true}),flush=fake.Decoder.prototype.flush;let finishFlush;
+ fake.Decoder.prototype.flush=function(){return new Promise(resolve=>{finishFlush=()=>flush.call(this).then(resolve)})};
+ const source=await createStreamedVideoSource([part],metadata,{...fake,fetcher:async()=>new Response(new Uint8Array(16))});
+ try{
+  // The drain never completes, yet the requested picture is delivered.
+  assert.equal(Math.round((await source.frameAt(0)).timestamp*60/1e6),0);
+  // A later group must resolve from its own output, not from the old drain.
+  assert.equal(Math.round((await source.frameAt(5)).timestamp*60/1e6),5);
+  finishFlush?.();
+ }finally{source.dispose()}
+});
