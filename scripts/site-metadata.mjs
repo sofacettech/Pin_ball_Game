@@ -5,7 +5,7 @@ export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.A
  let base='';
  if(origin){const url=new URL(origin);if(!['https:','http:'].includes(url.protocol))throw Error('The public site URL must use HTTPS or HTTP.');base=url.origin}
  html=String(html).replace(/<!-- site-metadata -->[\s\S]*?<!-- \/site-metadata -->/g,'').replace(/<link\b(?=[^>]*\brel=["'](?:icon|apple-touch-icon)["'])[^>]*>/gi,'').replace(/<meta\b(?=[^>]*(?:property|name)=["'](?:og:|twitter:)[^"']*["'])[^>]*>/gi,'');
- const image=escape(base+'/assets/sofacet-share.png');
+ const image=escape(base+'/assets/sofacet-share-20261114.jpg');
  return html.replace('</head>',`<!-- site-metadata -->
 <link rel="icon" href="/assets/sofacet-favicon-32.png?v=134f3ac4" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png?v=f5ecd063" sizes="180x180">
@@ -14,10 +14,10 @@ export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.A
 <meta property="og:title" content="${escape(title)}">
 <meta property="og:description" content="${escape(description)}">
 <meta property="og:image" content="${image}">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="SO/ FACET. What's yours? Play pinball. Save your SO/ COINS.">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="2752">
+<meta property="og:image:height" content="1536">
+<meta property="og:image:alt" content="SO/ FACET What’s Yours campaign artwork with model and SO/ COINS message.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escape(title)}">
 <meta name="twitter:description" content="${escape(description)}">

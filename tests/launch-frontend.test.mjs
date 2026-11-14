@@ -22,11 +22,12 @@ test('a ready world skips the remaining loading messages and stops the timer imm
 test('all page builds receive one complete share card and real favicons',()=>{
  const source='<html><head><title>Page</title><link rel="icon" href="data:,"></head><body></body></html>';
  const html=withSiteMetadata(source,'https://example.test/');
- assert.match(html,/og:image" content="https:\/\/example.test\/assets\/sofacet-share.png"/);
- assert.match(html,/og:image:width" content="1200"/);assert.match(html,/og:image:height" content="630"/);
+ assert.match(html,/og:image" content="https:\/\/example.test\/assets\/sofacet-share-20261114.jpg"/);
+ assert.match(html,/og:image:width" content="2752"/);assert.match(html,/og:image:height" content="1536"/);
+ assert.match(html,/og:image:type" content="image\/jpeg"/);
  assert.match(html,/SO\/ FACET. What's yours\?/);assert.match(html,/summary_large_image/);assert.doesNotMatch(html,/href="data:,"/);
  assert.equal(withSiteMetadata(html,'https://example.test/'),html);assert.throws(()=>withSiteMetadata(source,'javascript:alert(1)'));
- const png=readFileSync(new URL('../assets/sofacet-share.png',import.meta.url));assert.equal(png.readUInt32BE(16),1200);assert.equal(png.readUInt32BE(20),630);
+ const image=readFileSync(new URL('../assets/sofacet-share-20261114.jpg',import.meta.url));assert.equal(image.readUInt16BE(0),0xffd8);assert.ok(image.byteLength<5_000_000);
 });
 test('public sign-in cannot trust preview storage or use a demonstration verification code',()=>{
  const source=readFileSync(new URL('../account-source/src/main.jsx',import.meta.url),'utf8');
