@@ -68,9 +68,10 @@ export function advanceJourneyFrame(current,target,deltaMs,{coarse=false,reduced
 // aim a little short of the predicted rest point and ease there instead.
 // Returns the raw target while touching, when idle, or once the page overtakes.
 export function createTouchGlide({window=150,reach=.6,minSpeed=8,idle=300}={}){
-  let samples=[],touching=false,latch=null,commit=null;
+  let samples=[],touching=false,armed=false,latch=null,commit=null;
   return {
-    touch(value){touching=value;if(value)latch=null;},
+    // Only a real finger arms the glide; script/anchor/keyboard jumps stay exact.
+    touch(value){touching=value;if(value){latch=null;armed=true;}},
     push(frame,now){samples.push([now,frame]);while(samples.length&&now-samples[0][0]>window)samples.shift();},
     // When scrolling ends with the ball ahead of the page, the page is moved to
     // the ball (takeCommit) instead of pulling the ball back. Without this the
@@ -78,10 +79,10 @@ export function createTouchGlide({window=150,reach=.6,minSpeed=8,idle=300}={}){
     takeCommit(){const value=commit;commit=null;return value;},
     target(raw,now,{first=-Infinity,last=Infinity}={}){
       const end=samples.at(-1);
-      if(touching||!end){latch=null;return raw;}
+      if(touching||!end||!armed){latch=null;return raw;}
       if(now-end[0]>idle){
         if(latch&&(latch.point-raw)*latch.direction>0){commit=latch.point;samples=[[now,latch.point]];return latch.point;}
-        latch=null;return raw;
+        latch=null;armed=false;return raw;
       }
       const span=end[0]-samples[0][0],speed=span>=40?(end[1]-samples[0][1])/span*1000:0;
       if(Math.abs(speed)>=minSpeed){

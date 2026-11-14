@@ -104,9 +104,12 @@ test('touch glide aims short of the predicted rest point after release and never
  g.push(settled,2002);assert.equal(g.target(settled,2003,bounds),settled);
  // after a normal stop at the predicted point nothing is committed
  const quiet=createTouchGlide();quiet.push(10,0);assert.equal(quiet.target(10,1000,bounds),10);assert.equal(quiet.takeCommit(),null);
+ // a jump without any finger (scrollTo, anchor, key) is never extrapolated or committed
+ const j=createTouchGlide();j.push(0,0);j.push(1500,16);
+ assert.equal(j.target(1500,32,bounds),1500);assert.equal(j.target(1500,1000,bounds),1500);assert.equal(j.takeCommit(),null);
  // reversal and bounds
- const h=createTouchGlide();for(let i=0;i<8;i++)h.push(1990+i*5,i*16);
+ const h=createTouchGlide();h.touch(true);h.touch(false);for(let i=0;i<8;i++)h.push(1990+i*5,i*16);
  assert.equal(h.target(1995,112,bounds),2000);
- const r=createTouchGlide();for(let i=0;i<8;i++)r.push(500-i*5,i*16);
+ const r=createTouchGlide();r.touch(true);r.touch(false);for(let i=0;i<8;i++)r.push(500-i*5,i*16);
  assert.ok(r.target(465,112,bounds)<465);
 });
