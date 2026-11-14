@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {loadEntranceMedia} from '../entrance-source/video-delivery.mjs';
+import {createAdaptiveVideoPreload} from '../entrance-source/adaptive-video-preload.mjs';
 import {visibleVideoCrop} from '../entrance-source/video-crop.mjs';
 import {framePlacement} from '../frame-placement.js';
 
 const source=readFileSync(new URL('../entrance-source/video-renderer.mjs',import.meta.url),'utf8');
 async function fixture({cdn=false,segmentSource,streamSource,previewSource,width=1920,height=1080,preloadFailure=false,renderView=()=>null,onRender=()=>{},diagnostics=false,
-  media:providedMedia,preloadedFactory,load=true}={}){
+  media:providedMedia,preloadedFactory,adaptiveOptions={},load=true}={}){
   const videos=[],draws=[],errors=[];
   class Video extends EventTarget{
     readyState=2;videoWidth=width;videoHeight=height;time=0;seeking=false;seeks=[];
@@ -22,9 +23,10 @@ async function fixture({cdn=false,segmentSource,streamSource,previewSource,width
   const canvas={style:{},getContext:()=>({drawImage:(video,...args)=>draws.push({video,index:Math.floor(video.time*60),args,width:canvas.width,height:canvas.height})}),remove(){removed=true}};
   const manifest={version:1,width,height,fps:60,firstFrame:334,lastFrame:2164,clips:{opening:{frameCount:240,sha256:'a'.repeat(64)},journey:{frameCount:1831,sha256:'b'.repeat(64)}}};
   const media=providedMedia??{manifest,clips:Object.fromEntries(['opening','journey'].map(kind=>[kind,{url:(cdn?'https://media.example/':'/local/')+kind+'.mp4',local:'/local/'+kind+'.mp4',localWidth:1920,localHeight:1080,...((segmentSource||streamSource)&&kind==='journey'?{segments:[],...(previewSource?{preview:{width:512,height:288}}:{})}:{} )}]))};
+  const createBuffer=preloadedFactory??(()=>({load:async()=>{if(preloadFailure){preloadFailure=false;throw Error('CDN unavailable')}},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:100}));
   const context={JOURNEY_START_FRAME:334,visibleVideoCrop,
-    createPreloadedVideo:preloadedFactory??(()=>({load:async()=>{if(preloadFailure){preloadFailure=false;throw Error('CDN unavailable')}},url:url=>url,fetch:async()=>{},dispose(){},ready:true,bytes:100})),
-    createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>media,document:{createElement:type=>type==='canvas'?canvas:new Video()},
+    createAdaptiveVideoPreload:(initial,options)=>createAdaptiveVideoPreload(initial,{...options,createBuffer,loadMedia:async()=>media,document:null,...adaptiveOptions}),
+    createStreamedVideoSource:async(_parts,_metadata,size)=>size?.width===512?previewSource:typeof streamSource==='function'?streamSource(size):streamSource??null,createSegmentedVideoSource:()=>segmentSource,loadEntranceMedia:async()=>media,document:{createElement:type=>type==='canvas'?canvas:new Video()},
     fetch:async()=>({ok:true,json:async()=>manifest}),AbortController,DOMException,setTimeout,clearTimeout,console,performance};
   vm.runInNewContext(source.replace(/^import .*;\r?\n/gm,'').replace('export async function','async function')+';this.create=createJourneyRenderer',context);
   const renderer=await context.create({stage:{prepend(){}},renderView,onRender,diagnostics,onError:error=>errors.push(error)});
@@ -335,12 +337,12 @@ test('entrance selectors default to version 3 and retain explicit alternatives a
  for(const [query,expected] of [['','3'],['?debug=1','3'],['?entrance=1','1'],['?entrance=2','2'],['?entrance=3','3'],['?version=1','1'],['?version=2','2'],['?version=3','3'],['?version=3&entrance=2','2'],['?version=1&entrance=3','3'],['?entrance=video','3'],['?entrance=4','3']])assert.equal(selectEntranceOption(query),expected);
 });
 
-test('failed CDN preloading retries the complete bundled journey before it becomes ready',async()=>{
+test('failed CDN preloading retries the complete bundled journey before preparing any decoder',async()=>{
  let released=0;
  const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){released++}};
  const f=await fixture({cdn:true,width:3840,height:2160,streamSource:high,preloadFailure:true});
  try{
-  assert.equal(released,1);assert.equal(f.renderer.policy.segmented,false);assert.equal(f.renderer.policy.preloaded,true);
+  assert.equal(released,0,'do not allocate a decoder for a failed unbuffered variant');assert.equal(f.renderer.policy.segmented,false);assert.equal(f.renderer.policy.preloaded,true);
   assert.equal(f.videos[0].src,'/local/opening.mp4');assert.equal(f.videos[1].src,'/local/journey.mp4');
   f.renderer.renderAt(1840);f.videos[1].complete();await f.renderer.whenSettled();
   assert.equal(f.renderer.policy.sourceWidth,1920);assert.deepEqual(f.errors,[]);
@@ -424,6 +426,26 @@ test('segmented 4K readiness waits for the complete preloaded variant before any
  }finally{f.renderer.dispose()}
 });
 
+test('concurrent variant preparation shares one preload, decoder and first-picture preparation',async()=>{
+ let prepared=0;
+ const high={engine:'webcodecs',frameAt:async index=>{prepared++;return {time:index/60}},dispose(){}};
+ const f=await fixture({streamSource:high,load:false});
+ try{
+  const first=f.renderer.loadVariant(),second=f.renderer.loadVariant();assert.equal(first,second);
+  await Promise.all([first,second]);assert.equal(prepared,1);assert.equal(f.videos.length,1);assert.deepEqual(f.errors,[]);
+ }finally{f.renderer.dispose()}
+});
+
+test('a decoder completing after disposal is released without preparing or painting a picture',async()=>{
+ let finish,disposed=0,prepared=0;
+ const high={engine:'webcodecs',frameAt:async()=>{prepared++;return {}},dispose(){disposed++}};
+ const f=await fixture({streamSource:()=>new Promise(resolve=>{finish=resolve}),load:false});
+ const readiness=f.renderer.loadVariant();await new Promise(resolve=>setImmediate(resolve));
+ f.renderer.dispose();finish(high);
+ await assert.rejects(readiness,{name:'AbortError'});
+ assert.equal(disposed,1);assert.equal(prepared,0);assert.equal(f.videos.length,0);assert.equal(f.draws.length,0);
+});
+
 test('obsolete network seeks cancel on section jumps while active forward decoding stays serialized',async()=>{
  const media=await segmentedMedia(),pending=[];let cancellations=0,disposals=0,network=true;
  const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){disposals++}};
@@ -445,7 +467,7 @@ test('obsolete network seeks cancel on section jumps while active forward decodi
  }finally{f.renderer.dispose()}
 });
 
-test('a failed segmented 4K preload releases its decoder and retries the complete local 1080p variant',async()=>{
+test('a failed segmented 4K preload never allocates its decoder and retries the complete local 1080p variant',async()=>{
  const media=await segmentedMedia(),preloads=[];let bufferDisposals=0,decoderDisposals=0;
  const high={engine:'webcodecs',frameAt:async index=>({time:index/60}),dispose(){decoderDisposals++}};
  const f=await fixture({media,width:3840,height:2160,streamSource:high,preloadedFactory:files=>{
@@ -454,7 +476,7 @@ test('a failed segmented 4K preload releases its decoder and retries the complet
    dispose(){if(failed)bufferDisposals++},ready:!failed,bytes:failed?4238:208};
  }});
  try{
-  assert.equal(bufferDisposals,1);assert.equal(decoderDisposals,1);assert.equal(preloads.length,2);
+  assert.equal(bufferDisposals,1);assert.equal(decoderDisposals,0,'only a fully buffered selected variant may create a decoder');assert.equal(preloads.length,2);
   assert.equal(preloads[0].length,32);
   assert.deepEqual(preloads[1],[{url:media.clips.opening.local,bytes:80},{url:media.clips.journey.local,bytes:128}]);
   assert.equal(f.renderer.policy.streaming,false);assert.equal(f.renderer.policy.segmented,false);assert.equal(f.renderer.policy.preloaded,true);

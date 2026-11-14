@@ -4,9 +4,11 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {normalisePhone,countries,phoneCountry,maskedPhone} from '../membership-source/src/phone.js';
 import {capitaliseName,formatPoints,rewardMoney,resultHeadline,leaveCopy,birthDateState,splitPlayerName,publicPlayerName,leaderboardName,validPlayerName,validPublicName} from '../game-source/src/player-copy.ts';
+import {POINTS_PER_RUPEE,rewardFromPoints} from '../shared/reward-value.js';
 import {registrationDetails,registrationPayload,normaliseDesignPhone} from '../collective-source/auth-values.js';
 
 test('result and leave copy preserves exact scores without rounding money upwards',()=>{
+ assert.equal(POINTS_PER_RUPEE,10);assert.equal(rewardFromPoints(7300),730);assert.equal(rewardFromPoints(3205),320.5);
  assert.equal(formatPoints(3200),'3,200');assert.equal(rewardMoney(3205),'₹320.5');assert.equal(rewardMoney(9),'₹0.9');assert.equal(rewardMoney(-5),'₹0');
  assert.equal(resultHeadline(0),'Not much to keep yet.');assert.equal(resultHeadline(9),'Not much to keep yet.');assert.equal(resultHeadline(10),'Here’s what’s yours.');
  assert.equal(resultHeadline(5000,4500),'New best. Your SO/ COINS just went up.');assert.equal(resultHeadline(1,0),'New best. Your SO/ COINS just went up.');

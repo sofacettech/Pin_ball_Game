@@ -2,17 +2,19 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {createStreamedVideoSource} from '../entrance-source/streamed-video.mjs';
 const metadata={codec:'avc1.64002a',description:'0164002affe10000'};
 const segment={url:'https://media.example/movie.mp4',bytes:8,firstFrame:334,lastFrame:341,frameCount:8,frames:Array.from({length:8},(_,i)=>[i,1,i%4===0?1:0])};
+const decodeSizes=[{name:'1080p',width:1920,height:1080,maxFrames:4,probeDelay:50},{name:'4K',width:3840,height:2160,maxFrames:3,probeDelay:100}];
 function codec({buffered=false,coldBuffered=false,asyncOutput=false,dropOutput=false,bufferedFrames=0}={}){
- const images=[],chunks=[],pending=[];let flushes=0,bufferOutput=buffered||coldBuffered;
+ const images=[],chunks=[],pending=[];let flushes=0,bufferOutput=buffered||coldBuffered,decoder;
  class Decoder{
   static async isConfigSupported(){return {supported:true}}
-  constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured';this.needsKey=true}
+  constructor(callbacks){this.callbacks=callbacks;this.state='unconfigured';this.needsKey=true;decoder=this}
   configure(config){this.config=config;this.state='configured'}
   decode(chunk){if(this.needsKey)assert.equal(chunk.type,'key');this.needsKey=false;chunks.push(chunk);const frame={timestamp:chunk.timestamp,displayWidth:this.config.codedWidth,displayHeight:this.config.codedHeight,closed:false,close(){this.closed=true}};images.push(frame);if(dropOutput){frame.close();return}if(bufferOutput)pending.push(frame);else if(bufferedFrames){pending.push(frame);if(pending.length>bufferedFrames)this.callbacks.output(pending.shift())}else if(asyncOutput)queueMicrotask(()=>this.callbacks.output(frame));else this.callbacks.output(frame)}
   async flush(){flushes++;this.needsKey=true;for(const frame of pending.splice(0))this.callbacks.output(frame);if(coldBuffered)bufferOutput=false;}
-  close(){this.state='closed'}
+  close(){this.state='closed';for(const frame of pending.splice(0))frame.close()}
  }
- return {Decoder,Chunk:class{constructor(value){Object.assign(this,value)}},images,chunks,get flushes(){return flushes}};
+ return {Decoder,Chunk:class{constructor(value){Object.assign(this,value)}},images,chunks,get flushes(){return flushes},
+  output(count){for(const frame of pending.splice(0,count))decoder.callbacks.output(frame)}};
 }
 
 test('first pictures decode before a section finishes downloading; reverse groups reuse compressed bytes',async()=>{
@@ -70,13 +72,15 @@ test('range responses must match the requested offsets; servers ignoring Range r
  try{assert.equal(Math.round((await fallback.frameAt(7)).timestamp*60/1e6),7)}finally{fallback.dispose()}
 });
 
-test('twelve-frame prediction groups reuse decoded pictures and handle the final short group',async()=>{
+for(const size of decodeSizes)test(`${size.name} twelve-frame groups begin incrementally and present the final short group`,async()=>{
  const part={...segment,bytes:15,lastFrame:348,frameCount:15,frames:Array.from({length:15},(_,i)=>[i,1,Number(i%12===0)])},fake=codec();
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,fetcher:async()=>new Response(new Uint8Array(15))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,fetcher:async()=>new Response(new Uint8Array(15))});
  try{
-  await source.frameAt(0);await source.frameAt(11);assert.equal(fake.flushes,1);assert.equal(fake.chunks.length,12);
-  assert.equal(Math.round((await source.frameAt(14)).timestamp*60/1e6),14);assert.equal(fake.chunks.length,15);
+  await source.frameAt(0);assert.equal(fake.flushes,0);assert.equal(fake.chunks.length,size.maxFrames,'first paint must not wait for all twelve prediction pictures');
+  await source.frameAt(11);assert.equal(fake.flushes,1);assert.equal(fake.chunks.length,12);
+  assert.equal(Math.round((await source.frameAt(14)).timestamp*60/1e6),14);assert.equal(fake.chunks.length,15);assert.equal(fake.flushes,2);
  }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
 });
 
 test('prefetch reserves only the next boundary before continuing without overlapping downloads',async()=>{
@@ -114,48 +118,50 @@ test('advancing pauses skipped downloads and stale prefetch cannot fill an activ
 });
 
 
-test('4K decoding bounds retained pictures while preserving exact forward and reverse targets',async()=>{
+for(const size of decodeSizes)test(`${size.name} decoding bounds retained pictures while preserving exact forward and reverse targets`,async()=>{
  const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec();
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,fetcher:async()=>new Response(new Uint8Array(12))});
  try{
   for(const index of [0,4,11,2]){
    const frame=await source.frameAt(index);
-   assert.equal(Math.round(frame.timestamp*60/1e6),index);assert.equal(frame.displayWidth,3840);
-   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3,'4K frames must fit the 1080p decoded-pixel budget');
+   assert.equal(Math.round(frame.timestamp*60/1e6),index);assert.equal(frame.displayWidth,size.width);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames,'output pictures must fit the retained-frame budget');
   }
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
 });
 
-test('4K forward windows decode each prediction picture once and reverse misses restart from a keyframe',async()=>{
+for(const size of decodeSizes)test(`${size.name} forward windows decode each picture once and reverse misses restart from a keyframe`,async()=>{
  const part={...segment,bytes:24,lastFrame:357,frameCount:24,frames:Array.from({length:24},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({asyncOutput:true});
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(24))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,fetcher:async()=>new Response(new Uint8Array(24))});
  try{
   for(let index=0;index<12;index++){
    assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
-   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames);
   }
   assert.equal(fake.chunks.length,12,'appending forward windows must not decode the prediction prefix again');
   assert.equal(fake.flushes,1,'only the end of the prediction group drains the decoder');
-  await source.frameAt(8);assert.equal(fake.chunks.at(-9).type,'key');assert.equal(fake.chunks.length,21);
-  await source.frameAt(7);await source.frameAt(6);assert.equal(fake.chunks.length,21,'reuse the reverse lookbehind window');
-  await source.frameAt(10);assert.equal(fake.chunks.length,33,'a forward reversal after draining starts from an independent keyframe');
-  await source.frameAt(12);assert.equal(fake.chunks.at(-3).type,'key');assert.equal(fake.chunks.length,36);
-  assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+  const reverseIndex=11-size.maxFrames,reversePrefix=reverseIndex+1;
+  await source.frameAt(reverseIndex);assert.equal(fake.chunks.at(-reversePrefix).type,'key');assert.equal(fake.chunks.length,12+reversePrefix);
+  await source.frameAt(reverseIndex-1);await source.frameAt(reverseIndex-2);assert.equal(fake.chunks.length,12+reversePrefix,'reuse the reverse lookbehind window');
+  await source.frameAt(10);assert.equal(fake.chunks.length,24+reversePrefix,'a forward reversal after draining starts from an independent keyframe');
+  await source.frameAt(12);assert.equal(fake.chunks.at(-size.maxFrames).type,'key');assert.equal(fake.chunks.length,24+reversePrefix+size.maxFrames);
+  assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames);
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
 });
 
-test('two-picture hardware buffering retains incremental decoding and drains only the prediction tail',async()=>{
+for(const size of decodeSizes)test(`${size.name} two-picture hardware buffering decodes incrementally and drains only the prediction tail`,async()=>{
  const part={...segment,bytes:24,lastFrame:357,frameCount:24,frames:Array.from({length:24},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({bufferedFrames:2});
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(24))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(24))});
  try{
   for(let index=0;index<24;index++){
    assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
-   assert.ok(fake.images.filter(frame=>!frame.closed).length<=5,'retain at most three output pictures plus two internal decoder pictures');
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames+2,'bound retained output pictures plus two internal decoder pictures');
   }
   assert.equal(fake.chunks.length,24,'buffered output must not force repeated prediction-prefix decoding');
   assert.equal(fake.flushes,2,'flush once per group rather than permanently selecting the compatibility path');
+  assert.equal(source.metrics.compatibilityFlushes,0);
   for(const index of [21,19,15,10,3,0])assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
@@ -170,45 +176,46 @@ test('decoders that buffer output switch to flush-based requests after one probe
  }finally{source.dispose()}
 });
 
-test('one cold buffered group recovers low-delay decoding at the next independent GOP with the same three-picture budget',async t=>{
+for(const size of decodeSizes)test(`${size.name} cold buffered decoding recovers at the next independent GOP without increasing its frame budget`,async t=>{
  t.mock.timers.enable({apis:['setTimeout']});
  const part={...segment,bytes:60,lastFrame:393,frameCount:60,frames:Array.from({length:60},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({coldBuffered:true,asyncOutput:true});
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
  try{
   const cold=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(fake.flushes,0);t.mock.timers.tick(100);assert.equal(Math.round((await cold).timestamp*60/1e6),0);
+  assert.equal(fake.flushes,0);t.mock.timers.tick(size.probeDelay);assert.equal(Math.round((await cold).timestamp*60/1e6),0);
   assert.equal(source.metrics.compatibilityFlushes,1);assert.equal(source.metrics.flushRequired,true);
+  let coldFlushes;
   for(let index=1;index<60;index++){
    assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
-   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3,'recovery must not enlarge the hardware-picture cache');
-   if(index===11){assert.equal(source.metrics.lowDelayReprobes,0);assert.equal(source.metrics.flushRequired,true);}
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames,'recovery must not enlarge the hardware-picture cache');
+   if(index===11){assert.equal(source.metrics.lowDelayReprobes,0);assert.equal(source.metrics.flushRequired,true);coldFlushes=fake.flushes;}
    if(index===12){assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.flushRequired,false);}
   }
   assert.equal(source.metrics.compatibilityFlushes,1,'a successful recovery never waits for another compatibility timer');
-  assert.equal(fake.chunks.length,78,'only the cold group repeats its prefix; subsequent GOP pictures decode once');
-  assert.equal(fake.flushes,8,'one cold group plus normal prediction-tail drains');
+  assert.deepEqual(fake.chunks.map(chunk=>Math.round(chunk.timestamp*60/1e6)).filter(index=>index>=12),Array.from({length:48},(_,i)=>i+12),'subsequent GOP pictures must decode exactly once');
+  assert.equal(fake.flushes-coldFlushes,4,'recovered groups drain only their prediction tails');
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
 });
 
-test('a truly buffered decoder retries only once, skipping mandatory tail and reverse drains',async t=>{
+for(const size of decodeSizes)test(`${size.name} fully buffered decoding retries once and skips mandatory tail and reverse drains`,async t=>{
  t.mock.timers.enable({apis:['setTimeout']});
  const part={...segment,bytes:60,lastFrame:393,frameCount:60,frames:Array.from({length:60},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({buffered:true});
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,diagnostics:true,fetcher:async()=>new Response(new Uint8Array(60))});
  try{
-  const first=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));t.mock.timers.tick(100);await first;
+  const first=source.frameAt(0);await new Promise(resolve=>setImmediate(resolve));t.mock.timers.tick(size.probeDelay);await first;
   for(const index of [3,23,12])assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
   assert.equal(source.metrics.lowDelayReprobes,0,'reverse and group-tail requests cannot test immediate output');
   let settled=false;const retry=source.frameAt(24).then(frame=>{settled=true;return frame});
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.compatibilityFlushes,1);
-  t.mock.timers.tick(99);await Promise.resolve();assert.equal(settled,false);
+  t.mock.timers.tick(size.probeDelay-1);await Promise.resolve();assert.equal(settled,false);
   t.mock.timers.tick(1);assert.equal(Math.round((await retry).timestamp*60/1e6),24);
   for(const index of [27,36,39,48,51,59]){
    assert.equal(Math.round((await source.frameAt(index)).timestamp*60/1e6),index);
-   assert.ok(fake.images.filter(frame=>!frame.closed).length<=3);
+   assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames);
   }
-  assert.equal(source.metrics.compatibilityFlushes,2,'a genuinely buffered backend pays exactly one additional 100 ms 4K probe');
+  assert.equal(source.metrics.compatibilityFlushes,2,'a genuinely buffered backend pays exactly one additional deadline probe');
   assert.equal(source.metrics.lowDelayReprobes,1);assert.equal(source.metrics.flushRequired,true);
  }finally{source.dispose()}
  assert.ok(fake.images.every(frame=>frame.closed));
@@ -227,12 +234,30 @@ test('low-delay recovery recognizes a new section even when both sections start 
  assert.ok(fake.images.every(frame=>frame.closed));
 });
 
-test('disposing rejects a frame already submitted to a silent decoder without waiting for its timeout',async()=>{
+for(const size of decodeSizes)test(`${size.name} disposal rejects an in-flight decode without waiting for its timeout`,async()=>{
  const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({dropOutput:true});
- const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,width:3840,height:2160,fetcher:async()=>new Response(new Uint8Array(12))});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,fetcher:async()=>new Response(new Uint8Array(12))});
  const pending=assert.rejects(source.frameAt(0),{name:'AbortError'});
  await new Promise(resolve=>setImmediate(resolve));assert.ok(fake.chunks.length>0);
  source.dispose();await pending;assert.ok(fake.images.every(frame=>frame.closed));
+});
+
+for(const size of decodeSizes)test(`${size.name} reversing before queued output arrives closes duplicate timestamp frames`,async()=>{
+ const part={...segment,bytes:12,lastFrame:345,frameCount:12,frames:Array.from({length:12},(_,i)=>[i,1,Number(i%12===0)])},fake=codec({buffered:true});
+ const source=await createStreamedVideoSource([part],{...metadata,keyframeInterval:12},{...fake,...size,fetcher:async()=>new Response(new Uint8Array(12))});
+ try{
+  const forward=source.frameAt(1);await new Promise(resolve=>setImmediate(resolve));
+  fake.output(2);assert.equal(Math.round((await forward).timestamp*60/1e6),1);
+  const queued=fake.images.find(frame=>Math.round(frame.timestamp*60/1e6)===2);
+  assert.equal(queued.closed,false,'the previous decode still owns queued pictures');
+  assert.equal(Math.round((await source.frameAt(0)).timestamp*60/1e6),0);
+  const duplicates=fake.images.filter(frame=>Math.round(frame.timestamp*60/1e6)===2);
+  assert.equal(duplicates.length,2,'the reverse keyframe prefix includes an already queued timestamp');
+  assert.equal(queued.closed,true,'replacing a queued picture must release the old VideoFrame');
+  assert.equal(duplicates.at(-1).closed,false,'retain the replacement for the current window');
+  assert.ok(fake.images.filter(frame=>!frame.closed).length<=size.maxFrames);
+ }finally{source.dispose()}
+ assert.ok(fake.images.every(frame=>frame.closed));
 });
 
 test('opt-in decoder metrics separate cache hits, chunk submission and compatibility drains',async()=>{

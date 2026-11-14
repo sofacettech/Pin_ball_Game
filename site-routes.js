@@ -35,7 +35,7 @@ export function canonicalHref(href){
 
 export function registrationScreenRoute({step,tab,challenge,exit,fromAccount=false}){
  if(exit==='confirm')return null;
- const route=step==='success'?'/coins-saved':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
+ const route=step==='success'?'/coins-saved':step==='identity'&&tab==='create'?'/join':challenge?'/verify':step==='claim'?'/claim':tab==='registered'?'/sign-in':'/join';
  return fromAccount&&['/join','/verify','/sign-in'].includes(route)?route+'?from=account':route;
 }
 

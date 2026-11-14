@@ -117,7 +117,8 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
   #table-intro .table-facts .brand-word { -webkit-text-stroke: 0.45px #08050d; }
 
   .side-panel #table-intro:not([hidden]) ~ #start {
-    width: 72%;
+    width: 76%;
+    min-height: 48px;
     margin-inline: auto;
   }
 
@@ -220,6 +221,8 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
 
 @media (max-width: 600px) {
   :root #game-header .site-nav .skip-game { font-size: 13px; }
+  #story-copy .story-opening p { font-weight: 600; }
+  #story-copy :is(.story-opening p, .story-outside h2) { text-shadow: 0 2px 3px #080315b8, 0 0 12px #08031580; }
 }
 
 @media (max-width: 600px) and (orientation: portrait) {

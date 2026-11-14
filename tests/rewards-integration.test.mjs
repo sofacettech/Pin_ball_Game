@@ -8,7 +8,8 @@ async function verify(request) {
   assert.ok(!sent.data.challengeId.startsWith('rreg_'));
   const result = await request('/api/membership/otp/verify', { phoneNumber: registration.phoneNumber, challengeId: sent.data.challengeId, otp: '012345' });
   assert.equal(result.status, 200); assert.equal(result.data.verified, true);
-  assert.deepEqual(Object.keys(result.data).sort(), ['verificationToken', 'verified']);
+  assert.deepEqual(Object.keys(result.data).sort(), ['existingMember', 'verificationToken', 'verified']);
+  assert.equal(result.data.existingMember, false);
   return result.data.verificationToken;
 }
 
@@ -21,11 +22,12 @@ test('HTTP flow registers, verifies leading-zero OTP, reads score, then saves pr
     const payload = { ...profile, verificationToken };
     const result = await request('/api/membership', payload);
     assert.equal(result.status, 200); assert.equal(result.data.savedPoints, 3200); assert.equal(result.data.remainingPoints, 5);
-    assert.deepEqual(events.map(item => item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/score', '/rewards/profile', '/rewards/points']);
+    assert.deepEqual(events.map(item => item.path), ['/rewards/auth', '/rewards/auth/verify', '/rewards/score', '/rewards/profile', '/rewards/profile', '/rewards/points']);
     assert.deepEqual(events[1].body, { registration_id: 'rreg_0', otp: '012345' });
-    assert.equal(events[2].authorization, events[3].authorization);
-    assert.equal(events[4].body.points, 320); assert.equal(events[4].body.phone, undefined);
-    assert.equal(events[3].body.email, profile.email); assert.equal(events[3].body.terms_accepted, true);
+    for (const event of events.slice(3)) assert.equal(event.authorization, events[2].authorization);
+    assert.equal(events[3].body, undefined, 'verification checks the existing remote profile before saving details');
+    assert.equal(events[5].body.points, 320); assert.equal(events[5].body.phone, undefined);
+    assert.equal(events[4].body.email, profile.email); assert.equal(events[4].body.terms_accepted, true);
     const store = await readStore(); assert.equal(store.players[member].profile.email, undefined); assert.equal(state.profile.email, profile.email);
     assert.equal(store.players[member].profile.customerId, 'cus_fixture');
     assert.ok(!JSON.stringify(store).includes('fixture-signature') && !JSON.stringify(store).includes(verificationToken));

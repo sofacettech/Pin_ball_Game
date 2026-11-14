@@ -1,5 +1,5 @@
 import {selectEntranceOption} from './entrance-option.mjs';
-import {selectEntranceVideoWidth} from './video-quality.mjs';
+import {entranceVideoPreference} from './video-quality.mjs';
 
 export function validateEntranceManifest(manifest,{width=1920,height=1080}={}){
   if(manifest?.version!==1||manifest.width!==width||manifest.height!==height||manifest.fps!==60||manifest.firstFrame!==334||manifest.lastFrame!==2164||
@@ -9,15 +9,26 @@ export function validateEntranceManifest(manifest,{width=1920,height=1080}={}){
 
 // A separate switch prevents an existing legacy-video CDN setting from selecting
 // new objects before they have been uploaded and verified.
-export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOption(globalThis.location?.search||''),navigator=globalThis.navigator}={}){
-  const width=selectEntranceVideoWidth({option,navigator});
+export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOption(globalThis.location?.search||''),navigator=globalThis.navigator,signal}={}){
+  const preference=entranceVideoPreference({option,navigator}),width=preference.width;
+  // Keep the deadline/parent cancellation through JSON body consumption too.
+  const readManifest=async(url,milliseconds)=>{
+    signal?.throwIfAborted();
+    const controller=new AbortController(),abort=()=>controller.abort(signal.reason);
+    const timer=setTimeout(()=>controller.abort(new DOMException('Entrance manifest timed out','TimeoutError')),milliseconds);
+    signal?.addEventListener('abort',abort,{once:true});
+    try{
+      const response=await fetcher(url,{signal:controller.signal});
+      if(!response.ok)throw Error('Entrance manifest unavailable');
+      const data=await response.json();controller.signal.throwIfAborted();return data;
+    }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
+  };
   const localBase='/assets/entrance-video/';
-  const [response,config]=await Promise.all([
-    fetcher(localBase+'manifest.json'),
-    fetcher('/api/media-config',{signal:AbortSignal.timeout(2500)}).then(response=>response.ok?response.json():{}).catch(()=>({})),
+  const [localManifest,config]=await Promise.all([
+    readManifest(localBase+'manifest.json',5000),
+    readManifest('/api/media-config',2500).catch(error=>{signal?.throwIfAborted();return {}}),
   ]);
-  if(!response.ok)throw Error('Rendered entrance is unavailable');
-  const manifest=validateEntranceManifest(await response.json());
+  const manifest=validateEntranceManifest(localManifest);
   const clips=Object.fromEntries(['opening','journey'].map(kind=>{
     const local=localBase+kind+'.mp4?v='+manifest.clips[kind].sha256;
     return [kind,{url:local,local,bytes:manifest.clips[kind].bytes,localBytes:manifest.clips[kind].bytes,localWidth:manifest.width,localHeight:manifest.height}];
@@ -26,9 +37,7 @@ export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOpti
   for(const candidate of candidates.filter(item=>item.url))try{
     const url=new URL(candidate.url);
     if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Invalid entrance CDN URL');
-    const remote=await fetcher(url.href,{signal:AbortSignal.timeout(5000)});
-    if(!remote.ok)throw Error('Entrance CDN unavailable');
-    const higherQuality=validateEntranceManifest(await remote.json(),candidate);
+    const higherQuality=validateEntranceManifest(await readManifest(url.href,5000),candidate);
     const urls={};let segments,preview;
     const validFile=(clip,kind)=>/^[a-f0-9]{64}$/.test(clip.sha256)&&clip.file===`entrance-${kind}-${clip.sha256}.mp4`&&Number.isSafeInteger(clip.bytes)&&clip.bytes>0;
     for(const kind of ['opening','journey']){
@@ -69,7 +78,7 @@ export async function loadEntranceMedia(fetcher=fetch,{option=selectEntranceOpti
     for(const kind of ['opening','journey']){clips[kind].url=urls[kind];clips[kind].bytes=higherQuality.clips[kind].bytes;}
     if(segments){clips.journey.segments=segments;clips.journey.decoder=higherQuality.clips.journey.decoder;}
     if(preview)clips.journey.preview=preview;
-    return {manifest:higherQuality,clips};
-  }catch{/* Try the regular CDN, then bundled media, if a variant is unavailable. */}
-  return {manifest,clips};
+    return {manifest:higherQuality,clips,selectionReason:candidate.width===width?preference.reason:'cdn-fallback'};
+  }catch{signal?.throwIfAborted();/* Try the regular CDN, then bundled media. */}
+  return {manifest,clips,selectionReason:width===1920?preference.reason:'cdn-fallback'};
 }

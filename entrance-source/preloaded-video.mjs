@@ -1,24 +1,33 @@
 // Keep compressed media, not thousands of decoded 4K pictures. Every section is
 // ready before scrolling starts; decoder eviction can no longer cause a download.
-export function createPreloadedVideo(files,{fetcher=fetch,onProgress=()=>{},cacheStorage=globalThis.caches}={}){
+export function createPreloadedVideo(files,{fetcher=fetch,onProgress=()=>{},cacheStorage=globalThis.caches,clock=()=>performance.now(),bypassHTTPCache=false}={}){
   const limit=256*1024*1024,total=files.reduce((sum,file)=>sum+file.bytes,0);
   if(!files.length||files.some(file=>!Number.isSafeInteger(file.bytes)||file.bytes<1)||total>limit)throw Error('Invalid video preload size');
   const entries=new Map(),controller=new AbortController(),cacheWrites=[];let loaded=0,ready=false,loading,persisting,trimPending=false;
+  const networkTransfers=new Set();let networkBytes=0,networkStartedAt=null;
+  // Cache reads still report ordinary preload progress, but cannot imply network speed.
+  // Aborting clears activity now; each download's later cleanup is idempotent.
+  controller.signal.addEventListener('abort',()=>networkTransfers.clear(),{once:true});
   const storage=cacheStorage?.open('sofacet-entrance-preloaded-v1').catch(()=>null)??Promise.resolve(null);
   const abort=()=>{if(controller.signal.aborted)throw controller.signal.reason};
   async function download(file){
     abort();const cache=await storage;abort();
-    let response=await cache?.match(file.url).catch(()=>null),cached=!!response,timer;
+    let response=await cache?.match(file.url).catch(()=>null),cached=!!response,timer,networkTransfer;
     const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>controller.abort(new DOMException('Video download stalled','TimeoutError')),20000)};
     arm();
     try{
-      if(!response)response=await fetcher(file.url,{signal:controller.signal});
+      if(!response){
+        abort();networkStartedAt??=clock();networkTransfers.add(networkTransfer={});
+        const options={signal:controller.signal};if(bypassHTTPCache)options.cache='no-store';
+        response=await fetcher(file.url,options);
+      }
       if(!response.ok||!response.body)throw Error('Video download unavailable');
       const reader=response.body.getReader(),chunks=[];let received=0;
       const cancelled=()=>{void reader.cancel(controller.signal.reason).catch(()=>{})};
       controller.signal.addEventListener('abort',cancelled,{once:true});
       try{for(;;){
         abort();const {done,value}=await reader.read();abort();if(done)break;
+        if(!cached)networkBytes+=value.byteLength;
         received+=value.byteLength;if(received>file.bytes)throw Error('Oversized video download');
         chunks.push(value);loaded+=value.byteLength;onProgress(loaded,total);arm();
       }}finally{controller.signal.removeEventListener('abort',cancelled);await reader.cancel().catch(()=>{});reader.releaseLock()}
@@ -27,7 +36,7 @@ export function createPreloadedVideo(files,{fetcher=fetch,onProgress=()=>{},cach
       const blob=new Blob(chunks,{type:'video/mp4'});entries.set(file.url,{blob});
       clearTimeout(timer);
       if(cache&&!cached){cacheWrites.push({cache,url:file.url,blob});void persistPending();}
-    }finally{clearTimeout(timer)}
+    }finally{clearTimeout(timer);if(networkTransfer)networkTransfers.delete(networkTransfer)}
   }
   async function trimCache(){
     const cache=await storage;if(!cache||controller.signal.aborted)return;
@@ -78,6 +87,7 @@ export function createPreloadedVideo(files,{fetcher=fetch,onProgress=()=>{},cach
     url(url){abort();const entry=entries.get(url);if(!ready||!entry)throw Error('Video was not preloaded');return entry.url??=URL.createObjectURL(entry.blob)},
     revokeURL(url){const entry=entries.get(url);if(entry?.url){URL.revokeObjectURL(entry.url);delete entry.url;}},
     get ready(){return ready},get bytes(){return total},
+    get networkProgress(){return {bytes:networkBytes,startedAt:networkStartedAt,active:networkTransfers.size}},
     dispose(){controller.abort(new DOMException('Video preload disposed','AbortError'));cacheWrites.length=0;trimPending=false;for(const entry of entries.values())if(entry.url)URL.revokeObjectURL(entry.url);entries.clear();ready=false},
   };
 }

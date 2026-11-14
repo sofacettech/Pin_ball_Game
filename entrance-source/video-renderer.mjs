@@ -1,5 +1,5 @@
 import {JOURNEY_START_FRAME} from './journey-scroll.mjs';
-import {createPreloadedVideo} from './preloaded-video.mjs';
+import {createAdaptiveVideoPreload} from './adaptive-video-preload.mjs';
 import {loadEntranceMedia} from './video-delivery.mjs';
 import {createSegmentedVideoSource} from './segmented-video.mjs';
 import {createStreamedVideoSource} from './streamed-video.mjs';
@@ -8,7 +8,7 @@ import {visibleVideoCrop} from './video-crop.mjs';
 // Short GOP media belongs to the browser decoder. The existing all-IDR
 // WebCodecs worker cannot decode these samples independently.
 export async function createJourneyRenderer({stage,renderView=()=>null,diagnostics=false,onProgress=()=>{},onRender=()=>{},onError=()=>{}}){
-  const {manifest,clips}=await loadEntranceMedia();
+  let {manifest,clips,selectionReason}=await loadEntranceMedia();
   const canvas=document.createElement('canvas'),initialCrop=visibleVideoCrop(manifest.width,manifest.height,renderView(JOURNEY_START_FRAME));
   canvas.width=initialCrop?.width??manifest.width;canvas.height=initialCrop?.height??manifest.height;
   const context=canvas.getContext('2d',{alpha:false});
@@ -16,10 +16,10 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
   stage.prepend(canvas);
   const events=new AbortController(),videos={};
   const loadingTimers=new Set();
-  const files=[clips.opening,...(clips.journey.segments||[clips.journey])];
-  let buffer=createPreloadedVideo(files,{onProgress});
+  const preload=createAdaptiveVideoPreload({manifest,clips,selectionReason},{onProgress});
+  let buffer=null;
   const size={width:manifest.width,height:manifest.height,fetcher:(...args)=>buffer.fetch(...args),cacheStorage:null,diagnostics};
-  let segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder,size)||createSegmentedVideoSource(clips.journey.segments,size)):null;
+  let segmented=null;
   let disposed=false,suspended=false,wanted=null,painted=null,pending=null,prepared=null,targetIndex=null,timeout=null,failure=null;
   let displayed=null;
   let sourceWidth=manifest.width,sourceHeight=manifest.height;
@@ -204,16 +204,16 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
       return segmented?prepareJourney():loadNative('journey',true);
     }
   }
-  async function loadVariant(){
-    try{await buffer.load()}catch(error){
-      if(disposed)throw error;
-      buffer.dispose();segmented?.dispose();segmented=null;
-      for(const clip of Object.values(clips)){clip.url=clip.local;clip.bytes=clip.localBytes;}
-      buffer=createPreloadedVideo([clips.opening,clips.journey],{onProgress});
-      await buffer.load();
-    }
+  let variantLoading;
+  function loadVariant(){return variantLoading??=(async()=>{
+    const loaded=await preload.load();
+    if(disposed)throw new DOMException('Entrance disposed','AbortError');
+    manifest=loaded.manifest;clips=loaded.clips;buffer=loaded.buffer;
+    sourceWidth=manifest.width;sourceHeight=manifest.height;size.width=manifest.width;size.height=manifest.height;
+    segmented=clips.journey.segments?(await createStreamedVideoSource(clips.journey.segments,clips.journey.decoder,size)||createSegmentedVideoSource(clips.journey.segments,size)):null;
+    if(disposed){segmented?.dispose();segmented=null;throw new DOMException('Entrance disposed','AbortError');}
     await Promise.all([ensureOpening(),prepareJourney()]);
-  }
+  })();}
   return {
     loadVariant,
     renderAt(frame,target){
@@ -242,12 +242,12 @@ export async function createJourneyRenderer({stage,renderView=()=>null,diagnosti
     dispose(){
       if(disposed)return;stopOpening();disposed=true;clearTimeout(timeout);events.abort();
       segmented?.dispose();segmented=null;prepared=null;
-      buffer.dispose();
+      preload.dispose();
       for(const timer of loadingTimers)clearTimeout(timer);loadingTimers.clear();
       for(const video of Object.values(videos)){video.pause();video.removeAttribute('src');video.load();}
       for(const waiter of waiters)waiter.reject(new DOMException('Entrance disposed','AbortError'));waiters.clear();canvas.remove();
     },
-    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preloaded:buffer.ready,preloadedBytes:buffer.bytes,openingResident:!!videos.opening,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null}:{})}},batchingMode:'video',
+    profileFrames:[],get policy(){return {video:true,segmented:!!segmented,streaming:segmented?.engine==='webcodecs',preloaded:buffer?.ready??false,preloadedBytes:buffer?.bytes??0,networkSelection:preload.selection,openingResident:!!videos.opening,preview:false,previewVisible:false,sourceWidth,sourceHeight,visibleArea:!!crop,drawingWidth:canvas.width,drawingHeight:canvas.height,crop:crop?{x:crop.x,y:crop.y,width:crop.width,height:crop.height}:null,...(diagnostics?{paintMetrics:paintMetrics(),decoderMetrics:segmented?.metrics??null}:{})}},batchingMode:'video',
     renderer:{domElement:canvas,getPixelRatio:()=>1,info:{render:{calls:0,triangles:0}}},
   };
 }

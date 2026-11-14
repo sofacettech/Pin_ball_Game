@@ -53,7 +53,7 @@ export function AboutPage(){
       </div>
       <div className="gallery-pair scene">
         <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="4" aria-label="Enlarge collection image 5"><span className="image-window"><img data-image="collection5" data-caption="Real diamonds, grown." src="/assets/about/campaign/campaign-5.webp" width="1800" height="2234" alt="Campaign portrait with a rectangular diamond pendant necklace." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">Real diamonds, grown.</span></button></figure>
-        <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="5" aria-label="Enlarge collection image 6"><span className="image-window"><img data-image="collection6" data-caption="So/ what’s yours?" src="/assets/about/campaign/campaign-6.webp" width="1800" height="2234" alt="Campaign portrait with a circular diamond pendant necklace." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">So/ what’s yours?</span></button></figure>
+        <figure className="gallery-figure image-scene"><button className="image-button" data-gallery-index="5" aria-label="Enlarge collection image 6"><span className="image-window"><img data-image="collection6" data-caption="So/ what’s yours?" src="/assets/about/campaign/sofacet-campaign-6.jpg" width="1856" height="2304" alt="Campaign portrait with a circular diamond pendant necklace." style={{"objectPosition": "50% 50%"}} decoding="async"/></span><span className="image-caption">So/ what’s yours?</span></button></figure>
       </div>
     </div>
   </section>

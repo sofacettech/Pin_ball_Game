@@ -6,9 +6,10 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     colorSpace:{primaries:'bt709',transfer:'bt709',matrix:'bt709',fullRange:false},optimizeForLatency:true};
   try{if(!(await Decoder.isConfigSupported(config)).supported)return null}catch{return null}
   const interval=metadata.keyframeInterval??4;
-  // Keep the same decoded-pixel budget at 4K as twelve 1080p pictures.
+  // Small windows let forward playback paint before a whole group drains.
+  // Preserve the existing pixel budget so 4K retains at most three pictures.
   // Prediction frames before the requested window are closed immediately.
-  const maxFrames=Math.max(1,Math.min(interval,Math.floor(1920*1080*12/(width*height))));
+  const maxFrames=Math.max(1,Math.min(interval,4,Math.floor(1920*1080*12/(width*height))));
   // Full 4K prediction prefixes can legitimately take longer than 50 ms on a
   // phone. Give active hardware decoding room before probing a forced drain.
   const lowDelayDeadline=width*height>1920*1080?100:50;
@@ -32,7 +33,9 @@ export async function createStreamedVideoSource(segments,metadata,{fetcher=fetch
     if(frame.displayWidth!==width||frame.displayHeight!==height){frame.close();failure=Error('Unexpected decoded video dimensions');finishDecode(failure);return}
     const index=Math.round(frame.timestamp*60/1e6);
     if(index<keepFirst||index>=keepLast){if(metrics)metrics.discardedFrames++;frame.close();return}
-    frames.get(index)?.close();frames.set(index,frame);
+    // A reversal can decode a timestamp whose previous output is still queued.
+    frames.get(index)?.close();
+    frames.set(index,frame);
     finishDecode();
   },error:error=>{failure=error;finishDecode(error)}});
   try{decoder.configure(config)}catch{decoder.close();return null}
