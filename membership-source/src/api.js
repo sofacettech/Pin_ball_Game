@@ -1,3 +1,5 @@
+import {rewardFromPoints} from '../../shared/reward-value.js';
+
 export async function request(path, body, signal) {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -42,7 +44,7 @@ export function isAdult(value, today = new Date()) {
 }
 
 export function pendingResult(result) {
-  if (!result || result.status !== 'completed' || !Number.isSafeInteger(result.points) || result.points < 0 || result.rewardValue !== result.points / 10 || !Number.isFinite(result.completedAt)) return null;
+  if (!result || result.status !== 'completed' || !Number.isSafeInteger(result.points) || result.points < 0 || result.rewardValue !== rewardFromPoints(result.points) || !Number.isFinite(result.completedAt)) return null;
   if (result.gameId !== undefined && (typeof result.gameId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(result.gameId))) return null;
-  return Object.freeze({ points: result.points, rewardValue: result.points / 10, completedAt: result.completedAt, gameId: result.gameId, status: 'completed' });
+  return Object.freeze({ points: result.points, rewardValue: rewardFromPoints(result.points), completedAt: result.completedAt, gameId: result.gameId, status: 'completed' });
 }

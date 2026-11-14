@@ -8,6 +8,7 @@ import {build,transform} from 'esbuild-wasm';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {leaveCopy} from '../game-source/src/player-copy.ts';
+import {rewardFromPoints} from '../shared/reward-value.js';
 
 const require=createRequire(import.meta.url);
 const bundle=await build({entryPoints:[fileURLToPath(new URL('../game-source/src/score-page.jsx',import.meta.url))],bundle:true,platform:'node',format:'cjs',packages:'external',loader:{'.css':'empty'},write:false});
@@ -50,7 +51,7 @@ async function controllerFixture(){
  const compiled=await transform(source,{loader:'ts',format:'cjs'}),exports={};
  const context={exports,module:{exports},Date,Math,Number,URL,Element:class{},location:{origin:'http://test.local',href:'http://test.local/play.html'},
   document:{getElementById:node,querySelector:()=>node('header'),body:{prepend(){}},addEventListener:(key,fn)=>events.set(key,fn)},
-  setScreenRoute:route=>{captured.route=route},writeScreenData:(key,value)=>{captured[key+'Storage']=value},ResizeObserver:class{observe(){}disconnect(){}},addEventListener:(key,fn)=>events.set(key,fn),leaveCopy,
+  setScreenRoute:route=>{captured.route=route},writeScreenData:(key,value)=>{captured[key+'Storage']=value},ResizeObserver:class{observe(){}disconnect(){}},addEventListener:(key,fn)=>events.set(key,fn),leaveCopy,rewardFromPoints,
   mountRewardNoticeArtwork:()=>()=>{},mountScorePage:(_container,actions)=>{captured.actions=actions;return {render:value=>{captured.result=value;captured.scoreVisible=true},clear:()=>{captured.scoreVisible=false}}},window:{top:{location:{assign:value=>{captured.destination=value}}}},
  };
  vm.runInNewContext(compiled.code,context);

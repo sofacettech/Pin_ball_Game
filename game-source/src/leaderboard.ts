@@ -6,6 +6,7 @@ import {formatPoints,resultHeadline,leaderboardName} from './player-copy';
 import type {CompletedGameResult} from './post-game-rewards';
 import {setScreenRoute} from '../../site-routes.js';
 import {mountScoreMesh} from './score-mesh.js';
+import {rewardFromPoints} from '../../shared/reward-value.js';
 export type Entry={rank:number|null;display_name:string;points:number;is_you:boolean};
 type Board={entries:Entry[];me:Entry|null;mode:'game'|'rewards'};
 export type Player={display_name:string;member:boolean;best_score:number|null};
@@ -85,7 +86,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
     try{const result=await request<{pointsSaved:boolean}>('/api/membership/rewards',{gameId:target.id});if(result.pointsSaved!==true)throw Error('SO/ COINS have not been saved yet.');target.rewardSaved=true}
     catch(error){
      if(error instanceof Error&&'code' in error&&['invalid_token','rewards_verification_required'].includes(String(error.code))){
-      if(current===revision){close();onJoin(true,{points:target.score!,rewardValue:target.score!/10,completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
+      if(current===revision){close();onJoin(true,{points:target.score!,rewardValue:rewardFromPoints(target.score!),completedAt:Date.now(),gameId:target.id,status:'completed'})}return;
      }
      rewardError=error instanceof Error?error.message:'SO/ COINS have not been saved yet.';
     }
@@ -94,7 +95,7 @@ export function connectLeaderboard(onClose:()=>void,onReplay:()=>void,onVerified
   }catch(error){if(current===revision){status.textContent=error instanceof Error?error.message:'Unable to load the leaderboard.';retry.hidden=false}}
   finally{if(current===revision)rows.removeAttribute('aria-busy')}
  }
- document.getElementById('leaderboard-save')!.onclick=()=>{const pending=run.ended&&run.score!==undefined?{points:run.score,rewardValue:run.score/10,completedAt:Date.now(),status:'completed' as const,gameId:run.id}:undefined;close();onJoin(false,pending)};
+ document.getElementById('leaderboard-save')!.onclick=()=>{const pending=run.ended&&run.score!==undefined?{points:run.score,rewardValue:rewardFromPoints(run.score),completedAt:Date.now(),status:'completed' as const,gameId:run.id}:undefined;close();onJoin(false,pending)};
  retry.onclick=()=>void refreshPlayer().then(refresh);
  return {
   dialog,ready,

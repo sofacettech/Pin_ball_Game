@@ -3,6 +3,7 @@ import { ServiceError, rewardsScore, rewardsProfile, awardPoints } from './rewar
 import { otpProvider } from './membership-otp.mjs';
 import { isAdult } from './membership-source/src/api.js';
 import { validPlayerName, validPublicName } from './game-source/src/player-copy.ts';
+import {POINTS_PER_RUPEE,rewardFromPoints} from './shared/reward-value.js';
 
 const fail = (status, message) => { throw new ServiceError(status, message); };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -64,7 +65,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
     cachedProfile(id, remote);
     const ledger = getStore().rewardAccounts?.[customer.customer_id], player = getStore().players[id];
     return { name: remote.name, leaderboardName: remote.leaderboard_name, email: remote.email, phoneNumber: remote.phone,
-      marketingConsent: remote.marketing_consent, savedPoints: standing.balance * 10,
+      marketingConsent: remote.marketing_consent, savedPoints: standing.balance * POINTS_PER_RUPEE,
       bestPoints: Math.max(ledger?.bestScore || 0, player.bestVerified ? player.best : 0) };
   }
   function gameFor(gameId, id, customerId) {
@@ -85,10 +86,10 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         game.rewardCustomer = customerId;
       });
       let ledger = getStore().rewardAccounts[customerId];
-      // The supplied API grants ₹1 per integer unit; ten game points equal one API unit.
-      while (ledger.pending || Math.floor(ledger.bestScore / 10) > ledger.creditedUnits) {
+      // The supplied API grants only whole rupee units; keep the remainder in bestScore.
+      while (ledger.pending || Math.floor(rewardFromPoints(ledger.bestScore)) > ledger.creditedUnits) {
         if (!ledger.pending) commit(() => {
-          const current = getStore().rewardAccounts[customerId], target = Math.floor(current.bestScore / 10);
+          const current = getStore().rewardAccounts[customerId], target = Math.floor(rewardFromPoints(current.bestScore));
           current.pending = { eventId: 'best:' + customerId + ':' + target, points: target - current.creditedUnits, target };
         });
         const pending = getStore().rewardAccounts[customerId].pending;
@@ -102,7 +103,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
         });
         ledger = getStore().rewardAccounts[customerId];
       }
-      return { pointsSaved: true, savedPoints: ledger.creditedUnits * 10, bestPoints: ledger.bestScore, remainingPoints: ledger.bestScore % 10 };
+      return { pointsSaved: true, savedPoints: ledger.creditedUnits * POINTS_PER_RUPEE, bestPoints: ledger.bestScore, remainingPoints: ledger.bestScore % POINTS_PER_RUPEE };
     });
     jobs.set(customerId, job);
     try { return await job; } finally { if (jobs.get(customerId) === job) jobs.delete(customerId); }
@@ -122,7 +123,7 @@ export function createMembershipApi({ getStore, commit, phone, publicPlayer, pro
     }
     const signingIn = path.startsWith('/api/account/otp/');
     if (signingIn) path = path.replace('/api/account/otp/', '/api/membership/otp/');
-    if (path === '/api/membership/config') return { otpAvailable: configured(), policies: policies(), pointsPerRupee: 10 };
+    if (path === '/api/membership/config') return { otpAvailable: configured(), policies: policies(), pointsPerRupee: POINTS_PER_RUPEE };
     if (!data || typeof data !== 'object' || Array.isArray(data)) fail(400, 'Please send valid membership details.');
     if (path === '/api/account/details') {
       const current = getStore().players[id]?.profile;

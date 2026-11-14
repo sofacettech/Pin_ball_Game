@@ -1,6 +1,7 @@
+import {rewardFromPoints} from '../../shared/reward-value.js';
 const numbers=new Intl.NumberFormat('en-IN');
 export const formatPoints=(points:number)=>numbers.format(Math.max(0,Math.trunc(points)));
-export const rewardMoney=(points:number)=>{const whole=Math.max(0,Math.trunc(points));return '₹'+numbers.format(Math.floor(whole/10))+(whole%10?'.'+whole%10:'')};
+export const rewardMoney=(points:number)=>'₹'+numbers.format(rewardFromPoints(Math.max(0,Math.trunc(points))));
 export const underAgeCopy="Thanks for playing. You need to be 18 or older to save scores and earn SO/ COINS, but you're welcome to keep playing as a guest.";
 export function resultHeadline(points:number,previousBest:number|null=null){
  if(previousBest!==null&&previousBest>=0)return points>previousBest?'New best. Your SO/ COINS just went up.':`Your best is still ${formatPoints(previousBest)} SO/ COINS (${rewardMoney(previousBest)}). Beat it to earn more.`;
