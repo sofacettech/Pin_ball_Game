@@ -7,9 +7,8 @@ export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.A
  html=String(html).replace(/<!-- site-metadata -->[\s\S]*?<!-- \/site-metadata -->/g,'').replace(/<link\b(?=[^>]*\brel=["'](?:icon|apple-touch-icon)["'])[^>]*>/gi,'').replace(/<meta\b(?=[^>]*(?:property|name)=["'](?:og:|twitter:)[^"']*["'])[^>]*>/gi,'');
  const image=escape(base+'/assets/sofacet-share.png');
  return html.replace('</head>',`<!-- site-metadata -->
-<link rel="icon" href="/assets/sofacet-favicon.svg?v=f1229468" type="image/svg+xml">
-<link rel="icon" href="/assets/sofacet-favicon-32.png?v=f1229468" type="image/png" sizes="32x32">
-<link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png?v=f1229468" sizes="180x180">
+<link rel="icon" href="/assets/sofacet-favicon-32.png?v=134f3ac4" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png?v=f5ecd063" sizes="180x180">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SO/ FACET">
 <meta property="og:title" content="${escape(title)}">
