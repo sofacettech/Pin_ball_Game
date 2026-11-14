@@ -3,12 +3,13 @@ import {mountRewardNoticeArtwork} from '../../collective-source/artwork/RewardNo
 import './post-game-rewards.css';
 import '../../collective-source/reward-notice.css';
 import {leaveCopy} from './player-copy';
+import {rewardFromPoints} from '../../shared/reward-value.js';
 import {setScreenRoute,writeScreenData} from '../../site-routes.js';
 
 export type CompletedGameResult=Readonly<{points:number;rewardValue:number;completedAt:number;status:'completed';gameId?:string}>;
 export function captureGameResult(finalScore:number,gameId?:string):CompletedGameResult{
  const whole=Math.trunc(finalScore),points=Number.isSafeInteger(whole)?Math.max(0,whole):0;
- return Object.freeze({points,rewardValue:points/10,completedAt:Date.now(),status:'completed',gameId});
+ return Object.freeze({points,rewardValue:rewardFromPoints(points),completedAt:Date.now(),status:'completed',gameId});
 }
 export function connectPostGameRewards(onRegister:(result:CompletedGameResult,opener:HTMLElement)=>void,onRetry:()=>void,onLeaderboard:()=>void=()=>{}){
  const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
