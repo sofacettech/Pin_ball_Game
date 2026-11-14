@@ -7,7 +7,7 @@ export const FINAL_FRAME_HOLD_MS=200;
 // applies only to automatic completion; ordinary scroll/reversal stays direct.
 // Bound each request by the last painted picture so a slow decoder cannot turn
 // the ending into another jump straight to its last frame.
-export function createJourneyCompletion(lastFrame,{frames=164,fps=60,maxStep=4}={}){
+export function createJourneyCompletion(lastFrame,{frames=164,fps=90,maxStep=4}={}){
   const startFrame=lastFrame-frames;
   let active=false,origin,startedAt,requested,pausedAt=null;
   return {
@@ -34,7 +34,7 @@ export function createJourneyCompletion(lastFrame,{frames=164,fps=60,maxStep=4}=
 // Spend time crossing the doorway even when one swipe targets the far side.
 // The speed limit fades in/out over 80 source frames; outside it, retain the
 // existing direct touch response and desktop easing. No queued scroll events.
-const crossingTime=frame=>(integratedRamp(frame,1360,40)-integratedRamp(frame,1680,40))*1000/240;
+const crossingTime=frame=>(integratedRamp(frame,1360,40)-integratedRamp(frame,1680,40))*1000/360;
 
 export function advanceJourneyFrame(current,target,deltaMs,{coarse=false,reducedMotion=false}={}){
   if(reducedMotion)return target;

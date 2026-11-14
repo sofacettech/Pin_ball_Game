@@ -6,7 +6,7 @@ export function withSiteMetadata(html,origin=process.env.SITE_URL||process.env.A
  if(origin){const url=new URL(origin);if(!['https:','http:'].includes(url.protocol))throw Error('The public site URL must use HTTPS or HTTP.');base=url.origin}
  html=String(html).replace(/<!-- site-metadata -->[\s\S]*?<!-- \/site-metadata -->/g,'').replace(/<link\b(?=[^>]*\brel=["'](?:icon|apple-touch-icon)["'])[^>]*>/gi,'').replace(/<meta\b(?=[^>]*(?:property|name)=["'](?:og:|twitter:)[^"']*["'])[^>]*>/gi,'');
  const image=escape(base+'/assets/sofacet-share-20261114-v2.jpg');
- return html.replace(/<head\b[^>]*>/i,head=>`${head}<!-- site-metadata -->
+ return html.replace(/<head\b[^>]*>(?:\s*<meta\b[^>]*charset[^>]*>)?/i,head=>`${head}<!-- site-metadata -->
 <link rel="icon" href="/assets/sofacet-favicon-32.png?v=134f3ac4" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png?v=f5ecd063" sizes="180x180">
 <meta property="og:type" content="website">
