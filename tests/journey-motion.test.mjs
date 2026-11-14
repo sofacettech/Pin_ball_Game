@@ -23,6 +23,18 @@ test('completion keeps initial movement direct, cancels on reversal and honors r
  assert.equal(end.advance(2164,{target:2164,presented:2100,now:40,reducedMotion:true}),2164);
 });
 
+test('the faster ending finishes in about 1.82 seconds without widening its decoded-picture steps',()=>{
+ for(const hz of [30,60,120]){
+  const end=createJourneyCompletion(2164);let shown=2000,time=0;
+  while(shown<2164&&time<3000){
+   const next=end.advance(2164,{target:2164,presented:shown,now:time});
+   assert.ok(next>=shown&&next-shown<=4,'every request stays close to the painted frame');
+   shown=next;time+=1000/hz;
+  }
+  assert.equal(shown,2164);assert.ok(time>=1800&&time<1900,`${hz} Hz ending took ${time} ms`);
+ }
+});
+
 test('background and BFCache time do not speed up the remaining approach or consume its final hold',()=>{
  const end=createJourneyCompletion(2164);
  assert.equal(end.advance(2164,{target:2164,presented:2000,now:100}),2000);
@@ -30,7 +42,7 @@ test('background and BFCache time do not speed up the remaining approach or cons
  end.suspend(120);end.suspend(121);
  assert.equal(end.resume(5120),5000,'visibility and pagehide must not double count the pause');
  assert.equal(end.resume(5121),0,'pageshow and visibility resume must be idempotent');
- assert.equal(end.advance(2164,{target:2164,presented:2001,now:5134}),2002,'resume at the visible-time rate');
+ assert.equal(end.advance(2164,{target:2164,presented:2001,now:5134}),2003,'resume at the visible-time rate');
  let finalPresentedAt=6000;
  end.suspend(6020);finalPresentedAt+=end.resume(11020);
  assert.equal(11020-finalPresentedAt,20,'the final hold excludes time spent offscreen');
@@ -42,11 +54,11 @@ test('large forward and reverse scrolls show intermediate doorway poses on touch
   while(frame!==target&&time<5000){
    const next=advanceJourneyFrame(frame,target,1000/60,{coarse});
    assert.ok((next-frame)*direction>=0);assert.ok((target-next)*direction>=0);
-   if(frame>=1400&&frame<=1640&&next>=1400&&next<=1640){assert.ok(Math.abs(next-frame)<=4.001);inside++;}
+   if(frame>=1400&&frame<=1640&&next>=1400&&next<=1640){assert.ok(Math.abs(next-frame)<=6.001);inside++;}
    frame=next;time+=1000/60;
   }
-  assert.equal(frame,target);assert.ok(inside>=55,'do not skip the doorway');
-  assert.ok(time>=1000&&time<4000);
+  assert.equal(frame,target);assert.ok(inside>=35,'do not skip the doorway');
+  assert.ok(time>=650&&time<3000);
  }
 });
 
@@ -68,7 +80,7 @@ test('reversing a swipe takes effect immediately without finishing an old queued
 });
 
 test('stalls do not teleport the ball, and reduced motion and ordinary touch tracking remain direct',()=>{
- assert.ok(advanceJourneyFrame(1500,1900,1000,{coarse:true})-1500<=12.001);
+ assert.ok(advanceJourneyFrame(1500,1900,1000,{coarse:true})-1500<=18.001);
  assert.equal(advanceJourneyFrame(1500,1900,16.67,{reducedMotion:true}),1900);
  assert.equal(advanceJourneyFrame(800,900,16.67,{coarse:true}),900);
  assert.equal(advanceJourneyFrame(1800,2000,16.67,{coarse:true}),2000);

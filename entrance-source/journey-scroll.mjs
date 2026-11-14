@@ -6,12 +6,15 @@ export function integratedRamp(frame,center,halfWidth=80){
   if(x>=width)return x-halfWidth;
   const t=x/width;return width*(t*t*t-.5*t*t*t*t);
 }
-// Keep the shorter approaches and total travel, blending their speeds into
-// the rooms instead of doubling the ball's speed at a single scroll position.
+// Keep the opening and short approaches direct. The rooms and final approach
+// use 2/3 of their former scroll distance, with smooth speed changes at the joins.
 export function createJourneyScrollMap(firstFrame=JOURNEY_START_FRAME,lastFrame=2164) {
-  const distance=frame=>4*(frame+integratedRamp(frame,780)-integratedRamp(frame,1560)+integratedRamp(frame,2000));
-  const start=distance(firstFrame),travel=distance(lastFrame)-start;
-  const scrollAtFrame=frame=>distance(Math.max(firstFrame,Math.min(lastFrame,frame)))-start;
+  const distance=frame=>4*(frame+(integratedRamp(frame,780)-integratedRamp(frame,1560)+integratedRamp(frame,2000))/3);
+  const start=distance(firstFrame),rawTravel=distance(lastFrame)-start,travel=Math.round(rawTravel);
+  // Safari rounds scroll positions to whole pixels. Normalize both directions
+  // to that range so scrolling to the bottom reaches the exact handoff frame.
+  const scale=rawTravel?travel/rawTravel:1;
+  const scrollAtFrame=frame=>(distance(Math.max(firstFrame,Math.min(lastFrame,frame)))-start)*scale;
   function frameAtScroll(value){
     if(value<=0)return firstFrame;if(value>=travel)return lastFrame;
     let low=firstFrame,high=lastFrame;

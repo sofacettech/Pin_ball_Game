@@ -2,24 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createJourneyScrollMap} from '../entrance-source/journey-scroll.mjs';
 
-test('the closer spawn and both empty approaches need less scrolling without speeding up the rooms',()=>{
+test('middle and final sections move 50% faster while the opening and short approaches keep their response',()=>{
  const map=createJourneyScrollMap();
  assert.equal(map.scrollAtFrame(334),0);
- assert.equal(map.scrollAtFrame(700),(700-334)*4);
- assert.equal(map.scrollAtFrame(1480)-map.scrollAtFrame(860),(1480-860)*8);
- assert.equal(map.scrollAtFrame(1920)-map.scrollAtFrame(1640), (1920-1640)*4);
- assert.equal(map.scrollAtFrame(2164)-map.scrollAtFrame(2080), (2164-2080)*8);
- assert.equal(map.travel,11096);
+ // Whole-pixel range normalization changes section distances by less than 0.01%.
+ const near=(actual,expected)=>assert.ok(Math.abs(actual/expected-1)<.0001);
+ near(map.scrollAtFrame(700),(700-334)*4);
+ near(map.scrollAtFrame(1480)-map.scrollAtFrame(860),(1480-860)*8/1.5);
+ near(map.scrollAtFrame(1920)-map.scrollAtFrame(1640),(1920-1640)*4);
+ near(map.scrollAtFrame(2164)-map.scrollAtFrame(2080),(2164-2080)*8/1.5);
+ assert.equal(map.travel,8579);
 });
 
 test('equal scroll inputs accelerate gradually across each section boundary',()=>{
  const map=createJourneyScrollMap(),speed=y=>map.frameAtScroll(y+.5)-map.frameAtScroll(y-.5);
  for(const boundary of [780,1560,2000]){
   const center=map.scrollAtFrame(boundary);
-  assert.ok(Math.abs(speed(center-.5)-speed(center+.5))<.001,'no abrupt 2x speed change');
+  assert.ok(Math.abs(speed(center-.5)-speed(center+.5))<.001,'no abrupt speed change');
   for(let frame=boundary-90;frame<boundary+90;frame++){
    const y=map.scrollAtFrame(frame),a=speed(y),b=speed(y+1);
-   assert.ok(a>=.125-1e-8&&a<=.25+1e-8);
+   assert.ok(a>=.1875-1e-5&&a<=.25+1e-5);
    assert.ok(Math.abs(b-a)<.001,'speed blends throughout the transition');
   }
  }
@@ -41,4 +43,12 @@ test('overscroll clamps to the initial pose and exact game-handoff frame',()=>{
  assert.equal(map.frameAtScroll(-100),334);assert.equal(map.frameAtScroll(map.travel),2164);
  assert.equal(map.frameAtScroll(map.travel+100),2164);assert.equal(map.scrollAtFrame(0),0);
  assert.equal(map.scrollAtFrame(3000),map.travel);
+});
+
+test('whole-pixel browser scrolling can reach the exact final pose',()=>{
+ const map=createJourneyScrollMap();
+ assert.equal(Number.isInteger(map.travel),true,'the page must not require a fractional scroll position');
+ assert.equal(map.frameAtScroll(Math.floor(map.travel)),2164,'Safari can reach the cards handoff');
+ assert.equal(map.scrollAtFrame(2164),map.travel);
+ assert.ok(map.frameAtScroll(map.travel-1)<2164,'the ending stays scrollable until the bottom');
 });
