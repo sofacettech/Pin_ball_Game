@@ -1,23 +1,6 @@
 <!doctype html>
 <html lang="en" class="policy-root">
-<head><!-- page-ready --><style id="page-loader-css">html{color-scheme:dark;background-color:#08040d}html[data-loaded="false"] body{visibility:hidden!important;opacity:0!important}html[data-loaded="false"]::before{content:"";position:fixed;top:calc(50% - 22px);left:calc(50% - 22px);width:44px;height:44px;border:2px solid #503660;border-top-color:#d9ed37;border-radius:50%;animation:page-loader-spin .8s linear infinite;z-index:2147483647}html[data-loaded="false"]::after{content:"LOADING";position:fixed;top:calc(50% + 35px);left:50%;transform:translateX(-50%);color:#e4e3de;font:600 12px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.18em;z-index:2147483647}@keyframes page-loader-spin{to{transform:rotate(1turn)}}@media(prefers-reduced-motion:reduce){html[data-loaded="false"]::before{animation:none}}</style><script id="page-ready">(() => {
-  const root = document.documentElement;
-  root.dataset.loaded = 'false';
-  function reveal() {
-    root.dataset.loaded = 'true';
-  }
-  function ready() {
-    requestAnimationFrame(() => {
-      // Flush layout so fonts used by the mounted page have started loading.
-      document.body?.getBoundingClientRect();
-      Promise.resolve(document.fonts?.ready).catch(() => {}).then(() => requestAnimationFrame(reveal));
-    });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true});
-  else ready();
-  addEventListener('pageshow', event => {if (event.persisted) reveal();});
-})();
-</script><!-- /page-ready --><!-- site-metadata -->
+<head><!-- site-metadata -->
 <link rel="icon" href="/assets/sofacet-favicon-32.png?v=134f3ac4" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/sofacet-touch-icon.png?v=f5ecd063" sizes="180x180">
 <meta property="og:type" content="website">
@@ -34,7 +17,24 @@
 <meta name="twitter:description" content="Play pinball, score SO/ COINS, and save them for SO/ FACET lab-grown diamond jewellery.">
 <meta name="twitter:image" content="https://shopsofacet.com/assets/sofacet-share-20261114-v2.jpg">
 <!-- /site-metadata -->
-  <meta charset="utf-8">
+  <meta charset="utf-8"><!-- page-ready --><style id="page-loader-css">html{color-scheme:dark;background-color:#08040d}html[data-loaded="false"] body{visibility:hidden!important;opacity:0!important}html[data-loaded="false"]::before{content:"";position:fixed;top:calc(50% - 22px);left:calc(50% - 22px);width:44px;height:44px;border:2px solid #503660;border-top-color:#d9ed37;border-radius:50%;animation:page-loader-spin .8s linear infinite;z-index:2147483647}html[data-loaded="false"]::after{content:"LOADING";position:fixed;top:calc(50% + 35px);left:50%;transform:translateX(-50%);color:#e4e3de;font:600 12px/1.4 'Brilliant Cut Pro',sans-serif;letter-spacing:.18em;z-index:2147483647}@keyframes page-loader-spin{to{transform:rotate(1turn)}}@media(prefers-reduced-motion:reduce){html[data-loaded="false"]::before{animation:none}}</style><script id="page-ready">(() => {
+  const root = document.documentElement;
+  root.dataset.loaded = 'false';
+  function reveal() {
+    root.dataset.loaded = 'true';
+  }
+  function ready() {
+    requestAnimationFrame(() => {
+      // Flush layout so fonts used by the mounted page have started loading.
+      document.body?.getBoundingClientRect();
+      Promise.resolve(document.fonts?.ready).catch(() => {}).then(() => requestAnimationFrame(reveal));
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true});
+  else ready();
+  addEventListener('pageshow', event => {if (event.persisted) reveal();});
+})();
+</script><!-- /page-ready -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>SO/ FACET — Terms</title>
   <meta name="robots" content="noindex">
