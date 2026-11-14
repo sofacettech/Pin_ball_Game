@@ -115,7 +115,7 @@ body[data-menu-open] .claim-navigation .auth-flow-close{visibility:hidden}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-details>.claim-invitation,
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .claim-details>.claim-form>*{animation:none!important}
  :is(#account-root,#membership-root,#launch-root) .react-page-root.design-claim .page.claim-copy-leaving>:is(.brand,.content){animation:claim-copy-out .18s ease both!important;pointer-events:none}
- .design-claim .claim-confirmation :where(.auth-flow-notice>:is(h1,p:not(:first-child,[role="status"]),.auth-flow-actions)){animation:soFacetEntrance .85s cubic-bezier(.2,.75,.2,1) both}
+ .design-claim .claim-confirmation :where(.auth-flow-notice>:is(h1,p:not(:first-child,[role="status"]),.saved-balance,.auth-flow-actions)){animation:soFacetEntrance .85s cubic-bezier(.2,.75,.2,1) both}
  .design-claim .claim-confirmation h1{animation-delay:.25s}
  .design-claim .claim-confirmation p:nth-of-type(2){animation-delay:.36s}
  .design-claim .claim-confirmation p:nth-of-type(3){animation-delay:.46s}
@@ -130,6 +130,15 @@ body[data-menu-open] .claim-navigation .auth-flow-close{visibility:hidden}
  .design-claim .claim-confirmation .auth-flow-actions{gap:12px;margin-top:24px;flex-direction:column}
  .design-claim .claim-confirmation .auth-flow-actions>:is(button,a){width:100%}
  .design-claim .claim-confirmation .auth-flow-actions>a{font-size:inherit;line-height:inherit}
+ .design-claim .claim-confirmation .saved-confirmation h1{margin-bottom:16px;font:400 calc(clamp(39px,4.25vw,63px) - 2px)/1.13 'Brilliant Cut Pro',sans-serif;letter-spacing:-1.1px;color:#f6f4f7}
+ .design-claim .claim-confirmation .saved-confirmation h1>span{display:block;white-space:nowrap}
+ .design-claim .claim-confirmation .saved-confirmation .saved-intro{font-family:'Fancy Cut Pro',serif;font-size:clamp(20px,2.4vw,28px);color:#eee}
+ .design-claim .claim-confirmation .saved-balance{display:flex;align-items:baseline;gap:14px;max-width:580px;margin:28px 0 16px;padding:18px 0 14px;border-block:1px solid #6b5873}
+ .design-claim .claim-confirmation .saved-balance strong{font:400 clamp(56px,7vw,104px)/.95 'Brilliant Cut Pro',sans-serif;letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#f6f4f7}
+ .design-claim .claim-confirmation .saved-balance span{font:14px/1.3 'Brilliant Cut Pro',sans-serif;letter-spacing:.04em;white-space:nowrap;color:#d6d2d7}
+ .design-claim .claim-confirmation .saved-confirmation .saved-reward{max-width:35ch;font-size:clamp(17px,1.7vw,21px)}
+ .design-claim .claim-confirmation .saved-reward strong{color:#fff;font-weight:400}
+ .saved-confirmation .auth-flow-actions button:last-child .brand-word{margin-inline-start:.3em}
  .saved-confirmation .auth-flow-actions>:is(button,a){display:inline-flex;align-items:center;justify-content:center;min-height:48px;background:transparent;color:inherit;border:1px solid #89818a;border-radius:0;padding:12px 18px;font:12px/18px 'Brilliant Cut Pro',sans-serif;letter-spacing:.7px;text-transform:uppercase;text-decoration:none;transition:background-color .25s,color .25s,border-color .25s}
  .saved-confirmation .auth-flow-actions>:is(button,a):is(:active,:focus-visible){background:#fff;color:#000;border-color:#fff}
  .saved-confirmation .auth-flow-actions>:is(button,a):focus-visible{outline:2px solid #d9ed37;outline-offset:4px}
@@ -142,4 +151,11 @@ body[data-menu-open] .claim-navigation .auth-flow-close{visibility:hidden}
 @media(min-width:901px){
  .design-claim .claim-confirmation h1{font-size:clamp(40px,4vw,54px)}
  .design-claim .claim-confirmation p{font-size:18px}
+}
+@media(max-width:700px){
+ .design-claim .claim-confirmation .saved-confirmation h1{font-size:clamp(31px,8vw,42px)}
+ .design-claim .claim-confirmation .saved-balance{gap:10px;margin:20px 0 14px}
+ .design-claim .claim-confirmation .saved-balance strong{font-size:clamp(48px,12vw,70px)}
+ .design-claim .claim-confirmation .saved-balance span{font-size:12px}
+ .saved-confirmation .auth-flow-actions button:not(:first-child){background:#100817e6}
 }

@@ -117,7 +117,8 @@ label:not(:where(.design-rewards *,.design-claim *,.design-account *,.design-lau
   #table-intro .table-facts .brand-word { -webkit-text-stroke: 0.45px #08050d; }
 
   .side-panel #table-intro:not([hidden]) ~ #start {
-    width: 72%;
+    width: 76%;
+    min-height: 48px;
     margin-inline: auto;
   }
 

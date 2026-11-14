@@ -93,6 +93,18 @@ test('registered sessions save verified later games without registering or reque
  await Promise.all([f.api('/api/membership/rewards',{gameId:otherGame},'one'),f.api('/api/membership/rewards',{gameId:otherGame},'one')]);assert.equal(f.calls.length,2);assert.equal(f.calls[1].points,90);
  const lower=await f.api('/api/membership/rewards',{gameId:lowerGame},'one');assert.equal(lower.savedPoints,4100);assert.equal(f.calls.length,2);
 });
+test('a returning member verifies by phone and saves a new game without entering profile details again',async()=>{
+ const f=setup(),token=await verified(f);
+ await f.api('/api/membership',{...valid,verificationToken:token},'one');
+ await f.api('/api/account/signout',{},'one');f.advance(60001);
+ const challenge=await f.api('/api/membership/otp/request',{phoneNumber:valid.phoneNumber,name:valid.name,consent:true},'one');
+ const verifiedAgain=await f.api('/api/membership/otp/verify',{phoneNumber:valid.phoneNumber,otp:'654321',challengeId:challenge.challengeId},'one');
+ assert.equal(verifiedAgain.existingMember,true);
+ assert.equal((await f.api('/api/account/session',{},'one')).signedIn,true);
+ const reward=await f.api('/api/membership/rewards',{gameId:otherGame},'one');
+ assert.equal(reward.savedPoints,4100);
+ assert.equal(f.central.email,valid.email);
+});
 test('registered reward requests require the session member and its own verified game',async()=>{
  const f=setup();
  await assert.rejects(f.api('/api/membership/rewards',{gameId},'one'),status(401));

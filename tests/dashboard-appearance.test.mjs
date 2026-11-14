@@ -8,9 +8,9 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {fileURLToPath} from 'node:url';
 const main=readFileSync(new URL('../account-source/src/main.jsx',import.meta.url),'utf8');
 
-test('both share entry points use the score card with the saved score and destinations',async()=>{
+test('saved points and account score use the share card with the right totals',async()=>{
  const auth=readFileSync(new URL('../collective-source/AuthFlow.jsx',import.meta.url),'utf8');
- assert.match(auth,/ShareScoreDialog score=\{saved\.score\}/);
+ assert.match(auth,/ShareScoreDialog score=\{saved\.savedPoints\} dialogRef=\{shareDialog\} sharePoints/);
  assert.match(main,/ShareScoreDialog score=\{account\.bestPoints\}/);
  const server=await createServer({root:fileURLToPath(new URL('../shared/',import.meta.url)),server:{middlewareMode:true,hmr:false},optimizeDeps:{noDiscovery:true},appType:'custom'});
  try{
@@ -19,6 +19,8 @@ test('both share entry points use the score card with the saved score and destin
   assert.match(markup,/Share your score/);
   assert.match(markup,/3,205/);
   assert.match(markup,/Copy score &amp; link/);
+  const pointsMarkup=renderToStaticMarkup(React.createElement(ShareScoreDialog,{score:3200,dialogRef:{current:null},sharePoints:true}));
+  assert.match(pointsMarkup,/Share your points/);assert.match(pointsMarkup,/I have 3,200 SO\/ COINS/);assert.match(pointsMarkup,/Copy points &amp; link/);
   for(const name of ['whatsapp','telegram','x','gmail'])assert.match(markup,new RegExp('/assets/share-icons/'+name+'\\.svg'));
  }finally{await server.close()}
 });

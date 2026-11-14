@@ -4,7 +4,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {withRewardsSite,member,other,registration} from '../tests/helpers/rewards-fixture.mjs';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.SOFACET_PLAYWRIGHT_PATH||'playwright');
-const browser=await chromium.launch({channel:'chrome',args:['--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
 const output=process.env.SOFACET_SCREENSHOT_DIR,report=[];
 if(output)await mkdir(output,{recursive:true});
 async function capture(page,name){await page.evaluate(()=>document.fonts.ready);if(output)await page.screenshot({path:resolve(output,name+'.png'),fullPage:true})}
@@ -22,7 +22,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
    await page.goto(origin+'/launch');
    await page.waitForURL('**/notify');
    await page.getByRole('heading',{name:'LAUNCHING SOON',exact:true}).waitFor();
-   await page.getByText("You're in. Stay tuned for early access, before anyone else.",{exact:true}).waitFor();
+   await page.locator('.notify-member p').getByText('For exclusive early access, updates and more,',{exact:true}).waitFor();
    const about=page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true});await about.waitFor();
    assert.equal(await page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true}).isVisible(),false);
    await page.waitForFunction(()=>document.querySelector('#scene')?.dataset.intro==='complete');
@@ -58,7 +58,7 @@ try{await withRewardsSite(async({origin,readStore,request})=>{
   await page.goto(origin+'/notify');
   const join=page.getByRole('link',{name:'JOIN THE SO/ COLLECTIVE',exact:true});
   await join.waitFor();
-  await page.getByText('Early access and updates, before anyone else.',{exact:true}).waitFor();
+  await page.locator('.notify-join p').getByText('For exclusive early access, updates and more,',{exact:true}).waitFor();
   assert.equal(await page.getByRole('link',{name:'ABOUT SO/ FACET',exact:true}).isVisible(),false);
   await join.click();await page.waitForURL('**/join');report.push({guestJoin:true});
  }finally{await guest.close()}

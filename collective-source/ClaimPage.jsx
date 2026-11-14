@@ -76,8 +76,8 @@ export default function ClaimPage({pageTitle='SO/ FACET — My SO/ COINS',result
     if (changed) {setMessage('Send an OTP to verify your mobile number first.');return;}
     if (!/^\d{6}$/.test(otp)) {setMessage('Please enter the six-digit code.');return;}
     void submit(async values=>{
-      await onClaim(values);
-      if(twoStep){
+      const result=await onClaim(values);
+      if(twoStep&&!result?.existingMember){
         if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)setDetailsStep(true);
         else setLeaving(true);
       }
