@@ -6,6 +6,15 @@ const require=createRequire(import.meta.url),{webkit,chromium,devices}=require(p
 const engine=process.env.SOFACET_BROWSER||'webkit',url=new URL(process.env.SOFACET_ENTRANCE_URL||'http://127.0.0.1:8886/');url.searchParams.set('entrance','1');url.hash='experience';
 const browser=await ({webkit,chromium}[engine]).launch(engine==='chromium'?{args:['--enable-gpu']}:{}),scroll=createJourneyScrollMap(),report=[];
 await mkdir('work/chess-transition',{recursive:true});
+// The configured crossing now advances at 360 source frames/s, with each update
+// capped at 50ms. A slow renderer may therefore show 18 source frames per RAF;
+// the 200-frame core still needs at least 11 distinct poses and both boundaries.
+const coreStart=1440,coreEnd=1640,crossingFPS=360,maxUpdateMs=50;
+const maxCoreStep=crossingFPS*maxUpdateMs/1000+.1;
+const minimumCorePoses=Math.floor((coreEnd-coreStart)/(maxCoreStep-.1));
+// The full test leg integrates to 240 source frames of protected crossing time:
+// 667ms at the new pace. Allow RAF/first-update timing, while rejecting a jump.
+const minimumDurationMs=500;
 try{
  for(const [name,options] of [['phone',{...devices['iPhone 13'],viewport:{width:393,height:735}}],['desktop',{viewport:{width:1280,height:720}}]]){
   const page=await browser.newPage(options),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -22,15 +31,20 @@ try{
      requestAnimationFrame(sample);
     }requestAnimationFrame(sample);
    }),{y:scroll.scrollAtFrame(to),target:to});
-   const direction=Math.sign(to-from),core=samples.filter(s=>s.frame>=1440&&s.frame<=1640),duration=samples.at(-1).time-samples[0].time;
-   assert.ok(core.length>=16,`${name}: show intermediate doorway poses (${core.length})`);
-   assert.ok(duration>=750,`${name}: large scroll must not teleport across the doorway (${duration}ms)`);
+   const direction=Math.sign(to-from),core=samples.filter(s=>s.frame>=coreStart&&s.frame<=coreEnd),duration=samples.at(-1).time-samples[0].time;
+   const coreFrames=core.map(s=>s.frame),coreMin=Math.min(...coreFrames),coreMax=Math.max(...coreFrames);
+   const result={name,from,to,duration,corePoses:core.length,coreMin,coreMax,samples};
+   // Retain the failing leg too, so a CI assertion has its actual poses/timing.
+   report.push(result);await writeFile(`work/chess-transition/${engine}.json`,JSON.stringify(report,null,2));
+   console.log(JSON.stringify({engine,...result,samples:undefined,poses:samples.length}));
+   assert.ok(core.length>=minimumCorePoses,`${name}: show intermediate doorway poses (${core.length}, need ${minimumCorePoses})`);
+   assert.ok(coreMin<=coreStart+maxCoreStep&&coreMax>=coreEnd-maxCoreStep,`${name}: show both edges of the doorway core (${coreMin}–${coreMax})`);
+   assert.ok(duration>=minimumDurationMs,`${name}: large scroll must not teleport across the doorway (${duration}ms)`);
    for(let i=1;i<samples.length;i++){
     assert.ok((samples[i].frame-samples[i-1].frame)*direction>=-.001,'movement follows the requested direction');
-    if(samples[i].frame>=1440&&samples[i].frame<=1640&&samples[i-1].frame>=1440&&samples[i-1].frame<=1640)
-     assert.ok(Math.abs(samples[i].frame-samples[i-1].frame)<=12.1,'no jump within the doorway even after a slow frame');
+    if(samples[i].frame>=coreStart&&samples[i].frame<=coreEnd&&samples[i-1].frame>=coreStart&&samples[i-1].frame<=coreEnd)
+     assert.ok(Math.abs(samples[i].frame-samples[i-1].frame)<=maxCoreStep,'no jump within the doorway even after a slow frame');
    }
-   report.push({name,from,to,duration,samples});
   }
   // A reversal must act on the current pose, without completing the old swipe.
   await page.evaluate(y=>scrollTo(0,y),scroll.scrollAtFrame(1720));await page.waitForFunction(()=>window.entrancePreview.frame>1500&&window.entrancePreview.frame<1600);
