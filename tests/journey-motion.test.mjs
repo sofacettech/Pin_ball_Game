@@ -74,3 +74,42 @@ test('stalls do not teleport the ball, and reduced motion and ordinary touch tra
  assert.equal(advanceJourneyFrame(1800,2000,16.67,{coarse:true}),2000);
  assert.equal(advanceJourneyFrame(1500,1600,0),1500);
 });
+
+test('touch and desktop land on their destination with a steady glide, not a sub-frame crawl',()=>{
+ for(const coarse of [true,false]){
+  let frame=1000;const target=1010,steps=[];
+  for(let i=0;i<60&&frame!==target;i++){const next=advanceJourneyFrame(frame,target,1000/60,{coarse});steps.push(next-frame);frame=next;}
+  assert.equal(frame,target);
+  // every tick before landing moves at least ~1 frame, so no 50-100 ms stalls
+  assert.ok(steps.slice(0,-1).every(step=>step>=.99),JSON.stringify(steps));
+ }
+});
+
+import {createTouchGlide} from '../entrance-source/journey-motion.mjs';
+test('touch glide aims short of the predicted rest point after release and never while touching or idle',()=>{
+ const g=createTouchGlide(),bounds={first:0,last:2000};
+ // finger down: raw target is returned
+ g.touch(true);for(let i=0;i<8;i++)g.push(100+i*5,i*16);
+ assert.equal(g.target(135,112,bounds),135);
+ // released while moving ~312 frames/s: aim ahead, within the reach limit
+ g.touch(false);const ahead=g.target(135,114,bounds);
+ assert.ok(ahead>135&&ahead<=135+312*.6+1,String(ahead));
+ // a slow crawl with no earlier fast release is followed 1:1
+ const slow=createTouchGlide();slow.push(100,0);slow.push(100.5,100);
+ assert.equal(slow.target(100.5,110,bounds),100.5);
+ // scroll events stop with the ball ahead: the page is committed to the ball, never pulled back
+ const settled=g.target(150,2000,bounds);
+ assert.ok(settled>150&&settled===g.takeCommit());assert.equal(g.takeCommit(),null);
+ assert.equal(g.target(150,2001,bounds),settled,'holds the committed point until the page catches up');
+ g.push(settled,2002);assert.equal(g.target(settled,2003,bounds),settled);
+ // after a normal stop at the predicted point nothing is committed
+ const quiet=createTouchGlide();quiet.push(10,0);assert.equal(quiet.target(10,1000,bounds),10);assert.equal(quiet.takeCommit(),null);
+ // a jump without any finger (scrollTo, anchor, key) is never extrapolated or committed
+ const j=createTouchGlide();j.push(0,0);j.push(1500,16);
+ assert.equal(j.target(1500,32,bounds),1500);assert.equal(j.target(1500,1000,bounds),1500);assert.equal(j.takeCommit(),null);
+ // reversal and bounds
+ const h=createTouchGlide();h.touch(true);h.touch(false);for(let i=0;i<8;i++)h.push(1990+i*5,i*16);
+ assert.equal(h.target(1995,112,bounds),2000);
+ const r=createTouchGlide();r.touch(true);r.touch(false);for(let i=0;i<8;i++)r.push(500-i*5,i*16);
+ assert.ok(r.target(465,112,bounds)<465);
+});

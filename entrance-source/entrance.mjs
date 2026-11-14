@@ -3,7 +3,7 @@ import { createLandingCopy } from '/assets/kinetic-copy.js?v=welcome-scroll-3';
 import { createAssemblyClock } from './assembly-clock.mjs';
 import { storyFrameAt } from './story-timing.mjs';
 import { createJourneyScrollMap, JOURNEY_START_FRAME } from './journey-scroll.mjs';
-import { advanceJourneyFrame, createJourneyCompletion, FINAL_FRAME_HOLD_MS } from './journey-motion.mjs';
+import { advanceJourneyFrame, createJourneyCompletion, createTouchGlide, FINAL_FRAME_HOLD_MS } from './journey-motion.mjs';
 import { createFrameRatePanel } from './frame-rate-panel.js';
 import { framePlacement } from '/frame-placement.js';
 import { siteSound, CHESS_HIT_FRAME } from '/sounds/site-audio.js?v=state-e407c7a78895';
@@ -153,6 +153,9 @@ game.addEventListener('load',()=>{
 });
 $('scroll-hint').addEventListener('click',()=>{siteSound.unlock();window.scrollTo({top:window.scrollY+innerHeight*.8,behavior:reduced.matches?'instant':'smooth'});});
 
+// Touch only: ease through the iOS momentum tail instead of following its crawl.
+const touchGlide=videoEntrance&&coarse.matches?createTouchGlide():null;
+if(touchGlide){const touching=value=>()=>touchGlide.touch(value);window.addEventListener('touchstart',touching(true),{passive:true});window.addEventListener('touchend',touching(false),{passive:true});window.addEventListener('touchcancel',touching(false),{passive:true});}
 function tick(now){
   raf=0;if(gameRequested||document.hidden)return;
   if(!ready)return;
@@ -166,7 +169,9 @@ function tick(now){
   const dt=lastTime?Math.min(100,now-lastTime):16.67;lastTime=now;
   // Scroll chooses the destination while decoding catches up asynchronously.
   // Only the final handoff below waits for a settled, visible picture.
-  frame=advanceJourneyFrame(frame,target,dt,{coarse:coarse.matches,reducedMotion:reduced.matches});
+  const goal=touchGlide?touchGlide.target(target,now,{first:firstFrame,last:lastFrame}):target;
+  const settledAt=touchGlide?.takeCommit();if(settledAt!=null)scrollTo(0,journeyScroll.scrollAtFrame(settledAt));
+  frame=advanceJourneyFrame(frame,goal,dt,{coarse:coarse.matches&&goal===target,reducedMotion:reduced.matches});
   if(videoEntrance)frame=completion.advance(frame,{target,presented:presentedFrame,now,reducedMotion:reduced.matches});
   if(!videoEntrance){placeStage();presentJourneyFrame(frame);}
   const pageTime=performance.now()-tickStart;
@@ -199,7 +204,7 @@ function syncScroll(){
   if(!ready)return;
   // A swipe can enter the journey immediately, without waiting for assembly.
   if(phase==='assembly'&&scrollY>0){assembly.finish();frame=firstFrame;phase='idle';document.body.dataset.phase=phase;}
-  target=journeyScroll.frameAtScroll(scrollY);requestTick();
+  target=journeyScroll.frameAtScroll(scrollY);touchGlide?.push(target,performance.now());requestTick();
 }
 window.addEventListener('scroll',syncScroll,{passive:true});
 window.addEventListener('popstate',event=>{

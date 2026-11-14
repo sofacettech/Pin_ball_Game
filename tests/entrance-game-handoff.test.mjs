@@ -12,7 +12,7 @@ const handoff=source.slice(source.indexOf('function gameVisibility('),source.ind
 function videoView({initial=2162,target=2164,coarse=true,reducedMotion=false}={}){
  const handoffs=[],requests=[];
  let wanted;
- const context={raf:0,ready:true,gameRequested:false,phase:'idle',frame:initial,target,lastFrame:2164,lastTime:0,
+ const context={touchGlide:null,raf:0,ready:true,gameRequested:false,phase:'idle',frame:initial,target,lastFrame:2164,lastTime:0,
   presentedFrame:initial,finalFramePresentedAt:Infinity,videoEntrance:true,advanceJourneyFrame,FINAL_FRAME_HOLD_MS,completion:createJourneyCompletion(2164),
   coarse:{matches:coarse},reduced:{matches:reducedMotion},
   document:{hidden:false},performance:{now:()=>0},

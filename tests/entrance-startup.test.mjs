@@ -138,7 +138,7 @@ test('skipping while a successful model finishes preparation cannot reveal the e
 
 test('a first swipe during assembly can advance directly into the journey',async()=>{
  const view=await startupFixture();view.model.resolve();await view.done;
- view.context.scrollY=100;view.context.journeyScroll=createJourneyScrollMap();
+ view.context.scrollY=100;view.context.touchGlide=null;view.context.journeyScroll=createJourneyScrollMap();
  const sync=source.slice(source.indexOf('function syncScroll(){'),source.indexOf("window.addEventListener('scroll',syncScroll"));
  vm.runInContext(sync+';syncScroll();',view.context);
  assert.equal(view.context.phase,'idle');assert.equal(view.context.frame,334);assert.ok(view.context.target>334);
